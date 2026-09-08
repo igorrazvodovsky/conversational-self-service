@@ -5,13 +5,13 @@ import { useConfigurator, type Question } from "./provider";
 /**
  * The open questions, from `Deciding`.
  *
- * There can be more than one. A conflict between requirements and a proposed
+ * There can be more than one. A conflict between assertions and a proposed
  * completion are two questions about the same specification, and they used to
  * share a request — so asking either one erased the other. The request now
  * names the question (`about`) as well as its subject, which is also what tells
  * the two `Deciding/choose` rules apart.
  *
- * Neither shape of option is a catalogue option: one is a requirement that
+ * Neither shape of option is a catalogue option: one is an assertion that
  * might be given up, the other a whole proposed assignment. `Deciding`'s type
  * parameters cannot be constrained, which is what lets one concept carry both.
  */

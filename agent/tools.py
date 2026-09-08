@@ -1,16 +1,22 @@
 """The model's tools.
 
-Four verbs and one reading.  Each is a root action of the bootstrap concept and
-nothing more: the tool records that the model called it, and the rules in
+Three verbs and one reading.  Each is a root action of the bootstrap concept
+and nothing more: the tool records that the model called it, and the rules in
 `syncs/conduct.py` decide what follows.  A tool body that changed state
 directly would make the model a second initiator, which is the thing WYSIWID
 §7.2's fourth design rule exists to prevent and the thing the starter this
 replaces did in every frontend tool it defined.
 
-The names are ours, and so is the granularity: `require`, `prefer`, `withdraw`,
-`propose`.  A log of those four says what happened.  A single `configure(spec)`
+The names are ours, and so is the granularity: `assert_value`, `withdraw`,
+`propose`.  A log of those three says what happened.  A single `configure(spec)`
 taking the whole assignment — the shape this repository used to have — says
 only that something did.
+
+`prefer` is gone with `Asserting/prefer`.  Strength is a fact of a clause in
+the buyer's words, and this build holds no clauses — see
+`docs/concepts/asserting.md`.  The Python function is `assert_value` because
+Python reserves `assert`; the tool string the rules match on is `assert`, which
+is the vocabulary.
 """
 
 from __future__ import annotations
@@ -40,31 +46,16 @@ def _outcome(flow: str) -> dict[str, Any]:
 
 
 @tool
-def require(variable: str, option: str) -> dict[str, Any]:
-    """State that the specification must have this option for this variable.
+def assert_value(variable: str, option: str) -> dict[str, Any]:
+    """Assert this option for this variable, on the person's behalf.
 
     `variable` is a variable name such as `building_type`; `option` is a full
     option id such as `building_type:hospital`. Read them from the `open` list
-    that every tool returns. A requirement that cannot be met is still
-    recorded, and comes back with the rules that refuse it.
+    that every tool returns. An assertion that cannot be met is still recorded,
+    and comes back with the rules that refuse it.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="require",
-        spec=SPEC, variable=variable, option=option,
-    )
-    return _outcome(completion.flow)
-
-
-@tool
-def prefer(variable: str, option: str) -> dict[str, Any]:
-    """State that this option would be preferred, without insisting on it.
-
-    A preference is honoured where it can be and dropped where it cannot, and
-    does not narrow what remains possible. Use it when the person says they
-    would like something rather than that they need it.
-    """
-    completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="prefer",
+        "Copiloting", "invoke", actor="model", tool="assert",
         spec=SPEC, variable=variable, option=option,
     )
     return _outcome(completion.flow)
@@ -72,10 +63,10 @@ def prefer(variable: str, option: str) -> dict[str, Any]:
 
 @tool
 def withdraw(variable: str) -> dict[str, Any]:
-    """Take back whatever was asked of this variable.
+    """Take back whatever was asserted of this variable.
 
-    What follows from the remaining requirements is recomputed; a value that
-    was only ever an entailment reverts to being open.
+    What follows from the remaining assertions is recomputed; a value that was
+    only ever an entailment reverts to being open.
     """
     completion = engine.root(
         "Copiloting", "invoke", actor="model", tool="withdraw",
@@ -88,7 +79,7 @@ def withdraw(variable: str) -> dict[str, Any]:
 def propose(measure: Literal["cost", "carbon"] = "cost") -> dict[str, Any]:
     """Work out the cheapest or lowest-carbon way to finish the specification.
 
-    Every requirement already stated is kept. The result is put to the person
+    Every assertion already on record is kept. The result is put to the person
     to adopt or refuse — you cannot adopt it yourself, and saying that you have
     would be false.
     """
@@ -101,7 +92,7 @@ def propose(measure: Literal["cost", "carbon"] = "cost") -> dict[str, Any]:
 
 @tool
 def review() -> dict[str, Any]:
-    """Read the specification: what was asked for, what follows, what is open.
+    """Read the specification: what is asserted, what follows, what is open.
 
     A projection rather than the state itself. It is accurate as of this call
     and says nothing about what the person has done since.
@@ -109,4 +100,4 @@ def review() -> dict[str, Any]:
     return digest(engine, SPEC)
 
 
-configurator_tools = [require, prefer, withdraw, propose, review]
+configurator_tools = [assert_value, withdraw, propose, review]

@@ -25,9 +25,9 @@ it.
 | `TheCatalogueSeedsTheSolver` | [Seeding](seeding.md) |
 | `ADelistedOptionLeavesTheSolver` | [Seeding](seeding.md) |
 | `APersonStartsASpecification` | [Gestures](gestures.md) |
-| `APersonStatesARequirement` | [Gestures](gestures.md) |
-| `APersonPrefersAnOption` | [Gestures](gestures.md) |
-| `APersonWithdrawsARequirement` | [Gestures](gestures.md) |
+| `APersonSays` | [Gestures](gestures.md) |
+| `APersonAssertsAValue` | [Gestures](gestures.md) |
+| `APersonWithdrawsAnAssertion` | [Gestures](gestures.md) |
 | `APersonDiscardsTheSpecification` | [Gestures](gestures.md) |
 | `APersonAnswersAQuestion` | [Gestures](gestures.md) |
 | `APersonDeclinesToAnswer` | [Gestures](gestures.md) |
@@ -35,18 +35,17 @@ it.
 | `ANewSpecificationIsGivenToTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationLeavesTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationsQuestionsAreWithdrawn` | [Propagation](propagation.md) |
-| `RequirementsReachTheSolver` | [Propagation](propagation.md) |
-| `PreferencesReachTheSolverSoftly` | [Propagation](propagation.md) |
+| `AssertionsReachTheSolver` | [Propagation](propagation.md) |
+| `PreferencesReachTheSolverSoftly` — registered, reached by nothing | [Propagation](propagation.md) |
 | `AWithdrawalReachesTheSolver` | [Propagation](propagation.md) |
 | `AConflictIsPutToThePerson` | [Propagation](propagation.md) |
-| `UnmetRequirementsAreTriedAgain` | [Propagation](propagation.md) |
-| `TheConcededRequirementIsWithdrawn` | [Propagation](propagation.md) |
-| `TheModelMayStateARequirement` | [Conduct](conduct.md) |
-| `TheModelMayPreferAnOption` | [Conduct](conduct.md) |
-| `TheModelMayWithdrawARequirement` | [Conduct](conduct.md) |
+| `UnmetAssertionsAreTriedAgain` | [Propagation](propagation.md) |
+| `TheConcededAssertionIsWithdrawn` | [Propagation](propagation.md) |
+| `TheModelMayAssertAValue` | [Conduct](conduct.md) |
+| `TheModelMayWithdrawAnAssertion` | [Conduct](conduct.md) |
 | `TheModelMayProposeACompletion` | [Conduct](conduct.md) |
 | `ACompletionIsPutToThePerson` | [Conduct](conduct.md) |
-| `AnAdoptedCompletionBecomesRequirements` | [Conduct](conduct.md) |
+| `AnAdoptedCompletionBecomesAssertions` | [Conduct](conduct.md) |
 | `AChangedSpecificationWithdrawsItsProposal` | [Conduct](conduct.md) |
 | `TheCanvasIsShownBeforeItChanges` | [Conduct](conduct.md) |
 
@@ -59,26 +58,29 @@ question about what depends on what — worked through in
 
 ## What a person may do
 
-Every click is one root action carrying an `act`, and these eight rules decide
-what follows from it. There is no HTTP route per concept action, and
-[Gestures](gestures.md) says why that matters — as does why the vocabulary of
-acts is ours and lives there.
+Every click, and every chat message, is one root action carrying an `act`, and
+these eight rules decide what follows from it. There is no HTTP route per
+concept action, and [Gestures](gestures.md) says why that matters — as does why
+the vocabulary of acts is ours and lives there, and why the chat message is
+performed before the model node of the graph rather than from the browser.
 
-## Requirements reach the solver
+## Assertions reach the solver
 
-What a person asks for lives in [Asserting](../concepts/asserting.md); what
-follows from it lives in [Constraining](../concepts/constraining.md). Three
+What a party asserts lives in [Asserting](../concepts/asserting.md); what
+follows from it lives in [Constraining](../concepts/constraining.md). Two
 rules carry the first into the second, and they are the only path between them.
-See [Propagation](propagation.md).
+A third is registered and reached by nothing, which
+[Propagation](propagation.md#the-rule-that-is-registered-and-reached-by-nothing)
+argues for rather than hides.
 
 ## A conflict is put to the person
 
 When an assumption cannot hold, nothing is dropped without an account. The
 rules that cannot hold together are recorded against the variable and reach the
-card; when two or more requirements took part they also become the options of a
+card; when two or more assertions took part they also become the options of a
 question, and the person answers it. A lone refusal has nothing to choose
 between and raises no question — the account appears, the banner does not. See
-[Propagation](propagation.md#when-requirements-cannot-hold-together).
+[Propagation](propagation.md#when-assertions-cannot-hold-together).
 
 ## What the model may do
 

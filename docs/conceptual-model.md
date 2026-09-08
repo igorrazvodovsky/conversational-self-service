@@ -64,7 +64,7 @@ holds two representations of every rule — the notation in
 checks that they agree. That is the honest cost of not building a matcher.
 
 _Recomputation is quadratic in the worst case._ Adopting a completion issues
-about thirty `require`s, each triggering a full propagation, and takes roughly
+about thirty `assert`s, each triggering a full propagation, and takes roughly
 two seconds. Acceptable for a deliberate action, and it is a consequence of
 insisting that thirty requirements are thirty actions rather than one.
 
@@ -98,12 +98,12 @@ repository conforms at whichever slice the catalogue's concept is built.
 
 | Here | In the catalogue | What differs |
 |---|---|---|
-| `Asserting` (was `Specifying`) | `Asserting` — the concept the catalogue took from this build | Name conformed 2026-09-08; code not yet. Holds a value in the model's vocabulary with who asserted it; the catalogue's `Specifying` holds a clause in the buyer's |
+| `Asserting` (was `Specifying`) | `Asserting` — the concept the catalogue took from this build | Conformed 2026-09-08, notes and code. Holds a value in the model's vocabulary with who asserted it; the catalogue's `Specifying` holds a clause in the buyer's. `prefer` gone; `assertedBy` added and read by nothing |
 | `Constraining` | `Configuring` | `because` is provenance as a sentence, not a `Kind`; `complete` with a cost function has no counterpart; §8 already says this is two concepts, and the rule-book half is the model's authoring side, outside the case |
 | `Cataloguing` | `Configuring.inDomain` plus model metadata | This is the case's step 1 row *attribute semantics beyond a label*, answered for a stand-in engine: labels and a family, nothing more |
 | `Pricing`, `Footprinting` | `Configuring.price`; nothing | Service level and support term are variables here, which confirms the case's reading that the market models terms as attributes |
 | `Deciding` | `Suggesting` | Instantiated for a conflict and for a completion, not for an inferred clause or an interpreter-proposed choice. Its conflict answer is *withdraw an assertion*; the catalogue's is `Binding.substitute`, which keeps the requirement and needs `answers` and `serves` |
-| `Copiloting` — `gesture`, `invoke` | `Conversing` — one symmetric `say` | Two root actors here; the model initiates. The catalogue's interpreter is rules and never initiates; the buyer's `say` is the only entry. Recorded in the case as a rival composition |
+| `Copiloting` — `gesture`, `invoke` | `Conversing` — one symmetric `say` | Two root actors here; the model still initiates. Since 2026-09-08 the buyer's `say` *is* in the log — `Conversing` is built — but it is not the only entry, and no rule invokes the machine's half. Recorded in the case as a rival composition |
 | in the system prompt | `Reading`, `Mapping`, `Situating`, `Stepping` | *State the context first; a city implies a region; a storey count implies a travel height* — a task model, a mapping and the given/attribute split as English to a model, which §7 of this document (finding 4) names as the starter's failure |
 | absent | `Binding.answers`, `Specifying`, `Staling`, `Revising`, `Agreeing`, `Handing over` | §8's *adoption has no inverse* and *one specification, no revisions* |
 | the canvas | `Rendering` with one `move` | The ledger as an object; the case's Direction question 3 answered by default |
@@ -117,9 +117,30 @@ or in a tool description), *absent*. The `concept-coverage` skill re-runs this.
 
 | Verdict | Concepts |
 |---|---|
-| built | `Configuring` (as `Constraining` + `Cataloguing` + `Pricing`), `Asserting` (as `Specifying` in code), `Suggesting` (as `Deciding`, two of its four uses), `Rendering` (one move) |
-| in prompt | `Reading` (the model reads the message and calls `require`), `Mapping` (*a city implies a region*), `Situating` (context as variables, stated first), `Stepping` (*state the context before anything else*) |
-| absent | `Specifying`, `Binding`, `Conversing` (the thread is the framework's; no `say` in the log), `Diagnosing` beyond the *model rule* kind (`refused`, `culprits`), `Staling`, `Revising`, `Agreeing`, `Handing over`, `Deriving`, `Narrowing`, `Recalling`, `Quoting`, `Complying` |
+| built | `Configuring` (as `Constraining` + `Cataloguing` + `Pricing`), `Asserting`, `Conversing`, `Suggesting` (as `Deciding`, two of its four uses), `Rendering` (one move) |
+| in prompt | `Reading` (the model reads the message and calls `assert_value`), `Mapping` (*a city implies a region*), `Situating` (context as variables, stated first), `Stepping` (*state the context before anything else*) |
+| absent | `Specifying`, `Binding`, `Diagnosing` beyond the *model rule* kind (`refused`, `culprits`), `Staling`, `Revising`, `Agreeing`, `Handing over`, `Deriving`, `Narrowing`, `Recalling`, `Quoting`, `Complying` |
+
+Two verdicts moved on 2026-09-08, both by §9.4's items 2 and 3.
+
+`Asserting` was already *built*; what changed is that it is built under its own
+name. `agent/concepts/asserting.py` holds `open`, `asserted` and `assertedBy`
+with `start`, `assert`, `withdraw` and `discard`; `APersonAssertsAValue` and
+`TheModelMayAssertAValue` in `agent/syncs/gestures.py` and
+`agent/syncs/conduct.py` invoke the second, and `AssertionsReachTheSolver` in
+`agent/syncs/propagation.py` carries it to `Constraining/assume`. The caveat
+that goes with the verdict rather than against it: an assertion still answers
+nothing, because no clause exists to answer.
+
+`Conversing` moved from *absent* to *built*. `agent/concepts/conversing.py`
+holds `utterances`, `by` and `text` with one action `say`; `APersonSays` in
+`agent/syncs/gestures.py` invokes it; and `agent/hearing.py` performs the
+stimulus before the graph's model node, so the log's first completion for a
+turn is `Conversing/say` by the person and the model's `Copiloting/invoke`
+comes after it. Two caveats, neither of which is an absence of the concept:
+it is a single instance where the catalogue has `Conversing[?s, ?p]`, and no
+rule invokes `say` with the machine as the party, so the assistant's half of
+the conversation is still CopilotKit's thread and not the record.
 
 The structural audit in §3 passes and this one does not, and that is the
 reason both exist. Four of the case's concepts are sentences in a prompt, which
@@ -131,9 +152,14 @@ Neither the case's step 2 (the null: chat, a model, tools wired to the solver)
 nor its slice 1 (six concepts with `Binding` at the top). The null's chain with
 three additions — the assertion held apart from the entailment, a conflict and
 a completion put to the person, provenance on every action — and `answers`
-absent. The case's `Prototype plan` now runs its five pre-registered predictions
-on this build *as it stands*, then conforms it into slice 0 by the first two
-items below.
+absent. The case's `Prototype plan` runs its five pre-registered predictions on
+the build *as it stood* — which since 2026-09-08 means the branch
+`null-with-attribution`, at the commit before items 2 and 3 below were carried
+out, and not `main`. That branch is the only place the
+`say → (model) → require → assume` chain still exists to be measured, and it is
+kept reachable for that reason and no other. `main` has items 2 and 3 done and
+items 1 and 4 to 7 outstanding, so it is neither the null nor slice 0: the
+buyer's words are in the log and the model is still a root actor.
 
 Three things the case took from the build, each by its lane. *Grounded in the
 job:* the assertion apart from the entailment, which the job's fact table
@@ -145,17 +171,48 @@ in step 1, and the probe reframed as a diff of `Constraining`'s signatures
 against Tacton's API. *Grounded in neither:* the model as a root actor, which
 is the framework's default and is recorded as a rival composition, declined.
 
+What the regeneration found that the specifications had not anticipated, on
+2026-09-08. Three things, in descending order of how much they would change if
+taken to the case. First, `Asserting.assertedBy` is written by every rule that
+asserts and read by nothing — not by a `where` clause, not by `views.py`, not
+by a component. The canvas's three sentences come off the provenance edge, and
+the edge is *finer* than the relation: `APersonAssertsAValue` and
+`AnAdoptedCompletionBecomesAssertions` are two different things a person did
+and both write `person`, so in this build `assertedBy` carries no information
+the log does not already hold, and holds it more coarsely. The specification
+argues for the relation on the ground that a party is not a rule, which is
+true and is not yet load-bearing; it becomes load-bearing at the first moment
+there are three parties rather than two, which is the case's `interpreter`
+beside a buyer and a seller. Recorded as state that earns its place
+prospectively rather than now. Second, removing `prefer` left a rule that is
+registered and reached by nothing, and there was no third option between
+deleting `Constraining/incline` and keeping an action the specification no
+longer has — so the dead rule is kept with its reason written into
+[`docs/syncs/propagation.md`](syncs/propagation.md#the-rule-that-is-registered-and-reached-by-nothing),
+against the case's step 1 answering whether the real solver takes a soft
+constraint at all. It costs a tuple comparison per dispatch and nothing else,
+and it is the first thing in this repository that is deliberately unreachable.
+Third, `Conversing` could not be entered from the browser. A chat message
+posted as a second HTTP request races the CopilotKit run, so the ordering the
+concept exists to establish — the person's words before the model's tool
+call — would have held by luck; it is performed in `agent/hearing.py`, before
+the graph's model node, which makes `hearing.py` a third surface performing a
+root action beside `webapp.py` and `tools.py`. The specification had assumed
+one entry point per actor and there are now two for the person, a click and a
+message, which is a fact about the framework rather than about the concept.
+
 ### 9.4 What to change, in order
 
 Each item names the skill that does it. Specification first, then regenerate;
 do not patch `agent/` by hand.
 
-1. **Run the null's measurements before anything else.** Against one product
-   model and one dealer task, take the five observables in the case's
-   `Prototype plan` step 2 from the build as it is. This is the only moment the
-   `say → (model) → require → assume` chain exists to be measured. Throw the
-   numbers into the case, not the code.
-2. **Regenerate `Asserting` from its specification** (`concept-generate`).
+1. **Run the null's measurements before anything else.** *Outstanding; run on
+   the branch `null-with-attribution`, not on `main`.* Against one product model
+   and one dealer task, take the five observables in the case's `Prototype plan`
+   step 2 from the build as it was. That branch is the only place the
+   `say → (model) → require → assume` chain still exists to be measured. Throw
+   the numbers into the case, not the code.
+2. **Regenerate `Asserting` from its specification** (`concept-generate`). *Done 2026-09-08 — see §9.2 and the last paragraph of §9.3.*
    `agent/concepts/specifying.py` becomes `asserting.py`: class `Asserting`,
    state `open`, `asserted`, `assertedBy`; actions `start`, `assert_`,
    `withdraw`, `discard`; `prefer` and `preferred` removed. Python reserves
@@ -171,7 +228,7 @@ do not patch `agent/` by hand.
    `assert_value` or similar, `prefer` goes, and the docstrings stop saying
    *requirement*. The canvas strings in `src/components/configurator/` change
    from *You asked for* to *Asserted*. 
-3. **Record the buyer's words.** Add a concept `Conversing` per the case's
+3. **Record the buyer's words.** *Done 2026-09-08.* Add a concept `Conversing` per the case's
    catalogue — one action `say [party, text] => [utterance]`, state a sequence
    with `by` and `text` — and make the submitted chat message a
    `Copiloting/gesture [act: "say"]` that a rule carries into `Conversing/say`,

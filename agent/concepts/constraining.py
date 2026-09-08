@@ -97,7 +97,7 @@ class Constraining:
         and `possible` and `settled` would go stale besides, since neither is
         recomputed except by an action naming a specification.
 
-        Nothing reaches Specifying.  A requirement for a delisted option stays
+        Nothing reaches Asserting.  An assertion of a delisted option stays
         on record and unmet, exactly as it does when a rule refuses it:
         delisting an option does not unask for it.
         """

@@ -37,8 +37,8 @@ function Section({
 /**
  * The canvas.
  *
- * The three sections are the design's whole claim made visible: what a person
- * asked for, what follows from it, and what is still open are three different
+ * The three sections are the design's whole claim made visible: what a party
+ * asserted, what follows from it, and what is still open are three different
  * kinds of fact, and a configurator that keeps them in one field cannot show
  * you this. The grouping is a property of the current state — it changes on
  * every action and cuts across the catalogue's own families.
@@ -76,7 +76,7 @@ export function ConfiguratorCanvas() {
       <div className="mx-auto max-w-3xl px-6 py-6">
         <h1 className="text-[15px] font-semibold">{view.product}</h1>
         <p className="mb-4 text-[12px] text-[var(--muted-foreground)]">
-          {view.counts.asked + view.counts.unmet} asked for ·{" "}
+          {view.counts.asked + view.counts.unmet} asserted ·{" "}
           {view.counts.follows} follow · {view.counts.open} open
         </p>
 
@@ -87,8 +87,8 @@ export function ConfiguratorCanvas() {
         </div>
 
         <Section
-          title="You asked for"
-          hint="stated, and revisable"
+          title="Asserted"
+          hint="put there by a party, and revisable"
           count={asked.length}
         >
           <div className="grid gap-2 sm:grid-cols-2">

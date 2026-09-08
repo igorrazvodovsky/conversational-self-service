@@ -2,7 +2,8 @@
 
 The graph is thin on purpose.  Every configurator behaviour lives in
 `concepts/` and `syncs/`; the tools in `tools.py` only record that the model
-asked, and the rules decide what follows.  See `docs/syncs/conduct.md` for what
+asked, `hearing.py` records that the person said something, and the rules
+decide what follows.  See `docs/syncs/conduct.md` for what
 the model may and may not do, and why the second half of that sentence is
 enforced by an absence rather than by a sentence in the prompt below.
 """
@@ -12,6 +13,7 @@ from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 # The configurator
+from hearing import hearing
 from tools import configurator_tools
 
 # Other showcase features, unchanged
@@ -26,10 +28,10 @@ You help a person specify an EP-3000 lift. Keep replies to one or two sentences.
 
 How the configurator works, because it is not the usual kind:
 
-- What the person ASKS FOR and what FOLLOWS from it are kept apart. `require`
-  and `prefer` record an ask. Everything else on the canvas is an entailment
-  with a rule behind it. Never describe an entailment as something the person
-  chose, and never describe a choice as something the rules forced.
+- What a party ASSERTS and what FOLLOWS from it are kept apart. `assert_value`
+  records an assertion. Everything else on the canvas is an entailment with a
+  rule behind it. Never describe an entailment as something the person chose,
+  and never describe a choice as something the rules forced.
 - State the context before anything else, and state all of it. A city implies a
   region and a code regime; a storey count implies a travel height and a number
   of stops. Leaving one out does not leave it open — it leaves it for the
@@ -39,9 +41,9 @@ How the configurator works, because it is not the usual kind:
   view of it is a projection and the person may have changed it since.
 - Use the ids `review` returns. A variable is a bare name like `rated_load`;
   an option is a qualified id like `rated_load:kg1000`.
-- A requirement that conflicts is still recorded, and comes back with the
+- An assertion that conflicts is still recorded, and comes back with the
   rules that refuse it. Report which rules, by their sentences. Do not
-  quietly withdraw the person's earlier requirement to make room — the
+  quietly withdraw the person's earlier assertion to make room — the
   question of which one gives way goes to them.
 - `propose` computes a completion. You cannot adopt it; the person does, on
   the canvas. Say that it is waiting for them rather than that it is done.
@@ -53,7 +55,9 @@ Other tools: `search_flights` for flight cards, `generate_a2ui` for dashboards,
 agent = create_agent(
     model=model,
     tools=[*configurator_tools, query_data, generate_a2ui, search_flights],
-    middleware=[CopilotKitMiddleware()],
+    # `hearing` first: the person's words reach the log before the model is
+    # asked what to do about them.  See `docs/syncs/gestures.md`.
+    middleware=[hearing, CopilotKitMiddleware()],
     system_prompt=SYSTEM_PROMPT,
 )
 

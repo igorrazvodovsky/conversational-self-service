@@ -30,7 +30,7 @@ function Rules({
   );
 }
 
-/** A variable the person asked something of, or asked something impossible of. */
+/** A variable a party asserted a value for, or asserted an impossible one for. */
 export function AskedCard({ variable }: { variable: Variable }) {
   const { gesture, busy, label } = useConfigurator();
   const unmet = variable.standing === "unmet";
@@ -62,7 +62,6 @@ export function AskedCard({ variable }: { variable: Variable }) {
         </button>
       </div>
       <div className="mt-1 text-[11px] text-[var(--muted-foreground)]">
-        {variable.strength === "preferred" ? "preferred — " : ""}
         {variable.how}
       </div>
       {unmet ? (
@@ -125,11 +124,11 @@ export function OpenRow({ variable }: { variable: Variable }) {
               title={
                 option.possible
                   ? (option.note ?? undefined)
-                  : "Ruled out by what you have asked for so far"
+                  : "Ruled out by what has been asserted so far"
               }
               onClick={() =>
                 void gesture({
-                  act: "require",
+                  act: "assert",
                   variable: variable.name,
                   option: option.id,
                 })

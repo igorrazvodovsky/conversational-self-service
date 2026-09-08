@@ -61,7 +61,7 @@ worth stating together:
 
 | | `Request` | `Option` | Where |
 |---|---|---|---|
-| a conflict between requirements | `[ spec ; about: "conflict" ]` | a requirement that might be given up — `[ variable ; option ]` | [Propagation](../syncs/propagation.md#when-requirements-cannot-hold-together) |
+| a conflict between assertions | `[ spec ; about: "conflict" ]` | an assertion that might be given up — `[ variable ; option ]` | [Propagation](../syncs/propagation.md#when-assertions-cannot-hold-together) |
 | a completion the model has proposed | `[ spec ; about: "completion" ]` | the whole assignment, offered as one | [Conduct](../syncs/conduct.md#proposing-and-not-adopting) |
 | a meeting time | a meeting | a time | [Scheduling](scheduling.md) |
 
@@ -76,7 +76,7 @@ possible to get wrong quietly.
 The completion case is the more consequential. `Constraining/complete` returns
 an assignment and writes nothing; the only path from that assignment into
 [Asserting](asserting.md) is `Deciding/choose`. So the model may compute the
-cheapest buildable lift meeting every requirement, and may not make it yours.
+cheapest buildable lift meeting every assertion, and may not make it yours.
 That is not a policy in a prompt — it is
 [the absence of a rule](../syncs/conduct.md#what-is-not-here-and-why-that-is-the-enforcement).
 
@@ -88,8 +88,8 @@ the request stays on record, and they can come back to it. Withdrawing is
 whoever asked saying the matter no longer needs settling at all.
 
 The case that forced it: a specification is discarded, and the conflict
-question about its requirements is still open. Answering it would concede a
-requirement that no longer exists. Nothing in this concept can notice
+question about its assertions is still open. Answering it would concede an
+assertion that no longer exists. Nothing in this concept can notice
 that — it does not know what a specification is — so a
 [rule](../syncs/propagation.md#a-discarded-specification-leaves-the-solver)
 withdraws the question, which is where a fact about one concept following from
@@ -119,7 +119,7 @@ section below.
 Both configurator uses concern the same specification, and for a while both
 passed the specification itself as the `Request`. That was wrong, and wrong in
 a way that only shows up in a sequence: a person sitting on *which of these
-requirements do you give up* who then asks the assistant to make it cheaper
+assertions do you give up* who then asks the assistant to make it cheaper
 found that question replaced by *adopt this completion*, with nothing anywhere
 recording that the first had been asked. Two different matters were sharing one
 request, so answering either meant losing the other.
@@ -155,7 +155,7 @@ output argument.
 
 `scheduleTime` fuses two concepts. The ask-and-answer protocol is
 domain-independent — the same shape governs approving a deploy, confirming a
-destructive operation, resolving a conflict between two requirements, or
+destructive operation, resolving a conflict between two assertions, or
 picking a shipping address. What is being decided is a different concern
 entirely.
 
@@ -187,7 +187,7 @@ mechanism; it had to write two rules.
 
 ## See also
 
-- [Asserting](asserting.md) — what a conceded requirement is withdrawn from
+- [Asserting](asserting.md) — what a conceded assertion is withdrawn from
 - [Constraining](constraining.md) — what raises the conflict, and what proposes the completion
 - [Scheduling](scheduling.md) — the domain concept this was once fused with
 - [The synchronizations](../syncs/README.md) — all three compositions

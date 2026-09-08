@@ -133,8 +133,8 @@ recomputed except by an action naming a specification.
 
 So `withhold` gives up the assumptions that named the option and recomputes,
 and reports which specifications it did that to. Note what it does *not* do:
-nothing reaches [Asserting](asserting.md), so the requirement stays on record
-and unmet, exactly as it does when a requirement is refused by a rule. Delisting
+nothing reaches [Asserting](asserting.md), so the assertion stays on record
+and unmet, exactly as it does when an assertion is refused by a rule. Delisting
 an option does not unask for it.
 
 That `conceding` is an output nothing currently carries anywhere is the honest
@@ -173,9 +173,9 @@ The card would then say *on record, and not buildable* with no account of why,
 permanently. A second conflict makes it worse: `ask` replaces the pending
 question, so the first refusal would never have had a reason at all.
 
-That is the whole claim of this design failing quietly. A requirement that
+That is the whole claim of this design failing quietly. An assertion that
 cannot be met is not a nullity — it is the most important thing on the screen —
-and a requirement whose refusal is unexplained is barely better than one that
+and an assertion whose refusal is unexplained is barely better than one that
 was silently dropped.
 
 It is cleared when it stops being true: by a successful `assume` on the same
@@ -251,7 +251,7 @@ family is a fixed arrangement of the catalogue. See
 
 ## See also
 
-- [Asserting](asserting.md) — the requirements that arrive here as assumptions
+- [Asserting](asserting.md) — the assertions that arrive here as assumptions
 - [Cataloguing](cataloguing.md) — the other holder of the option ranges
 - [Deciding](deciding.md) — where a conflict goes once it is reported
 - [The synchronizations](../syncs/README.md) — every path in and out

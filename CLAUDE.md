@@ -22,8 +22,8 @@ Meaningful_ (MSM) and _What You See Is What It Does_ (WYSIWID) — plus Jackson'
 _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 
 - [`docs/method/`](docs/method/README.md) — the vocabulary: individuals, values, actions, facts, concepts, synchronizations, and how they map to code
-- [`docs/concepts/`](docs/concepts/README.md) — the eleven concepts, specified
-- [`docs/syncs/`](docs/syncs/README.md) — the twenty-seven rules, the only way two concepts interact
+- [`docs/concepts/`](docs/concepts/README.md) — the twelve concepts, specified
+- [`docs/syncs/`](docs/syncs/README.md) — the twenty-six rules, the only way two concepts interact
 - [`docs/conceptual-model.md`](docs/conceptual-model.md) — the alignment analysis, including §8 on what is wrong with this design
 
 **The notes are the source, and the code is generated from them.** WYSIWID
@@ -44,15 +44,16 @@ used here — see [`docs/method/synchronization.md`](docs/method/synchronization
 Ask for a hospital lift and the usage profile becomes near-continuous, the
 rescue system becomes a full battery backup, and five of the seven rated loads
 disappear. None of that was chosen. The canvas therefore has three sections —
-**you asked for**, **follows from that** (with the rule that forces it), and
+**asserted**, **follows from that** (with the rule that forces it), and
 **still open** — and that grouping is a property of the current state, not of
 the catalogue.
 
 Everything else in the design follows from taking that seriously:
 
 - [`Asserting`](docs/concepts/asserting.md) records assertions a party made — the case's name for it; it was `Specifying` until 2026-09-08. It validates nothing and solves nothing.
+- [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. Nothing reads it yet; the point is that the log's first entry for a turn is the person's words rather than the model's tool call.
 - [`Constraining`](docs/concepts/constraining.md) holds the rules and answers what they still allow. z3 lives here.
-- A requirement that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
+- An assertion that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
 
 ## Architecture
 
@@ -84,7 +85,8 @@ layer beside the agent.
 │   ├── wiring.py          # discovers concepts, wires rules, reads the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
 │   ├── webapp.py          # POST /gesture, GET /view — mounted by langgraph.json
-│   ├── tools.py           # the model's five tools
+│   ├── tools.py           # the model's four tools
+│   ├── hearing.py         # the chat message, as a person's `say` gesture
 │   ├── instance.py        # the one engine both actors share
 │   └── main.py            # the graph
 └── docs/                  # the method, the concepts, the rules, the analysis
@@ -113,7 +115,7 @@ in a concept or a rule.
 
 |  | person | model |
 |---|---|---|
-| state or withdraw a requirement | yes | yes |
+| assert or withdraw a value | yes | yes |
 | propose a completion | — | yes |
 | **adopt one** | **yes** | **no** |
 | change a price or the catalogue | no | no |

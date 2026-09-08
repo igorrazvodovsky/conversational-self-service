@@ -19,13 +19,14 @@ import json
 from pathlib import Path
 from typing import Any
 
+from concepts.asserting import Asserting
 from concepts.cataloguing import Cataloguing
 from concepts.constraining import Constraining
+from concepts.conversing import Conversing
 from concepts.deciding import Deciding
 from concepts.footprinting import Footprinting
 from concepts.moding import Moding
 from concepts.pricing import Pricing
-from concepts.specifying import Specifying
 from engine import Engine
 from engine.bootstrap import Copiloting
 from syncs import conduct, gestures, propagation, seeding
@@ -56,11 +57,13 @@ def build(path: Path = CATALOGUE) -> Engine:
         Constraining(),
         Pricing(),
         Footprinting(),
-        Specifying(),
+        Asserting(),
+        Conversing(),
         Deciding(),
         Moding(),
     ):
         engine.register(concept)
+    _alias_assert(engine)
     engine.react(*seeding.rules, *propagation.rules, *gestures.rules, *conduct.rules)
 
     catalogue = json.loads(path.read_text())
@@ -70,6 +73,19 @@ def build(path: Path = CATALOGUE) -> Engine:
     engine.catalogue = catalogue
     engine.settled_at = engine.log.last_seq
     return engine
+
+
+def _alias_assert(engine: Engine) -> None:
+    """`Asserting/assert`, under the name the specification gives it.
+
+    Python reserves `assert`, so the generated method is `assert_`.  The engine
+    dispatches with `getattr(concept, action)` and is not edited for a language
+    keyword — MSM §5.2.4 — so the alias is registered here, where the concepts
+    are discovered.  Every rule invokes `assert`, and the log reads
+    `Asserting/assert`.
+    """
+    asserting = engine.concepts["Asserting"]
+    setattr(asserting, "assert", asserting.assert_)
 
 
 def _load(engine: Engine, catalogue: dict[str, Any]) -> None:
@@ -190,4 +206,4 @@ def _open(engine: Engine) -> None:
     engine.root(
         "Moding", "focus", actor="boot", flow=flow, workspace=WORKSPACE, surface="chat"
     )
-    engine.root("Specifying", "start", actor="boot", flow=flow, spec=SPEC)
+    engine.root("Asserting", "start", actor="boot", flow=flow, spec=SPEC)

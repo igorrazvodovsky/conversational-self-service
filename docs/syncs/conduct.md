@@ -6,31 +6,37 @@ What the model may do, stated positively. See [the index](README.md) and
 ## The permissions
 
 ```
-sync TheModelMayStateARequirement
-when  { Copiloting/invoke: [ tool: "require" ;
+sync TheModelMayAssertAValue
+when  { Copiloting/invoke: [ tool: "assert" ;
           spec: ?s ; variable: ?v ; option: ?o ] => [] }
-then  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ] }
+then  { Asserting/assert: [ party: model ;
+          spec: ?s ; variable: ?v ; option: ?o ] }
 
-sync TheModelMayPreferAnOption
-when  { Copiloting/invoke: [ tool: "prefer" ;
-          spec: ?s ; variable: ?v ; option: ?o ] => [] }
-then  { Asserting/prefer: [ spec: ?s ; variable: ?v ; option: ?o ] }
-
-sync TheModelMayWithdrawARequirement
+sync TheModelMayWithdrawAnAssertion
 when  { Copiloting/invoke: [ tool: "withdraw" ;
           spec: ?s ; variable: ?v ] => [] }
 then  { Asserting/withdraw: [ spec: ?s ; variable: ?v ] }
 
 sync TheCanvasIsShownBeforeItChanges
-when  { Copiloting/invoke: [ tool: "require" ] => [] }
+when  { Copiloting/invoke: [ tool: "assert" ] => [] }
 then  { Moding/focus: [ surface: canvas ] }
 ```
+
+The `party` in the first rule is what distinguishes it from
+[`APersonAssertsAValue`](gestures.md) in the state as well as in the trace. Two
+rules, two parties, one action — and `Asserting.assertedBy` records which,
+independently of the provenance edge the log already carries. The edge is finer:
+`APersonAssertsAValue` and `AnAdoptedCompletionBecomesAssertions` are two
+different things a person did, and both write `person`.
+
+There is no `TheModelMayPreferAnOption`. `Asserting` has no `prefer` — see
+[the dead rule](propagation.md#the-rule-that-is-registered-and-reached-by-nothing).
 
 `TheCanvasIsShownBeforeItChanges` is the rule the starter wrote as the sentence
 `Todos: enable app mode first, then manage todos` in a system prompt. It is
 ordinary application logic — a person who cannot see the canvas watches nothing
 happen — and it was enforced by asking a language model nicely. Here it fires
-because a requirement was stated, whatever the model does or does not remember
+because a value was asserted, whatever the model does or does not remember
 about it.
 
 ## Proposing, and not adopting
@@ -48,13 +54,14 @@ when  { Constraining/complete: [ spec: ?s ] => [ assignment: ?a ; cost: ?c ] }
 then  { Deciding/ask: [ request: [ spec: ?s ; about: "completion" ] ;
           reason: "adopt this completion" ; options: { ?a } ] }
 
-sync AnAdoptedCompletionBecomesRequirements
+sync AnAdoptedCompletionBecomesAssertions
 when  { Deciding/choose: [ request: ?r ; option: ?a ] => [ request: ?r ] }
 where { ?r is [ spec: ?s ; about: "completion" ]
         ?a maps ?v to ?o
-        ?v is neither required of ?s nor settled for ?s, read from
+        ?v is neither asserted of ?s nor settled for ?s, read from
           Asserting and Constraining }
-then  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ] }
+then  { Asserting/assert: [ party: person ;
+          spec: ?s ; variable: ?v ; option: ?o ] }
 ```
 
 ```
@@ -66,7 +73,7 @@ then  { Deciding/withdraw: [ request: [ spec: ?s ; about: "completion" ] ] }
 
 A completion is computed against the assumptions holding when `propose` ran. Let
 the specification move underneath it and adopting it restates values chosen for a
-state that has gone — including, in the worst case, the very requirement the
+state that has gone — including, in the worst case, the very assertion the
 person just gave up to resolve a conflict. The proposal is not wrong so much as
 no longer about anything, and a stale proposal is worse than none: it carries the
 authority of *the assistant worked this out* and the content of a state nobody is
@@ -78,25 +85,26 @@ conflict and a completion could be open together — before that, the second
 question destroyed the first, and destroying it was the only thing keeping this
 from happening.
 
-The `about` in the request is what keeps `AnAdoptedCompletionBecomesRequirements` and
-[`TheConcededRequirementIsWithdrawn`](propagation.md#when-requirements-cannot-hold-together)
-[`TheConcededRequirementIsWithdrawn`](propagation.md#when-requirements-cannot-hold-together)
+The `about` in the request is what keeps `AnAdoptedCompletionBecomesAssertions` and
+[`TheConcededAssertionIsWithdrawn`](propagation.md#when-assertions-cannot-hold-together)
 apart. Both match `Deciding/choose`; without it they would have to be told
 apart by the shape of an unconstrained value, and a completion of one variable
 would be indistinguishable from a conflict candidate. See
 [Deciding](../concepts/deciding.md#why-a-request-names-the-question-and-not-its-subject).
 
-Only genuinely open variables are stated. Adopting a completion fills the gaps:
-it does not restate what you already required, and it does not turn what merely
-follows from the rules into something you demanded — which is what keeps *asked
-for* and *follows from* readable after a completion is adopted. A preference is
-deliberately not in that exclusion, because a preference narrows nothing and a
-preferred variable is still open.
+Only genuinely open variables are asserted. Adopting a completion fills the
+gaps: it does not restate what you already asserted, and it does not turn what
+merely follows from the rules into something you demanded — which is what keeps
+*asserted* and *follows from* readable after a completion is adopted.
 
-`AnAdoptedCompletionBecomesRequirements` is the ordinary WYSIWID §6.5 shape:
+The party is the person. Adoption *is* asserting the values in the proposal,
+and the rule that performs it is the one the model has no counterpart for —
+which is the asymmetry below, showing up in `assertedBy` as well as in the
+trace.
+
+`AnAdoptedCompletionBecomesAssertions` is the ordinary WYSIWID §6.5 shape:
 the `where` binds once per pair in the assignment and `then` fires once per
-binding, so thirty-six requirements are stated without a loop appearing
-anywhere.
+binding, so thirty-odd assertions are made without a loop appearing anywhere.
 
 ### The two approximations in that `where` clause
 
@@ -153,7 +161,7 @@ _No rule adopts a completion._ `Constraining/complete` changes nothing — it
 returns an assignment. The only path from an assignment into
 [Asserting](../concepts/asserting.md) runs through `Deciding/choose`, which
 only a person performs. The model can compute the cheapest buildable lift that
-honours every requirement and it cannot make it yours.
+honours every assertion and it cannot make it yours.
 
 _No rule lets the model price anything._ No `when { Copiloting/invoke: … }` has
 `Pricing` or `Footprinting` in its `then`. The model can read a price and
@@ -177,10 +185,17 @@ English.
 
 ## The tool names are ours
 
-`require`, `prefer`, `withdraw`, `propose`. Four, against the starter's
-`manage_todos`, and the difference is the same difference
-[Tasking](../method/action.md) had: a log of the first four says what happened,
-and a log of the fifth says only that something did.
+`assert`, `withdraw`, `propose`. Three, against the starter's `manage_todos`,
+and the difference is the same difference [Tasking](../method/action.md) had:
+a log of the first three says what happened, and a log of the fourth says only
+that something did.
+
+The tool string and the Python function differ, and only in one direction:
+Python reserves `assert`, so `agent/tools.py` defines `assert_value` and passes
+`tool="assert"`. What the rule matches on, and what the model sees named in its
+own tool list, are two different things, and neither is the concept's action
+name — [`Asserting/assert`](../concepts/asserting.md) is reached only through
+the rule.
 
 That the tools are shaped by CopilotKit's conventions does not make their
 names, arguments or granularity the vendor's responsibility —
@@ -190,4 +205,4 @@ names, arguments or granularity the vendor's responsibility —
 
 - [Code of conduct](../method/conduct.md) — the structure this is an instance of
 - [Copiloting](../concepts/copiloting.md) — the bootstrap, and the second root actor
-- [Propagation](propagation.md) — what happens after a requirement is stated
+- [Propagation](propagation.md) — what happens after a value is asserted

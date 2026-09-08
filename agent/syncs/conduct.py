@@ -15,24 +15,29 @@ likely to infer from a paragraph of English.
 
 from __future__ import annotations
 
+from typing import Any
+
 from engine import Completion, Invocation, States, Sync
 
 WORKSPACE = "workspace"
+
+# The party the model asserts as.  Stated here rather than read off the
+# completion's actor, for the reason given in `gestures.py`.
+MODEL = "model"
+PERSON = "person"
 
 # The one basis the catalogue seeds.  A second would be a second set of terms
 # to quote on, and the state can now hold one.
 BASIS = "catalogue"
 
 
-def _tool(name: str, concept: str, action: str, *arguments: str):
+def _tool(name: str, concept: str, action: str, *arguments: str, **fixed: Any):
     def then(c: Completion, _: States) -> list[Invocation]:
         if c.output.get("tool") != name:
             return []
-        return [
-            Invocation(
-                concept, action, {a: c.output[a] for a in arguments if a in c.output}
-            )
-        ]
+        input: dict[str, Any] = {a: c.output[a] for a in arguments if a in c.output}
+        input.update(fixed)
+        return [Invocation(concept, action, input)]
 
     return then
 
@@ -152,31 +157,28 @@ def _a_completion_is_put_to_the_person(c: Completion, _: States) -> list[Invocat
     ]
 
 
-def _an_adopted_completion_becomes_requirements(
+def _an_adopted_completion_becomes_assertions(
     c: Completion, states: States
 ) -> list[Invocation]:
     """One binding per pair, one invocation per binding — WYSIWID §6.5.
 
-    Requirements are stated without a loop appearing in a concept.
+    Assertions are made without a loop appearing in a concept.
 
-    Only the genuinely open variables are stated.  Adopting a completion fills
-    the gaps: it does not restate what you already required, and it does not
-    turn what merely follows from the rules into something you demanded.  That
-    second exclusion is what keeps the distinction between *asked for* and
+    Only the genuinely open variables are asserted.  Adopting a completion
+    fills the gaps: it does not restate what you already asserted, and it does
+    not turn what merely follows from the rules into something you demanded.
+    That second exclusion is what keeps the distinction between *asserted* and
     *follows from* readable after a completion is adopted, which is most of
     what the interface is for.
 
-    The rule is discriminated from `TheConcededRequirementIsWithdrawn` by the
+    The rule is discriminated from `TheConcededAssertionIsWithdrawn` by the
     request's `about`, not by the shape of an untyped option.  Both match
     `Deciding/choose`; a completion of a single variable and a conflict
     candidate are otherwise indistinguishable.
 
-    A *preference* is not in that exclusion, and the asymmetry is the point.
-    A preference does not narrow anything, so a preferred variable is still
-    open and still has to be settled by the completion — a completion is
-    exactly the thing that turns "I would like panoramic glass" into "and you
-    can have it".  Leaving preferences out would have the price quoted with the
-    proposal differ from the price on the canvas a moment later.
+    The party is the person, not the model.  A person adopting a proposal is
+    asserting the values in it — that is what adoption is — and the rule that
+    lets them is the one the model has no counterpart for.
     """
     if c.failed:
         return []
@@ -187,14 +189,19 @@ def _an_adopted_completion_becomes_requirements(
     if not isinstance(assignment, dict):
         return []
     spec = request["spec"]
-    specifying = states["Specifying"].state()
+    asserting = states["Asserting"].state()
     settled = states["Constraining"].state()["settled"].get(spec, {})
-    already = set(specifying["required"].get(spec, {})) | set(settled)
+    already = set(asserting["asserted"].get(spec, {})) | set(settled)
     return [
         Invocation(
-            "Specifying",
-            "require",
-            {"spec": spec, "variable": variable, "option": chosen},
+            "Asserting",
+            "assert",
+            {
+                "spec": spec,
+                "variable": variable,
+                "option": chosen,
+                "party": PERSON,
+            },
         )
         for variable, chosen in assignment.items()
         if variable not in already
@@ -208,7 +215,7 @@ def _a_changed_specification_withdraws_its_proposal(
 
     `complete` is computed against the assumptions holding when `propose` ran.
     Let the specification move underneath it and adopting it restates values
-    chosen for a state that has gone — in the worst case the very requirement
+    chosen for a state that has gone — in the worst case the very assertion
     the person just gave up to resolve a conflict.
 
     Reachable only since a conflict and a completion could be open at once.
@@ -229,7 +236,7 @@ def _a_changed_specification_withdraws_its_proposal(
 def _the_canvas_is_shown_before_it_changes(
     c: Completion, _: States
 ) -> list[Invocation]:
-    if c.output.get("tool") not in {"require", "prefer", "withdraw", "propose"}:
+    if c.output.get("tool") not in {"assert", "withdraw", "propose"}:
         return []
     return [
         Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
@@ -238,19 +245,22 @@ def _the_canvas_is_shown_before_it_changes(
 
 rules = [
     Sync(
-        "TheModelMayStateARequirement",
+        "TheModelMayAssertAValue",
         ("Copiloting", "invoke"),
-        _tool("require", "Specifying", "require", "spec", "variable", "option"),
+        _tool(
+            "assert",
+            "Asserting",
+            "assert",
+            "spec",
+            "variable",
+            "option",
+            party=MODEL,
+        ),
     ),
     Sync(
-        "TheModelMayPreferAnOption",
+        "TheModelMayWithdrawAnAssertion",
         ("Copiloting", "invoke"),
-        _tool("prefer", "Specifying", "prefer", "spec", "variable", "option"),
-    ),
-    Sync(
-        "TheModelMayWithdrawARequirement",
-        ("Copiloting", "invoke"),
-        _tool("withdraw", "Specifying", "withdraw", "spec", "variable"),
+        _tool("withdraw", "Asserting", "withdraw", "spec", "variable"),
     ),
     Sync(
         "TheModelMayProposeACompletion",
@@ -263,18 +273,18 @@ rules = [
         _a_completion_is_put_to_the_person,
     ),
     Sync(
-        "AnAdoptedCompletionBecomesRequirements",
+        "AnAdoptedCompletionBecomesAssertions",
         ("Deciding", "choose"),
-        _an_adopted_completion_becomes_requirements,
+        _an_adopted_completion_becomes_assertions,
     ),
     Sync(
         "AChangedSpecificationWithdrawsItsProposal",
-        ("Specifying", "require"),
+        ("Asserting", "assert"),
         _a_changed_specification_withdraws_its_proposal,
     ),
     Sync(
         "AChangedSpecificationWithdrawsItsProposal",
-        ("Specifying", "withdraw"),
+        ("Asserting", "withdraw"),
         _a_changed_specification_withdraws_its_proposal,
     ),
     Sync(

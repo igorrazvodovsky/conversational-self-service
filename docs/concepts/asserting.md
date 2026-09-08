@@ -82,7 +82,7 @@ Keeping them apart makes both actions available and makes the log answer the
 question. `Asserting` holds only assertions a party made. What follows from
 them lives in [Constraining](constraining.md), which never writes here. The
 one direction of travel between them is a
-[synchronization](../syncs/README.md#requirements-reach-the-solver).
+[synchronization](../syncs/README.md#assertions-reach-the-solver).
 
 The consequence worth stating: an assertion stays on record even when it
 cannot be met. Asking for a hospital lift and a 630 kg car records both, and
@@ -140,18 +140,21 @@ _A name for the specification._ Not modelled. There is one specification per
 session and it is not saved, compared or shared. See
 [the deliberate exclusions](README.md#not-concepts).
 
-## In the code
+## One name the language would not let us have
 
-The code has not been regenerated against this specification. `agent/concepts/specifying.py`
-still implements the previous one: class `Specifying`, actions `require`,
-`prefer`, `withdraw`, `start`, `discard`, state `required` and `preferred`, no
-`assertedBy`. The rules in `agent/syncs/` and the read side in `agent/views.py`
-name it accordingly. The list of what to regenerate, in order, is
-[§9 of the alignment analysis](../conceptual-model.md#9-against-the-cases-catalogue).
-One implementation note for when it is: Python reserves `assert`, so the
-generated method is `assert_` and `wiring.py` registers the alias with
-`setattr(instance, "assert", instance.assert_)` — the engine dispatches by
-name and is not edited.
+Python reserves `assert`, so `agent/concepts/asserting.py` defines `assert_`
+and `agent/wiring.py` registers the alias after discovery:
+
+```python
+setattr(asserting, "assert", asserting.assert_)
+```
+
+The engine dispatches with `getattr(concept, action)` and is not edited for a
+language keyword — MSM §5.2.4. Every rule invokes `assert`, so the log reads
+`Asserting/assert`, which is what the operational principle above says. The
+model's tool has the same problem and solves it the same way: the Python
+function is `assert_value`, the tool string the rule matches is `assert`, and
+neither is the action's name.
 
 ## See also
 

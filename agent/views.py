@@ -21,28 +21,30 @@ from typing import Any
 from engine import Engine
 from wiring import BASIS
 
-# Which rule put a requirement on record, in words.
+# Which rule put an assertion on record, in words.  Three sentences, three
+# rules, and no field anywhere recording which: the difference between them is
+# a provenance edge.  `Asserting.assertedBy` answers a different question —
+# *whose value is this* — and `APersonAssertsAValue` and
+# `AnAdoptedCompletionBecomesAssertions` both answer it with the same party.
 HOW = {
-    "APersonStatesARequirement": "you asked for this",
-    "APersonPrefersAnOption": "you would prefer this",
-    "TheModelMayStateARequirement": "the assistant asked for this",
-    "TheModelMayPreferAnOption": "the assistant would prefer this",
-    "AnAdoptedCompletionBecomesRequirements": "adopted from a proposal",
+    "APersonAssertsAValue": "you asked for this",
+    "TheModelMayAssertAValue": "the assistant asked for this",
+    "AnAdoptedCompletionBecomesAssertions": "adopted from a proposal",
 }
 
 
 def _provenance(engine: Engine, spec: str) -> dict[str, str]:
-    """The rule behind the most recent requirement recorded for each variable.
+    """The rule behind the most recent assertion recorded for each variable.
 
     Scanned from the boot mark rather than from the start of the log: the
     catalogue's arrival is a thousand-odd records of `Cataloguing` and
-    `Pricing`, and no requirement can precede it.
+    `Pricing`, and no assertion can precede it.
     """
     how: dict[str, str] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
-        if record.kind != "completion" or record.concept != "Specifying":
+        if record.kind != "completion" or record.concept != "Asserting":
             continue
-        if record.action not in {"require", "prefer", "withdraw"}:
+        if record.action not in {"assert", "withdraw"}:
             continue
         output = record.output or {}
         if output.get("spec") != spec or "variable" not in output:
@@ -62,7 +64,7 @@ def canvas(engine: Engine, spec: str, grid: str = "today") -> dict[str, Any]:
 def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     catalogue = engine.state("Cataloguing")
     constraining = engine.state("Constraining")
-    specifying = engine.state("Specifying")
+    asserting = engine.state("Asserting")
     moding = engine.state("Moding")
     pricing = engine.concepts["Pricing"]
     footprinting = engine.concepts["Footprinting"]
@@ -70,8 +72,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     monthly = pricing.state()["monthly"]
     embodied = footprinting.state()["embodied"]
 
-    required = specifying["required"].get(spec, {})
-    preferred = specifying["preferred"].get(spec, {})
+    asserted = asserting["asserted"].get(spec, {})
     assumed = constraining["assumed"].get(spec, {})
     possible = constraining["possible"].get(spec, {})
     settled = constraining["settled"].get(spec, {})
@@ -82,15 +83,12 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     variables = []
     for name, offered in catalogue["offers"].items():
         allowed = set(possible.get(name, offered))
-        asked = required.get(name) or preferred.get(name)
-        strength = "required" if name in required else (
-            "preferred" if name in preferred else None
-        )
-        unmet = name in required and assumed.get(name) != required[name]
+        asked = asserted.get(name)
+        unmet = name in asserted and assumed.get(name) != asserted[name]
         value = settled.get(name)
         if unmet:
             standing = "unmet"
-        elif strength:
+        elif asked is not None:
             standing = "asked"
         elif value is not None:
             standing = "follows"
@@ -103,7 +101,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "family": catalogue["family"].get(name, "other"),
                 "standing": standing,
                 "asked": asked,
-                "strength": strength,
                 "how": HOW.get(how.get(name, ""), how.get(name)) if asked else None,
                 "value": value,
                 "owing": [

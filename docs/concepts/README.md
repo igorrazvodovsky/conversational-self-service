@@ -20,6 +20,7 @@ of what we rely on it for, and nothing more — the policy is
 | Concept | Purpose |
 |---|---|
 | [Asserting](asserting.md) | to hold what a party asserted of a specification apart from what its rules entailed |
+| [Conversing](conversing.md) | to carry what a party says into the system, in the order it was said |
 | [Constraining](constraining.md) | to limit a specification to combinations that can actually be built |
 | [Cataloguing](cataloguing.md) | to say what may be ordered, in terms a person can recognise |
 | [Pricing](pricing.md) | to say what each choice adds to the cost of a specification |
@@ -56,6 +57,11 @@ the question a person most often has.
 [Cataloguing](cataloguing.md) is the shortest route to why concepts are not
 entities: it takes one JSON object apart into four concepts' facts and says
 what each of the pieces is for.
+
+[Conversing](conversing.md) is the one concept here taken from the case's
+catalogue rather than from a reading of the starter, and the only one nothing
+reads from. Its note says why a concept whose completions appear in no `when`
+is worth having.
 
 ## What was here before
 

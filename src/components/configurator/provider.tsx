@@ -45,7 +45,6 @@ export interface Variable {
   family: string;
   standing: Standing;
   asked: string | null;
-  strength: "required" | "preferred" | null;
   how: string | null;
   value: string | null;
   owing: { rule: string; because: string }[];

@@ -10,7 +10,7 @@ nothing writes through a read.
 
 Note what is absent: there is no endpoint per concept action.  A person's click
 is a stimulus, and the rules in `syncs/gestures.py` decide what follows from it.
-Adding a route that called `Specifying/require` directly would make the browser
+Adding a route that called `Asserting/assert` directly would make the browser
 a second initiator and break WYSIWID §7.2's fourth design rule.
 """
 

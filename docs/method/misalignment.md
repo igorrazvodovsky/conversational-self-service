@@ -92,9 +92,9 @@ into a specification is `Deciding/choose`. See
 [Conduct](../syncs/conduct.md#what-is-not-here-and-why-that-is-the-enforcement).
 
 _The asymmetry test._ "Is there an inverse action, and does it cost what the
-original cost?" `require` costs one click; `withdraw` costs one click, from the
-card the requirement is displayed on. Adopting a completion states thirty-odd
-requirements at once and there is no single action that unstates them, which is
+original cost?" `assert` costs one click; `withdraw` costs one click, from the
+card the assertion is displayed on. Adopting a completion makes thirty-odd
+assertions at once and there is no single action that unmakes them, which is
 a genuine asymmetry and the one place the test currently fails.
 
 _Substitution risk, live._ The estimates are the exposure. `Pricing` reckons

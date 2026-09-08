@@ -91,11 +91,11 @@ _`AConflictIsPutToThePerson`_ matches a *failing* completion —
 `assume => [ error ; culprits ; conceding ]` — and needs no construct to do it,
 because `error` is an ordinary argument name (WYSIWID §5.3). It also aggregates
 in its `where` rather than firing once per binding, since five conflicting
-requirements are one question with five answers.
+assertions are one question with five answers.
 
-_`AnAdoptedCompletionBecomesRequirements`_ is the ordinary §6.5 shape in the
+_`AnAdoptedCompletionBecomesAssertions`_ is the ordinary §6.5 shape in the
 other direction: one binding per pair in the assignment, `then` invoked once per
-binding, thirty-odd requirements stated with no loop anywhere in a concept.
+binding, thirty-odd assertions made with no loop anywhere in a concept.
 
 _`TheModelMayProposeACompletion`_ reads `Pricing` and `Footprinting` state in
 its `where` to build an objective, and hands it to `Constraining`. Neither

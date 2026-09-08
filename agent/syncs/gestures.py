@@ -8,27 +8,26 @@ is the whole of what the model may not do.
 
 from __future__ import annotations
 
+from typing import Any
+
 from engine import Completion, Invocation, States, Sync
 
 WORKSPACE = "workspace"
 
+# The party a gesture is made by.  It is stated in the `then` clause rather
+# than read off the completion's actor, because `Asserting/assert` takes a
+# party as an argument and a rule that says who is asserting is the readable
+# form of that — the case's `ApplyMapping` names `interpreter` the same way.
+PERSON = "person"
 
-def _act(name: str):
-    def matches(c: Completion) -> bool:
-        return c.output.get("act") == name
 
-    return matches
-
-
-def _carry(act: str, concept: str, action: str, *arguments: str):
+def _carry(act: str, concept: str, action: str, *arguments: str, **fixed: Any):
     def then(c: Completion, _: States) -> list[Invocation]:
         if c.output.get("act") != act:
             return []
-        return [
-            Invocation(
-                concept, action, {a: c.output[a] for a in arguments if a in c.output}
-            )
-        ]
+        input: dict[str, Any] = {a: c.output[a] for a in arguments if a in c.output}
+        input.update(fixed)
+        return [Invocation(concept, action, input)]
 
     return then
 
@@ -47,27 +46,29 @@ rules = [
     Sync(
         "APersonStartsASpecification",
         ("Copiloting", "gesture"),
-        _carry("start", "Specifying", "start", "spec"),
+        _carry("start", "Asserting", "start", "spec"),
     ),
     Sync(
-        "APersonStatesARequirement",
+        "APersonSays",
         ("Copiloting", "gesture"),
-        _carry("require", "Specifying", "require", "spec", "variable", "option"),
+        _carry("say", "Conversing", "say", "text", party=PERSON),
     ),
     Sync(
-        "APersonPrefersAnOption",
+        "APersonAssertsAValue",
         ("Copiloting", "gesture"),
-        _carry("prefer", "Specifying", "prefer", "spec", "variable", "option"),
+        _carry(
+            "assert", "Asserting", "assert", "spec", "variable", "option", party=PERSON
+        ),
     ),
     Sync(
-        "APersonWithdrawsARequirement",
+        "APersonWithdrawsAnAssertion",
         ("Copiloting", "gesture"),
-        _carry("withdraw", "Specifying", "withdraw", "spec", "variable"),
+        _carry("withdraw", "Asserting", "withdraw", "spec", "variable"),
     ),
     Sync(
         "APersonDiscardsTheSpecification",
         ("Copiloting", "gesture"),
-        _carry("discard", "Specifying", "discard", "spec"),
+        _carry("discard", "Asserting", "discard", "spec"),
     ),
     Sync(
         "APersonAnswersAQuestion",
