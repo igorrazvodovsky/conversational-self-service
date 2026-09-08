@@ -113,9 +113,21 @@ that gap measurable.
 
 _A channel._ Typed prose, a structured form and a click on a rendered component
 are all a person's `say` in the case's reading, and changing the channel would
-change this concept and nothing else. Here only the chat box reaches it; a
-click on the canvas is an `assert` gesture and not a `say`, which is the same
-divergence stated from the other side.
+change this concept and nothing else. Here only the chat box reaches it.
+
+That last point is a divergence and not a detail. The case's
+`Synchronisations` gives slice 0 a rule that this build does not have — a
+person asserting from a rendered component does it *through* `Conversing/say`,
+with structured text naming an attribute and a value, and `Asserting/assert`
+follows from that. Here a click is a `Copiloting/gesture [act: "assert"]`
+carried straight to `Asserting/assert` by
+[`APersonAssertsAValue`](../syncs/gestures.md), and `Conversing` never sees it.
+So the property this concept was built for — the log's first entry for a turn
+is what the person said — holds for a typed turn and not for a click, which is
+how most values here actually get set. It is
+[written up as a finding](../conceptual-model.md#9-against-the-cases-catalogue)
+in §9.3 rather than repaired, because repairing it is the chain §9.4 item 4
+builds.
 
 ## See also
 

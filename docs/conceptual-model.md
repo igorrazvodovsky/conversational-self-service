@@ -121,26 +121,36 @@ or in a tool description), *absent*. The `concept-coverage` skill re-runs this.
 | in prompt | `Reading` (the model reads the message and calls `assert_value`), `Mapping` (*a city implies a region*), `Situating` (context as variables, stated first), `Stepping` (*state the context before anything else*) |
 | absent | `Specifying`, `Binding`, `Diagnosing` beyond the *model rule* kind (`refused`, `culprits`), `Staling`, `Revising`, `Agreeing`, `Handing over`, `Deriving`, `Narrowing`, `Recalling`, `Quoting`, `Complying` |
 
-Two verdicts moved on 2026-09-08, both by §9.4's items 2 and 3.
+Both `Asserting` and `Conversing` changed row on 2026-09-08, by §9.4's items 2
+and 3, but only one of them changed verdict.
 
-`Asserting` was already *built*; what changed is that it is built under its own
-name. `agent/concepts/asserting.py` holds `open`, `asserted` and `assertedBy`
-with `start`, `assert`, `withdraw` and `discard`; `APersonAssertsAValue` and
+`Asserting` was already *built*; what moved is its evidence, since it is now
+built under its own name. `agent/concepts/asserting.py` holds `open`,
+`asserted` and `assertedBy` with `start`, `assert`, `withdraw` and `discard`;
+`APersonAssertsAValue` and
 `TheModelMayAssertAValue` in `agent/syncs/gestures.py` and
 `agent/syncs/conduct.py` invoke the second, and `AssertionsReachTheSolver` in
 `agent/syncs/propagation.py` carries it to `Constraining/assume`. The caveat
 that goes with the verdict rather than against it: an assertion still answers
 nothing, because no clause exists to answer.
 
-`Conversing` moved from *absent* to *built*. `agent/concepts/conversing.py`
-holds `utterances`, `by` and `text` with one action `say`; `APersonSays` in
-`agent/syncs/gestures.py` invokes it; and `agent/hearing.py` performs the
-stimulus before the graph's model node, so the log's first completion for a
-turn is `Conversing/say` by the person and the model's `Copiloting/invoke`
-comes after it. Two caveats, neither of which is an absence of the concept:
-it is a single instance where the catalogue has `Conversing[?s, ?p]`, and no
-rule invokes `say` with the machine as the party, so the assistant's half of
-the conversation is still CopilotKit's thread and not the record.
+`Conversing` is the verdict that moved, from *absent* to *built*.
+`agent/concepts/conversing.py` holds `utterances`, `by` and `text` with one
+action `say`; `APersonSays` in `agent/syncs/gestures.py` invokes it; and
+`agent/hearing.py` performs the stimulus before the graph's model node, so the
+log's first completion for a turn is `Conversing/say` by the person and the
+model's `Copiloting/invoke` comes after it. Verified through the whole path —
+CopilotKit runtime, AG-UI, the graph — and not only by calling the hook.
+
+Three caveats, and the third is the one that matters. It is a single instance
+where the catalogue has `Conversing[?s, ?p]`. No rule invokes `say` with the
+machine as the party, so the assistant's half of the conversation is still
+CopilotKit's thread and not the record. And *only a chat message is a `say`*:
+a click on the canvas is a `Copiloting/gesture [act: "assert"]` reaching
+`Asserting/assert` directly, so the property this concept was built for — the
+log's first entry for a turn is what the person said — holds for typed turns
+and not for clicks, which are how most values actually get set. That last one
+is a divergence from a named rule and is written up as such below.
 
 The structural audit in §3 passes and this one does not, and that is the
 reason both exist. Four of the case's concepts are sentences in a prompt, which
@@ -179,12 +189,14 @@ by a component. The canvas's three sentences come off the provenance edge, and
 the edge is *finer* than the relation: `APersonAssertsAValue` and
 `AnAdoptedCompletionBecomesAssertions` are two different things a person did
 and both write `person`, so in this build `assertedBy` carries no information
-the log does not already hold, and holds it more coarsely. The specification
-argues for the relation on the ground that a party is not a rule, which is
-true and is not yet load-bearing; it becomes load-bearing at the first moment
-there are three parties rather than two, which is the case's `interpreter`
-beside a buyer and a seller. Recorded as state that earns its place
-prospectively rather than now. Second, removing `prefer` left a rule that is
+the log does not already hold, and holds it more coarsely. That is a question
+for the case's `Asserting` note rather than a verdict on it — the note justifies
+the relation as *`assertedBy (assertion, interpreter)` for the configurator's
+audit*, and with a trace that carries the rule name, party-at-grain is derivable
+from the trace in the working composition too, where `ApplyMapping` writes
+`party: interpreter` and the rule name already says so. Recorded as state that
+earns its place prospectively rather than now, and the thing that would settle
+it is a third party. Second, removing `prefer` left a rule that is
 registered and reached by nothing, and there was no third option between
 deleting `Constraining/incline` and keeping an action the specification no
 longer has — so the dead rule is kept with its reason written into
@@ -192,14 +204,30 @@ longer has — so the dead rule is kept with its reason written into
 against the case's step 1 answering whether the real solver takes a soft
 constraint at all. It costs a tuple comparison per dispatch and nothing else,
 and it is the first thing in this repository that is deliberately unreachable.
-Third, `Conversing` could not be entered from the browser. A chat message
-posted as a second HTTP request races the CopilotKit run, so the ordering the
-concept exists to establish — the person's words before the model's tool
-call — would have held by luck; it is performed in `agent/hearing.py`, before
-the graph's model node, which makes `hearing.py` a third surface performing a
-root action beside `webapp.py` and `tools.py`. The specification had assumed
-one entry point per actor and there are now two for the person, a click and a
-message, which is a fact about the framework rather than about the concept.
+Third, and the one to take to the case: a click does not go through
+`Conversing`. `Synchronisations` states the slice 0 rule outright — *one more
+rule lets a person assert directly from a rendered component: `Conversing/say`
+with structured text naming an attribute and a value, `then Asserting/assert`,
+and it is the rule slice 1 replaces*. This build does not have that rule. A
+click is a `Copiloting/gesture [act: "assert"]` carried straight to
+`Asserting/assert` by `APersonAssertsAValue`, and `Conversing` is reached only
+by a typed message. So the log records what a person *typed* before the model
+acted on it, and records nothing at all of what a person *clicked* — which is
+the majority of how values are set here, and which is exactly the half the
+concept was meant to cover. Not built now on purpose: item 3 says nothing else
+fires from the say yet, and rerouting the click is item 4's chain. It is a
+divergence from a named rule and it needs a lane. The reading offered, for the
+case to accept or reject: *grounded in neither* — the catalogue's `Conversing`
+note already says a structured form and a click on a rendered component are
+both a buyer's `say`, so the catalogue covers it and this repository is the
+thing that should conform, at whichever slice the rule is built.
+
+A fourth, smaller: `Conversing` could not be entered from the browser at all.
+A chat message posted as a second HTTP request races the CopilotKit run, so the
+ordering the concept exists to establish would have held by luck; it is
+performed in `agent/hearing.py`, before the graph's model node, which makes
+`hearing.py` a third surface performing a root action beside `webapp.py` and
+`tools.py`. A fact about the framework rather than about the concept.
 
 ### 9.4 What to change, in order
 
