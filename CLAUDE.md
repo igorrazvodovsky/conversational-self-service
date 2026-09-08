@@ -1,284 +1,171 @@
-# CopilotKit + LangGraph Todo Demo
+# CopilotKit + LangGraph elevator configurator
 
 ## Purpose
 
-This repository serves as both a **showcase** and **template** for building AI agents with CopilotKit and LangGraph. It demonstrates how CopilotKit can drive interactive UI beyond just chat, using a **collaborative todo list** as the primary example.
+This repository is a showcase and template for building AI agents with
+CopilotKit and LangGraph, using a **product configuration** as the primary
+example, with z3 doing the constraint solving. It demonstrates CopilotKit driving interactive UI beyond chat.
 
-**Target audience:** Developers evaluating CopilotKit or starting new projects with AI agents.
+## Read this first
 
-## Core Concept
+This repository is one artefact of a discovery case — the case's discovery
+represented in code — and its concept notes are downstream of the case's
+catalogue. The case: `~/Library/CloudStorage/Dropbox/discovery/Projects/Conversational self-service/`
+(an Obsidian vault; start at `Prototype plan.md`, then `Ontology/Concept catalogue.md`).
+The rule of precedence and the reading of this code against that catalogue are
+[`docs/conceptual-model.md` §9](docs/conceptual-model.md#9-against-the-cases-catalogue),
+which also lists what to change next, in order. A divergence from the catalogue
+is a finding to classify there, not a fork.
 
-The todo list demonstrates **agent-driven UI** where:
+The application is grounded in two papers on concept design — _Making Software
+Meaningful_ (MSM) and _What You See Is What It Does_ (WYSIWID) — plus Jackson's
+_Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 
-- The agent can manipulate application state (adding todos, updating status, organizing tasks)
-- Users can interact with the same state (editing titles, checking off tasks, deleting todos)
-- Both agent and user changes update the same shared state
-- The UI reactively updates based on agent state changes
+- [`docs/method/`](docs/method/README.md) — the vocabulary: individuals, values, actions, facts, concepts, synchronizations, and how they map to code
+- [`docs/concepts/`](docs/concepts/README.md) — the eleven concepts, specified
+- [`docs/syncs/`](docs/syncs/README.md) — the twenty-seven rules, the only way two concepts interact
+- [`docs/conceptual-model.md`](docs/conceptual-model.md) — the alignment analysis, including §8 on what is wrong with this design
 
-This uses CopilotKit's **v2 agent state pattern** where state lives in the agent and syncs to the frontend.
+**The notes are the source, and the code is generated from them.** WYSIWID
+§7.3: the prompt for the implementation is exactly the concept design spec. If
+you want to change behaviour, edit the specification and regenerate — do not
+patch the generated code. Five project skills carry the procedures:
+`concept-spec`, `concept-sync`, `concept-generate`, `concept-audit`, `concept-coverage`.
+
+General-purpose concept-design material predates the synchronization scheme
+used here — see [`docs/method/synchronization.md`](docs/method/synchronization.md#this-scheme-replaced-an-earlier-one).
+
+## The one idea
+
+> What a person asked for and what follows from it are two different kinds of
+> fact, and a configurator that keeps them in one field cannot answer the
+> question a person most often has.
+
+Ask for a hospital lift and the usage profile becomes near-continuous, the
+rescue system becomes a full battery backup, and five of the seven rated loads
+disappear. None of that was chosen. The canvas therefore has three sections —
+**you asked for**, **follows from that** (with the rule that forces it), and
+**still open** — and that grouping is a property of the current state, not of
+the catalogue.
+
+Everything else in the design follows from taking that seriously:
+
+- [`Asserting`](docs/concepts/asserting.md) records assertions a party made — the case's name for it; it was `Specifying` until 2026-09-08. It validates nothing and solves nothing.
+- [`Constraining`](docs/concepts/constraining.md) holds the rules and answers what they still allow. z3 lives here.
+- A requirement that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
 
 ## Architecture
 
-This is a **flat npm project** with a Next.js frontend at the root and a Python agent in `agent/`.
-
-### Repository Structure
+A Next.js frontend at the root, a Python agent in `agent/`, and the concept
+layer beside the agent.
 
 ```
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx              # Main page - wires up all components
-│   │   └── api/copilotkit/       # CopilotKit API route
+│   │   ├── page.tsx                      # wires the providers together
+│   │   └── api/
+│   │       ├── copilotkit/[[...slug]]/   # CopilotKit runtime
+│   │       └── configurator/[...path]/   # proxy onto the concept layer
 │   ├── components/
-│   │   ├── canvas/               # Todo list UI
-│   │   │   ├── index.tsx         # Canvas container
-│   │   │   ├── todo-list.tsx     # Todo list with columns
-│   │   │   ├── todo-column.tsx   # Column (pending/completed)
-│   │   │   └── todo-card.tsx     # Individual todo card
-│   │   ├── example-layout/       # Layout: chat + canvas side-by-side
-│   │   └── generative-ui/        # Example generative UI components
+│   │   ├── configurator/                 # the canvas
+│   │   │   ├── provider.tsx              # reads /view, performs gestures
+│   │   │   ├── index.tsx                 # the three sections
+│   │   │   ├── totals.tsx                # price and carbon
+│   │   │   ├── question.tsx              # the open Deciding questions
+│   │   │   └── variables.tsx             # asked / follows / open rows
+│   │   ├── example-layout/               # chat + canvas, mode from Moding
+│   │   └── generative-ui/                # other showcase features
 │   └── hooks/
-│       ├── use-generative-ui-examples.tsx  # Example CopilotKit patterns
-│       └── use-example-suggestions.tsx     # Chat suggestions
-├── agent/                         # LangGraph Python agent
-│   ├── main.py                    # Agent entry point
-│   └── src/
-│       ├── todos.py               # Todo tools and state schema
-│       └── query.py               # Example data query tool
-├── scripts/                       # Agent setup and run scripts
-│   ├── setup-agent.sh / .bat
-│   └── run-agent.sh / .bat
-├── package.json                   # Root project config (npm + concurrently)
-└── next.config.ts
+├── agent/
+│   ├── concepts/          # one module per concept — MSM §5.2.1
+│   ├── syncs/             # seeding, gestures, propagation, conduct
+│   ├── engine/            # log, flows, provenance, dispatch — do not edit
+│   ├── catalogue/         # elevator.json
+│   ├── wiring.py          # discovers concepts, wires rules, reads the catalogue
+│   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
+│   ├── webapp.py          # POST /gesture, GET /view — mounted by langgraph.json
+│   ├── tools.py           # the model's five tools
+│   ├── instance.py        # the one engine both actors share
+│   └── main.py            # the graph
+└── docs/                  # the method, the concepts, the rules, the analysis
 ```
 
-## Key Pattern: Agent State with CopilotKit v2
+### The rules that make this work
 
-The todo list uses **CopilotKit v2's agent state pattern** where state lives in the agent backend and syncs bidirectionally with the frontend.
+**Concepts never import each other.** Every interaction is a rule in
+`agent/syncs/`. If you find yourself wanting to read another concept's state
+from inside a concept, that is a synchronization you have not written yet.
 
-### How It Works
+**Only the bootstrap concept initiates.** `Copiloting.gesture` (a person) and
+`Copiloting.invoke` (the model) are the only root actions. There is no HTTP
+route per concept action and no tool that changes state directly — a tool
+records that the model asked, and a rule decides what follows.
 
-1. **Agent defines state schema and tools** (Python)
+**Reads are not actions.** The price total and the carbon footprint are
+calculations over exposed state, in `agent/views.py`. Nobody performs *compute
+the total*.
 
-   ```python
-   # agent/src/todos.py
-   class Todo(TypedDict):
-       id: str
-       title: str
-       description: str
-       emoji: str
-       status: Literal["pending", "completed"]
+**Do not edit `agent/engine/`.** MSM §5.2.4 observed that no case of an agent
+modifying engine code to get a behaviour was ever legitimate. Behaviour belongs
+in a concept or a rule.
 
-   class AgentState(TypedDict):
-       todos: list[Todo]
+### Two root actors, and what each may do
 
-   @tool
-   def manage_todos(todos: list[Todo], runtime: ToolRuntime) -> Command:
-       """Manage the current todos."""
-       return Command(update={"todos": todos, ...})
-   ```
+|  | person | model |
+|---|---|---|
+| state or withdraw a requirement | yes | yes |
+| propose a completion | — | yes |
+| **adopt one** | **yes** | **no** |
+| change a price or the catalogue | no | no |
 
-2. **Frontend reads from agent state**
+Every `no` is the absence of a rule, not a prohibition — the DSL has no way to
+write one, and an action no rule invokes does not happen. So *can the assistant
+change a price?* is answered by reading the `then` clauses of
+[`agent/syncs/conduct.py`](agent/syncs/conduct.py), not by reasoning about what
+a language model might infer from a prompt.
 
-   ```typescript
-   // src/components/canvas/index.tsx
-   const { agent } = useAgent();
+### The log
 
-   return (
-     <TodoList
-       todos={agent.state?.todos || []}
-       onUpdate={(updatedTodos) => agent.setState({ todos: updatedTodos })}
-       isAgentRunning={agent.isRunning}
-     />
-   );
-   ```
+Every action is recorded with its actor and the rule that authorised it. The
+canvas reads those provenance edges directly: *you asked for this*, *the
+assistant asked for this* and *adopted from a proposal* are three `via` values
+on the same action, with no field anywhere recording which.
 
-3. **User interactions update agent state**
-
-   ```typescript
-   // User clicks checkbox → frontend calls agent.setState()
-   const toggleStatus = (todo) => {
-     const updated = todos.map((t) =>
-       t.id === todo.id
-         ? { ...t, status: t.status === "completed" ? "pending" : "completed" }
-         : t,
-     );
-     agent.setState({ todos: updated });
-   };
-   ```
-
-4. **Agent can manipulate state via tools**
-   - The agent calls `manage_todos` tool to update the todo list
-   - Both user and agent changes update the same `agent.state.todos`
-   - Frontend automatically re-renders when state changes
-
-### Why This Pattern?
-
-- **Single source of truth**: State lives in the agent, not duplicated in frontend
-- **Bidirectional sync**: User changes → agent state, Agent changes → UI update
-- **Simple**: No need for separate frontend state management
-- **Observable**: Agent has full visibility into state changes
-
-## Implementation Details
-
-### Agent Backend
-
-**Agent Definition** (`agent/main.py`):
-
-```python
-from langchain.agents import create_agent
-from copilotkit import CopilotKitMiddleware
-from src.todos import todo_tools, AgentState
-
-agent = create_agent(
-    model="gpt-5.2",
-    tools=[*todo_tools, ...],  # manage_todos, get_todos
-    middleware=[CopilotKitMiddleware()],
-    state_schema=AgentState,  # Defines state shape
-    system_prompt="You are a helpful assistant..."
-)
-```
-
-**Todo Tools** (`agent/src/todos.py`):
-
-```python
-@tool
-def manage_todos(todos: list[Todo], runtime: ToolRuntime) -> Command:
-    """Manage the current todos."""
-    # Ensure todos have unique IDs
-    for todo in todos:
-        if "id" not in todo or not todo["id"]:
-            todo["id"] = str(uuid.uuid4())
-
-    # Update agent state
-    return Command(update={
-        "todos": todos,
-        "messages": [ToolMessage(...)]
-    })
-
-@tool
-def get_todos(runtime: ToolRuntime):
-    """Get the current todos."""
-    return runtime.state.get("todos", [])
-```
-
-### Frontend
-
-**Canvas Component** (`src/components/canvas/index.tsx`):
-
-```typescript
-export function Canvas() {
-  const { agent } = useAgent();  // CopilotKit v2 hook
-
-  return (
-    <div className="h-full p-8 bg-gray-50">
-      <TodoList
-        // Read state from agent
-        todos={agent.state?.todos || []}
-        // Update state in agent
-        onUpdate={(updatedTodos) => agent.setState({ todos: updatedTodos })}
-        // React to agent execution
-        isAgentRunning={agent.isRunning}
-      />
-    </div>
-  );
-}
-```
-
-**Todo List** (`src/components/canvas/todo-list.tsx`):
-
-```typescript
-export function TodoList({ todos, onUpdate, isAgentRunning }: TodoListProps) {
-  const toggleStatus = (todo: Todo) => {
-    const updated = todos.map((t) =>
-      t.id === todo.id
-        ? { ...t, status: t.status === "completed" ? "pending" : "completed" }
-        : t
-    );
-    onUpdate(updated);  // Calls agent.setState()
-  };
-
-  const addTodo = () => {
-    const newTodo = { id: crypto.randomUUID(), ... };
-    onUpdate([...todos, newTodo]);
-  };
-
-  return (
-    <div className="flex gap-8">
-      <TodoColumn title="To Do" todos={pendingTodos} onAddTodo={addTodo} ... />
-      <TodoColumn title="Done" todos={completedTodos} ... />
-    </div>
-  );
-}
-```
-
-### How State Flows
-
-1. **User adds/edits todo** → Frontend calls `agent.setState({ todos: [...] })`
-2. **Agent state updates** → CopilotKit syncs to backend
-3. **Agent observes change** → Can respond via `manage_todos` tool
-4. **Agent modifies todos** → Calls `manage_todos` tool
-5. **State syncs to frontend** → `agent.state.todos` updates
-6. **UI re-renders** → React sees new state and updates display
-
-**Key insight**: State lives in the agent, frontend just reads/writes to it via CopilotKit hooks.
-
-## Tech Stack
+## Tech stack
 
 - **Frontend**: Next.js 16, React 19, TailwindCSS 4
-- **Agent**: LangGraph (Python), OpenAI GPT-5.2
+- **Agent**: LangGraph (Python), OpenAI
+- **Solver**: z3-solver
 - **CopilotKit**: React hooks for agent integration (v2)
-- **Build**: npm with concurrently for parallel dev processes
-- **Other**: Recharts for generative UI examples
 
 ## Development
 
 ```bash
-# Install dependencies (also sets up agent via postinstall)
-npm install
-
-# Start both frontend and agent
-npm run dev
-
-# Start individually
-npm run dev:ui      # Next.js frontend on port 3000
-npm run dev:agent   # LangGraph agent on port 8123
-
-# Build
+npm install        # also sets up the agent
+npm run dev        # frontend on 3000, agent on 8123
+npm run dev:ui
+npm run dev:agent
 npm run build
 ```
 
-### Environment Setup
-
 ```bash
-# Set OpenAI API key
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+cp .env.example .env    # then set OPENAI_API_KEY
 ```
 
-## Design Principles
+The concept layer is mounted into the LangGraph server by `langgraph.json`'s
+`http.app`, so it runs in the same process as the graph and shares one engine
+with the model's tools. `AGENT_URL` points the frontend proxy at it.
 
-1. **Simple over complex** - The todo list is intentionally simple and focused
-2. **CopilotKit v2 patterns** - Uses modern agent state management
-3. **Template-first** - Code is meant to be forked and extended
-4. **Showcasing agent-driven UI** - Demonstrates AI manipulating application state beyond chat
+## Design principles
 
----
+1. **The specification comes first.** Argue the change in `docs/concepts/` or `docs/syncs/`, then regenerate.
+2. **Pull apart rather than add.** MSM §5.1.1's repair for conflation is separation, and `worktree` is the model.
+3. **State permissions, never prohibitions.** A prohibition is a permission you decline to write.
+4. **Say what is wrong.** [`docs/conceptual-model.md`](docs/conceptual-model.md) §8 lists this design's own defects, and keeping that section current is what makes a later substitution visible.
 
-## Key Takeaways for Developers
+## When extending this
 
-**State Management Pattern**: This app uses CopilotKit v2's agent state pattern where:
-
-- State is defined in the agent backend (Python TypedDict)
-- Frontend reads via `agent.state.todos`
-- Frontend writes via `agent.setState({ todos: ... })`
-- Agent can modify state via tools (`manage_todos`)
-- Changes sync bidirectionally automatically
-
-**When extending this template**:
-
-- Define state schema in the agent (`AgentState`)
-- Create tools that manipulate state via `Command(update={...})`
-- Use `useAgent()` hook in frontend to read/write state
-- Let CopilotKit handle the sync - no manual state management needed
-
-This pattern works great for **agent-driven applications** where the AI needs to manipulate structured application state, not just chat.
+- Write the concept in [`docs/concepts/`](docs/concepts/README.md) first. Check it against the three [bad smells](docs/method/objects.md#bad-smells) — the cheapest is whether the purpose needs an "and".
+- Write the rules in [`docs/syncs/`](docs/syncs/README.md). If two concepts need to know about each other, they do not; a rule does.
+- Then generate. One concept's specification is the whole context for generating it.
+- Re-run [`docs/conceptual-model.md`](docs/conceptual-model.md) §3 against the change with the `concept-audit` skill, and say whether a verdict moved.

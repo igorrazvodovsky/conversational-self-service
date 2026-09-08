@@ -1,0 +1,450 @@
+"""Constraining — to limit a specification to combinations that can actually
+be built.
+
+Generated from `docs/concepts/constraining.md`.
+
+state
+  range:    Variable -> set Option
+  scope:    Rule -> seq Variable
+  allows:   Rule -> set (seq Option)
+  because:  Rule -> string
+  assumed:  Spec -> Variable -> Option
+  inclined: Spec -> Variable -> Option
+  possible: Spec -> Variable -> set Option
+  settled:  Spec -> Variable -> Option
+  owing:    Spec -> Variable -> set Rule
+  refused:  Spec -> Variable -> set Rule
+
+A change to the rule base recomputes every specification being tracked.  Only
+an action naming a specification used to do that, so `possible` and `settled`
+went stale behind `offer` and `withhold`.
+
+The decision procedure is z3, and the specification says nothing about that on
+purpose: which procedure computes `possible` is the kind of implementation
+choice MSM §5.2 calls secondary to the names.
+
+The encoding, once, so it is not reverse-engineered later.  One Boolean per
+(variable, option) pair; one permanent, untracked exactly-one constraint per
+variable, so that it can never appear in a core and be mistaken for a rule; one
+literal per rule, with the rule asserted as `Implies(literal, constraint)` and
+the literal supplied as an assumption at every check.  Assumptions of a
+specification are supplied as the selection literals themselves.  An unsat core
+therefore comes back as a mixture of rule identities and (variable, option)
+pairs, which is exactly the pair of things the failing case of `assume` has to
+report.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Iterable
+
+import z3
+
+
+class Constraining:
+    name = "Constraining"
+
+    def __init__(self) -> None:
+        self._range: dict[str, list[str]] = {}
+        self._rules: dict[str, dict[str, Any]] = {}
+        self._because: dict[str, str] = {}
+        self._assumed: dict[str, dict[str, str]] = {}
+        self._inclined: dict[str, dict[str, str]] = {}
+        self._possible: dict[str, dict[str, list[str]]] = {}
+        self._settled: dict[str, dict[str, str]] = {}
+        self._owing: dict[str, dict[str, list[str]]] = {}
+        self._refused: dict[str, dict[str, list[str]]] = {}
+        self._solver: z3.Solver | None = None
+        self._sel: dict[tuple[str, str], z3.BoolRef] = {}
+        self._rule_lit: dict[str, z3.BoolRef] = {}
+
+    def state(self) -> dict[str, Any]:
+        return {
+            "range": {v: list(os) for v, os in self._range.items()},
+            "because": dict(self._because),
+            "scope": {r: list(d.get("over", [])) for r, d in self._rules.items()},
+            "assumed": {s: dict(m) for s, m in self._assumed.items()},
+            "inclined": {s: dict(m) for s, m in self._inclined.items()},
+            "possible": {
+                s: {v: list(os) for v, os in m.items()}
+                for s, m in self._possible.items()
+            },
+            "settled": {s: dict(m) for s, m in self._settled.items()},
+            "owing": {
+                s: {v: list(rs) for v, rs in m.items()} for s, m in self._owing.items()
+            },
+            "refused": {
+                s: {v: list(rs) for v, rs in m.items()}
+                for s, m in self._refused.items()
+            },
+        }
+
+    # -- actions: the rule base --------------------------------------------
+
+    def offer(self, variable: str, option: str) -> dict[str, Any]:
+        options = self._range.setdefault(variable, [])
+        if option not in options:
+            options.append(option)
+            self._invalidate()
+            self._recompute_all()
+        return {"variable": variable}
+
+    def withhold(self, variable: str, option: str) -> dict[str, Any]:
+        """Take the option out of the range, and out of anything that held it.
+
+        The promise — no specification may settle on it again — is not kept for
+        a specification that already assumed it unless the assumption goes too,
+        and `possible` and `settled` would go stale besides, since neither is
+        recomputed except by an action naming a specification.
+
+        Nothing reaches Specifying.  A requirement for a delisted option stays
+        on record and unmet, exactly as it does when a rule refuses it:
+        delisting an option does not unask for it.
+        """
+        options = self._range.get(variable, [])
+        if option not in options:
+            return {"variable": variable, "conceding": []}
+        options.remove(option)
+        conceding = []
+        for spec in list(self._assumed):
+            if self._assumed[spec].get(variable) == option:
+                self._assumed[spec].pop(variable, None)
+                conceding.append(spec)
+        for spec in list(self._inclined):
+            if self._inclined[spec].get(variable) == option:
+                self._inclined[spec].pop(variable, None)
+        self._invalidate()
+        self._recompute_all()
+        return {"variable": variable, "conceding": sorted(conceding)}
+
+    def tabulate(
+        self, rule: str, over: list[str], allows: list[list[str]], because: str
+    ) -> dict[str, Any]:
+        self._rules[rule] = {
+            "kind": "table",
+            "over": list(over),
+            "allows": [list(t) for t in allows],
+        }
+        self._because[rule] = because
+        self._invalidate()
+        return {"rule": rule}
+
+    def imply(
+        self,
+        rule: str,
+        given: list[dict[str, Any]],
+        entails: dict[str, Any],
+        because: str,
+    ) -> dict[str, Any]:
+        self._rules[rule] = {
+            "kind": "implication",
+            "over": [c["variable"] for c in given] + [entails["variable"]],
+            "given": [
+                {"variable": c["variable"], "among": list(c["among"])} for c in given
+            ],
+            "entails": {
+                "variable": entails["variable"],
+                "among": list(entails["among"]),
+            },
+        }
+        self._because[rule] = because
+        self._invalidate()
+        return {"rule": rule}
+
+    # -- actions: a specification's assumptions -----------------------------
+
+    def assume(self, spec: str, variable: str, option: str) -> dict[str, Any]:
+        return self._adopt(spec, variable, option, hard=True)
+
+    def incline(self, spec: str, variable: str, option: str) -> dict[str, Any]:
+        return self._adopt(spec, variable, option, hard=False)
+
+    def consider(self, spec: str) -> dict[str, Any]:
+        """Begin tracking a specification, before anything has been assumed."""
+        self._assumed.setdefault(spec, {})
+        self._inclined.setdefault(spec, {})
+        self._refused.setdefault(spec, {})
+        return self._recompute(spec)
+
+    def release(self, spec: str, variable: str) -> dict[str, Any]:
+        self._assumed.setdefault(spec, {}).pop(variable, None)
+        self._inclined.setdefault(spec, {}).pop(variable, None)
+        self._refused.setdefault(spec, {}).pop(variable, None)
+        return self._recompute(spec)
+
+    def forget(self, spec: str) -> dict[str, Any]:
+        """The inverse of `consider`, and it costs what `consider` cost.
+
+        A discarded specification whose assumptions stayed here would be
+        neither tracked nor gone.
+        """
+        for held in (
+            self._assumed,
+            self._inclined,
+            self._possible,
+            self._settled,
+            self._owing,
+            self._refused,
+        ):
+            held.pop(spec, None)
+        return {"spec": spec}
+
+    def complete(self, spec: str, cost: dict[str, float]) -> dict[str, Any]:
+        solver = self._built()
+        opt = z3.Optimize()
+        for assertion in solver.assertions():
+            opt.add(assertion)
+        for literal in self._rule_lit.values():
+            opt.add(literal)
+        for variable, option in self._assumed.get(spec, {}).items():
+            literal = self._sel.get((variable, option))
+            if literal is None:
+                return {"error": f"{variable} does not offer {option}", "culprits": []}
+            opt.add(literal)
+        for variable, option in self._inclined.get(spec, {}).items():
+            literal = self._sel.get((variable, option))
+            if literal is not None:
+                opt.add_soft(literal, weight=1)
+        terms = [
+            z3.If(literal, float(cost.get(option, 0.0)), 0.0)
+            for (variable, option), literal in self._sel.items()
+        ]
+        objective = opt.minimize(z3.Sum(terms) if terms else z3.RealVal(0))
+        if opt.check() != z3.sat:
+            culprits = self._why_unsat(spec)["rules"]
+            return {
+                "error": "no buildable combination honours every requirement",
+                "culprits": culprits,
+            }
+        model = opt.model()
+        assignment = {
+            variable: option
+            for (variable, option), literal in self._sel.items()
+            if z3.is_true(model.eval(literal, model_completion=True))
+        }
+        total = sum(cost.get(option, 0.0) for option in assignment.values())
+        return {
+            "spec": spec,
+            "assignment": assignment,
+            "cost": round(float(total), 2),
+            "objective": str(objective.value()),
+        }
+
+    # -- the solver ---------------------------------------------------------
+
+    def _invalidate(self) -> None:
+        self._solver = None
+
+    def _recompute_all(self) -> None:
+        """Every specification being tracked, after the rule base moved.
+
+        `_assumed` is the tracking set: `consider` seeds an entry before
+        anything is assumed of a specification and `forget` removes one, so a
+        specification with no assumptions left is still tracked.
+
+        Free at boot, where the catalogue arrives before any specification.
+        """
+        for spec in list(self._assumed):
+            self._recompute(spec)
+
+    def _built(self) -> z3.Solver:
+        if self._solver is not None:
+            return self._solver
+        solver = z3.Solver()
+        self._sel = {}
+        self._rule_lit = {}
+        for variable, options in self._range.items():
+            literals = []
+            for option in options:
+                literal = z3.Bool(f"{variable}={option}")
+                self._sel[(variable, option)] = literal
+                literals.append(literal)
+            if literals:
+                # Permanent and untracked: an exactly-one constraint is not a
+                # rule, and must never turn up in a core as though it were.
+                solver.add(z3.PbEq([(literal, 1) for literal in literals], 1))
+        for rule, body in self._rules.items():
+            constraint = self._encode(body)
+            if constraint is None:
+                continue
+            literal = z3.Bool(f"rule::{rule}")
+            self._rule_lit[rule] = literal
+            solver.add(z3.Implies(literal, constraint))
+        self._solver = solver
+        return solver
+
+    def _encode(self, body: dict[str, Any]) -> z3.BoolRef | None:
+        if body["kind"] == "table":
+            over = body["over"]
+            clauses = []
+            for tuple_ in body["allows"]:
+                literals = [
+                    self._sel.get((variable, option))
+                    for variable, option in zip(over, tuple_)
+                ]
+                if all(literal is not None for literal in literals):
+                    clauses.append(z3.And(*literals))
+            return z3.Or(*clauses) if clauses else z3.BoolVal(False)
+        premises = []
+        for condition in body["given"]:
+            literals = self._among(condition)
+            if not literals:
+                return None
+            premises.append(z3.Or(*literals))
+        conclusion = self._among(body["entails"])
+        head = z3.Or(*conclusion) if conclusion else z3.BoolVal(False)
+        return z3.Implies(z3.And(*premises) if premises else z3.BoolVal(True), head)
+
+    def _among(self, condition: dict[str, Any]) -> list[z3.BoolRef]:
+        variable = condition["variable"]
+        return [
+            self._sel[(variable, option)]
+            for option in condition["among"]
+            if (variable, option) in self._sel
+        ]
+
+    def _assumption_literals(self, spec: str) -> list[z3.BoolRef]:
+        literals = []
+        for variable, option in self._assumed.get(spec, {}).items():
+            literal = self._sel.get((variable, option))
+            if literal is not None:
+                literals.append(literal)
+        return literals
+
+    def _adopt(
+        self, spec: str, variable: str, option: str, *, hard: bool
+    ) -> dict[str, Any]:
+        if (variable, option) not in self._built_sel():
+            return {
+                "error": f"{variable} does not offer {option}",
+                "culprits": [],
+                "conceding": [variable],
+            }
+        assumed = self._assumed.setdefault(spec, {})
+        inclined = self._inclined.setdefault(spec, {})
+        was_assumed = assumed.get(variable)
+        was_inclined = inclined.get(variable)
+        if hard:
+            inclined.pop(variable, None)
+            assumed[variable] = option
+        else:
+            assumed.pop(variable, None)
+            inclined[variable] = option
+
+        if hard:
+            solver = self._built()
+            if solver.check(*self._rule_lit.values(), *self._assumption_literals(spec)) \
+                    != z3.sat:
+                why = self._why_unsat(spec)
+                # leave the assumptions as they were
+                assumed.pop(variable, None)
+                if was_assumed is not None:
+                    assumed[variable] = was_assumed
+                if was_inclined is not None:
+                    inclined[variable] = was_inclined
+                self._refused.setdefault(spec, {})[variable] = why["rules"]
+                sentences = [self._because.get(r, r) for r in why["rules"]]
+                joined = "; ".join(sentences) if sentences else "the rules"
+                return {
+                    "error": f"{variable} cannot be {option}: {joined}",
+                    "culprits": why["rules"],
+                    "conceding": sorted(set(why["variables"]) | {variable}),
+                }
+        self._refused.setdefault(spec, {}).pop(variable, None)
+        return self._recompute(spec)
+
+    def _built_sel(self) -> dict[tuple[str, str], z3.BoolRef]:
+        self._built()
+        return self._sel
+
+    def _why_unsat(self, spec: str) -> dict[str, list[str]]:
+        """The smallest set of rules and assumptions that cannot hold together."""
+        solver = self._built()
+        solver.check(*self._rule_lit.values(), *self._assumption_literals(spec))
+        core = {str(term) for term in solver.unsat_core()}
+        rules = sorted(
+            rule for rule, literal in self._rule_lit.items() if str(literal) in core
+        )
+        variables = sorted(
+            {
+                variable
+                for (variable, option), literal in self._sel.items()
+                if str(literal) in core
+            }
+        )
+        return {"rules": rules, "variables": variables}
+
+    def _recompute(self, spec: str) -> dict[str, Any]:
+        """Which options survive, which variables are settled, and by which rules.
+
+        Two passes, and the shape of them is the difference between a
+        configurator that answers in milliseconds and one that does not.
+
+        The first enumerates models rather than testing pairs.  Asking "can
+        this variable still be this option" once per pair costs one solver call
+        per pair — about a hundred and fifty here.  Asking instead for any
+        model that selects a pair nobody has seen yet retires a whole
+        assignment's worth of pairs per call, and stops when none are left.
+
+        The second runs only over the variables that came out settled, and
+        asks one question of each: is the opposite unsatisfiable, and if so on
+        whose authority.  The core of that check is `owing` — the rules that
+        make the value necessary, which is what the interface prints next to it.
+        """
+        solver = self._built()
+        rules = list(self._rule_lit.values())
+        assumptions = self._assumption_literals(spec)
+
+        possible: dict[str, set[str]] = {v: set() for v in self._range}
+        while True:
+            unseen = [
+                self._sel[(variable, option)]
+                for variable, options in self._range.items()
+                for option in options
+                if option not in possible[variable]
+            ]
+            if not unseen:
+                break
+            solver.push()
+            solver.add(*assumptions)
+            solver.add(z3.Or(*unseen))
+            found = solver.check(*rules) == z3.sat
+            model = solver.model() if found else None
+            solver.pop()
+            if not found:
+                break
+            for (variable, option), literal in self._sel.items():
+                if z3.is_true(model.eval(literal, model_completion=True)):
+                    possible[variable].add(option)
+
+        ordered = {
+            variable: [o for o in options if o in possible[variable]]
+            for variable, options in self._range.items()
+        }
+        settled = {v: os[0] for v, os in ordered.items() if len(os) == 1}
+        asked = self._assumed.get(spec, {})
+        owing: dict[str, list[str]] = {}
+        for variable, option in settled.items():
+            if variable in asked:
+                # Settled because you said so, not because a rule said so.
+                continue
+            literal = self._sel[(variable, option)]
+            if solver.check(*rules, *assumptions, z3.Not(literal)) == z3.unsat:
+                core = {str(term) for term in solver.unsat_core()}
+                blamed = sorted(
+                    rule
+                    for rule, rule_literal in self._rule_lit.items()
+                    if str(rule_literal) in core
+                )
+                if blamed:
+                    owing[variable] = blamed
+
+        self._possible[spec] = ordered
+        self._settled[spec] = settled
+        self._owing[spec] = owing
+        return {
+            "spec": spec,
+            "possible": ordered,
+            "settled": settled,
+            "owing": owing,
+        }

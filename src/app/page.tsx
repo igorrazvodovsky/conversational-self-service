@@ -1,7 +1,8 @@
 "use client";
 
 import { ExampleLayout } from "@/components/example-layout";
-import { ExampleCanvas } from "@/components/example-canvas";
+import { ConfiguratorCanvas } from "@/components/configurator";
+import { ConfiguratorProvider } from "@/components/configurator/provider";
 import { useGenerativeUIExamples, useExampleSuggestions } from "@/hooks";
 
 import {
@@ -29,6 +30,14 @@ export default function HomePage() {
       required, not optional.
     */
     <CopilotChatConfigurationProvider agentId="default">
+      {/*
+        The configurator's state lives behind its own actions, beside the agent,
+        and this provider is the only thing in the UI that reaches them. It sits
+        inside the chat provider because it polls while the agent is running —
+        the model's actions land in the same log as the person's clicks, and
+        nothing in the CopilotKit state channel would report them.
+      */}
+      <ConfiguratorProvider>
       <div className={styles.layout}>
         {/* SDK threads drawer (replaces the hand-rolled fork). License-gated: the locked view's Upgrade CTA opens the Intelligence docs by default. */}
         <CopilotThreadsDrawer agentId="default" />
@@ -40,10 +49,11 @@ export default function HomePage() {
                 input={{ disclaimer: () => null, className: "pb-6" }}
               />
             }
-            appContent={<ExampleCanvas />}
+            appContent={<ConfiguratorCanvas />}
           />
         </div>
       </div>
+      </ConfiguratorProvider>
     </CopilotChatConfigurationProvider>
   );
 }

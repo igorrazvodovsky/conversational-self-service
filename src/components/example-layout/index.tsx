@@ -1,34 +1,32 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
 import { ModeToggle } from "./mode-toggle";
-import { useFrontendTool } from "@copilotkit/react-core/v2";
+import { useConfigurator } from "@/components/configurator/provider";
 
 interface ExampleLayoutProps {
   chatContent: ReactNode;
   appContent: ReactNode;
 }
 
+/**
+ * Which surface has the viewer's attention is a fact of `Moding`, held behind
+ * the concept layer, and this component renders it rather than owning it.
+ *
+ * It used to be `useState` here, written two ways: a toggle the person clicked,
+ * and two frontend tools whose handlers called `setMode` directly. That second
+ * path made the model an initiator that reached component state without passing
+ * through any nameable action — WYSIWID §7.2's fourth design rule, broken in
+ * five lines. Both paths are now `Moding/focus`, reached by a rule, and the
+ * one that fires when the assistant is about to change the canvas is
+ * `TheCanvasIsShownBeforeItChanges` — which the starter wrote as a sentence in
+ * a system prompt asking a language model to remember.
+ */
 export function ExampleLayout({ chatContent, appContent }: ExampleLayoutProps) {
-  const [mode, setMode] = useState<"chat" | "app">("chat");
-
-  useFrontendTool({
-    name: "enableAppMode",
-    description:
-      "Enable app mode, make sure its open when interacting with todos.",
-    handler: async () => {
-      setMode("app");
-    },
-  });
-
-  useFrontendTool({
-    name: "enableChatMode",
-    description: "Enable chat mode",
-    handler: async () => {
-      setMode("chat");
-    },
-  });
+  const { view, gesture } = useConfigurator();
+  const mode = view?.mode ?? "chat";
+  const setMode = (surface: "chat" | "canvas") =>
+    void gesture({ act: "focus", surface });
 
   return (
     <div className="h-full flex flex-row pb-6">
@@ -37,7 +35,7 @@ export function ExampleLayout({ chatContent, appContent }: ExampleLayoutProps) {
       {/* Chat Content */}
       <div
         className={`max-h-full flex flex-col dark:bg-stone-950 ${
-          mode === "app"
+          mode === "canvas"
             ? "w-1/2 px-6 max-lg:hidden" // Half/half with the canvas; hidden on mobile in app mode
             : "flex-1 max-lg:px-4"
         }`}
@@ -65,7 +63,7 @@ export function ExampleLayout({ chatContent, appContent }: ExampleLayoutProps) {
       {/* State Panel */}
       <div
         className={`h-full overflow-hidden ${
-          mode === "app"
+          mode === "canvas"
             ? "w-1/2 max-lg:w-full border-l border-[var(--border)] max-lg:border-l-0" // Half/half with the chat; full width on mobile
             : "w-0 border-l-0"
         }`}

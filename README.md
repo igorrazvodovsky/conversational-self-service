@@ -118,28 +118,48 @@ The following scripts can also be run using your preferred package manager:
 ## Project Structure
 
 ```
-├── src/                         # Next.js frontend source
+├── src/                          # Next.js frontend source
 │   ├── app/
-│   │   ├── page.tsx             # Main page
-│   │   └── api/copilotkit/      # CopilotKit API route
+│   │   ├── page.tsx              # Main page
+│   │   └── api/
+│   │       ├── copilotkit/       # CopilotKit API route
+│   │       └── configurator/     # Proxy onto the concept layer
 │   ├── components/
-│   │   ├── example-canvas/      # Todo list UI
-│   │   ├── example-layout/      # Layout: chat + canvas side-by-side
-│   │   └── generative-ui/       # Example generative UI components
+│   │   ├── configurator/         # The configurator canvas
+│   │   ├── example-layout/       # Layout: chat + canvas side-by-side
+│   │   └── generative-ui/        # Example generative UI components
 │   └── hooks/
-├── agent/                       # LangGraph Python agent
-│   ├── main.py                  # Agent entry point
-│   └── src/
-│       ├── todos.py             # Todo tools and state schema
-│       └── query.py             # Example data query tool
-├── scripts/                     # Agent setup and run scripts
-│   ├── setup-agent.sh / .bat
-│   └── run-agent.sh / .bat
-├── public/                      # Static assets
+├── agent/                        # LangGraph Python agent
+│   ├── main.py                   # Agent entry point
+│   ├── concepts/                 # One module per concept
+│   ├── syncs/                    # The rules between them
+│   ├── engine/                   # Action log, flows, provenance
+│   ├── catalogue/elevator.json   # The product catalogue and its rules
+│   ├── wiring.py                 # Wires concepts and rules, reads the catalogue
+│   ├── views.py                  # The read side
+│   ├── webapp.py                 # POST /gesture, GET /view
+│   ├── tools.py                  # The model's tools
+│   └── src/                      # Other showcase features (charts, A2UI)
+├── docs/                         # The method, the concepts, the rules
+├── scripts/                      # Agent setup and run scripts
+├── public/                       # Static assets
 ├── next.config.ts
 ├── tsconfig.json
 └── package.json
 ```
+
+## The configurator
+
+The main example is an elevator configurator: thirty-five variables, about two
+hundred options, fifty-four compatibility rules drawn from EN 81 and ASME
+A17.1, a price model and a carbon model, with z3 solving the constraints.
+
+Its design and the reasoning behind it are in [`docs/`](docs/) — start with
+[`docs/conceptual-model.md`](docs/conceptual-model.md). The short version:
+what a person **asked for** and what **follows** from it are kept apart, so the
+canvas can tell you which values you chose, which the rules forced and which
+rule forced them. The assistant can propose a completed specification and
+cannot adopt one; only you can.
 
 ## A2UI — Agent-to-User Interface
 

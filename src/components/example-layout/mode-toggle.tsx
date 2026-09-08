@@ -1,6 +1,6 @@
 interface ModeToggleProps {
-  mode: "chat" | "app";
-  onModeChange: (mode: "chat" | "app") => void;
+  mode: "chat" | "canvas";
+  onModeChange: (mode: "chat" | "canvas") => void;
 }
 
 export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
@@ -17,14 +17,14 @@ export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
         Chat
       </button>
       <button
-        onClick={() => onModeChange("app")}
+        onClick={() => onModeChange("canvas")}
         className={`px-4 py-1.5 rounded-[2px] text-[13px] leading-[20px] font-medium transition-all cursor-pointer ${
-          mode === "app"
+          mode === "canvas"
             ? "bg-[var(--card)] text-[var(--card-foreground)] shadow-sm"
             : "text-[var(--muted-foreground)]"
         }`}
       >
-        App
+        Configurator
       </button>
     </div>
   );

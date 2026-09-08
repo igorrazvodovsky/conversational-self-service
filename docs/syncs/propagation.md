@@ -1,0 +1,198 @@
+# Propagation
+
+How what a person asks for reaches the solver, and how a conflict comes back.
+See [the index](README.md).
+
+## Requirements reach the solver
+
+```
+sync RequirementsReachTheSolver
+when  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ]
+          => [ spec: ?s ; variable: ?v ; option: ?o ] }
+then  { Constraining/assume: [ spec: ?s ; variable: ?v ; option: ?o ] }
+
+sync PreferencesReachTheSolverSoftly
+when  { Asserting/prefer: [ spec: ?s ; variable: ?v ; option: ?o ]
+          => [ spec: ?s ; variable: ?v ; option: ?o ] }
+then  { Constraining/incline: [ spec: ?s ; variable: ?v ; option: ?o ] }
+
+sync AWithdrawalReachesTheSolver
+when  { Asserting/withdraw: [ spec: ?s ; variable: ?v ]
+          => [ spec: ?s ; variable: ?v ] }
+then  { Constraining/release: [ spec: ?s ; variable: ?v ] }
+```
+
+Three rules, one direction. Nothing carries anything from
+[Constraining](../concepts/constraining.md) back into
+[Asserting](../concepts/asserting.md) except by way of a person answering a
+question, and that asymmetry is the design.
+
+## The requirement is recorded before it is known to be satisfiable
+
+`Asserting/assert` completes first and `Constraining/assume` follows. When
+the assumption fails, the requirement is already on record and stays there.
+
+This looks like a mistake and is the point. A requirement that cannot currently
+be met is not a nullity — it is the most important thing on the screen. The two
+relations are readable side by side:
+
+```
+required  minus  assumed   =   what you asked for and cannot have
+```
+
+A configurator that validated before recording would have nowhere to put that
+difference, and would be back to the last write winning. See
+[Asserting](../concepts/asserting.md#why-this-is-separate-from-constraining).
+
+## A discarded specification leaves the solver
+
+```
+sync ADiscardedSpecificationLeavesTheSolver
+when  { Asserting/discard: [ spec: ?s ] => [ spec: ?s ] }
+then  { Constraining/forget: [ spec: ?s ] }
+
+sync ADiscardedSpecificationsQuestionsAreWithdrawn
+when  { Asserting/discard: [ spec: ?s ] => [ spec: ?s ] }
+where { Deciding: { ?r offered: ?options }
+        and ?r is [ spec: ?s ; about: ?about ] }
+then  { Deciding/withdraw: [ request: ?r ] }
+```
+
+The second is the ordinary §6.5 shape — one binding per request, `then` once per
+binding. It exists because a conflict question outlives the requirements it is
+about: answering it after a discard would concede a requirement that no longer
+exists, and the canvas would go on asking about a specification that is gone.
+
+Note that this is a rule and not a change to [Deciding](../concepts/deciding.md).
+That concept cannot tell that a specification was discarded, because it does not
+know what a specification is. What it can do is stop holding a request, and
+which requests to stop holding is a question for a rule.
+
+The inverse of `ANewSpecificationIsGivenToTheSolver`, and it exists for the
+reason MSM §5.1.2 gives: an action whose inverse is missing is a trap, and
+`discard` was an action of [Asserting](../concepts/asserting.md) that no
+stimulus reached and no rule followed. It is now reachable by a gesture
+([Gestures](gestures.md)) and its consequence for the solver is a rule, which
+is where a consequence belongs.
+
+No control on the canvas performs it yet. That is a gap in the interface rather
+than in the model: the act exists, the route exists, and nothing has been built
+to press it.
+
+## When requirements cannot hold together
+
+```
+sync AConflictIsPutToThePerson
+when  { Constraining/assume: [ spec: ?s ; variable: ?v' ; option: ?o' ]
+          => [ error: ?why ; culprits: ?rules ; conceding: ?vars ] }
+where { ?candidates is the set of [ variable: ?v ; option: ?o ]
+          such that ?v is in ?vars
+          and Asserting: { ?s required: ?v -> ?o },
+          together with [ variable: ?v' ; option: ?o' ]
+        ?candidates has at least two members
+        ?reason is the because of each rule in ?rules,
+          read from Constraining }
+then  { Deciding/ask: [ request: [ spec: ?s ; about: "conflict" ] ;
+          reason: ?reason ; options: ?candidates ] }
+
+sync TheConcededRequirementIsWithdrawn
+when  { Deciding/choose: [ request: ?r ; option: ?candidate ]
+          => [ request: ?r ] }
+where { ?r is [ spec: ?s ; about: "conflict" ]
+        ?candidate is [ variable: ?v ; option: ?o ] }
+then  { Asserting/withdraw: [ spec: ?s ; variable: ?v ] }
+```
+
+Two clauses in that `where` were for a while only in the code, and both are
+decisions rather than transcription. The refused pair `[ ?v' ; ?o' ]` is
+offered alongside the candidates because the thing a person most often wants to
+give up is the request they just made, and it is not in `required` — it never
+got there. And a question needs at least two answers: with one candidate there
+is nothing to choose between, so no question is asked. The refusal is still
+recorded in `Constraining.refused` and still reaches the card, which is why the
+person is not left without an account — but see below.
+
+
+The `where` clause discards `?why` and keeps the rules' own sentences. The
+error `Constraining` composes names variables and options by identity, because
+identities are all it has; `because` is what a person can read, and it belongs
+to the concept that owns the rule rather than to the one that reports the
+failure. A concept that knew how to phrase its errors for an interface would be
+a concept that knew there was an interface.
+
+`AConflictIsPutToThePerson` aggregates in its `where` rather than firing once
+per binding. WYSIWID §6.5's default — one binding, one invocation of `then` —
+is what gives a cascading delete its iteration for free, and it is the wrong
+default here: five conflicting requirements are one question with five answers,
+not five questions. The `where` clause "performs calculations" (WYSIWID §5), and
+collecting a set is one.
+
+Note that `error` is matched alongside two other output arguments. No construct
+is needed for that: a failing case is an ordinary case, and `error` is an
+ordinary argument name (WYSIWID §5.3). The rules responsible arrive with the
+failure that produced them rather than from a separate query, which is
+[why there is no `Explaining` concept](../concepts/constraining.md#why-the-explanation-is-not-its-own-concept).
+
+## What `Deciding` is instantiated with here
+
+[`Deciding [Request, Option]`](../concepts/deciding.md) is used twice in this
+application with entirely different parameters, which is the argument for it
+being a concept at all:
+
+| | `Request` | `Option` |
+|---|---|---|
+| a conflict | a specification | a requirement that might be given up — `[ variable ; option ]` |
+| a meeting | a meeting | a time |
+
+The `Option` of a conflict question is *not* a catalogue option. It is a pair
+naming the variable and what was asked for it, because the question is *which
+of these requests do you give up*, and the answer has to identify a request.
+An implementation that passed catalogue options here would produce a question a
+person cannot answer — several conflicting requirements can name options of the
+same variable, and several variables can be offered the same option value.
+
+The type parameter is unconstrained (WYSIWID §4), so nothing in `Deciding`
+notices or cares. That is what makes it reusable, and it is also what makes it
+possible to get wrong quietly, which is why it is written down.
+
+## A requirement is tried again when the obstacle goes
+
+```
+sync UnmetRequirementsAreTriedAgain
+when  { Constraining/release: [ spec: ?s ] => [ spec: ?s ] }
+where { Asserting: { ?s required: ?v -> ?o }
+        and Constraining: { ?s has no assumption for ?v } }
+then  { Constraining/assume: [ spec: ?s ; variable: ?v ; option: ?o ] }
+```
+
+This is what makes *the requirement stays on record* mean something rather than
+merely look tidy. Give up the hospital and the 630 kg car you asked for
+half an hour ago becomes buildable — so it is assumed, and the red card turns
+into an ordinary one, without anybody asking for it a second time.
+
+It is the [§6.5 shape](../method/synchronization.md#flows) again: one binding
+per unmet requirement, `then` once per binding. It cannot loop, because a
+retry that succeeds invokes no `release` and a retry that fails invokes
+nothing at all; and it terminates, because the set of requirements only ever
+shrinks along that path.
+
+Without it, `refused` would go stale rather than transient — a card explaining
+a refusal by rules that no longer refuse anything, which is worse than no
+explanation.
+
+## If the person declines
+
+`Deciding/decline` appears in no rule here, and nothing happens as a result.
+That is the whole of its effect and it is correct: the requirement stays
+recorded and unassumed, the rules that refused it stay recorded against it in
+`Constraining.refused`, and the person can come back to it. The banner goes;
+the account does not. An action no rule invokes does not happen — the same property that
+lets a prohibition be written as a withheld permission
+([Code of conduct](../method/conduct.md#permission-is-stated-positively)).
+
+## See also
+
+- [Asserting](../concepts/asserting.md) — the asserted half
+- [Constraining](../concepts/constraining.md) — the entailed half
+- [Deciding](../concepts/deciding.md) — the question, and its other use
+- [Conduct](conduct.md) — what the model may add to any of this

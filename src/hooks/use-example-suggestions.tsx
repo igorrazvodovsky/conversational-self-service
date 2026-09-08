@@ -2,7 +2,8 @@
  * Suggestion pills shown in the chat UI. Each suggestion triggers a specific
  * demo feature when clicked.
  *
- * Ordered from most constrained (fixed UI) to most open (freeform UI).
+ * The configurator leads; the other showcase features follow, ordered from
+ * most constrained (fixed UI) to most open (freeform UI).
  *
  * Showcase mode (showcase.json) controls which pills are visually highlighted.
  * Highlight styling: globals.css (.a2ui-highlight, .opengenui-highlight)
@@ -17,6 +18,26 @@ const showcase = showcaseConfig.showcase;
 export const useExampleSuggestions = () => {
   useConfigureSuggestions({
     suggestions: [
+      {
+        title: "Specify a hospital lift",
+        message:
+          "I need a lift for a new 12-storey hospital in Munich. Set the building type, the region, the installation type and the travel height, then tell me what that already forces and which rules force it.",
+      },
+      {
+        title: "Why can't I have that?",
+        message:
+          "I want a panoramic glass car wall and a 2500 kg rated load. Ask for both and tell me exactly which rules refuse it.",
+      },
+      {
+        title: "Make it cheaper, then greener",
+        message:
+          "Propose the cheapest way to finish this specification and tell me the lifetime cost, then propose the lowest-carbon way and tell me what the difference costs.",
+      },
+      {
+        title: "Read the specification back",
+        message:
+          "Review the specification and tell me, separately, what I asked for and what merely follows from it.",
+      },
       {
         title: "Pie Chart (Controlled Generative UI)",
         message:
@@ -57,11 +78,6 @@ export const useExampleSuggestions = () => {
       {
         title: "Toggle Theme (Frontend Tools)",
         message: "Toggle the app theme using the toggleTheme tool.",
-      },
-      {
-        title: "Task Manager (Shared State)",
-        message:
-          "Enable app mode and add three todos about learning CopilotKit: one about reading the docs, one about building a prototype, and one about exploring agent state.",
       },
     ],
     available: "always",
