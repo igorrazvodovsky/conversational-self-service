@@ -2,9 +2,8 @@
 
 A domain [concept](../method/concept.md) of the elevator configurator, taken
 from the case's catalogue, where it is a root: it makes sense with nothing else
-present. Built on 2026-09-11 as the first half of the case's slice 1, with
-[Binding](binding.md) as the second. See
-[Against the case's catalogue](../conceptual-model.md#9-against-the-cases-catalogue).
+present. It is the first half of the case's slice 1, with
+[Binding](binding.md) as the second. 
 
 ```
 concept Specifying [Spec, Party]
@@ -134,8 +133,8 @@ operational principle
 
 ## Why this is separate from Asserting
 
-The two hold opposite things, and the case's catalogue was renamed on
-2026-09-08 to keep them apart. [Asserting](asserting.md) holds a value in the
+The two hold opposite things, and the case's catalogue names them apart.
+[Asserting](asserting.md) holds a value in the
 *model's* vocabulary: `rated_load` is `kg1000`. This concept holds a
 requirement in the *buyer's*: *a bed must fit, with a porter*. Nothing here
 names a variable, an option or a catalogue; the type parameters are the
@@ -169,9 +168,8 @@ it is *not* the catalogue's family of a variable, though the two will often
 coincide. A clause is grouped by what it is about before anybody knows which
 variable will answer it.
 
-`negotiability` is the fact that [Asserting](asserting.md#why-prefer-left-the-specification)
-gave up when `prefer` left it: hard-or-soft belongs to the clause, not to the
-value. Three settings, from the catalogue: `fixed`, `negotiable`, and `open`
+`negotiability` is why [Asserting](asserting.md#why-there-is-no-prefer)
+has no `prefer`: hard-or-soft belongs to the clause, not to the value. Three settings, from the catalogue: `fixed`, `negotiable`, and `open`
 for a requirement the party has deliberately not made — *whatever the standard
 finish is*. The third is the one the purpose statement is about.
 
@@ -186,9 +184,7 @@ concept and nothing removed from it.
 
 `serves` — the objective a clause serves — is left out with more regret. It is
 what `OfferSubstitutes` needs before it may offer an alternative, and without
-it the composition asks *what is this for* instead. This build has no
-substitution move to offer, so no rule would read it, and a relation no rule
-reads is [state that earns its place prospectively](../conceptual-model.md#9-against-the-cases-catalogue).
+it the composition asks *what is this for* instead. 
 
 ## Why `relax` keeps the old wording and requires `negotiable`, and `reword` does neither
 
@@ -203,8 +199,8 @@ A fixed clause cannot be relaxed. The way to change it is `settle` it
 negotiable first, which is one more gesture and is meant to be: the person
 is saying *this can give* before they say what it gives.
 
-`reword` is the typo. It arrived with the
-[document editor](#the-specification-is-edited-as-a-document) on 2026-09-11,
+`reword` is the typo. It exists for the
+[document editor](#the-specification-is-edited-as-a-document),
 because free editing of a clause's text is neither of the two acts above, and
 routing it through `relax` would have made every correction a concession and
 every fixed clause uneditable. It keeps nothing: the log holds the old
@@ -230,8 +226,9 @@ in the editor is a stimulus, not a write: a node that appears is `require`,
 a node that vanishes is `strike`, changed text is `reword`, a changed
 discipline is `classify`, a changed order is `move`, and a changed
 negotiability is `settle`. Holding the editor's JSON in a concept instead
-would be the starter's whole-list setter one level up, and the finding that
-[replaced it](README.md#what-was-here-before) applies unchanged.
+would be a whole-list setter one level up — one write that says nothing
+about which clause changed — and the argument against the
+[model that had one](README.md#what-was-here-before) applies unchanged.
 
 Second, *a clause keeps its identity through edits.* [Binding](binding.md)
 points at a clause, so a node's identity is the clause's and not the
@@ -240,19 +237,18 @@ editor's, and deleting the text of a clause and typing new text is a
 editor cannot do is undo a strike, because the concept has no inverse for
 it: a struck clause's answers are retracted by
 [rule](../syncs/binding.md#what-takes-a-choice-away), and a clause typed
-again afterwards is a new clause with none. Recorded in
-[§8](../conceptual-model.md#what-is-wrong-with-this-one) rather than
-repaired.
+again afterwards is a new clause with none. 
 
 Third, *order is a fact of the specification.* The catalogue holds `clauses`
 as a set; this note holds a sequence, because a tender's clauses are
 numbered and a person reordering them in a document is saying something.
-`move` is the action, and it is the one of the three added today that the
-catalogue may decline: a set with no order is the cheaper concept, and
-whether a buyer ever reorders is something slice 1 can now observe.
+`move` is the action, and of the three the document needs — `reword`,
+`classify`, `move` — it is the one the catalogue may decline: a set with no
+order is the cheaper concept, and whether a buyer ever reorders is something
+slice 1 can observe.
 
-`classify` is the smallest of the three. The discipline was set once by
-`require` and could not be changed, which the form never noticed and a
+`classify` is the smallest of the three. Without it the discipline is set
+once by `require` and never changes, which a form does not notice and a
 document does at once.
 
 ## Why the action is not called `state`
@@ -300,9 +296,7 @@ stated by a party in a form; the case's `Reading` is slice 2, and
 _A situation._ The catalogue's `Specifying` keys a specification on a
 `Situation`, and `Situating` holds the givens — rise, stops, power — apart
 from the requirements. Here those are still variables of the specification,
-and *six storeys* is a clause only if a person writes it as one. The
-distinction is [recorded in the alignment analysis](../conceptual-model.md#9-against-the-cases-catalogue)
-rather than built.
+and *six storeys* is a clause only if a person writes it as one.
 
 ## See also
 

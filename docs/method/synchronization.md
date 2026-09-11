@@ -63,8 +63,7 @@ The same edges give idempotency. A rule fires for a completion only if no edge a
 
 ## Design rules
 
-WYSIWID §7.2 states the four rules the pattern imposes. They are assessed against this repository in [the alignment analysis](../conceptual-model.md#3-wysiwids-four-design-rules).
-
+WYSIWID §7.2 states the four rules the pattern imposes.
 1. Concept actions do not call actions or access the state of other concepts.
 2. State declarations in one concept have no dependencies on state declarations in another.
 3. Synchronizations only access concept states and actions.
@@ -102,11 +101,9 @@ its `where` to build an objective, and hands it to `Constraining`. Neither
 concept learns the other exists. That is rules 1 and 3 below working together,
 and it is the arrangement's clearest payoff.
 
-The starter this replaced had no engine and no rules. Its coordination lived in
-three places that were not rules: middleware configuration, five prose
-sentences in a system prompt, and a shared state setter both actors called.
-Each is transcribed and its fate recorded in
-[the alignment analysis](../conceptual-model.md#what-this-replaced).
+The CopilotKit starter has no engine and no rules. Its coordination lives in
+three places that are not rules: middleware configuration, five prose
+sentences in a system prompt, and a shared state setter both actors call.
 
 ## See also
 

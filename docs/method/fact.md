@@ -56,8 +56,8 @@ assert an independence the physics does not have. See
 
 _And one state declaration depends on no other's._ WYSIWID §7.2's second design
 rule, satisfied by construction: each concept in `agent/concepts/` holds its own
-dictionaries and imports nothing from its neighbours. The starter this replaced
-violated it at the type level, with `class AgentState(BaseAgentState)` putting
+dictionaries and imports nothing from its neighbours. The CopilotKit starter
+violates it at the type level, with `class AgentState(BaseAgentState)` putting
 the task list in the same object as the conversation.
 
 ## See also

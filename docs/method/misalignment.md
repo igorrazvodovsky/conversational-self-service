@@ -1,8 +1,4 @@
-# Misalignment
-
 The diagnostic vocabulary. MSM §5.1.
-
-The rest of the method says how to build something meaningful. This section says what to call it when something is not, and it is the part of MSM the [alignment analysis](../conceptual-model.md) leans on most heavily without having had a note to cite.
 
 The premise is that users deprived of a stated meaning construct their own:
 
@@ -67,7 +63,7 @@ The repair is to make requests at the level of meaning — a new reaction, an ad
 
 ## In this repository
 
-The vocabulary is now mostly used to say what the design avoids rather than
+The vocabulary is mostly used here to say what the design avoids rather than
 what it does. That is a weaker kind of claim and worth marking as such: a
 conflation that never happened leaves no evidence, and the only honest test is
 whether the actions a person wants exist as actions of the system.

@@ -47,10 +47,10 @@ effective(s)  =  preference(s), when it is "dark" or "light"
                  environment(s), when the preference is "system"
 ```
 
-It used to be state, set as a side effect of `prefer` and `resolve`. That made
-it a memo of the last resolution with nothing in the state saying whether it
-was still current — and it made `resolve` an action whose whole effect was to
-compute something. Holding the environment as a fact instead, and reading the
+It is not state. Held as state, set as a side effect of `prefer` and
+`resolve`, it would be a memo of the last resolution with nothing in the state
+saying whether it was still current — and `resolve` would be an action whose
+whole effect was to compute something. Holding the environment as a fact instead, and reading the
 two together, is the same move
 [Pricing](pricing.md#the-total-is-a-read-and-here-is-the-arithmetic) makes for
 the total: nobody performs *work out which theme applies*.
@@ -65,7 +65,7 @@ The agent-facing action is `toggleTheme` (`src/hooks/use-generative-ui-examples.
 
 _The action reads the wrong fact._ `toggleTheme` decides what to flip to by reading `document.documentElement.classList` (`:77`) rather than `theme`. It is therefore contingent on a fact — `preference(s, "system")` — that it never consults, consulting a derived DOM fact instead. The action's meaning ("toggle the theme") and the state it acts on have come apart.
 
-_The environment has no root action._ `resolve` is performed by the operating system changing its colour scheme, which is an external stimulus, and WYSIWID §6.7 requires those to be root actions of the bootstrap concept. It reaches the application as a `matchMedia` listener inside a React effect (`:22-31`) — a second initiator, in exactly the sense [Gestures](../syncs/gestures.md#why-a-click-is-not-an-endpoint) rejects for clicks. [Copiloting](copiloting.md#what-we-rely-on-it-for) now lists it as a stimulus kind; nothing routes it that way yet.
+_The environment has no root action._ `resolve` is performed by the operating system changing its colour scheme, which is an external stimulus, and WYSIWID §6.7 requires those to be root actions of the bootstrap concept. It reaches the application as a `matchMedia` listener inside a React effect (`:22-31`) — a second initiator, in exactly the sense [Gestures](../syncs/gestures.md#why-a-click-is-not-an-endpoint) rejects for clicks. [Copiloting](copiloting.md#what-we-rely-on-it-for) lists it as a stimulus kind; nothing routes it that way yet.
 
 _`defer` is missing._ Invoking `toggleTheme` while the preference is `system` discards the deference to the environment permanently. Nothing restores it: `setTheme` has exactly one caller in the codebase, and it passes only `"light"` or `"dark"` (`:78`). The provider supports `"system"` (`use-theme.tsx:5,16`) and no surface, agent-facing or human-facing, can return to it.
 

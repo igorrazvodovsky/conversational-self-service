@@ -87,7 +87,7 @@ other. Declining is a person saying *not now*: the matter still needs settling,
 the request stays on record, and they can come back to it. Withdrawing is
 whoever asked saying the matter no longer needs settling at all.
 
-The case that forced it: a specification is discarded, and the conflict
+The case that needs it: a specification is discarded, and the conflict
 question about its assertions is still open. Answering it would concede an
 assertion that no longer exists. Nothing in this concept can notice
 that — it does not know what a specification is — so a
@@ -95,8 +95,8 @@ that — it does not know what a specification is — so a
 withdraws the question, which is where a fact about one concept following from
 another belongs.
 
-MSM §5.1.2's asymmetry test again: `ask` puts a matter on record, and until now
-nothing took one off.
+MSM §5.1.2's asymmetry test again: `ask` puts a matter on record, and without
+`withdraw` nothing would take one off.
 
 ## The open questions are a read
 
@@ -116,19 +116,19 @@ section below.
 
 ## Why a request names the question and not its subject
 
-Both configurator uses concern the same specification, and for a while both
-passed the specification itself as the `Request`. That was wrong, and wrong in
-a way that only shows up in a sequence: a person sitting on *which of these
-assertions do you give up* who then asks the assistant to make it cheaper
-found that question replaced by *adopt this completion*, with nothing anywhere
-recording that the first had been asked. Two different matters were sharing one
-request, so answering either meant losing the other.
+Both configurator uses concern the same specification, so passing the
+specification itself as the `Request` is tempting, and wrong in a way that only
+shows up in a sequence: a person sitting on *which of these assertions do you
+give up* who then asks the assistant to make it cheaper would find that
+question replaced by *adopt this completion*, with nothing anywhere recording
+that the first had been asked. Two different matters would share one request,
+so answering either would lose the other.
 
 The repair is in the instantiation rather than in this concept. A `Request` is
 `[ spec ; about ]` — the specification the question concerns, and which question
 it is. `Deciding` neither notices nor cares, because the type parameter
-[cannot be constrained](../method/concept.md); what changed is that the two
-[synchronizations](../syncs/README.md) now mint requests that are distinct when
+[cannot be constrained](../method/concept.md); what keeps them apart is that the
+two [synchronizations](../syncs/README.md) mint requests that are distinct when
 the questions are distinct.
 
 This is the same class of mistake as passing a catalogue option where a
@@ -144,8 +144,7 @@ on a request already open looks like it should fail too. It must not. A second
 conflict on the same specification is a new question about the same matter, and
 a concept that refused to ask it would leave the person looking at a stale one.
 
-What was actually missing is an account of the replacement. `ask` now says that
-it discards whatever was offered and whatever was answered, and returns the
+What it needs is an account of the replacement. `ask` says that it discards whatever was offered and whatever was answered, and returns the
 displaced options — so the [log](../method/implementation.md#the-action-log)
 records that a question was superseded rather than the question simply ceasing
 to exist. That is the difference between a fact and a gap, and it costs one

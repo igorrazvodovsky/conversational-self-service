@@ -34,8 +34,8 @@ operational principle
 
 ## Why this thin concept earns its place
 
-There is a real rule attached to it. The starter wrote it as English in a
-system prompt:
+There is a real rule attached to it. The CopilotKit starter writes it as
+English in a system prompt:
 
 ```
 - Todos: enable app mode first, then manage todos.
@@ -53,16 +53,14 @@ then { Moding/focus: [ surface: canvas ] }
 ```
 
 A concept with one action and two state relations is worth naming exactly when
-something else needs to refer to it. This is that case, twice over since
-2026-09-11: the offer is a second surface beside the canvas, and
+something else needs to refer to it. This is that case, twice over: the offer is a second surface beside the canvas, and
 [`AnIssuedQuoteIsShown`](../syncs/propagation.md#an-issued-quote-is-shown)
 gives it the viewer's attention when a quote is issued, whichever party asked.
 
 ## What is not a surface
 
-The chat was a `Moding` surface until 2026-09-11, when the layout adopted the
-sibling prototype's chat geometry (`conv-pro-conf`, its *chat surface* spec):
-the conversation sits beside the artifact panel, floats over it, takes the
+The chat is not a `Moding` surface. The layout takes the sibling prototype's
+chat geometry (`conv-pro-conf`, its *chat surface* spec): the conversation sits beside the artifact panel, floats over it, takes the
 whole surface, or is put away, and the person switches between those from one
 control. That geometry is not a surface here, for two reasons.
 
@@ -71,26 +69,26 @@ viewer's attention, and a rule may move it — a tool call brings the canvas
 forward, an issued quote brings the offer. How wide the transcript is drawn is
 the person's alone: no rule, tool call or card click reaches it, it is not
 remembered across a reload, and the app never opens anyone in a transcript.
-Keeping it in the concept would have let `TheCanvasIsShownBeforeItChanges`
+Keeping it in the concept would let `TheCanvasIsShownBeforeItChanges`
 decide the width of somebody's chat, which is not what the rule is about.
 
-Second, the two were conflated. With `chat` a surface, *focus the canvas*
-meant both *put the specification on the panel* and *shrink the conversation
-to half*, and the toggle that offered `chat` was really a fourth geometry
-under another name. Pulled apart, `Moding` holds `canvas` and `quote`, the
+Second, the two would be conflated. With `chat` a surface, *focus the canvas*
+would mean both *put the specification on the panel* and *shrink the
+conversation to half*, and a toggle that offered `chat` would really be a
+fourth geometry under another name. Kept apart, `Moding` holds `canvas` and `quote`, the
 canvas is always mounted, and the chat's position is view state in
 `src/components/example-layout/chat-surface.tsx`.
 
-What this costs: the rule now guarantees that the canvas is the artifact on
+What this costs: the rule guarantees that the canvas is the artifact on
 the panel, not that the panel is in view. A person who has given the chat the
 whole surface and then asks the assistant for a hospital lift sees the change
 when they come back. The sibling prototype takes the same position and states
 it as a principle — user-invoked, one click back, never the app's choice.
 
-Note what changed and what did not. The concept is untouched by the move from a
-todo list to a configurator, and so is the rule's shape; only the tool named in
-the `when` is different. That is the reusability the method claims for
-concepts, observed rather than asserted.
+Note what is shared. The starter's todo list and this configurator use the
+same concept and the same rule shape; only the tool named in the `when`
+differs. That is the reusability the method claims for concepts, observed
+rather than asserted.
 
 ## See also
 

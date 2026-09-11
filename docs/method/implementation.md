@@ -106,26 +106,9 @@ The layout follows §5.2.1, on the agent side, in Python:
 | `src/engine/` — provided, untouched | `agent/engine/` — the log, flows, provenance, and the dispatcher |
 | `src/main.ts` — discovers concepts, wires syncs | `agent/wiring.py`, which also reads the catalogue in |
 
-Three departures worth naming, all deliberate.
+_The engine has no DSL._ It provides the log, the flow token, the provenance edge and the once-only guarantee; a rule is a function, not a parsed string. The `when`/`where`/`then` notation lives in [`../syncs/`](../syncs/README.md). This is the only place where a reader has to hold two representations of one thing in their head, and it is the cost of not building a matcher.
 
-_Python, not TypeScript._ The [earlier analysis](../conceptual-model.md)
-recorded this as an open decision and leaned TypeScript, on the grounds that
-the endpoint has to exist anyway and the UI is the more frequent caller. The
-solver settled it the other way: `Constraining` is the largest concept and z3's
-Python binding is the reference one. MSM §5.2 is explicit that the idiom is a
-convention rather than a language feature — a class whose methods take and
-return dicts satisfies it exactly — so nothing was given up but familiarity.
-
-_The engine has no DSL._ It provides the log, the flow token, the provenance
-edge and the once-only guarantee; a rule is a function, not a parsed string. The
-`when`/`where`/`then` notation lives in [`../syncs/`](../syncs/README.md). This
-is the only place where a reader has to hold two representations of one thing
-in their head, and it is the cost of not building a matcher.
-
-_Reads are a fourth thing._ `agent/views.py` composes concept state and the
-arithmetic each concept declares over its own into the shape the canvas needs.
-It invokes nothing and appears in no rule. WYSIWID §6.4 puts it there — "reads
-are handled by client-driven querying capabilities" — and the alternative,
+`agent/views.py` composes concept state and the arithmetic each concept declares over its own into the shape the canvas needs. It invokes nothing and appears in no rule. WYSIWID §6.4 puts it there — "reads are handled by client-driven querying capabilities" — and the alternative,
 making the total an action, would have put *compute the total* in the log as
 though somebody had performed it.
 
@@ -148,9 +131,9 @@ edges directly: *you asked for this*, *the assistant asked for this*, *adopted
 from a proposal* are three different `via` values on the same action, and no
 field anywhere records which one applied.
 
-That is the property the starter could not have had. Its one write action was
-`agent.setState`, called by both actors with the same payload shape, so no log
-could distinguish completing a task from renaming one.
+That is the property the CopilotKit starter cannot have. Its one write action
+is `agent.setState`, called by both actors with the same payload shape, so no
+log can distinguish completing a task from renaming one.
 
 The log is also the only thing kept between runs. `agent/journal.py` appends
 every record after the boot mark to a file as it is committed, and at the next

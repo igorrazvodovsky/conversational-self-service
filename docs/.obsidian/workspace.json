@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "conceptual-model.md",
+                "file": "ui.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "conceptual-model"
+              "title": "ui"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "conceptual-model.md",
+                "file": "ui.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -174,8 +174,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300,
-    "collapsed": true
+    "width": 300
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -190,33 +189,33 @@
   },
   "active": "83ee5d50279fef92",
   "lastOpenFiles": [
+    "conceptual-model.md",
+    "method/synchronization.md",
+    "concepts/specifying.md",
+    "concepts/README.md",
+    "method/README.md",
+    "concepts/quoting.md",
+    "concepts/profiling.md",
+    "concepts/naming.md",
+    "method/misalignment.md",
+    "method/implementation.md",
+    "concepts/copiloting.md",
+    "concepts/conversing.md",
+    "concepts/asserting.md",
+    "method/conduct.md",
+    "method/concept.md",
+    "method/boundaries.md",
+    "concepts/binding.md",
+    "syncs/binding.md",
     "concepts/framing.md",
     "concepts/showing.md",
-    "syncs/binding.md",
-    "concepts/binding.md",
-    "concepts/specifying.md",
     "concepts/stipulating.md",
-    "concepts/naming.md",
-    "concepts/profiling.md",
-    "concepts/quoting.md",
     "ui.md",
     "method/objects.md",
-    "conceptual-model.md",
-    "concepts/asserting.md",
     "concept-relations.md",
     "concept-relations.canvas",
     "concepts/footprinting.md",
     "concepts/moding.md",
-    "concepts/copiloting.md",
-    "syncs/gestures.md",
-    "concepts/tasking.md",
-    "syncs/conduct.md",
-    "syncs/propagation.md",
-    "syncs/seeding.md",
-    "syncs/README.md",
-    "concepts/pricing.md",
-    "concepts/cataloguing.md",
-    "concepts/constraining.md",
     "syncs",
     "concepts",
     "method"

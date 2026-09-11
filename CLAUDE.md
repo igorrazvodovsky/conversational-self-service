@@ -12,10 +12,6 @@ This repository is one artefact of a discovery case — the case's discovery
 represented in code — and its concept notes are downstream of the case's
 catalogue. The case: `~/Library/CloudStorage/Dropbox/discovery/Projects/Conversational self-service/`
 (an Obsidian vault; start at `Prototype plan.md`, then `Ontology/Concept catalogue.md`).
-The rule of precedence and the reading of this code against that catalogue are
-[`docs/conceptual-model.md` §9](docs/conceptual-model.md#9-against-the-cases-catalogue),
-which also lists what to change next, in order. A divergence from the catalogue
-is a finding to classify there, not a fork.
 
 The application is grounded in two papers on concept design — _Making Software
 Meaningful_ (MSM) and _What You See Is What It Does_ (WYSIWID) — plus Jackson's
@@ -24,7 +20,6 @@ _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 - [`docs/method/`](docs/method/README.md) — the vocabulary: individuals, values, actions, facts, concepts, synchronizations, and how they map to code
 - [`docs/concepts/`](docs/concepts/README.md) — the twelve concepts, specified
 - [`docs/syncs/`](docs/syncs/README.md) — the twenty-six rules, the only way two concepts interact
-- [`docs/conceptual-model.md`](docs/conceptual-model.md) — the alignment analysis, including §8 on what is wrong with this design
 
 **The notes are the source, and the code is generated from them.** WYSIWID
 §7.3: the prompt for the implementation is exactly the concept design spec. If
@@ -50,8 +45,8 @@ the catalogue.
 
 Everything else in the design follows from taking that seriously:
 
-- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1, built 2026-09-11: the canvas gains a *required* section above the three, and the proposal's basis of design renders from it. The person does the mapping by picking an option while answering a clause; the model cannot write or answer one.
-- [`Asserting`](docs/concepts/asserting.md) records assertions a party made — the case's name for it; it was `Specifying` until 2026-09-08. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
+- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the canvas has a *required* section above the three, and the proposal's basis of design renders from it. The person does the mapping by picking an option while answering a clause; the model cannot write or answer one.
+- [`Asserting`](docs/concepts/asserting.md) records assertions a party made, in the model's vocabulary — the case's name for it. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
 - [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. Nothing reads it yet; the point is that the log's first entry for a turn is the person's words rather than the model's tool call.
 - [`Constraining`](docs/concepts/constraining.md) holds the rules and answers what they still allow. z3 lives here.
 - An assertion that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
@@ -203,11 +198,9 @@ rewrites `globals.css` and silently drops the `@theme inline` bridge, the
 1. **The specification comes first.** Argue the change in `docs/concepts/` or `docs/syncs/`, then regenerate.
 2. **Pull apart rather than add.** MSM §5.1.1's repair for conflation is separation, and `worktree` is the model.
 3. **State permissions, never prohibitions.** A prohibition is a permission you decline to write.
-4. **Say what is wrong.** [`docs/conceptual-model.md`](docs/conceptual-model.md) §8 lists this design's own defects, and keeping that section current is what makes a later substitution visible.
 
 ## When extending this
 
 - Write the concept in [`docs/concepts/`](docs/concepts/README.md) first. Check it against the three [bad smells](docs/method/objects.md#bad-smells) — the cheapest is whether the purpose needs an "and".
 - Write the rules in [`docs/syncs/`](docs/syncs/README.md). If two concepts need to know about each other, they do not; a rule does.
 - Then generate. One concept's specification is the whole context for generating it.
-- Re-run [`docs/conceptual-model.md`](docs/conceptual-model.md) §3 against the change with the `concept-audit` skill, and say whether a verdict moved.

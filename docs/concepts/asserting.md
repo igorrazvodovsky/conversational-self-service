@@ -1,10 +1,8 @@
 # Asserting
 
-A domain [concept](../method/concept.md) of the elevator configurator. Until
-2026-09-08 this concept was called `Specifying`; the name moved because the
-case's catalogue already has a `Specifying` that holds the opposite thing — a
-requirement in the *buyer's* words, a clause — and this concept holds a value
-in the *model's*. See [Against the case's catalogue](../conceptual-model.md#9-against-the-cases-catalogue).
+A domain [concept](../method/concept.md) of the elevator configurator. It
+holds a value in the *model's* vocabulary; [Specifying](specifying.md) holds
+the opposite thing — a requirement in the *buyer's* words, a clause.
 
 ```
 concept Asserting [Spec, Variable, Option, Party]
@@ -63,8 +61,7 @@ operational principle
 
 ## Why this is separate from Constraining
 
-This is the design's central claim, and it is the repair of the failure the
-starter exhibited.
+This is the design's central claim.
 
 A configurator has two kinds of assignment in it, and they mean opposite
 things. _This is a hospital_ is something a person asserted. _The car is
@@ -92,11 +89,10 @@ assertion gives way is a question for the person, put to them through
 
 The case's catalogue reached the same distinction from the other side. Its
 `Configuring.holds` — the existing product, read from the sources — is one
-relation for a value a party `set` and a value `solve` filled in, and the
-catalogue had folded the assertion into `Binding` as if a committed value only
-made sense once it answered a clause. This concept is now in the catalogue
-under this name, on the product side of the seam, depending on `Configuring`
-and on nothing else.
+relation for a value a party `set` and a value `solve` filled in. This concept
+is in the catalogue under this name, on the product side of the seam,
+depending on `Configuring` and on nothing else, so that a committed value makes
+sense before it answers a clause.
 
 ## What this concept is not
 
@@ -104,13 +100,13 @@ _A clause._ `asserted` maps a variable to an option: the assertion is already
 in the model's vocabulary. Nothing here says *what the value is for*.
 [Specifying](specifying.md) holds that — a requirement in the buyer's words,
 with a discipline and a negotiability — and [Binding](binding.md) holds the
-relation `answers` between a choice and the clause it satisfies. Both exist
-since 2026-09-11, the case's slice 1, and this concept now holds the
-attribute-level assertion that a person's pick produces on its way to the
-solver, by [one rule](../syncs/binding.md#the-person-maps). An assertion made
-with no clause behind it — by the slice 0 gesture, or by the model — is still
-recorded here exactly as before, and the canvas says it answers nothing, which
-is the control inside the same build.
+relation `answers` between a choice and the clause it satisfies. Together
+they are the case's slice 1, and this concept holds the attribute-level
+assertion that a person's pick produces on its way to the solver, by
+[one rule](../syncs/binding.md#the-person-maps). An assertion made with no
+clause behind it — by the slice 0 gesture, or by the model — is recorded here
+the same way, and the canvas says it answers nothing, which is the control
+inside the same build.
 
 _Who decided, as state._ `assertedBy` records the party at the grain of the
 assertion — the person, or the model on the person's behalf. The three
@@ -118,11 +114,10 @@ sentences on the canvas (*you asked for this*, *the assistant asked for this*,
 *adopted from a proposal*) are still read off provenance edges, because they
 name the *rule* and not only the party, and a rule is what the log holds.
 
-## Why `prefer` left the specification
+## Why there is no `prefer`
 
-The previous specification had `prefer` beside `require`: a soft assertion,
-honoured where it can be and dropped where it cannot. It is not here. In the
-case's catalogue, hard-or-soft is a fact of the *clause* — `negotiability`,
+There is no soft assertion here — nothing honoured where it can be and dropped
+where it cannot. In the case's catalogue, hard-or-soft is a fact of the *clause* — `negotiability`,
 fixed, negotiable or left open — and reaches the solver through the mapping;
 an assertion has no strength because it has no clause to carry one. Whether the
 real solver accepts a soft constraint at all is a step 1 row in the case's

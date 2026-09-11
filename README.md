@@ -154,13 +154,6 @@ The main example is an elevator configurator: thirty-five variables, about two
 hundred options, fifty-four compatibility rules drawn from EN 81 and ASME
 A17.1, a price model and a carbon model, with z3 solving the constraints.
 
-Its design and the reasoning behind it are in [`docs/`](docs/) — start with
-[`docs/conceptual-model.md`](docs/conceptual-model.md). The short version:
-what a party **asserted** and what **follows** from it are kept apart, so the
-canvas can tell you which values you chose, which the rules forced and which
-rule forced them. The assistant can propose a completed specification and
-cannot adopt one; only you can.
-
 ## A2UI — Agent-to-User Interface
 
 This starter includes [A2UI](https://a2ui.org/specification/) support, allowing the agent to generate rich, interactive UI surfaces declaratively. Instead of returning plain text, the agent sends a JSON description of the UI it wants to render, and the frontend turns it into real components.

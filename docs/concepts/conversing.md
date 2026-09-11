@@ -1,10 +1,8 @@
 # Conversing
 
 A domain [concept](../method/concept.md) of the elevator configurator, taken
-from the case's catalogue rather than from this repository's own reading of the
-starter. It is the case's bootstrap concept, and the second of the two changes
-that turn this build into slice 0 of its
-[`Prototype plan`](../conceptual-model.md#9-against-the-cases-catalogue).
+from the case's catalogue rather than from this repository's own reading of its
+code.
 
 ```
 concept Conversing [Party]
@@ -41,18 +39,16 @@ message here and stops.
 ## Why it is worth a concept when nothing reads it
 
 A concept whose completions appear in no `when` looks like dead weight. It is
-not, and the reason is the whole point of building it now.
+not, and the reason is the whole point of it.
 
 The engine records every action with its actor and the rule that authorised
 it, so the trace can already answer *what did the assistant do, and under which
-permission*. What it could not answer was *what did the person say that the
-assistant did it about*. The message lived in the framework's chat thread, and
-the log's first entry for a turn was the model's tool call. The trace could
-therefore say `Asserting/assert [building_type:hospital] via
+permission*. What it cannot answer without this concept is *what did the
+person say that the assistant did it about*. The message would live only in the
+framework's chat thread, and the log's first entry for a turn would be the
+model's tool call. The trace could say `Asserting/assert [building_type:hospital] via
 TheModelMayAssertAValue` and could not say that the person had said "it's a
-hospital, six storeys" a moment earlier — which is the record the case
-[booked as the cost](../conceptual-model.md#9-against-the-cases-catalogue) of
-having no concept for the model's reading of an utterance.
+hospital, six storeys" a moment earlier.
 
 With this concept the turn reads in order, and the reading is legible as a gap
 rather than as an absence:
@@ -124,10 +120,7 @@ carried straight to `Asserting/assert` by
 [`APersonAssertsAValue`](../syncs/gestures.md), and `Conversing` never sees it.
 So the property this concept was built for — the log's first entry for a turn
 is what the person said — holds for a typed turn and not for a click, which is
-how most values here actually get set. It is
-[written up as a finding](../conceptual-model.md#9-against-the-cases-catalogue)
-in §9.3 rather than repaired, because repairing it is the chain §9.4 item 4
-builds.
+how most values here actually get set. 
 
 ## See also
 

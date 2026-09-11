@@ -32,8 +32,7 @@ operational principle
 A frame is a value the canvas interprets, as a facet is for
 [Showing](showing.md). The concept holds it and decides nothing about what
 it selects; that is the read side's, in `agent/views.py`. A lens with no
-frame shows everything, which is the canvas as it was before this concept
-existed.
+frame shows everything, which is the canvas without this concept.
 
 ## The one frame built, and why it is that one
 
@@ -48,9 +47,9 @@ it all along without a place to show the answer.
 
 The read behind it is [Constraining](constraining.md)'s `following`, which
 names the assertions a settled value rests on, and its `narrowing`, which
-names the assertions that ruled an option out. Neither needed a new solver
-call for the settled half: the core that settles a value already contained
-the assumptions as well as the rules, and only the rules were being kept.
+names the assertions that ruled an option out. Neither needs a new solver
+call for the settled half: the core that settles a value already contains
+the assumptions as well as the rules.
 
 ## What else a frame could be
 

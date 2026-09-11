@@ -2,9 +2,7 @@
 
 A domain [concept](../method/concept.md) of the elevator configurator, taken
 from the case's catalogue, where it is the *defining* concept — the node the
-product's purpose hangs on. Built on 2026-09-11 as the second half of the
-case's slice 1, with [Specifying](specifying.md) as the first. See
-[Against the case's catalogue](../conceptual-model.md#9-against-the-cases-catalogue).
+product's purpose hangs on.
 
 ```
 concept Binding [Spec, Requirement, Offering, Value, Party]
@@ -87,32 +85,6 @@ operational principle
                                          requirement: c ; value: kg1250 ]
   then choices of sel is empty
 ```
-
-## The cheapest way to say it
-
-A shopping cart whose every line remembers *why it is in the cart*. A cart
-holds values against an offering; this concept holds values against an
-offering *and* against a requirement, and the second relation, `answers`, is
-what the case's whole direction is about.
-
-## Why this is a third concept and not a column on Asserting
-
-[Asserting](asserting.md) already holds a value with who asserted it, and it
-would cost one relation — `answers: Spec -> Variable -> Clause` — to record
-what each asserted value is for. That is the object-oriented move, and it was
-declined for the reason [the objects piece](../method/objects.md) gives: the
-column would make `Asserting` depend on a clause existing, and `Asserting` is
-the one concept a wizard can be given with no clause in sight. The case's
-slice 0 is exactly that build, and it has to stay buildable.
-
-There is a second reason, which is the catalogue's. The value in a choice and
-the value in an assertion are not the same kind of thing, even when they are
-spelled the same. A choice is *the buyer's*: it answers their clause, and in
-the working composition it is a value in whatever vocabulary the buyer used,
-mapped to attributes by [`Mapping`](#the-value-is-the-option-and-that-is-a-finding).
-An assertion is *whoever mapped it*: the attribute-level fact the solver is
-given. Both travel, and both are attributed, and a handover that had only one
-of them would have lost either the reason or the setting.
 
 ## The value is the option, and that is a finding
 

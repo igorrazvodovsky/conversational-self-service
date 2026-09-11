@@ -6,9 +6,7 @@ configurator built on the CopilotKit + LangGraph starter.
 Under the method these notes are not documentation of the code. They are the
 source the code is generated from — see
 [From meaning to code](../method/implementation.md#generation). The rules by
-which they interact are in [`../syncs/`](../syncs/README.md), and how far the
-implementation answers to either is
-[the alignment analysis](../conceptual-model.md).
+which they interact are in [`../syncs/`](../syncs/README.md).
 
 Notes come at two tiers. Concepts we own carry a full WYSIWID §4 specification.
 The one concept naming third-party machinery carries a purpose and a statement
@@ -62,21 +60,18 @@ real claim — that what a person asked for and what follows from it are two
 kinds of fact, and that a configurator storing them in one field cannot answer
 the question a person most often has.
 
-[Specifying](specifying.md) and [Binding](binding.md) are the case's slice 1,
-built 2026-09-11: the requirement in the buyer's words, and the relation from
+[Specifying](specifying.md) and [Binding](binding.md) are the case's slice 1:
+the requirement in the buyer's words, and the relation from
 a value to the clause it answers. Between them and Asserting the same value
-appears twice, once as a choice and once as an assertion, and
-[Binding's note](binding.md#why-this-is-a-third-concept-and-not-a-column-on-asserting)
-says why that is not a duplication.
+appears twice, once as a choice and once as an assertion.
 
 [Cataloguing](cataloguing.md) is the shortest route to why concepts are not
 entities: it takes one JSON object apart into four concepts' facts and says
 what each of the pieces is for.
 
-[Conversing](conversing.md) is the one concept here taken from the case's
-catalogue rather than from a reading of the starter, and the only one nothing
-reads from. Its note says why a concept whose completions appear in no `when`
-is worth having.
+[Conversing](conversing.md) is, like Specifying and Binding, taken from the
+case's catalogue, and it is the only concept nothing reads from. Its note says
+why a concept whose completions appear in no `when` is worth having.
 
 [Quoting](quoting.md) is where the configuration stops being the point. The
 end of a configuration is an offer somebody can accept, and its note says why
@@ -105,8 +100,7 @@ change of domain. Seven user-meaningful task actions were implemented as one
 whole-list setter; the equivalent mistake here would be a single
 `configure(spec)` taking the whole assignment, and it is the mistake
 [Asserting](asserting.md#why-this-is-separate-from-constraining) exists to
-make impossible. The history is in
-[the alignment analysis](../conceptual-model.md#what-this-replaced).
+make impossible.
 
 ## On "In the code" sections
 
@@ -136,7 +130,7 @@ responsible for a conflict are an output argument of the failing case of
 _Versioning or comparing a specification._ There is one specification per
 session. A configurator sold to anyone would need both, and each is a concept
 rather than a field; leaving them out is a scope decision, not a claim that
-they do not exist. [Quoting](quoting.md) now holds the one snapshot the
+they do not exist. [Quoting](quoting.md) holds the one snapshot the
 application cannot do without, and its note says why that is not a version;
 [Naming](naming.md) gives the one specification a title and a site, which
 makes it findable and not comparable.
@@ -151,6 +145,6 @@ catalogue has it on the horizon, depending on `Binding`, and
 [Quoting](quoting.md#why-commit-is-here-and-not-a-concept-of-its-own) says why
 accepting a fixed offer is not the same concept.
 
-_Chart components, suggestion pills, and conversation itself._ Reasons in
+_Chart components and suggestion pills._ Reasons in
 [Concept](../method/concept.md#what-is-deliberately-not-a-concept) and
 [Copiloting](copiloting.md#two-deliberate-exclusions).

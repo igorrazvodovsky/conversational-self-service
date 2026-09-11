@@ -31,9 +31,9 @@ when  { Asserting/prefer: [ spec: ?s ; variable: ?v ; option: ?o ]
 then  { Constraining/incline: [ spec: ?s ; variable: ?v ; option: ?o ] }
 ```
 
-`Asserting` has no `prefer`. The action left the specification when the concept
-took the case's name — strength is a fact of a *clause*, and this build holds no
-clauses — so no completion can ever match this rule's `when`, and
+`Asserting` has no `prefer`. Strength is a fact of a *clause* —
+[Specifying](../concepts/specifying.md)'s `negotiability` — and not of an
+assertion, so no completion can ever match this rule's `when`, and
 `Constraining/incline` is an action nothing invokes.
 
 Both are kept anyway, and deliberately. Whether the real configurator's solver
@@ -41,8 +41,8 @@ accepts a soft constraint at all is one of the **[unknown]**s in step 1 of the
 case's `Prototype plan`, and it is not this repository's to answer: the z3
 stand-in here obviously supports one, which is evidence about z3 and not about
 Tacton. Deleting the pair would throw away a working answer to a question that
-has not been asked yet; leaving it wired to `prefer` would have kept an action
-in `Asserting` that the specification no longer has. So it stays as a dead rule
+has not been asked yet; giving `Asserting` a `prefer` to reach it would put
+back an action its specification does not have. So it stays as a dead rule
 with the reason written down, which is the honest third option and is why this
 section exists rather than a deletion.
 
@@ -94,8 +94,8 @@ which requests to stop holding is a question for a rule.
 
 The inverse of `ANewSpecificationIsGivenToTheSolver`, and it exists for the
 reason MSM §5.1.2 gives: an action whose inverse is missing is a trap, and
-`discard` was an action of [Asserting](../concepts/asserting.md) that no
-stimulus reached and no rule followed. It is now reachable by a gesture
+without it `discard` would be an action of [Asserting](../concepts/asserting.md)
+with its consequence for the solver unwritten. It is reachable by a gesture
 ([Gestures](gestures.md)) and its consequence for the solver is a rule, which
 is where a consequence belongs.
 

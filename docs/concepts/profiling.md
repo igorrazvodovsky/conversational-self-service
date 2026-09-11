@@ -1,7 +1,7 @@
 # Profiling
 
-A domain [concept](../method/concept.md) of the elevator configurator. Built
-on 2026-09-11 because a quote is addressed, and until then nobody here had a
+A domain [concept](../method/concept.md) of the elevator configurator. It
+exists because a quote is addressed, and nothing else here gives a party a
 name.
 
 ```
@@ -42,10 +42,6 @@ the next, and a form on the canvas is filled in one field at a time. An
 hold a draft the concept does not know about, which is the shared-blob pattern
 this repository exists to avoid. So each call carries what it carries, and the
 profile is whatever has been said so far.
-
-There is no inverse, and that is a finding rather than an oversight: a person
-can overwrite a detail and cannot erase one. MSM §5.1.2's asymmetry test fails
-here, recorded in [§8](../conceptual-model.md#what-is-wrong-with-this-one).
 
 ## Who the parties are
 

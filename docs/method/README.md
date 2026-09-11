@@ -47,8 +47,7 @@ Four phenomena are not enough structure for a system with a hundred actions, so 
 ## Applying it here
 
 The concepts of this application are in [`../concepts/`](../concepts/) and the
-rules between them in [`../syncs/`](../syncs/). How far the code answers to
-either is [the conceptual model](../conceptual-model.md).
+rules between them in [`../syncs/`](../syncs/).
 
 The notes come first and the code is generated from them. Where the two have
 drifted, the note is right and the code is wrong — that is what it means for a

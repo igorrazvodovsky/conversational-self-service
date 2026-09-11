@@ -1,9 +1,6 @@
 # Naming
 
-A domain [concept](../method/concept.md) of the elevator configurator. The
-one [§8](../conceptual-model.md#what-is-wrong-with-this-one) called for under
-*one specification, no name*, built on 2026-09-11 because a quote has to say
-what job it is for.
+A domain [concept](../method/concept.md) of the elevator configurator. 
 
 ```
 concept Naming [Item]

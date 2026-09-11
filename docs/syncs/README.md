@@ -87,7 +87,7 @@ it.
 ## Seeding
 
 The catalogue arrives as a file and leaves as facts in six concepts — the
-seller's profile and terms among them, since 2026-09-11. Which of those are
+seller's profile and terms among them. Which of those are
 reached by a rule, and which by the wiring at boot, is a question about what
 depends on what — worked through in [Seeding](seeding.md).
 
@@ -170,8 +170,8 @@ actions — is the one a rule can break on its own.
 Every `then` above names an action of a concept specified in
 [`../concepts/`](../concepts/README.md). None targets a setter, a React state
 hook, or a field of an agent state object. That is the difference from the
-starter this application replaces, where the single write action was
-`agent.setState` and a rule expressing it would have had to name it.
+CopilotKit starter, where the single write action is `agent.setState` and a
+rule expressing it would have to name it.
 
 ## See also
 

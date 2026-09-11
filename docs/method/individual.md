@@ -38,7 +38,7 @@ In code, an individual is a UUID (MSM §5.2). Not an object with methods: "an ob
 | Rule | its catalogue id — `R15` (`agent/concepts/constraining.py`) | Genuine. Its `because` sentence is a [fact](fact.md) about it, not part of it. |
 | Specification | one per running instance, `SPEC` (`agent/wiring.py`) | Genuine, and deliberately impoverished — see below. |
 | Action occurrence | a UUID on every log record (`agent/engine/log.py`) | Genuine. This is what provenance edges point at. |
-| Flow | `flow-…`, minted per root action (`agent/engine/log.py`) | Genuine, and the thing the starter had no equivalent of. |
+| Flow | `flow-…`, minted per root action (`agent/engine/log.py`) | Genuine, and the thing the CopilotKit starter has no equivalent of. |
 | Grid | `today`, `decarbonising` (`agent/wiring.py`, `GRIDS`) | Genuine. Two carbon intensities the same specification ranks differently against. |
 | Retraction candidate | none — it is a value | Correctly *not* an individual. Two candidates naming the same variable and option are the same candidate, so identity would do no work. See [Value](value.md). |
 | Thread, message | SDK-internal | Genuine, opaque to this codebase. |

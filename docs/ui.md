@@ -47,7 +47,7 @@ Since shadcn 4.19 the registry's components import `cn` from shadcn's own `cn`
 package instead of from `@/lib/utils`. The installed files keep that import, so
 they stay identical to what `add` writes, and `src/lib/utils.ts` re-exports the
 same function, so app code and primitives merge classes with one engine.
-`clsx` and `tailwind-merge` are no longer dependencies.
+`clsx` and `tailwind-merge` are not dependencies.
 
 ## What each surface is made of
 
@@ -104,10 +104,10 @@ during the hydration pass shifts the `useId` values of the whole page.
 
 The conversation list is the other `conv-pro-conf` carry-over: a menu at the
 left of the chat's header (`conversation-menu.tsx`), rows labelled by start
-time and grouped by day, with no navigation column beside the split. It
-replaced `CopilotThreadsDrawer`, which would not fetch until the runtime
-reported a license status. Only CopilotKit Intelligence reports one, so without
-`CPK_INTELLIGENCE_API_KEY` the drawer showed *Loading threads…* forever. The
+time and grouped by day, with no navigation column beside the split. It is
+used instead of `CopilotThreadsDrawer`, which does not fetch until the runtime
+reports a license status. Only CopilotKit Intelligence reports one, so without
+`CPK_INTELLIGENCE_API_KEY` the drawer shows *Loading threads…* forever. The
 menu reads the same `GET /threads` through `useThreads`, which needs no
 license. Without Intelligence that list is the in-memory runner's: it ends
 with the Next.js process, and nothing pushes changes to the client, so the page
@@ -120,19 +120,19 @@ configurator is one engine, not one per thread.
 - `InputGroup` fades itself whole with `has-disabled:opacity-50`, which is
   meant for a disabled field. In the composer the disabled element is the send
   button on an empty field, or the attach button while dictating, and the
-  whole composer greyed out. The composer takes the fade back on the group
+  whole composer would grey out. The composer takes the fade back on the group
   (`has-disabled:opacity-100`), and both buttons keep the library's plain
   `disabled`.
 - The A2UI schema still accepts colours from the agent (`PieChart`'s and
   `BarChart`'s `color`, `FlightCard`'s `statusColor`), and the renderers ignore
   them. The chart tokens and badge variants stand in, so an agent-drawn
   dashboard doesn't bring its own palette.
-- The old status colours (amber for a question, red for an unmet assertion,
-  violet for the model in the log, green for a trend going up) have no zinc
-  equivalent. They map onto shadcn's variants: `destructive` for what can't be
-  built, and `Badge` variants for actor, trend and status.
-- Nothing is smaller than 12px. The canvas used 10px and 11px labels; they are
-  `text-xs` now.
+- Status has no colour of its own — no amber for a question, red for an unmet
+  assertion, violet for the model in the log or green for a trend going up —
+  because zinc has no equivalent. It maps onto shadcn's variants:
+  `destructive` for what can't be built, and `Badge` variants for actor, trend
+  and status.
+- Nothing is smaller than 12px: the canvas's labels are `text-xs`.
 
 ## What is not shadcn, and why
 

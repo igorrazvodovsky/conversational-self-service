@@ -11,7 +11,7 @@
  * Polling covers only the other root actor. While the model is working, its
  * actions land in the same log and the same state, and nothing in the
  * CopilotKit state channel would tell us — by design: state lives behind the
- * actions now, not in the channel. See docs/conceptual-model.md.
+ * actions now, not in the channel.
  */
 
 import { useAgent } from "@copilotkit/react-core/v2";

@@ -72,7 +72,7 @@ That list is this concept's `shown`, and the three writers are what make it a
 concept rather than a component's state. The defaults are seeded at boot, as
 [Moding](moding.md)'s surfaces are; a person shows or hides a facet from a
 menu on the canvas; and a rule lets the model do the same when asked — *show
-me the price next to each option* is a request the assistant can now act on
+me the price next to each option* is a request the assistant can act on
 rather than answer with a recital. See [Gestures](../syncs/gestures.md) and
 [Conduct](../syncs/conduct.md).
 
@@ -131,11 +131,11 @@ anyone has touched the menu:
 | `answers` | on an asserted value, the requirement it answers | shown |
 | `how` | on an asserted value, who asserted it and by what route | shown |
 
-The defaults are the canvas as it was before this concept existed, so a
-person who never opens the menu sees what they saw. The three that are on
+The defaults are the canvas without this concept, so a person who never
+opens the menu sees the canvas unchanged. The three that are on
 by default are the ones a first-time buyer needs to read the canvas at all;
 the four that are off are the ones a dealer asked for and a buyer would not.
-Which of those two readings holds is what the log now records — the paper's
+Which of those two readings holds is what the log records — the paper's
 figure 22, taken off `Showing/show` and `Showing/hide` instead of a study.
 
 `excluded` is the one facet that costs something to read: it is the

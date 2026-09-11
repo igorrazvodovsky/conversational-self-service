@@ -85,10 +85,11 @@ distinguishes the two is the provenance edge, which is what the canvas reads.
 The model asking for a quote is the model computing a number on the person's
 behalf, like proposing a completion; what it cannot do is the next thing.
 
-`TheCanvasIsShownBeforeItChanges` is the rule the starter wrote as the sentence
-`Todos: enable app mode first, then manage todos` in a system prompt. It is
-ordinary application logic — a person who cannot see the canvas watches nothing
-happen — and it was enforced by asking a language model nicely. Here it fires
+`TheCanvasIsShownBeforeItChanges` is the rule the CopilotKit starter writes as
+the sentence `Todos: enable app mode first, then manage todos` in a system
+prompt. It is ordinary application logic — a person who cannot see the canvas
+watches nothing happen — and there it is enforced by asking a language model
+nicely. Here it fires
 because a value was asserted, or the canvas reshaped, whatever the model does
 or does not remember about it.
 
@@ -98,7 +99,7 @@ or does not remember about it.
 `TheModelMayShowAFacet` and `TheModelMayHideAFacet` are the first permissions
 the model holds on exactly the terms the person does, and the only ones that
 change no fact of the specification. *Show me the price next to each option*
-is a request the assistant can now act on rather than answer with a recital,
+is a request the assistant can act on rather than answer with a recital,
 and *the canvas is too busy* has an act to go with it. Both reach
 [Showing](../concepts/showing.md), whose facets name facts other concepts
 already hold, so the grant costs nothing: the model can choose which of the
@@ -156,10 +157,10 @@ authority of *the assistant worked this out* and the content of a state nobody i
 in.
 
 So a proposal lasts exactly as long as the state it assumed. Ask again and you
-get one for the state you are actually in. This became reachable only when a
-conflict and a completion could be open together — before that, the second
-question destroyed the first, and destroying it was the only thing keeping this
-from happening.
+get one for the state you are actually in. The case arises because a conflict
+and a completion can be open together, as
+[Deciding](../concepts/deciding.md#why-a-request-names-the-question-and-not-its-subject)
+arranges.
 
 The `about` in the request is what keeps `AnAdoptedCompletionBecomesAssertions` and
 [`TheConcededAssertionIsWithdrawn`](propagation.md#when-assertions-cannot-hold-together)
@@ -238,8 +239,8 @@ _No rule lets the model state a requirement, or say what a value is for._ No
 [Binding](../concepts/binding.md) in its `then`. A clause is in the person's
 words and only the person writes one; which value answers it is the person's
 mapping, and only the person's pick reaches `Binding/propose`. The model may
-still assert a value with no clause behind it, as it always could, and the
-canvas says so beside the value. When the case's `Reading` arrives a model's
+assert a value with no clause behind it, and the canvas says so beside the
+value. When the case's `Reading` arrives a model's
 reading of an utterance will enter `Specifying` through a gate the person
 holds; until then the absence is the gate.
 
@@ -281,10 +282,10 @@ English.
 ## The tool names are ours
 
 `assert`, `withdraw`, `propose`, `introduce`, `entitle`, `quote`, `show`,
-`hide`, `frame`, `unframe`. Ten, against the starter's `manage_todos`, and
-the difference is the same difference [Tasking](../method/action.md) had: a
-log of the ten says what happened, and a log of the one says only that
-something did.
+`hide`, `frame`, `unframe`. Ten, against the CopilotKit starter's one
+`manage_todos`, and the difference is the one [Action](../method/action.md)
+draws: a log of the ten says what happened, and a log of the one says only
+that something did.
 
 The tool string and the Python function differ, and only in one direction:
 Python reserves `assert`, so `agent/tools.py` defines `assert_value` and passes

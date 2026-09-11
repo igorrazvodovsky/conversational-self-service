@@ -114,8 +114,8 @@ A financing factor of 1.25 is exactly as contested, and a customer paying cash
 is reckoning on a different basis rather than a wrong one. `Basis` is a type
 parameter for the same reason `Grid` is, and it costs one relation each.
 
-The catalogue seeds one basis, and that is the whole of the difference in
-practice today. What changes is that a second one is now expressible.
+The catalogue seeds one basis, so in practice there is one. What the
+parameter buys is that a second one is expressible.
 
 ## Why this is separate from Footprinting
 

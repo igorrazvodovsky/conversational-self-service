@@ -127,11 +127,11 @@ options are the same condition.
 
 ## Withholding an option is not only a fact about the range
 
-`withhold` used to return `[ variable ]` and say nothing about a specification
-that had already assumed the option, which left its promise — *no specification
-may settle on it again* — unkept for the one specification where it mattered
-most. `possible` and `settled` would also have gone stale, since neither is
-recomputed except by an action naming a specification.
+A `withhold` that returned only `[ variable ]` and said nothing about a
+specification that had already assumed the option would leave its promise —
+*no specification may settle on it again* — unkept for the one specification
+where it matters most. `possible` and `settled` would also go stale, since
+neither is recomputed except by an action naming a specification.
 
 So `withhold` gives up the assumptions that named the option and recomputes,
 and reports which specifications it did that to. Note what it does *not* do:
@@ -219,8 +219,8 @@ narrowing [ spec: Spec ; variable: Variable ; option: Option ] : set Variable
 For a settled value the corresponding question is answered by state rather
 than by a read. `following` records, beside `owing`, which of the
 specification's assumptions the settlement rests on: the core that settles
-a value names the assumptions as well as the rules, and until 2026-09-11
-only the rules were kept. Together `following` and `narrowing` are what
+a value names the assumptions as well as the rules, and both are kept.
+Together `following` and `narrowing` are what
 [Framing](framing.md) reads to narrow the canvas to what followed from one
 assertion.
 

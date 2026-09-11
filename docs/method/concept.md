@@ -27,7 +27,7 @@ That is a retraction naming the exact substitution, so it decides the question o
 ## Which source wins
 
 <a id="which-source-wins"></a>
-Three sources now describe this method, and they use three notations. A precedence rule, so this is not re-argued each time something new appears:
+Three sources describe this method, and they use three notations. A precedence rule, so this is not re-argued each time something new appears:
 
 _The source addressing the axis wins._
 
@@ -111,4 +111,3 @@ The discriminating question in every case: does it have a purpose you could stat
 - [Synchronization](synchronization.md) — the only way two concepts may interact
 - [Action](action.md) — what a concept is a partition of
 - [Objects](objects.md) — why the chunk is a purpose and not an entity
-- [The alignment analysis](../conceptual-model.md) — how the code measures up

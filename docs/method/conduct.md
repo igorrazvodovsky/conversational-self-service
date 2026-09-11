@@ -2,7 +2,7 @@
 
 The vocabulary for governing an actor that acts in your absence. MSM §5.3.
 
-This is the note the rest of the method needs in order to say anything useful about the model. [The alignment analysis](../conceptual-model.md#5-two-root-actors-and-what-each-may-do) names the problem: this application has two root actors, and one of them decides for itself which tools to call. §5.3 is the answer's shape.
+This is the note the rest of the method needs in order to say anything useful about the model. This application has two root actors, and one of them decides for itself which tools to call. §5.3 is the answer's shape.
 
 > An agent that has been granted authority over a user's files, email, calendar or experimental codebase acts in the user's absence. What it did, why it did so, and whether it had the right to do so must be answered from a record largely produced by the agent itself. Direct observation, which mediates most software use, is no longer available.
 
@@ -43,7 +43,7 @@ This is the part that solves a problem the [DSL](synchronization.md) raises and 
 
 The code-of-conduct framing dissolves it. You do not forbid the second draw; you decline to authorise it. An action reaches the log only by way of some synchronization ([the action log](implementation.md#the-action-log) invariant), so an action no rule invokes simply does not happen. A prohibition becomes the absence of a permission, and every rule can then be written in the positive form the DSL already has.
 
-The starter this replaced had five such rules written as prose in a system prompt. Four were permissions in disguise. The fifth was only ever hard because it was phrased as a ban, and it dissolved the moment it was restated as one.
+The CopilotKit starter has five such rules written as prose in a system prompt. Four are permissions in disguise. The fifth is hard only because it is phrased as a ban, and it dissolves the moment it is restated as one.
 
 ## Predictions, and what the trace becomes
 
@@ -94,7 +94,7 @@ can read a price and not set one, and cannot list or delist an option. Nothing
 tells it not to. An action reaches the log only by way of some synchronization,
 so an action no rule invokes does not happen — which is this section's move,
 [permission stated positively](#permission-is-stated-positively), doing the work
-a paragraph of English used to be asked to do.
+a paragraph of English would otherwise be asked to do.
 
 The practical difference is that the list is checkable. *Can the assistant
 change a price?* is answered by reading the `then` clauses of one file, not by

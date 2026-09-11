@@ -35,8 +35,8 @@ operational principle
 
 ## There is no `answer` action
 
-There was one, and it was a getter: it changed nothing and returned `matched`,
-which `ask` had already computed. WYSIWID §6.4 puts that on the read side of
+An `answer` would be a getter: it would change nothing and return `matched`,
+which `ask` has already computed. WYSIWID §6.4 puts that on the read side of
 the line, and [Pricing](pricing.md#the-total-is-a-read-and-here-is-the-arithmetic)
 makes the argument in full for the same reason — nobody performs *compute the
 total*, and nobody performs *answer* either. The act was `ask`; the records are
@@ -45,7 +45,7 @@ a read over `matched`.
 The line is whether the observation is something a person would recognise as an
 act. [`Constraining/complete`](constraining.md) also changes nothing and stays,
 because *work out the cheapest buildable lift* is a thing somebody does, the way
-`check` on a password is. `answer` is not, so it went.
+`check` on a password is. `answer` is not, so it is not an action.
 
 ## In the code
 

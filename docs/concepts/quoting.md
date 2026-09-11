@@ -6,7 +6,7 @@ name, with the actions `quote` and `commit` and the facts `from`, `issuedTo`,
 `amount`, `terms`, `committed` — but never wrote out, because writing it needs
 the product's API surface. This note writes it for the stand-in engine here, in
 the same way [Constraining](constraining.md) stands in for the catalogue's
-`Configuring`. See [Against the case's catalogue](../conceptual-model.md#9-against-the-cases-catalogue).
+`Configuring`. 
 
 ```
 concept Quoting [Item, Party, Terms]
@@ -80,15 +80,6 @@ what was true. Whether the working specification has since drifted from a quote
 is then a [read](#three-reads), a comparison between the frozen item and the
 live state, and not a fact anyone has to maintain.
 
-This makes a quote the first thing in this build that survives a change to the
-specification. [The alignment analysis](../conceptual-model.md) records *one
-specification, no revisions, no comparison* as a scope decision; a quote is a
-revision in the narrowest possible sense — a snapshot with a price — and it is
-also what makes a comparison possible, since two quotes can be read side by
-side. Neither `Revising` nor a comparison is built here; the point is that the
-first artefact a person actually wants out of a configurator needed the
-snapshot, and the snapshot is where it belongs.
-
 ## Why `commit` is here and not a concept of its own
 
 The catalogue has both `Quoting.commit` and a horizon concept `Agreeing`, and
@@ -99,11 +90,6 @@ changes underneath the agreement. A quote never changes; a new quote is a new
 quote. So `void` would be an action nothing could ever invoke, and a qualified
 acceptance — *yes, subject to the lead time being confirmed* — is exactly the
 thing `Agreeing` exists for and this concept does not attempt.
-
-What `commit` records is the narrow thing: the party the quote was issued to
-accepted it, as it stood, in time. That is what the catalogue's product does
-outside itself and what this build does on the canvas, which is a fact about
-software and is [recorded as one](../conceptual-model.md#9-against-the-cases-catalogue).
 
 ## Why the amount is frozen and the footprint is not
 
@@ -135,11 +121,6 @@ accepted is a trap for whoever issued it. The inverse costs what the original
 cost — one action, one date-free record — and it stops at the line an accepted
 offer draws: a committed quote cannot be revoked, because at that point it is no
 longer only an offer.
-
-The catalogue's `Quoting` has no `revoke`, and this is a divergence for the
-case to classify. Recorded in [§9.3](../conceptual-model.md#9-against-the-cases-catalogue)
-rather than argued here, because whether the real product lets a seller withdraw
-an issued quote is a fact about its API.
 
 ## Three reads
 
@@ -194,11 +175,9 @@ concept of their own, [Stipulating](stipulating.md), and the parties are
 held as a value.
 
 _A qualified acceptance._ See [above](#why-commit-is-here-and-not-a-concept-of-its-own).
-That is `Agreeing`, which depends on `Binding` — built since 2026-09-11 — and
-on conditions with owners and dates, which nothing here holds.
+That is `Agreeing`, which depends on `Binding` — built — and on conditions with owners and dates, which nothing here holds.
 
-_What the item contains._ Since the same day the value the issuing rule
-copies in carries the clauses of [Specifying](specifying.md) as they stood,
+_What the item contains._ The value the issuing rule copies in carries the clauses of [Specifying](specifying.md) as they stood,
 each with the option [Binding](binding.md) said answered it, beside the
 settled assignment. The proposal's basis of design renders from them. This
 concept sees none of it: `Item` is a type parameter, and a wider value is
@@ -209,11 +188,3 @@ parameters and cannot be constrained. The catalogue says `quote` requires
 `valid` and `priced`, and it does — in the `where` of the rule that issues one,
 which is the only place that can read [Constraining](constraining.md) and
 [Pricing](pricing.md) together.
-
-## See also
-
-- [Gestures](../syncs/gestures.md) — the three rules that reach this concept from a person
-- [Conduct](../syncs/conduct.md) — the one rule that reaches it from the model, and the one that does not exist
-- [Pricing](pricing.md) — where the amount and terms are read from
-- [Constraining](constraining.md) — where the item is read from
-- The case's catalogue: `~/Library/CloudStorage/Dropbox/discovery/Projects/Conversational self-service/Ontology/Concept catalogue/Quoting.md` and `Agreeing.md`

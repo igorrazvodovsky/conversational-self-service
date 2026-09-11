@@ -1,8 +1,8 @@
 # Stipulating
 
-A domain [concept](../method/concept.md) of the elevator configurator. Built
-on 2026-09-11, when the quote became a proposal: a real one is half
-conditions, and none of them was anywhere.
+A domain [concept](../method/concept.md) of the elevator configurator. It
+exists because a quote is a proposal, and a real proposal is half
+conditions.
 
 ```
 concept Stipulating [Basis, Variable]
@@ -60,7 +60,7 @@ operational principle
 
 `Basis` is the type parameter [Pricing](pricing.md#why-the-reckoning-is-a-basis-and-not-a-constant)
 introduced for *the terms on which somebody is being quoted*. A financing
-factor and a presumed term were the first two such terms; a payment schedule,
+factor and a presumed term are two such terms; a payment schedule,
 a warranty and a list of exclusions are more of the same kind, and they are
 kept apart from Pricing for the reason its note gives for keeping carbon
 apart: they do not compute the same way. A price is arithmetic over the

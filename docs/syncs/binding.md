@@ -24,17 +24,6 @@ then  { Specifying/close: [ spec: ?s ] ;
         Binding/abandon: [ selection: ?sel ] }
 ```
 
-One identifier, three concepts, and none of them knows the others exist. The
-catalogue's `BeginConfiguring` runs the other way — `Binding/begin` mints the
-selection and `Configuring/start` is given its identity — because there the
-specification comes first and the configuration follows. Here the boot's one
-root action is `Asserting/start`, as it was before either of these concepts
-existed, and the two rules above hang the new concepts off it rather than
-moving the root. That is a divergence in direction and not in shape, recorded
-in [§9.3](../conceptual-model.md#9-against-the-cases-catalogue); when the case's
-`Reading` arrives and the specification is opened by a person's first words,
-the root moves and these two rules are rewritten.
-
 ## A person answers a clause
 
 <a id="a-person-answers-a-clause"></a>
@@ -62,14 +51,6 @@ nobody has answered gets a `propose`, a clause already answered gets a
 `substitute` with `replaces` and a reason. Answering a clause with the value
 it already has fires neither, which is the ordinary meaning of a `where` that
 does not bind.
-
-This is the gesture [Asserting's note](../concepts/asserting.md) has been
-waiting for. The slice 0 gesture `assert` carries a variable and an option
-and reaches `Asserting/assert` directly; it is kept, so that a person can
-still set a value with no clause behind it, and the share of assertions that
-arrive that way against the share that arrive through `answer` is the
-comparison the case's `Prototype plan` says slice 1 is measured by. Nothing
-in this file prevents the first kind; it only makes the second kind possible.
 
 ## The person maps
 
@@ -174,8 +155,7 @@ unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
 
 The second is the plan's control number. A variable asserted with no clause
 behind it is a value in the model's vocabulary that answers nothing — which
-is every value in slice 0, and is what the *asserted* section of the canvas
-used to be entirely. The canvas now shows the clause beside the value where
+is every value in slice 0. The canvas shows the clause beside the value where
 there is one, and shows *answers nothing* where there is not, so the share is
 something a person can see rather than something a script has to count.
 

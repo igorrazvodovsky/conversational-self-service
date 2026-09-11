@@ -139,7 +139,7 @@ The stimulus does not come from the browser. A chat message posted as a second
 HTTP request would race the model's run, so the ordering the rule exists to
 establish would hold by luck; it is performed instead in `agent/hearing.py`,
 which runs before the model node of the graph, so the ordering is one the graph
-enforces. Three surfaces now perform a root action — a click (`webapp.py`), a
+enforces. Three surfaces perform a root action — a click (`webapp.py`), a
 tool call (`tools.py`) and a chat message (`hearing.py`) — and all three do the
 same nothing with it.
 
@@ -288,9 +288,9 @@ the canvas*. What follows from a click is a question for these rules, and
 keeping it a question for these rules is what lets the answer change without
 the browser being redeployed.
 
-The starter this replaces got the same thing wrong in the other direction: its
-frontend tool handlers called `setMode` directly (`useFrontendTool` →
-`setMode("app")`), so a model-initiated change reached component state without
+The CopilotKit starter gets the same thing wrong in the other direction: its
+frontend tool handlers call `setMode` directly (`useFrontendTool` →
+`setMode("app")`), so a model-initiated change reaches component state without
 passing through anything nameable. Two initiators, neither encapsulated.
 
 ## What a gesture is not allowed to be

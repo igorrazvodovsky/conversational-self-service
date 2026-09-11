@@ -59,13 +59,13 @@ stating precisely.
 write: `addMessage` / `setMessages`, `setState`, and `runAgent` /
 `connectAgent`. There is no method for invoking a named agent-side action.
 
-The starter's canvas therefore wrote through `setState` — a setter on a shared
-blob, called by both actors with the same payload shape, which is why no log of
-it could say what had happened. There was never a version of this in which the
-method's action layer lived inside the SDK, so the question was never how to
-reconcile two orientations but where to put the concepts.
+A canvas built on the SDK alone — the CopilotKit starter's is one — therefore
+writes through `setState`: a setter on a shared blob, called by both actors
+with the same payload shape, so no log of it can say what happened. The
+method's action layer cannot live inside the SDK, so the question is not how
+to reconcile two orientations but where to put the concepts.
 
-They went behind an endpoint we own, invoked as actions by both the UI and the
+They sit behind an endpoint we own, invoked as actions by both the UI and the
 model. That is WYSIWID §6.4's read/write split, which the paper prescribes for
 its own reasons: "Reads and writes are strictly separated: reads are handled by
 client-driven querying capabilities […] and writes are handled directly by the
@@ -77,9 +77,10 @@ rather than the state, and the system prompt says so. And the canvas polls
 while the model is working, because a change made through the action API is
 invisible to the state channel by construction.
 
-## Two deliberate exclusions
+## What is not here
 
-_Conversation gets no domain concept._ Submitted messages and returned prose are stimuli here because this application does nothing with a conversation beyond carrying it — it records no facts about messages and has no action over them. An application that threaded, searched or summarised its own conversations would need a `Conversing` concept it owned and specified; this one lacks the behavior to justify one.
+<a id="two-deliberate-exclusions"></a>
+_Conversation is not held here._ A submitted message is a stimulus, and a rule carries it into [Conversing](conversing.md), the domain concept that records what a party said. The assistant's replies are carried by the framework and recorded nowhere.
 
 _Suggestion pills are not a concept._ `useConfigureSuggestions` (`src/hooks/use-example-suggestions.tsx`) submits a message when clicked, so it is an affordance on an existing stimulus.
 
@@ -105,14 +106,8 @@ where: Hypothesizing.form (hypothesis, supports: change)
 then:  Editing.commit (change)
 ```
 
-The starter had five attempts at exactly that, written as prose in a system
-prompt to a model that might decline them. They are now rules, and the one that
-survived the change of domain unaltered — the canvas must be visible before the
-assistant changes it — is [`TheCanvasIsShownBeforeItChanges`](../syncs/conduct.md).
+The CopilotKit starter makes five attempts at exactly that, written as prose
+in a system prompt to a model that might decline them. Here they are rules, and
+the one that carries over to this domain unaltered — the canvas must be visible
+before the assistant changes it — is [`TheCanvasIsShownBeforeItChanges`](../syncs/conduct.md).
 
-## See also
-
-- [Two tiers of concept](../method/boundaries.md) — why this note stops where it does
-- [Synchronization](../method/synchronization.md) — flows root in this concept's stimuli
-- [Conduct](../syncs/conduct.md) and [Gestures](../syncs/gestures.md) — what each root actor may do
-- [The conceptual model](../conceptual-model.md#5-two-root-actors-and-what-each-may-do) — the alignment analysis
