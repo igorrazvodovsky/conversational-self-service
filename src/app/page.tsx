@@ -3,10 +3,10 @@
 import { ExampleLayout } from "@/components/example-layout";
 import { ConfiguratorCanvas } from "@/components/configurator";
 import { ConfiguratorProvider } from "@/components/configurator/provider";
+import { ConfiguratorChat } from "@/components/chat";
 import { useGenerativeUIExamples, useExampleSuggestions } from "@/hooks";
 
 import {
-  CopilotChat,
   CopilotChatConfigurationProvider,
   CopilotThreadsDrawer,
 } from "@copilotkit/react-core/v2";
@@ -43,12 +43,7 @@ export default function HomePage() {
         <CopilotThreadsDrawer agentId="default" />
         <div className={styles.mainPanel}>
           <ExampleLayout
-            chatContent={
-              <CopilotChat
-                attachments={{ enabled: true }}
-                input={{ disclaimer: () => null, className: "pb-6" }}
-              />
-            }
+            chatContent={<ConfiguratorChat />}
             appContent={<ConfiguratorCanvas />}
           />
         </div>

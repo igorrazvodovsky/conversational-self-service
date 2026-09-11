@@ -1,3 +1,5 @@
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 interface ModeToggleProps {
   mode: "chat" | "canvas";
   onModeChange: (mode: "chat" | "canvas") => void;
@@ -5,27 +7,23 @@ interface ModeToggleProps {
 
 export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
   return (
-    <div className="fixed top-4 right-4 z-50 flex items-center min-h-[46px] rounded-[4px] border border-[var(--border)] bg-[var(--secondary)] p-1.5">
-      <button
-        onClick={() => onModeChange("chat")}
-        className={`px-4 py-1.5 rounded-[2px] text-[13px] leading-[20px] font-medium transition-all cursor-pointer ${
-          mode === "chat"
-            ? "bg-[var(--card)] text-[var(--card-foreground)] shadow-sm"
-            : "text-[var(--muted-foreground)]"
-        }`}
-      >
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      spacing={0}
+      value={mode}
+      // Radix reports "" when the pressed item is pressed again; a surface is
+      // always showing, so that is not a change.
+      onValueChange={(value) => value && onModeChange(value as "chat" | "canvas")}
+      aria-label="Surface"
+      className="fixed top-4 right-4 z-50 bg-background"
+    >
+      <ToggleGroupItem value="chat" className="px-4">
         Chat
-      </button>
-      <button
-        onClick={() => onModeChange("canvas")}
-        className={`px-4 py-1.5 rounded-[2px] text-[13px] leading-[20px] font-medium transition-all cursor-pointer ${
-          mode === "canvas"
-            ? "bg-[var(--card)] text-[var(--card-foreground)] shadow-sm"
-            : "text-[var(--muted-foreground)]"
-        }`}
-      >
+      </ToggleGroupItem>
+      <ToggleGroupItem value="canvas" className="px-4">
         Configurator
-      </button>
-    </div>
+      </ToggleGroupItem>
+    </ToggleGroup>
   );
 }

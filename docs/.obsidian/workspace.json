@@ -190,6 +190,7 @@
   },
   "active": "83ee5d50279fef92",
   "lastOpenFiles": [
+    "ui.md",
     "method/objects.md",
     "conceptual-model.md",
     "concepts/asserting.md",
@@ -217,7 +218,6 @@
     "method/value.md",
     "method/individual.md",
     "2026-09-07.md",
-    "concepts/README.md",
     "concepts",
     "method"
   ]

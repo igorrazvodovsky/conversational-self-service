@@ -1,25 +1,28 @@
-/**
- * CopilotKit brand chart palette — Plus Jakarta Sans / brand color system.
- */
-export const CHART_COLORS = [
-  "#BEC2FF", // lilac-400
-  "#85ECCE", // mint-400
-  "#FFAC4D", // orange-400
-  "#FFF388", // yellow-400
-  "#189370", // mint-800
-  "#EEE6FE", // primary-100
-  "#FA5F67", // red-400
-] as const;
+import type { ChartConfig } from "@/components/ui/chart";
 
-export const CHART_CONFIG = {
-  tooltipStyle: {
-    backgroundColor: "var(--card)",
-    border: "1px solid var(--border)",
-    borderRadius: "10px",
-    padding: "10px 14px",
-    color: "var(--foreground)",
-    fontSize: "13px",
-    fontFamily: "var(--font-body)",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-  },
-};
+/** The five chart tokens in globals.css; a sixth series repeats the first. */
+export const chartColor = (index: number) => `var(--chart-${(index % 5) + 1})`;
+
+export interface Datum {
+  label: string;
+  value: number;
+}
+
+/**
+ * A series per label, in shadcn's `ChartConfig` shape. Keyed by position
+ * rather than by label, so a label needs no slug to be a CSS custom property:
+ * `ChartContainer` turns each key into `--color-<key>` inside the chart.
+ */
+export function toSeries(data: Datum[]) {
+  const rows = data.map((datum, index) => ({
+    key: `s${index}`,
+    label: datum.label,
+    value: Number(datum.value) || 0,
+    fill: `var(--color-s${index})`,
+  }));
+  const config: ChartConfig = { value: { label: "Value" } };
+  data.forEach((datum, index) => {
+    config[`s${index}`] = { label: datum.label, color: chartColor(index) };
+  });
+  return { rows, config };
+}

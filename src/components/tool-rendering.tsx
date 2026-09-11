@@ -1,18 +1,20 @@
 "use client";
 
 /**
- * Example tool-call card, styled with Tailwind CSS utility classes such as
- * `flex`, `items-center`, `gap-2`, `list-none`, and `h-3 w-3`. This example
- * compiles them through `@import "tailwindcss"` in `src/app/globals.css`,
- * `tailwindcss` and `@tailwindcss/postcss` in `package.json`, and
- * `postcss.config.mjs`.
- *
- * Copying this file into another project requires the same Tailwind build, or
- * your own styles in place of these class names. See CopilotKit issue #4777.
+ * The tool-call row every backend tool gets in the chat. Built from shadcn
+ * primitives (docs/ui.md), which compile through `@import "tailwindcss"` in
+ * `src/app/globals.css`; copying this file into another project requires the
+ * same components and Tailwind build. See CopilotKit issue #4777.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Wrench, Check, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
 
 interface ToolReasoningProps {
@@ -31,65 +33,48 @@ function formatValue(value: unknown): string {
 
 export function ToolReasoning({ name, args, status }: ToolReasoningProps) {
   const entries = args ? Object.entries(args) : [];
-  const detailsRef = useRef<HTMLDetailsElement>(null);
   const isRunning = status === "executing" || status === "inProgress";
+  const [open, setOpen] = useState(isRunning);
 
   // Auto-open while executing, auto-close when complete
-  useEffect(() => {
-    if (!detailsRef.current) return;
-    detailsRef.current.open = isRunning;
-  }, [isRunning]);
+  useEffect(() => setOpen(isRunning), [isRunning]);
 
-  const statusIcon = isRunning ? (
-    <Spinner size="sm" className="h-3 w-3" />
-  ) : (
-    <Check className="h-3 w-3 text-emerald-500" />
+  const heading = (
+    <>
+      {isRunning ? <Spinner className="size-3" /> : <Check />}
+      <Wrench />
+      <span className="font-mono">{name}</span>
+    </>
   );
 
+  if (entries.length === 0) {
+    return (
+      <div className="my-1.5 flex items-center gap-2 text-xs text-muted-foreground [&_svg]:size-3">
+        {heading}
+      </div>
+    );
+  }
+
   return (
-    <div className="my-1.5">
-      {entries.length > 0 ? (
-        <details ref={detailsRef} open className="group">
-          <summary className="flex items-center gap-2 cursor-pointer list-none text-sm text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors">
-            {statusIcon}
-            <Wrench className="h-3 w-3" />
-            <span
-              className="font-medium"
-              style={{ fontFamily: "var(--font-code)" }}
-            >
-              {name}
-            </span>
-            <ChevronDown className="h-3 w-3 ml-auto transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="ml-5 mt-1.5 rounded-md bg-[var(--secondary)] px-3 py-2 space-y-1">
-            {entries.map(([key, value]) => (
-              <div
-                key={key}
-                className="flex gap-2 min-w-0 text-xs"
-                style={{ fontFamily: "var(--font-code)" }}
-              >
-                <span className="text-[var(--muted-foreground)] shrink-0">
-                  {key}:
-                </span>
-                <span className="text-[var(--foreground)] truncate">
-                  {formatValue(value)}
-                </span>
-              </div>
-            ))}
+    <Collapsible open={open} onOpenChange={setOpen} className="my-1.5">
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          size="xs"
+          className="-ml-2 w-[calc(100%+--spacing(2))] justify-start text-muted-foreground"
+        >
+          {heading}
+          <ChevronDown className="ml-auto transition-transform group-data-[state=open]/button:rotate-180" />
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-1.5 ml-5 space-y-1 bg-muted px-3 py-2 font-mono text-xs">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex min-w-0 gap-2">
+            <span className="shrink-0 text-muted-foreground">{key}:</span>
+            <span className="truncate">{formatValue(value)}</span>
           </div>
-        </details>
-      ) : (
-        <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-          {statusIcon}
-          <Wrench className="h-3 w-3" />
-          <span
-            className="font-medium"
-            style={{ fontFamily: "var(--font-code)" }}
-          >
-            {name}
-          </span>
-        </div>
-      )}
-    </div>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

@@ -1,5 +1,14 @@
 "use client";
 
+import { Card } from "@/components/ui/card";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { ItemGroup } from "@/components/ui/item";
+import { Spinner } from "@/components/ui/spinner";
 import { useConfigurator } from "./provider";
 import { PendingQuestions } from "./question";
 import { Totals } from "./totals";
@@ -20,15 +29,17 @@ function Section({
   return (
     <section className="mt-6">
       <header className="mb-2 flex items-baseline gap-2">
-        <h2 className="text-[13px] font-semibold">{title}</h2>
-        <span className="text-[11px] text-[var(--muted-foreground)]">
+        <h2 className="text-sm font-semibold">{title}</h2>
+        <span className="text-xs text-muted-foreground">
           {count} · {hint}
         </span>
       </header>
       {count ? (
         children
       ) : (
-        <p className="text-[12px] text-[var(--muted-foreground)]">Nothing yet.</p>
+        <Empty className="border p-4">
+          <EmptyDescription>Nothing yet.</EmptyDescription>
+        </Empty>
       )}
     </section>
   );
@@ -48,20 +59,23 @@ export function ConfiguratorCanvas() {
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center p-8">
-        <p className="max-w-sm text-center text-[13px] text-[var(--muted-foreground)]">
-          {error}
-        </p>
-      </div>
+      <Empty className="h-full">
+        <EmptyHeader>
+          <EmptyDescription className="max-w-sm">{error}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
   if (!view) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <p className="text-[13px] text-[var(--muted-foreground)]">
-          Reading the catalogue…
-        </p>
-      </div>
+      <Empty className="h-full">
+        <EmptyHeader>
+          <EmptyMedia>
+            <Spinner />
+          </EmptyMedia>
+          <EmptyDescription>Reading the catalogue…</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
@@ -72,10 +86,12 @@ export function ConfiguratorCanvas() {
   const open = view.variables.filter((v) => v.standing === "open");
 
   return (
-    <div className="h-full overflow-y-auto bg-[var(--background)]">
-      <div className="mx-auto max-w-3xl px-6 py-6">
-        <h1 className="text-[15px] font-semibold">{view.product}</h1>
-        <p className="mb-4 text-[12px] text-[var(--muted-foreground)]">
+    <div className="h-full overflow-y-auto bg-background">
+      {/* Below `lg` the canvas takes the full width, and the threads launcher
+          and the Chat/Configurator switch are fixed over its top corners. */}
+      <div className="mx-auto max-w-3xl px-6 py-6 max-lg:pt-16">
+        <h1 className="text-base font-semibold">{view.product}</h1>
+        <p className="mb-4 text-xs text-muted-foreground">
           {view.counts.asked + view.counts.unmet} asserted ·{" "}
           {view.counts.follows} follow · {view.counts.open} open
         </p>
@@ -103,24 +119,24 @@ export function ConfiguratorCanvas() {
           hint="nobody chose these"
           count={follows.length}
         >
-          <div className="space-y-1">
+          <ItemGroup className="gap-1">
             {follows.map((variable) => (
               <FollowsRow key={variable.name} variable={variable} />
             ))}
-          </div>
+          </ItemGroup>
         </Section>
 
         <Section title="Still open" hint="yours to settle" count={open.length}>
-          <div className="rounded-[6px] border border-[var(--border)] bg-[var(--card)] px-3">
+          <Card className="gap-0 py-0">
             {open.map((variable) => (
               <OpenRow key={variable.name} variable={variable} />
             ))}
-          </div>
+          </Card>
         </Section>
 
         <Trace />
 
-        <p className="mt-6 text-[11px] leading-relaxed text-[var(--muted-foreground)]">
+        <p className="mt-6 text-xs/relaxed text-muted-foreground">
           {view.footprint.scope}
         </p>
       </div>

@@ -2,6 +2,21 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemTitle,
+} from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
 import { Check, X, Clock, ChevronRight } from "lucide-react";
 
@@ -18,6 +33,33 @@ export interface MeetingTimePickerProps {
   meetingDuration?: number;
   title?: string;
   timeSlots?: TimeSlot[];
+}
+
+function Outcome({
+  icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Card className="mx-auto mb-4 w-full max-w-md">
+      <CardContent>
+        <Empty className="p-2">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">{icon}</EmptyMedia>
+            <EmptyTitle>{title}</EmptyTitle>
+            <EmptyDescription>{description}</EmptyDescription>
+          </EmptyHeader>
+          {children}
+        </Empty>
+      </CardContent>
+    </Card>
+  );
 }
 
 export function MeetingTimePicker({
@@ -56,122 +98,80 @@ export function MeetingTimePicker({
   // Confirmed state
   if (selectedSlot) {
     return (
-      <Card className="max-w-md w-full mx-auto mb-4 overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-[#189370]">
-              <Check className="h-5 w-5 text-white" strokeWidth={3} />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-[var(--foreground)]">
-                Meeting Scheduled
-              </h3>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                {selectedSlot.date} at {selectedSlot.time}
-              </p>
-            </div>
-            {selectedSlot.duration && (
-              <Badge variant="secondary">
-                <Clock className="h-3 w-3 mr-1" />
-                {selectedSlot.duration}
-              </Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <Outcome
+        icon={<Check />}
+        title="Meeting Scheduled"
+        description={`${selectedSlot.date} at ${selectedSlot.time}`}
+      >
+        {selectedSlot.duration && (
+          <Badge variant="secondary">
+            <Clock />
+            {selectedSlot.duration}
+          </Badge>
+        )}
+      </Outcome>
     );
   }
 
   // Declined state
   if (declined) {
     return (
-      <Card className="max-w-md w-full mx-auto mb-4 overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center text-center gap-3">
-            <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[var(--secondary)]">
-              <X className="h-6 w-6 text-[var(--muted-foreground)]" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-[var(--foreground)]">
-                No Time Selected
-              </h3>
-              <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                Looking for a better time that works for you
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Outcome
+        icon={<X />}
+        title="No Time Selected"
+        description="Looking for a better time that works for you"
+      />
     );
   }
 
   // Selection state
   return (
-    <Card className="max-w-md w-full mx-auto mb-4 overflow-hidden">
-      <CardContent className="p-6">
-        <div className="flex flex-col items-center text-center mb-5">
-          <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[var(--accent)] mb-3">
-            <Clock className="h-6 w-6 text-[#BEC2FF]" />
-          </div>
-          <h3 className="text-lg font-bold text-[var(--foreground)]">
-            {displayTitle}
-          </h3>
-          <p className="text-sm text-[var(--muted-foreground)] mt-1">
-            {status === "inProgress"
-              ? "Finding available times..."
-              : "Pick a time that works for you"}
-          </p>
-        </div>
+    <Outcome
+      icon={<Clock />}
+      title={displayTitle}
+      description={
+        status === "inProgress"
+          ? "Finding available times..."
+          : "Pick a time that works for you"
+      }
+    >
+      {status === "inProgress" && <Spinner className="size-6" />}
 
-        {status === "inProgress" && (
-          <div className="flex justify-center py-6">
-            <Spinner size="lg" />
-          </div>
-        )}
-
-        {status === "executing" && (
-          <div className="space-y-3">
+      {status === "executing" && (
+        <div className="w-full space-y-2">
+          <ItemGroup className="gap-2">
             {slots.map((slot, index) => (
-              <button
-                key={index}
-                onClick={() => handleSelectSlot(slot)}
-                className="group w-full px-6 py-5 rounded-[var(--radius)]
-                  border border-[var(--border)]
-                  hover:border-[var(--ring)] hover:bg-[var(--accent)]
-                  transition-all duration-150 cursor-pointer
-                  flex items-center gap-4"
-              >
-                <div className="flex-1 text-left">
-                  <div className="font-semibold text-base text-[var(--foreground)]">
-                    {slot.date}
-                  </div>
-                  <div className="text-sm text-[var(--muted-foreground)] mt-0.5">
-                    {slot.time}
-                  </div>
-                </div>
-                {slot.duration && (
-                  <Badge
-                    variant="secondary"
-                    className="shrink-0 text-sm px-3 py-1"
-                  >
-                    {slot.duration}
-                  </Badge>
-                )}
-                <ChevronRight className="h-4 w-4 text-[var(--muted-foreground)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-              </button>
+              <Item key={index} variant="outline" role="listitem" asChild>
+                <button
+                  type="button"
+                  className="cursor-pointer text-left hover:bg-muted"
+                  onClick={() => handleSelectSlot(slot)}
+                >
+                  <ItemContent>
+                    <ItemTitle className="text-sm">{slot.date}</ItemTitle>
+                    <ItemDescription>{slot.time}</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    {slot.duration && (
+                      <Badge variant="secondary">{slot.duration}</Badge>
+                    )}
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  </ItemActions>
+                </button>
+              </Item>
             ))}
+          </ItemGroup>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full mt-1 text-xs text-[var(--muted-foreground)]"
-              onClick={handleDecline}
-            >
-              None of these work
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-muted-foreground"
+            onClick={handleDecline}
+          >
+            None of these work
+          </Button>
+        </div>
+      )}
+    </Outcome>
   );
 }

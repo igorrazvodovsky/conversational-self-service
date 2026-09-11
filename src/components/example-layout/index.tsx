@@ -34,7 +34,7 @@ export function ExampleLayout({ chatContent, appContent }: ExampleLayoutProps) {
 
       {/* Chat Content */}
       <div
-        className={`max-h-full flex flex-col dark:bg-stone-950 ${
+        className={`max-h-full flex flex-col ${
           mode === "canvas"
             ? "w-1/2 px-6 max-lg:hidden" // Half/half with the canvas; hidden on mobile in app mode
             : "flex-1 max-lg:px-4"
@@ -48,7 +48,7 @@ export function ExampleLayout({ chatContent, appContent }: ExampleLayoutProps) {
             calc resolves to 1.5rem (pl-6) when expanded and ~6rem when collapsed,
             so the logo never sits under the cluster. max-lg:pt-2.5 + pb-0
             vertically center the logo with that launcher and the top-right
-            Chat/App toggle (both pinned at top-2). */}
+            Chat/Configurator toggle (both pinned at top-4). */}
         <div className="shrink-0 pt-[23px] pl-[max(1.5rem,calc(7rem_-_var(--cpk-drawer-reserved-width,320px)))] pb-2 max-lg:pl-24 max-lg:pb-4 flex gap-1.5 items-center align-center">
           <span className="font-extrabold text-2xl">CopilotKit</span>
           <img
@@ -64,7 +64,7 @@ export function ExampleLayout({ chatContent, appContent }: ExampleLayoutProps) {
       <div
         className={`h-full overflow-hidden ${
           mode === "canvas"
-            ? "w-1/2 max-lg:w-full border-l border-[var(--border)] max-lg:border-l-0" // Half/half with the chat; full width on mobile
+            ? "w-1/2 max-lg:w-full border-l max-lg:border-l-0" // Half/half with the chat; full width on mobile
             : "w-0 border-l-0"
         }`}
       >

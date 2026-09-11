@@ -68,6 +68,8 @@ layer beside the agent.
 │   │       ├── copilotkit/[[...slug]]/   # CopilotKit runtime
 │   │       └── configurator/[...path]/   # proxy onto the concept layer
 │   ├── components/
+│   │   ├── ui/                           # shadcn primitives — installed, never hand-written
+│   │   ├── chat/                         # CopilotChat, composed from them through slots
 │   │   ├── configurator/                 # the canvas
 │   │   │   ├── provider.tsx              # reads /view, performs gestures
 │   │   │   ├── index.tsx                 # the three sections
@@ -135,7 +137,7 @@ on the same action, with no field anywhere recording which.
 
 ## Tech stack
 
-- **Frontend**: Next.js 16, React 19, TailwindCSS 4
+- **Frontend**: Next.js 16, React 19, TailwindCSS 4, shadcn/ui (Lyra style, zinc)
 - **Agent**: LangGraph (Python), OpenAI
 - **Solver**: z3-solver
 - **CopilotKit**: React hooks for agent integration (v2)
@@ -157,6 +159,15 @@ cp .env.example .env    # then set OPENAI_API_KEY
 The concept layer is mounted into the LangGraph server by `langgraph.json`'s
 `http.app`, so it runs in the same process as the graph and shares one engine
 with the model's tools. `AGENT_URL` points the frontend proxy at it.
+
+## UI components
+
+Every surface is built from shadcn/ui in `src/components/ui/`, added with
+`npx shadcn@latest add <component>` and never hand-written; reach for a
+primitive before writing a `className` string. Do not run `shadcn init`: it
+rewrites `globals.css` and silently drops the `@theme inline` bridge, the
+`shadcn/tailwind.css` import and the zero radius ramp. Read
+[`docs/ui.md`](docs/ui.md) before editing that stylesheet.
 
 ## Design principles
 

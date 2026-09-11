@@ -1,5 +1,7 @@
 import { useAgent } from "@copilotkit/react-core/v2";
 import { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const HeadlessChat = () => {
   const { agent } = useAgent();
@@ -19,19 +21,28 @@ export const HeadlessChat = () => {
   );
 
   return (
-    <div>
-      <h1>Chat</h1>
+    <div className="flex flex-col gap-3">
+      <h1 className="text-base font-semibold">Chat</h1>
       {agent.messages.map((message) => (
-        <div key={message.id}>
-          <p>{JSON.stringify(message.content)}</p>
-        </div>
+        <p key={message.id} className="text-sm">
+          {JSON.stringify(message.content)}
+        </p>
       ))}
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-      <button onClick={() => sendMessage(message)}>Send</button>
+      <form
+        className="flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          sendMessage(message);
+        }}
+      >
+        <Input
+          type="text"
+          aria-label="Message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        />
+        <Button type="submit">Send</Button>
+      </form>
     </div>
   );
 };

@@ -1,6 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronDownIcon, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Item, ItemContent } from "@/components/ui/item";
+import { cn } from "@/lib/utils";
 import { useConfigurator, type Variable } from "./provider";
 
 function Rules({
@@ -12,18 +28,16 @@ function Rules({
 }) {
   if (!rules.length) return null;
   return (
-    <ul className="mt-1 space-y-0.5">
+    <ul className="space-y-0.5">
       {rules.map((rule) => (
         <li
           key={rule.rule}
-          className={`text-[11px] ${
-            tone === "refused"
-              ? "text-red-700 dark:text-red-300"
-              : "text-[var(--muted-foreground)]"
-          }`}
+          className={cn(
+            "text-xs",
+            tone === "refused" ? "text-destructive" : "text-muted-foreground",
+          )}
         >
-          <span className="font-mono text-[10px] opacity-70">{rule.rule}</span>{" "}
-          {rule.because}
+          <span className="font-mono">{rule.rule}</span> {rule.because}
         </li>
       ))}
     </ul>
@@ -35,47 +49,44 @@ export function AskedCard({ variable }: { variable: Variable }) {
   const { gesture, busy, label } = useConfigurator();
   const unmet = variable.standing === "unmet";
   return (
-    <div
-      className={`rounded-[6px] border p-3 ${
-        unmet
-          ? "border-red-400/70 bg-red-50 dark:bg-red-950/25"
-          : "border-[var(--border)] bg-[var(--card)]"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-[11px] uppercase tracking-wide text-[var(--muted-foreground)]">
-            {variable.heading}
+    <Card size="sm" className={cn(unmet && "ring-destructive/60")}>
+      <CardHeader>
+        <CardDescription className="uppercase tracking-wide">
+          {variable.heading}
+        </CardDescription>
+        <CardTitle>{label(variable.asked)}</CardTitle>
+        <CardAction>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            disabled={busy}
+            title="Take this back"
+            aria-label="Take this back"
+            onClick={() =>
+              void gesture({ act: "withdraw", variable: variable.name })
+            }
+          >
+            <XIcon />
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {variable.how ? (
+          <p className="text-xs text-muted-foreground">{variable.how}</p>
+        ) : null}
+        {unmet ? (
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-destructive">
+              On record, and not buildable alongside the rest.
+            </p>
+            {/* The rules that refused it, kept by `Constraining.refused` rather
+                than only carried in the question — so the account survives the
+                banner being dismissed. */}
+            <Rules rules={variable.refused} tone="refused" />
           </div>
-          <div className="text-[13px] font-medium">{label(variable.asked)}</div>
-        </div>
-        <button
-          type="button"
-          disabled={busy}
-          title="Take this back"
-          onClick={() =>
-            void gesture({ act: "withdraw", variable: variable.name })
-          }
-          className="shrink-0 rounded-[3px] px-1.5 text-[var(--muted-foreground)] hover:text-[var(--foreground)] disabled:opacity-40 cursor-pointer"
-        >
-          ✕
-        </button>
-      </div>
-      <div className="mt-1 text-[11px] text-[var(--muted-foreground)]">
-        {variable.how}
-      </div>
-      {unmet ? (
-        <div className="mt-2">
-          <div className="text-[11px] font-medium text-red-700 dark:text-red-300">
-            On record, and not buildable alongside the rest.
-          </div>
-          {/* The rules that refused it, kept by `Constraining.refused` rather
-              than only carried in the question — so the account survives the
-              banner being dismissed. */}
-          <Rules rules={variable.refused} tone="refused" />
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -83,67 +94,70 @@ export function AskedCard({ variable }: { variable: Variable }) {
 export function FollowsRow({ variable }: { variable: Variable }) {
   const { label } = useConfigurator();
   return (
-    <div className="border-l-2 border-[var(--border)] py-1.5 pl-3">
-      <div className="flex flex-wrap items-baseline gap-x-2">
-        <span className="text-[11px] uppercase tracking-wide text-[var(--muted-foreground)]">
-          {variable.heading}
-        </span>
-        <span className="text-[13px] font-medium">{label(variable.value)}</span>
-      </div>
-      <Rules rules={variable.owing} />
-    </div>
+    <Item size="xs" variant="muted" role="listitem" className="items-start">
+      <ItemContent className="gap-1">
+        {/* Not `ItemTitle`: it clamps to one line, and undoing the clamp
+            with `line-clamp-none` sets `display: block`, which drops the gap
+            between heading and value. A value has to be free to wrap. */}
+        <div className="flex flex-wrap items-baseline gap-x-2 text-xs font-medium">
+          <span className="font-normal uppercase tracking-wide text-muted-foreground">
+            {variable.heading}
+          </span>
+          <span className="text-sm">{label(variable.value)}</span>
+        </div>
+        <Rules rules={variable.owing} />
+      </ItemContent>
+    </Item>
   );
 }
 
 /** A variable still open, with what the rules have left of its range. */
 export function OpenRow({ variable }: { variable: Variable }) {
   const { gesture, busy } = useConfigurator();
-  const [showing, setShowing] = useState(false);
   const live = variable.options.filter((option) => option.possible);
   const gone = variable.options.length - live.length;
 
   return (
-    <div className="border-b border-[var(--border)] py-2 last:border-b-0">
-      <button
-        type="button"
-        onClick={() => setShowing(!showing)}
-        className="flex w-full items-center justify-between gap-2 text-left cursor-pointer"
-      >
-        <span className="text-[13px]">{variable.heading}</span>
-        <span className="shrink-0 text-[11px] text-[var(--muted-foreground)]">
-          {live.length} left{gone ? ` · ${gone} ruled out` : ""} {showing ? "▴" : "▾"}
-        </span>
-      </button>
-      {showing ? (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {variable.options.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              disabled={busy}
-              title={
-                option.possible
-                  ? (option.note ?? undefined)
-                  : "Ruled out by what has been asserted so far"
-              }
-              onClick={() =>
-                void gesture({
-                  act: "assert",
-                  variable: variable.name,
-                  option: option.id,
-                })
-              }
-              className={`rounded-[4px] border px-2 py-1 text-[11px] disabled:opacity-40 cursor-pointer ${
-                option.possible
-                  ? "border-[var(--border)] bg-[var(--card)] hover:border-[var(--foreground)]"
-                  : "border-transparent bg-[var(--secondary)] text-[var(--muted-foreground)] line-through"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
+    <Collapsible className="border-b last:border-b-0">
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          className="h-auto w-full justify-between gap-2 px-3 py-2 text-left text-sm font-normal"
+        >
+          <span>{variable.heading}</span>
+          <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+            {live.length} left{gone ? ` · ${gone} ruled out` : ""}
+            <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />
+          </span>
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="flex flex-wrap gap-1.5 px-3 pb-3">
+        {variable.options.map((option) => (
+          <Button
+            key={option.id}
+            variant={option.possible ? "outline" : "secondary"}
+            size="xs"
+            disabled={busy}
+            title={
+              option.possible
+                ? (option.note ?? undefined)
+                : "Ruled out by what has been asserted so far"
+            }
+            className={cn(
+              !option.possible && "text-muted-foreground line-through",
+            )}
+            onClick={() =>
+              void gesture({
+                act: "assert",
+                variable: variable.name,
+                option: option.id,
+              })
+            }
+          >
+            {option.label}
+          </Button>
+        ))}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
