@@ -1,0 +1,196 @@
+# Binding
+
+How a clause comes to be answered, how an answer reaches the solver, and what
+takes an answer away. See [the index](README.md).
+
+These are the rules of the case's slice 1, written for a build in which the
+person does the mapping. The catalogue's chain for the same move is
+`ProposeFromClause → MapProposed → ApplyMapping → AssertionReachesTheSolver`,
+with a language model inside `Mapping.map`; here there is no `Mapping`, the
+person's pick names the option, and the chain is two rules shorter.
+
+## A specification is opened and closed in three concepts at once
+
+```
+sync AStartedSpecificationIsOpened
+when  { Asserting/start: [ spec: ?s ] => [ spec: ?s ] }
+then  { Specifying/open: [ spec: ?s ] ;
+        Binding/begin: [ spec: ?s ; offering: catalogue ] }
+
+sync ADiscardedSpecificationIsClosed
+when  { Asserting/discard: [ spec: ?s ] => [ spec: ?s ] }
+where { Binding: { ?sel for: ?s } }
+then  { Specifying/close: [ spec: ?s ] ;
+        Binding/abandon: [ selection: ?sel ] }
+```
+
+One identifier, three concepts, and none of them knows the others exist. The
+catalogue's `BeginConfiguring` runs the other way — `Binding/begin` mints the
+selection and `Configuring/start` is given its identity — because there the
+specification comes first and the configuration follows. Here the boot's one
+root action is `Asserting/start`, as it was before either of these concepts
+existed, and the two rules above hang the new concepts off it rather than
+moving the root. That is a divergence in direction and not in shape, recorded
+in [§9.3](../conceptual-model.md#9-against-the-cases-catalogue); when the case's
+`Reading` arrives and the specification is opened by a person's first words,
+the root moves and these two rules are rewritten.
+
+## A person answers a clause
+
+<a id="a-person-answers-a-clause"></a>
+```
+sync APersonAnswersAClause
+when  { Copiloting/gesture: [ act: "answer" ; spec: ?s ;
+          clause: ?c ; option: ?o ] => [] }
+where { Binding: { ?sel for: ?s }
+        no choice of ?sel answers ?c }
+then  { Binding/propose: [ party: person ; selection: ?sel ;
+          requirement: ?c ; value: ?o ] }
+
+sync APersonSubstitutesAnAnswer
+when  { Copiloting/gesture: [ act: "answer" ; spec: ?s ;
+          clause: ?c ; option: ?o ; reason: ?why ] => [] }
+where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ;
+                   ?ch answers: ?c ; ?ch value: ?v }
+        ?v is not ?o }
+then  { Binding/substitute: [ party: person ; choice: ?ch ;
+          value: ?o ; reason: ?why ] }
+```
+
+One gesture, two rules, and which fires is a fact of the state: a clause
+nobody has answered gets a `propose`, a clause already answered gets a
+`substitute` with `replaces` and a reason. Answering a clause with the value
+it already has fires neither, which is the ordinary meaning of a `where` that
+does not bind.
+
+This is the gesture [Asserting's note](../concepts/asserting.md) has been
+waiting for. The slice 0 gesture `assert` carries a variable and an option
+and reaches `Asserting/assert` directly; it is kept, so that a person can
+still set a value with no clause behind it, and the share of assertions that
+arrive that way against the share that arrive through `answer` is the
+comparison the case's `Prototype plan` says slice 1 is measured by. Nothing
+in this file prevents the first kind; it only makes the second kind possible.
+
+## The person maps
+
+<a id="the-person-maps"></a>
+```
+sync AChoiceReachesTheAssertions
+when  { Binding/propose: [] => [ choice: ?ch ; selection: ?sel ;
+          value: ?o ; party: ?p ] }
+where { Binding: { ?sel for: ?s }
+        Cataloguing: { ?v offers: ?o } }
+then  { Asserting/assert: [ party: ?p ; spec: ?s ;
+          variable: ?v ; option: ?o ] }
+
+sync ASubstituteReachesTheAssertions
+when  { Binding/substitute: [] => [ choice: ?ch ; selection: ?sel ;
+          value: ?o ; party: ?p ] }
+where { … as above … }
+then  { Asserting/assert: [ party: ?p ; spec: ?s ;
+          variable: ?v ; option: ?o ] }
+```
+
+The catalogue's `ApplyMapping` fires on a `Mapping/map` completion carrying
+attribute–value pairs. Here the value *is* an option, the variable that offers
+it is a read of [Cataloguing](../concepts/cataloguing.md), and the mapping is
+the identity — which is what *mapping is done by the person* means in code.
+[Binding's note](../concepts/binding.md#the-value-is-the-option-and-that-is-a-finding)
+says why that is a finding and not a shortcut.
+
+From `Asserting/assert` on, nothing is new: `AssertionsReachTheSolver` carries
+the value to [Constraining](../concepts/constraining.md), a conflict comes
+back through `Deciding`, and the canvas reads the provenance edge. The edge
+for a value that answers a clause is `AChoiceReachesTheAssertions`, which is
+a fourth sentence beside *you asked for this*, *the assistant asked for this*
+and *adopted from a proposal*: *answers a requirement*.
+
+## What takes a choice away
+
+<a id="what-takes-a-choice-away"></a>
+```
+sync AWithdrawnValueRetractsItsChoices
+when  { Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ; option: ?o ] }
+where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ; ?ch value: ?o } }
+then  { Binding/retract: [ choice: ?ch ] }
+
+sync AnOverwrittenValueRetractsItsChoices
+when  { Asserting/assert: [] => [ spec: ?s ; variable: ?v ; option: ?o ] }
+where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ; ?ch value: ?o' }
+        ?o' is not ?o
+        Cataloguing: { ?v offers: ?o' } }
+then  { Binding/retract: [ choice: ?ch ] }
+
+sync AStruckClauseReleasesItsChoices
+when  { Specifying/strike: [ clause: ?c ] => [ clause: ?c ; spec: ?s ] }
+where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ; ?ch answers: ?c } }
+then  { Binding/retract: [ choice: ?ch ] }
+```
+
+Three consequences, no gesture. A choice is the *current* answer to a clause,
+and it stops being current in three ways: the value it holds is withdrawn, a
+different value is asserted for the same variable — by the person on the
+canvas, by the model on their behalf, or by an adopted completion — or the
+clause it answers is struck. Each is the §6.5 shape, one binding per choice,
+`then` once per binding.
+
+The second is the one to read twice. The model may still assert a value with
+no clause behind it, and when it does so on a variable whose value answered a
+clause, the person's answer is retracted and the clause shows as unanswered
+again. That is correct: the value the person chose *for that reason* is
+gone, and a ledger that went on saying the clause was answered would be
+lying. It is also the case's constraint 7 — every interpreter-made selection
+visible and reversible — met by a rule rather than by a gate, and the
+provenance edge on the `retract` says which assertion did it.
+
+The third does *not* withdraw the value. Striking a requirement is not the
+same act as taking back a value, and [Specifying's note](../concepts/specifying.md#why-there-is-a-strike)
+says why.
+
+Nothing carries a `Binding/retract` back into `Asserting`. A retraction is a
+consequence of an assertion changing, never a cause of one, and that
+asymmetry keeps the two concepts from chasing each other round a loop.
+
+## The ledger is a read
+
+<a id="the-ledger-is-a-read"></a>
+No action lists the clauses with their answers. It is a calculation over four
+concepts' exposed state, in `agent/views.py`, on the line
+[Pricing](../concepts/pricing.md#the-total-is-a-read-and-here-is-the-arithmetic)
+draws:
+
+```
+ledger(s)   =  for each clause c in Specifying.clauses(s), in order:
+                 text, discipline, negotiability, statedBy, formerly,
+                 and the choices ch of Binding's selection for s with answers(ch) = c,
+                 each with its value, the variable Cataloguing says offers it,
+                 who decided it, what it replaced and why,
+                 and a standing read against Asserting and Constraining:
+                   asked   if the value is asserted and assumed
+                   unmet   if the value is asserted and not assumed
+
+unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
+```
+
+The second is the plan's control number. A variable asserted with no clause
+behind it is a value in the model's vocabulary that answers nothing — which
+is every value in slice 0, and is what the *asserted* section of the canvas
+used to be entirely. The canvas now shows the clause beside the value where
+there is one, and shows *answers nothing* where there is not, so the share is
+something a person can see rather than something a script has to count.
+
+The same read, frozen, goes into a quote. The item a quote holds gains the
+clauses as they stood at issue, each with the option that answered it, and
+the proposal's *basis of design* renders from those — the customer's words
+first, the catalogue's context values after — so that the document a person
+reads shows what was asked beside what is offered. That is the trace from
+output to intent the case's traceability note asks for, structural rather
+than computed: a line in the proposal, the choice it froze, the clause the
+choice answers, and the party who stated it.
+
+## See also
+
+- [Gestures](gestures.md) — the five acts that reach `Specifying`, and the one that reaches `Binding`
+- [Propagation](propagation.md) — where an assertion goes from here
+- [Conduct](conduct.md) — the rule that does not exist: no `Copiloting/invoke` reaches either concept
+- [Specifying](../concepts/specifying.md) · [Binding](../concepts/binding.md)

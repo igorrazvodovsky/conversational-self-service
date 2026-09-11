@@ -204,6 +204,48 @@ Without it, `refused` would go stale rather than transient — a card explaining
 a refusal by rules that no longer refuse anything, which is worse than no
 explanation.
 
+## An issued quote is shown
+
+```
+sync AnIssuedQuoteIsShown
+when  { Quoting/quote: [] => [ quote: ?q ] }
+then  { Moding/focus: [ workspace: workspace ; surface: quote ] }
+```
+
+The offer is a surface of its own, offered at boot beside the canvas
+([Seeding](seeding.md)), and it takes the viewer's attention when a
+quote is issued, whichever party asked for it. An offer nobody sees is not an
+offer that was made. This is
+[`TheCanvasIsShownBeforeItChanges`](conduct.md) one concept further along, and
+it lives here rather than in [Conduct](conduct.md) because its `when` is a
+concept's completion and not a tool call: it fires the same way for a click
+and for the model.
+
+## A frame goes with what it framed
+
+<a id="a-frame-goes-with-what-it-framed"></a>
+```
+sync AWithdrawnAssertionUnframesTheCanvas
+when  { Asserting/withdraw: [ spec: ?s ; variable: ?v ]
+          => [ spec: ?s ; variable: ?v ] }
+where { Framing: { workspace framed: [ by: "assertion" ; variable: ?v ] } }
+then  { Framing/unframe: [ lens: workspace ] }
+
+sync ADiscardedSpecificationUnframesTheCanvas
+when  { Asserting/discard: [ spec: ?s ] => [ spec: ?s ] }
+where { Framing: { workspace framed: ?f } }
+then  { Framing/unframe: [ lens: workspace ] }
+```
+
+A canvas narrowed to what followed from an assertion that no longer exists
+would show the assertion's consequences with nothing for them to be
+consequences of. The first rule's `where` is what keeps a frame on some
+*other* assertion in place; the second needs none beyond there being a
+frame at all. [Framing](../concepts/framing.md) cannot see either event for
+itself — it does not know what an assertion is — so when a frame stops
+meaning anything is a question for a rule, as when a question stops needing
+an answer is above.
+
 ## If the person declines
 
 `Deciding/decline` appears in no rule here, and nothing happens as a result.

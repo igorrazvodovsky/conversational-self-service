@@ -56,11 +56,19 @@ same function, so app code and primitives merge classes with one engine.
 | Canvas sections, empty and loading states | `Empty`, `Spinner` |
 | Asserted value | `Card` with a ghost `Button` to withdraw; unmet is a destructive ring |
 | A value that follows | `Item` (muted) in an `ItemGroup` |
-| An open variable | `Collapsible` whose trigger is a ghost `Button`; options are `Button size="xs"`, a ruled-out one `secondary` and struck through |
+| An open variable | `Collapsible` whose trigger is a ghost `Button`; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
+| Which facts are shown (`Showing`) | `DropdownMenu` of checkbox items, from a ghost `Button` |
+| The offers issued | `Table`, one row per quote, the selected row `data-state=selected`; a ghost `Button` per row to compare |
+| Two quotes compared | `Table` of the rows that differ, with the sums |
+| The frame (`Framing`) | A bordered strip with the counts of the slice and a ghost `Button` to show everything; the way in is a ghost `Button` on an asserted card |
 | Price and carbon totals | `Card`; the grid choice is a `ToggleGroup` |
 | An open question | `Alert` (destructive for a conflict) with `Button`s |
 | The action log | `Collapsible`, `Card`, `Badge` for the actor and for a refusal |
-| Chat / Configurator switch | `ToggleGroup` |
+| Configurator / Quote switch | `ToggleGroup` |
+| Artifact panel and chat split | `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle` |
+| Conversation list and new-conversation control | `DropdownMenu` of radio items grouped under `DropdownMenuLabel` days, `Button` |
+| Chat layout menu and hide control | `DropdownMenu` of radio items, `Button` |
+| Restore-the-chat control | `Button` with a mark for unseen replies |
 | Chat composer | `InputGroup`, `InputGroupTextarea`, `Button` |
 | Suggestions | `Button variant="outline" size="xs"` |
 | A person's turn | `Bubble` |
@@ -75,6 +83,37 @@ The chat keeps CopilotKit's layout and swaps pieces in through `CopilotChat`'s
 slots (`src/components/chat/index.tsx`). CopilotKit still owns the
 stick-to-bottom scroller, the overlay the composer sits in, the attachment queue,
 and the markdown body of an assistant turn, which is set at 14px to match.
+
+## The chat against the artifact panel
+
+The layout is `conv-pro-conf`'s (its *chat surface* and *remembered split*
+specs), carried over in `src/components/example-layout/`: an artifact panel
+that is always mounted, and a chat with four geometries — sidebar, floating,
+full screen, hidden — switched from one menu in its header. The chat is
+mounted once and the modes change its container's classes only, because the
+transcript's scroll offset belongs to a DOM node and re-parenting it loses the
+place. Hidden is `inert` and transparent rather than `display:none` for the
+same reason. Floating is a positioned panel, not a `Dialog`: nothing dims and
+no focus is trapped, so the canvas under it stays live.
+
+The geometry is React state, reset on every load; the split's division is a
+cookie the server reads (`src/lib/split-layout.ts`), because the panel group
+writes it inline and a value the server did not know would hydrate as a
+mismatch. Both menus mount a tick after hydration, since a Radix menu present
+during the hydration pass shifts the `useId` values of the whole page.
+
+The conversation list is the other `conv-pro-conf` carry-over: a menu at the
+left of the chat's header (`conversation-menu.tsx`), rows labelled by start
+time and grouped by day, with no navigation column beside the split. It
+replaced `CopilotThreadsDrawer`, which would not fetch until the runtime
+reported a license status. Only CopilotKit Intelligence reports one, so without
+`CPK_INTELLIGENCE_API_KEY` the drawer showed *Loading threads…* forever. The
+menu reads the same `GET /threads` through `useThreads`, which needs no
+license. Without Intelligence that list is the in-memory runner's: it ends
+with the Next.js process, and nothing pushes changes to the client, so the page
+refetches it when a run ends and when the menu opens. A conversation joins it
+on its first run. Switching conversations changes the transcript only; the
+configurator is one engine, not one per thread.
 
 ## Decisions a reader might trip over
 
@@ -97,13 +136,6 @@ and the markdown body of an assistant turn, which is set at 14px to match.
 
 ## What is not shadcn, and why
 
-- `CopilotThreadsDrawer` is a CopilotKit web component with its own shadow DOM,
-  and it needs CopilotKit Intelligence (`CPK_INTELLIGENCE_API_KEY`) to list
-  anything. Rebuilding it on `useThreads` would depend on the same platform, so
-  it stays as it is.
-- `src/app/page.module.css` is the grid that reserves the drawer's column so the
-  layout doesn't shift when the client-only drawer mounts. It is layout, not a
-  component.
 - The attachment queue above the composer, and a sent attachment's thumbnail,
   are CopilotKit's own components with no slot, so they keep their rounded
   corners. Replacing them means taking over `CopilotChatView`'s whole layout, as

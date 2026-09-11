@@ -152,6 +152,19 @@ That is the property the starter could not have had. Its one write action was
 `agent.setState`, called by both actors with the same payload shape, so no log
 could distinguish completing a task from renaming one.
 
+The log is also the only thing kept between runs. `agent/journal.py` appends
+every record after the boot mark to a file as it is committed, and at the next
+boot — after the catalogue has been read in afresh — replays the file: each
+completion's recorded input is applied to its concept again, and the record
+goes back into the log as it was, identity, timestamp and provenance edge
+included. No rule fires during replay, because every derived completion is
+already in the file; the once-only edges are restored with the records. That
+is the paper's claim above, that the state of concepts can be reconstructed
+entirely from the log, made into the persistence mechanism rather than a
+property proven about one. It lives outside `engine/` because that directory
+is not edited, and the one cost of that is that the durable log numbers its
+own records.
+
 ## See also
 
 - [Concept](concept.md) — the specification format that acts as the prompt

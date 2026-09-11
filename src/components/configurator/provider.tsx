@@ -27,6 +27,10 @@ import {
 } from "react";
 
 export type Standing = "asked" | "unmet" | "follows" | "open";
+/** The surfaces `Moding` offers: the specification and the offer. The chat
+ * is not one — where it sits is the person's view state
+ * (`example-layout/chat-surface.tsx`), which no rule reaches. */
+export type Surface = "canvas" | "quote";
 export type Grid = "today" | "decarbonising";
 
 export interface Option {
@@ -37,6 +41,20 @@ export interface Option {
   capital: number | null;
   monthly: number | null;
   embodied: number | null;
+  /** The rules that rule the option out, from `Constraining.excluding`.
+   * Read only while the `excluded` facet is shown; empty otherwise, and
+   * empty when the option is out by the person's own assertion alone. */
+  excluded: { rule: string; because: string }[];
+}
+
+/**
+ * One facet the canvas can show beside an item, from `Showing`: its name,
+ * what it is in words, and whether it is shown through the workspace's lens.
+ */
+export interface Facet {
+  facet: string;
+  about: string;
+  shown: boolean;
 }
 
 export interface Variable {
@@ -46,10 +64,57 @@ export interface Variable {
   standing: Standing;
   asked: string | null;
   how: string | null;
+  /** The clauses the asserted value answers, from `Binding`. Empty is a finding. */
+  answers: { clause: string; text: string }[];
   value: string | null;
   owing: { rule: string; because: string }[];
+  /** The assertions a settled value rests on: the other half of `owing`'s core. */
+  following: { variable: string; heading: string }[];
+  /** Whether the current frame selects this item; always true with no frame. */
+  framed: boolean;
   refused: { rule: string; because: string }[];
   options: Option[];
+}
+
+/**
+ * The canvas narrowed to what followed from one assertion, from `Framing`.
+ * The membership test is the read side's; each variable carries `framed`.
+ */
+export interface Frame {
+  by: "assertion";
+  variable: string;
+  heading: string;
+  asked: string | null;
+}
+
+export type Negotiability = "fixed" | "negotiable" | "open";
+
+/** A choice currently answering a clause, read against the assertions. */
+export interface Answer {
+  choice: string;
+  value: string;
+  variable: string | null;
+  heading: string | null;
+  label: string;
+  decidedBy: string;
+  reason: string | null;
+  replaced: string | null;
+  standing: "asked" | "unmet" | "displaced" | "unrealisable";
+}
+
+/**
+ * One line of the requirement ledger: a clause from `Specifying` in the
+ * person's words, with the choices from `Binding` that answer it. Four
+ * concepts' state composed by a read, and maintained by nobody.
+ */
+export interface Clause {
+  clause: string;
+  text: string;
+  discipline: string;
+  negotiability: Negotiability;
+  statedBy: string;
+  formerly: string[];
+  answers: Answer[];
 }
 
 export type Request = { spec: string; about: "conflict" | "completion" };
@@ -59,6 +124,75 @@ export interface Question {
   about: "conflict" | "completion";
   reason: string;
   options: ({ variable: string; option: string } | Record<string, string>)[];
+}
+
+export type QuoteStanding = "open" | "committed" | "revoked" | "lapsed";
+
+/** What a party has said of who they are, from `Profiling`. Every field optional. */
+export interface Party {
+  name?: string;
+  organisation?: string;
+  address?: string;
+  email?: string;
+  phone?: string;
+}
+
+/**
+ * The terms an offer was issued on, copied into the quote at issue: the
+ * seller's stipulations, both parties' profiles and the job's name as they
+ * stood. The document renders from these alone.
+ */
+export interface Terms {
+  basis: string;
+  months: number;
+  recurring: number;
+  seller: Party;
+  customer: Party;
+  title: string;
+  site: string;
+  validity: number;
+  warranty: number;
+  approval: number;
+  installation: number;
+  byOthers: string[];
+  stages: { upon: string; share: number }[];
+  clauses: Record<string, string[]>;
+}
+
+/**
+ * A quote, from `Quoting`, read with the three calculations its note names:
+ * its standing today, which of its frozen values the specification has since
+ * moved away from, and a footprint recomputed from the frozen item.
+ */
+export interface Quote {
+  quote: string;
+  number: number;
+  standing: QuoteStanding;
+  amount: number;
+  terms: Terms;
+  issued: string | null;
+  until: string;
+  committed: string | null;
+  issuedTo: string;
+  how: string | null;
+  holds: {
+    name: string;
+    heading: string;
+    family: string;
+    value: string;
+    label: string;
+    note: string | null;
+  }[];
+  /** The clauses as they stood at issue, each with the option that answered it then. */
+  requires: {
+    clause: string;
+    text: string;
+    discipline: string;
+    negotiability: Negotiability;
+    answeredBy: { value: string; label: string }[];
+  }[];
+  differs: string[];
+  footprint: { made: number; run: number; total: number; complete: boolean };
 }
 
 export interface LogRecord {
@@ -76,8 +210,13 @@ export interface View {
   grid: Grid;
   product: string;
   currency: string;
-  mode: "chat" | "canvas";
+  mode: Surface;
+  /** Which facts the canvas shows at a glance, and what else it could. */
+  showing: Facet[];
+  /** Which items the canvas is narrowed to, or null for everything. */
+  frame: Frame | null;
   variables: Variable[];
+  clauses: Clause[];
   price: {
     capital: number;
     recurring: number;
@@ -103,7 +242,12 @@ export interface View {
     complete: boolean;
   };
   questions: Question[];
-  counts: Record<Standing, number>;
+  quotes: Quote[];
+  quotable: { ok: boolean; because: string };
+  customer: Party;
+  seller: Party;
+  project: { title: string; site: string };
+  counts: Record<Standing, number> & { unanswered: number; unbound: number };
   log: LogRecord[];
 }
 
@@ -115,7 +259,8 @@ interface Configurator {
   setGrid: (grid: Grid) => void;
   busy: boolean;
   error: string | null;
-  gesture: (stimulus: Stimulus) => Promise<void>;
+  /** Perform a root action; resolves to the view as the rules left it, or null if refused. */
+  gesture: (stimulus: Stimulus) => Promise<View | null>;
   label: (id: string | null) => string;
 }
 
@@ -183,8 +328,10 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
       if (!response.ok) throw new Error(body.error ?? "the action was refused");
       setView(body.view);
       setError(null);
+      return body.view as View;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
+      return null;
     } finally {
       setBusy(false);
     }

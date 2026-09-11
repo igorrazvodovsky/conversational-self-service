@@ -50,10 +50,12 @@ the catalogue.
 
 Everything else in the design follows from taking that seriously:
 
-- [`Asserting`](docs/concepts/asserting.md) records assertions a party made — the case's name for it; it was `Specifying` until 2026-09-08. It validates nothing and solves nothing.
+- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1, built 2026-09-11: the canvas gains a *required* section above the three, and the proposal's basis of design renders from it. The person does the mapping by picking an option while answering a clause; the model cannot write or answer one.
+- [`Asserting`](docs/concepts/asserting.md) records assertions a party made — the case's name for it; it was `Specifying` until 2026-09-08. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
 - [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. Nothing reads it yet; the point is that the log's first entry for a turn is the person's words rather than the model's tool call.
 - [`Constraining`](docs/concepts/constraining.md) holds the rules and answers what they still allow. z3 lives here.
 - An assertion that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
+- [`Quoting`](docs/concepts/quoting.md) holds the end of a configuration: an offer, frozen as issued, that the specification can move away from without changing. It is the fourth kind of fact on the canvas, and the person accepts it or nobody does. The offer is rendered as a commercial proposal on the seller's terms ([`Stipulating`](docs/concepts/stipulating.md), seeded), addressed to a party ([`Profiling`](docs/concepts/profiling.md)) for a named job at a site ([`Naming`](docs/concepts/naming.md)).
 
 ## Architecture
 
@@ -64,6 +66,7 @@ layer beside the agent.
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx                      # wires the providers together
+│   │   ├── quotes/[quote]/               # one quote, as a printable document
 │   │   └── api/
 │   │       ├── copilotkit/[[...slug]]/   # CopilotKit runtime
 │   │       └── configurator/[...path]/   # proxy onto the concept layer
@@ -74,22 +77,28 @@ layer beside the agent.
 │   │   │   ├── provider.tsx              # reads /view, performs gestures
 │   │   │   ├── index.tsx                 # the three sections
 │   │   │   ├── totals.tsx                # price and carbon
+│   │   │   ├── specification.tsx         # the requirement ledger as a Tiptap document; edits become gestures
+│   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode
 │   │   │   ├── question.tsx              # the open Deciding questions
+│   │   │   ├── quotes.tsx                # the quote surface: every offer issued, two compared, the addressee, one proposal at a time
+│   │   │   ├── document.tsx              # a quote laid out as a commercial proposal
+│   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
 │   │   │   └── variables.tsx             # asked / follows / open rows
-│   │   ├── example-layout/               # chat + canvas, mode from Moding
+│   │   ├── example-layout/               # the artifact panel (canvas or quote, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features
 │   └── hooks/
 ├── agent/
 │   ├── concepts/          # one module per concept — MSM §5.2.1
-│   ├── syncs/             # seeding, gestures, propagation, conduct
+│   ├── syncs/             # seeding, gestures, binding, propagation, conduct
 │   ├── engine/            # log, flows, provenance, dispatch — do not edit
 │   ├── catalogue/         # elevator.json
 │   ├── wiring.py          # discovers concepts, wires rules, reads the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
 │   ├── webapp.py          # POST /gesture, GET /view — mounted by langgraph.json
-│   ├── tools.py           # the model's four tools
+│   ├── tools.py           # the model's eleven tools
 │   ├── hearing.py         # the chat message, as a person's `say` gesture
 │   ├── instance.py        # the one engine both actors share
+│   ├── journal.py         # the log, kept: appended as written, replayed at boot
 │   └── main.py            # the graph
 └── docs/                  # the method, the concepts, the rules, the analysis
 ```
@@ -117,16 +126,23 @@ in a concept or a rule.
 
 |  | person | model |
 |---|---|---|
+| state, relax or strike a requirement, in their own words | yes | no |
+| say which requirement a value answers | yes | no |
 | assert or withdraw a value | yes | yes |
 | propose a completion | — | yes |
 | **adopt one** | **yes** | **no** |
-| change a price or the catalogue | no | no |
+| say who the person is, and where the lift goes | yes | yes |
+| request a quote | yes | yes |
+| **accept or revoke one** | **yes** | **no** |
+| choose which facts the canvas shows beside each item | yes | yes |
+| narrow the canvas to what followed from one assertion | yes | yes |
+| change a price, the catalogue, or the seller's terms | no | no |
 
 Every `no` is the absence of a rule, not a prohibition — the DSL has no way to
 write one, and an action no rule invokes does not happen. So *can the assistant
-change a price?* is answered by reading the `then` clauses of
-[`agent/syncs/conduct.py`](agent/syncs/conduct.py), not by reasoning about what
-a language model might infer from a prompt.
+change a price?* or *can it buy the lift?* is answered by reading the `then`
+clauses of [`agent/syncs/conduct.py`](agent/syncs/conduct.py), not by
+reasoning about what a language model might infer from a prompt.
 
 ### The log
 
@@ -134,6 +150,15 @@ Every action is recorded with its actor and the rule that authorised it. The
 canvas reads those provenance edges directly: *you asked for this*, *the
 assistant asked for this* and *adopted from a proposal* are three `via` values
 on the same action, with no field anywhere recording which.
+
+The log is also what survives a restart. Nothing serialises concept state:
+every record after the boot mark is appended to `agent/.journal/actions.jsonl`
+as it is committed, and at the next boot the catalogue is read afresh and the
+file is replayed — each recorded input applied to its concept again, each
+record put back with its identity, timestamp and provenance edge, no rule
+firing. That is MSM §5.2.3's "the state of concepts can be reconstructed
+entirely from the log" taken literally, in [`agent/journal.py`](agent/journal.py).
+The chat threads are kept separately by LangGraph's dev server.
 
 ## Tech stack
 
@@ -159,6 +184,10 @@ cp .env.example .env    # then set OPENAI_API_KEY
 The concept layer is mounted into the LangGraph server by `langgraph.json`'s
 `http.app`, so it runs in the same process as the graph and shares one engine
 with the model's tools. `AGENT_URL` points the frontend proxy at it.
+
+The specification survives a restart: the action log is kept in
+`agent/.journal/actions.jsonl` (`AGENT_JOURNAL` moves it) and replayed at boot.
+`npm run reset:agent` deletes it, which starts over.
 
 ## UI components
 

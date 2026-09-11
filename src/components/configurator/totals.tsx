@@ -7,16 +7,8 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { money, tonnes } from "./format";
 import { useConfigurator, type Grid } from "./provider";
-
-const money = (amount: number, currency: string) =>
-  new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: currency || "EUR",
-    maximumFractionDigits: 0,
-  }).format(amount);
-
-const tonnes = (kg: number) => `${(kg / 1000).toFixed(1)} t`;
 
 function Figure({ value, unit }: { value: string; unit: string }) {
   return (

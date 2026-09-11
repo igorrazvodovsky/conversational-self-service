@@ -7,6 +7,84 @@
     "term_months": { "y5": 60, "y10": 120, "y15": 180 },
     "default_term": "y10"
   },
+  "vendor": {
+    "party": "seller",
+    "name": "Northline Lifts B.V.",
+    "organisation": "Northline Lifts B.V., a fictional manufacturer used to illustrate this catalogue",
+    "address": "Maashaven 8, 3072 AC Rotterdam, Netherlands",
+    "email": "quotations@northline-lifts.example",
+    "phone": "+31 10 000 0000"
+  },
+  "terms": {
+    "basis": "catalogue",
+    "validity_days": 30,
+    "warranty_months": 12,
+    "approval_weeks": 4,
+    "installation_weeks": 6,
+    "by_others": [
+      "shaft",
+      "pit_depth",
+      "headroom"
+    ],
+    "schedule": [
+      {
+        "upon": "order, with this quotation accepted",
+        "share": 0.3
+      },
+      {
+        "upon": "notice that the equipment is ready for dispatch",
+        "share": 0.5
+      },
+      {
+        "upon": "completion of installation",
+        "share": 0.15
+      },
+      {
+        "upon": "acceptance, following the final examination",
+        "share": 0.05
+      }
+    ],
+    "clauses": {
+      "included": [
+        "Manufacture, delivery to site, installation, commissioning and the final examination by a notified body under the Lifts Directive 2014/33/EU.",
+        "Layout drawings for approval, and as-installed wiring diagrams and the operating manual on handover.",
+        "Maintenance for the warranty period, with call-out during normal working hours.",
+        "Two keys for each key switch supplied."
+      ],
+      "excluded": [
+        "VAT and any other tax or duty.",
+        "Builder's work of any kind: cutting, patching, grouting, fire-stopping and making good.",
+        "Temporary power, lighting, scaffolding and site welfare.",
+        "Craneage and hoisting beyond a clear roll-able route from the unloading point to the shaft.",
+        "Use of the lift before acceptance; a temporary-use agreement is available on request.",
+        "An emergency power supply and its changeover contacts.",
+        "Painting and finishes other than those stated."
+      ],
+      "provided": [
+        "A plumb, enclosed shaft to the dimensions stated, within 25 mm over its full height, with the fire rating the building requires.",
+        "A dry pit with a drain or sump pump, a ladder and lighting.",
+        "A lifting beam at the shaft head rated for 3 500 kg, positioned to the layout drawings.",
+        "Rail bracket supports at each floor to the layout drawings, and rough openings at each landing until the entrances are set.",
+        "A three-phase 400 V fused supply to the control cabinet with a lockable isolator, and a separate lighting and socket circuit.",
+        "A telephone line or data connection to the control cabinet for the alarm and, where specified, remote monitoring.",
+        "Where fire recall is specified, a smoke detector contact at each landing wired to the control cabinet.",
+        "A dry, lockable storage area beside the shaft for the equipment on delivery, and free parking for the installation team."
+      ],
+      "conditions": [
+        "Prices are firm for orders placed within the validity period and for delivery within twelve months of order; later delivery is subject to adjustment.",
+        "The programme runs from approval of the layout drawings and from a shaft ready for installation; delay by others extends it and re-mobilisation is charged.",
+        "Changes after approval of the drawings are made by written variation, priced before the work is done.",
+        "The lift complies with EN 81-20 and EN 81-50 as in force at the date of this quotation; a change in the law after that date is a variation.",
+        "Title to the equipment passes on payment in full.",
+        "The warranty covers defects in materials and workmanship, excludes wear, misuse and work by others, and is conditional on the lift being maintained by us.",
+        "Neither party is liable for delay caused by events beyond its reasonable control."
+      ],
+      "maintenance": [
+        "The maintenance agreement begins when the warranty period ends and runs for the contract term stated, with the charge reviewed each year against the published index of labour costs.",
+        "The charge is based on the usage profile stated; sustained use beyond it is grounds for review."
+      ]
+    }
+  },
   "variables": [
     {
       "name": "service_level",

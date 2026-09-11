@@ -17,7 +17,123 @@ import {
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
-import { useConfigurator, type Variable } from "./provider";
+import { useAnswering } from "./clauses";
+import { adds, kilos } from "./format";
+import { useConfigurator, type Option, type Variable } from "./provider";
+import { useShown } from "./showing";
+
+/**
+ * The one click that sets a value, and what it carries.
+ *
+ * In answering mode the pick names the clause it answers and goes to
+ * `Binding` (the `answer` gesture); a variable whose value already answers
+ * exactly one clause keeps answering it when changed, which is a substitution;
+ * otherwise the pick is the slice 0 gesture, a bare `assert`. Which of the
+ * three happened is on the log, not here.
+ */
+function usePick(variable: Variable) {
+  const { gesture } = useConfigurator();
+  const { answering } = useAnswering();
+  const clause =
+    answering?.clause ??
+    (variable.answers.length === 1 ? variable.answers[0].clause : null);
+  return (option: Option) =>
+    void gesture(
+      clause
+        ? { act: "answer", clause, option: option.id }
+        : { act: "assert", variable: variable.name, option: option.id },
+    );
+}
+
+/**
+ * The options of a variable, and what is shown beside each.
+ *
+ * The label is always there. What each option adds to the price or the
+ * carbon sits inside its button when the `price` or `carbon` facet is shown;
+ * the catalogue's notes and the rules that rule an option out are lists
+ * under the buttons when `notes` or `excluded` is. Which of those a person
+ * sees is `Showing`'s, not this component's.
+ */
+function Options({ variable }: { variable: Variable }) {
+  const { busy, view } = useConfigurator();
+  const shown = useShown();
+  const pick = usePick(variable);
+  const currency = view?.currency ?? "";
+  const price = shown("price");
+  const carbon = shown("carbon");
+  const noted = shown("notes")
+    ? variable.options.filter((o) => o.note)
+    : [];
+  const excluded = shown("excluded")
+    ? variable.options.filter((o) => !o.possible && o.excluded.length)
+    : [];
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        {variable.options.map((option) => (
+          <Button
+            key={option.id}
+            variant={option.possible ? "outline" : "secondary"}
+            size="xs"
+            disabled={busy || option.id === variable.asked}
+            title={
+              option.possible
+                ? (option.note ?? undefined)
+                : "Ruled out by what has been asserted so far"
+            }
+            className={cn(
+              "h-auto py-1",
+              !option.possible && "text-muted-foreground line-through",
+            )}
+            onClick={() => pick(option)}
+          >
+            {option.label}
+            {price && option.capital !== null ? (
+              <span className="font-normal tabular-nums text-muted-foreground">
+                {adds(option.capital, currency)}
+              </span>
+            ) : null}
+            {price && option.monthly !== null ? (
+              <span className="font-normal tabular-nums text-muted-foreground">
+                {adds(option.monthly, currency)}/mo
+              </span>
+            ) : null}
+            {carbon && option.embodied !== null ? (
+              <span className="font-normal tabular-nums text-muted-foreground">
+                +{kilos(option.embodied)}
+              </span>
+            ) : null}
+          </Button>
+        ))}
+      </div>
+      {noted.length ? (
+        <dl className="space-y-0.5 text-xs text-muted-foreground">
+          {noted.map((option) => (
+            <div key={option.id} className="flex gap-1.5">
+              <dt className="shrink-0 text-foreground">{option.label}</dt>
+              <dd>{option.note}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {excluded.length ? (
+        <ul className="space-y-0.5 text-xs text-muted-foreground">
+          {excluded.map((option) => (
+            <li key={option.id}>
+              <span className="text-foreground line-through">{option.label}</span>{" "}
+              {option.excluded.map((rule, i) => (
+                <span key={rule.rule}>
+                  {i ? " · " : ""}
+                  <span className="font-mono">{rule.rule}</span> {rule.because}
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 function Rules({
   rules,
@@ -46,8 +162,10 @@ function Rules({
 
 /** A variable a party asserted a value for, or asserted an impossible one for. */
 export function AskedCard({ variable }: { variable: Variable }) {
-  const { gesture, busy, label } = useConfigurator();
+  const { gesture, busy, label, view } = useConfigurator();
+  const shown = useShown();
   const unmet = variable.standing === "unmet";
+  const framedOnThis = view?.frame?.variable === variable.name;
   return (
     <Card size="sm" className={cn(unmet && "ring-destructive/60")}>
       <CardHeader>
@@ -71,9 +189,56 @@ export function AskedCard({ variable }: { variable: Variable }) {
         </CardAction>
       </CardHeader>
       <CardContent className="space-y-2">
-        {variable.how ? (
+        {shown("how") && variable.how ? (
           <p className="text-xs text-muted-foreground">{variable.how}</p>
         ) : null}
+        {/* What the value is for, from `Binding`. An assertion answering no
+            clause is the slice 0 case and is said so, not hidden — unless
+            the person hid the facet, which is theirs to do. */}
+        {shown("answers") ? (
+          variable.answers.length ? (
+            <ul className="space-y-0.5 text-xs">
+              {variable.answers.map((answer) => (
+                <li key={answer.clause}>
+                  <span className="text-muted-foreground">for:</span> {answer.text}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-muted-foreground">answers no stated requirement</p>
+          )
+        ) : null}
+        <Collapsible>
+          <div className="-ml-2 flex flex-wrap items-center gap-1">
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="xs" className="text-muted-foreground">
+                <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />
+                Change
+              </Button>
+            </CollapsibleTrigger>
+            {/* The requirement slice: narrow the canvas to what this
+                assertion forced, ruled out or refused — `Framing`. */}
+            {!framedOnThis && !unmet ? (
+              <Button
+                variant="ghost"
+                size="xs"
+                className="text-muted-foreground"
+                disabled={busy}
+                onClick={() =>
+                  void gesture({
+                    act: "frame",
+                    frame: { by: "assertion", variable: variable.name },
+                  })
+                }
+              >
+                What followed from this
+              </Button>
+            ) : null}
+          </div>
+          <CollapsibleContent className="pt-1">
+            <Options variable={variable} />
+          </CollapsibleContent>
+        </Collapsible>
         {unmet ? (
           <div className="space-y-1">
             <p className="text-xs font-medium text-destructive">
@@ -93,6 +258,7 @@ export function AskedCard({ variable }: { variable: Variable }) {
 /** A variable nobody chose, whose value the rules leave no room to argue with. */
 export function FollowsRow({ variable }: { variable: Variable }) {
   const { label } = useConfigurator();
+  const shown = useShown();
   return (
     <Item size="xs" variant="muted" role="listitem" className="items-start">
       <ItemContent className="gap-1">
@@ -105,7 +271,18 @@ export function FollowsRow({ variable }: { variable: Variable }) {
           </span>
           <span className="text-sm">{label(variable.value)}</span>
         </div>
-        <Rules rules={variable.owing} />
+        {shown("rules") ? (
+          <>
+            <Rules rules={variable.owing} />
+            {/* The assertions the value rests on, from the same core. */}
+            {variable.following.length ? (
+              <p className="text-xs text-muted-foreground">
+                from{" "}
+                {variable.following.map((f) => f.heading).join(", ")}
+              </p>
+            ) : null}
+          </>
+        ) : null}
       </ItemContent>
     </Item>
   );
@@ -113,7 +290,6 @@ export function FollowsRow({ variable }: { variable: Variable }) {
 
 /** A variable still open, with what the rules have left of its range. */
 export function OpenRow({ variable }: { variable: Variable }) {
-  const { gesture, busy } = useConfigurator();
   const live = variable.options.filter((option) => option.possible);
   const gone = variable.options.length - live.length;
 
@@ -131,32 +307,8 @@ export function OpenRow({ variable }: { variable: Variable }) {
           </span>
         </Button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="flex flex-wrap gap-1.5 px-3 pb-3">
-        {variable.options.map((option) => (
-          <Button
-            key={option.id}
-            variant={option.possible ? "outline" : "secondary"}
-            size="xs"
-            disabled={busy}
-            title={
-              option.possible
-                ? (option.note ?? undefined)
-                : "Ruled out by what has been asserted so far"
-            }
-            className={cn(
-              !option.possible && "text-muted-foreground line-through",
-            )}
-            onClick={() =>
-              void gesture({
-                act: "assert",
-                variable: variable.name,
-                option: option.id,
-              })
-            }
-          >
-            {option.label}
-          </Button>
-        ))}
+      <CollapsibleContent className="px-3 pb-3">
+        <Options variable={variable} />
       </CollapsibleContent>
     </Collapsible>
   );

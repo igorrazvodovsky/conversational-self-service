@@ -46,6 +46,9 @@ next-env.d.ts
 # LangGraph API
 .langgraph_api
 
+# The action log, kept between runs (agent/journal.py)
+agent/.journal/
+
 # Git worktrees
 .worktrees
 

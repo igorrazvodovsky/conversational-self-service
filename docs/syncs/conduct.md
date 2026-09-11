@@ -17,8 +17,44 @@ when  { Copiloting/invoke: [ tool: "withdraw" ;
           spec: ?s ; variable: ?v ] => [] }
 then  { Asserting/withdraw: [ spec: ?s ; variable: ?v ] }
 
+sync TheModelMayIntroduceThePerson
+when  { Copiloting/invoke: [ tool: "introduce" ; name: ?n ; organisation: ?o ;
+          address: ?a ; email: ?e ; phone: ?p ] => [] }
+then  { Profiling/introduce: [ party: person ; name: ?n ; organisation: ?o ;
+          address: ?a ; email: ?e ; phone: ?p ] }
+
+sync TheModelMayEntitleTheJob
+when  { Copiloting/invoke: [ tool: "entitle" ; spec: ?s ; title: ?t ; site: ?where ] => [] }
+then  { Naming/entitle: [ item: ?s ; title: ?t ; site: ?where ] }
+
+sync TheModelMayRequestAQuote
+when  { Copiloting/invoke: [ tool: "quote" ; spec: ?s ] => [] }
+where { as APersonRequestsAQuote — every variable settled, nothing
+          asserted unmet, Pricing's total complete, the person named
+          and the job sited; the item, amount, terms and validity
+          read the same way }
+then  { Quoting/quote: [ item: ?item ; to: person ;
+          amount: ?amount ; terms: ?terms ; until: ?until ] }
+
+sync TheModelMayShowAFacet
+when  { Copiloting/invoke: [ tool: "show" ; facet: ?f ] => [] }
+then  { Showing/show: [ lens: workspace ; facet: ?f ] }
+
+sync TheModelMayHideAFacet
+when  { Copiloting/invoke: [ tool: "hide" ; facet: ?f ] => [] }
+then  { Showing/hide: [ lens: workspace ; facet: ?f ] }
+
+sync TheModelMayFrameTheCanvas
+when  { Copiloting/invoke: [ tool: "frame" ; frame: ?f ] => [] }
+then  { Framing/frame: [ lens: workspace ; frame: ?f ] }
+
+sync TheModelMayUnframeTheCanvas
+when  { Copiloting/invoke: [ tool: "unframe" ] => [] }
+then  { Framing/unframe: [ lens: workspace ] }
+
 sync TheCanvasIsShownBeforeItChanges
-when  { Copiloting/invoke: [ tool: "assert" ] => [] }
+when  { Copiloting/invoke: [ tool: ?t ] => [] }
+where { ?t is one of assert, withdraw, propose, quote, show, hide, frame, unframe }
 then  { Moding/focus: [ surface: canvas ] }
 ```
 
@@ -32,12 +68,52 @@ different things a person did, and both write `person`.
 There is no `TheModelMayPreferAnOption`. `Asserting` has no `prefer` — see
 [the dead rule](propagation.md#the-rule-that-is-registered-and-reached-by-nothing).
 
+`TheModelMayIntroduceThePerson` writes the *person's* profile, as
+`TheModelMayAssertAValue` writes the person's assertion: the party is the
+person, and the model has no profile of its own. The prompt tells it to record
+only what was said and never to invent a name or an address, and that is a
+sentence in a prompt, which this repository treats as a finding: the rule
+cannot tell a name the person gave from one the model made up. What it can
+guarantee is narrower and holds — the seller's profile and the seller's terms
+are reached by no tool at all.
+
+`TheModelMayRequestAQuote` has the same `where` as
+[`APersonRequestsAQuote`](gestures.md#a-quote-is-requested) and the same
+`then`, down to the party: a quote is issued *to the person* whoever asked for
+it, because the person is the only party an offer can be made to here. What
+distinguishes the two is the provenance edge, which is what the canvas reads.
+The model asking for a quote is the model computing a number on the person's
+behalf, like proposing a completion; what it cannot do is the next thing.
+
 `TheCanvasIsShownBeforeItChanges` is the rule the starter wrote as the sentence
 `Todos: enable app mode first, then manage todos` in a system prompt. It is
 ordinary application logic — a person who cannot see the canvas watches nothing
 happen — and it was enforced by asking a language model nicely. Here it fires
-because a value was asserted, whatever the model does or does not remember
-about it.
+because a value was asserted, or the canvas reshaped, whatever the model does
+or does not remember about it.
+
+## What the canvas shows
+
+<a id="what-the-canvas-shows"></a>
+`TheModelMayShowAFacet` and `TheModelMayHideAFacet` are the first permissions
+the model holds on exactly the terms the person does, and the only ones that
+change no fact of the specification. *Show me the price next to each option*
+is a request the assistant can now act on rather than answer with a recital,
+and *the canvas is too busy* has an act to go with it. Both reach
+[Showing](../concepts/showing.md), whose facets name facts other concepts
+already hold, so the grant costs nothing: the model can choose which of the
+canvas's facts a person sees and cannot make one up — no rule lets it offer a
+facet, as none lets it list an option. What it did is in the log with its
+provenance edge, and the person's menu shows the result and can take it
+back.
+
+`TheModelMayFrameTheCanvas` and `TheModelMayUnframeTheCanvas` extend the
+same grant to which *items* the canvas shows
+([Framing](../concepts/framing.md)). *What did asking for a hospital cost
+me?* is answered by narrowing the canvas to what followed from that
+assertion, with the sections kept, and saying so in a sentence — rather
+than by eleven values in a chat bubble. The tool passes the same frame value
+a person's click passes, and the rule carries it without looking inside.
 
 ## Proposing, and not adopting
 
@@ -155,7 +231,17 @@ WYSIWID §7.2's first and third design rules doing their work together.
 
 ## What is not here, and why that is the enforcement
 
-Three absences carry more weight than any of the rules above.
+Five absences carry more weight than any of the rules above.
+
+_No rule lets the model state a requirement, or say what a value is for._ No
+`when { Copiloting/invoke: … }` has [Specifying](../concepts/specifying.md) or
+[Binding](../concepts/binding.md) in its `then`. A clause is in the person's
+words and only the person writes one; which value answers it is the person's
+mapping, and only the person's pick reaches `Binding/propose`. The model may
+still assert a value with no clause behind it, as it always could, and the
+canvas says so beside the value. When the case's `Reading` arrives a model's
+reading of an utterance will enter `Specifying` through a gate the person
+holds; until then the absence is the gate.
 
 _No rule adopts a completion._ `Constraining/complete` changes nothing — it
 returns an assignment. The only path from an assignment into
@@ -163,13 +249,22 @@ returns an assignment. The only path from an assignment into
 only a person performs. The model can compute the cheapest buildable lift that
 honours every assertion and it cannot make it yours.
 
+_No rule commits to a quote._ The model may ask for one, and the offer comes
+back issued to the person. No `when { Copiloting/invoke: … }` has
+`Quoting/commit` in its `then`, so accepting it is
+[`APersonCommitsToAQuote`](gestures.md#the-two-asymmetries) or nothing. The
+model can say what the lift would cost and cannot buy it.
+
 _No rule lets the model price anything._ No `when { Copiloting/invoke: … }` has
 `Pricing` or `Footprinting` in its `then`. The model can read a price and
 cannot set one. Nothing tells it not to.
 
-_No rule lets the model change the catalogue._ Same shape. `Cataloguing/list`
-and `Cataloguing/delist` are invoked by the wiring at boot
-([Seeding](seeding.md)) and by nothing else.
+_No rule lets the model change the catalogue, or the seller's terms._ Same
+shape. `Cataloguing/list` and `Cataloguing/delist` are invoked by the wiring
+at boot ([Seeding](seeding.md)) and by nothing else, and so are every action
+of `Stipulating` and the seller's `Profiling/introduce`. The model can put
+the person's name on a proposal and cannot change what the proposal
+stipulates.
 
 None of that is a prohibition, because the DSL has no way to write one. Each is
 the absence of a permission, and an action reaches the
@@ -185,10 +280,11 @@ English.
 
 ## The tool names are ours
 
-`assert`, `withdraw`, `propose`. Three, against the starter's `manage_todos`,
-and the difference is the same difference [Tasking](../method/action.md) had:
-a log of the first three says what happened, and a log of the fourth says only
-that something did.
+`assert`, `withdraw`, `propose`, `introduce`, `entitle`, `quote`, `show`,
+`hide`, `frame`, `unframe`. Ten, against the starter's `manage_todos`, and
+the difference is the same difference [Tasking](../method/action.md) had: a
+log of the ten says what happened, and a log of the one says only that
+something did.
 
 The tool string and the Python function differ, and only in one direction:
 Python reserves `assert`, so `agent/tools.py` defines `assert_value` and passes

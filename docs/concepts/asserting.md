@@ -101,14 +101,16 @@ and on nothing else.
 ## What this concept is not
 
 _A clause._ `asserted` maps a variable to an option: the assertion is already
-in the model's vocabulary. Nothing here says *what the value is for*. The
-case's `Specifying` holds that — a requirement in the buyer's words, with a
-discipline and a target it serves — and its `Binding` holds the relation
-`answers` between a committed value and the clause it satisfies. Neither exists
-in this repository yet; slice 1 of the case's `Prototype plan` adds them, and
-this concept then holds the attribute-level assertions that a mapped choice
-produces. Until then an assertion answers nothing, which is the honest state
-of slice 0 and the reason it is the control.
+in the model's vocabulary. Nothing here says *what the value is for*.
+[Specifying](specifying.md) holds that — a requirement in the buyer's words,
+with a discipline and a negotiability — and [Binding](binding.md) holds the
+relation `answers` between a choice and the clause it satisfies. Both exist
+since 2026-09-11, the case's slice 1, and this concept now holds the
+attribute-level assertion that a person's pick produces on its way to the
+solver, by [one rule](../syncs/binding.md#the-person-maps). An assertion made
+with no clause behind it — by the slice 0 gesture, or by the model — is still
+recorded here exactly as before, and the canvas says it answers nothing, which
+is the control inside the same build.
 
 _Who decided, as state._ `assertedBy` records the party at the grain of the
 assertion — the person, or the model on the person's behalf. The three
@@ -159,6 +161,7 @@ neither is the action's name.
 ## See also
 
 - [Constraining](constraining.md) — what follows from what is recorded here
+- [Specifying](specifying.md) and [Binding](binding.md) — what an assertion is for, when it is for anything
 - [Deciding](deciding.md) — how a conflict between assertions is settled
 - [Misalignment](../method/misalignment.md#conflation) — the failure this separation avoids
 - [The synchronizations](../syncs/README.md) — the only path out of this concept

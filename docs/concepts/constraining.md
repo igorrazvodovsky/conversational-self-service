@@ -19,6 +19,7 @@ state
   possible: Spec -> Variable -> set Option
   settled:  Spec -> Variable -> Option
   owing:    Spec -> Variable -> set Rule
+  following: Spec -> Variable -> set Variable
   refused:  Spec -> Variable -> set Rule
 
 actions
@@ -57,7 +58,8 @@ actions
     replacing any option previously assumed or inclined for it
     clear any refusal recorded against the variable
     recompute, for every variable, which options remain possible
-    and which are settled to one, and by which rules
+    and which are settled to one, by which rules, and resting on
+    which of the specification's assumptions
     return both
 
   assume [ spec: Spec ; variable: Variable ; option: Option ]
@@ -181,6 +183,46 @@ was silently dropped.
 It is cleared when it stops being true: by a successful `assume` on the same
 variable, and by `release`. It is *not* cleared by the person declining to
 answer, because declining changes nothing about whether the lift can be built.
+
+## Why an option is ruled out is a read
+
+<a id="why-an-option-is-ruled-out-is-a-read"></a>
+`owing` says which rules force a value and `refused` which rules refused an
+assertion. Neither says why a particular option that nobody asserted is
+struck through on the canvas, and that is the question a dealer asks of a
+greyed-out button. It is answered by a calculation over exposed state, in the
+same place [Pricing's total](pricing.md#the-total-is-a-read-and-here-is-the-arithmetic)
+is, and for the same reason — nobody performs *explain this option*:
+
+```
+excluding [ spec: Spec ; variable: Variable ; option: Option ] : set Rule
+  empty if the option is in possible of (spec, variable)
+  otherwise the smallest set of rules that, together with the
+  specification's assumptions, cannot hold with the option selected
+```
+
+The set is empty in a second case: when nothing but the assumptions is in
+the core, which is what happens to every other option of a variable the
+person has asserted. That option is out because they said otherwise, the
+card already says so, and there is no rule to name. It costs one solver
+check per option asked about, and the view asks only while
+[Showing](showing.md)'s `excluded` facet is shown.
+
+The same core answers a second question, *which assertions* ruled the
+option out, and that is the read beside it:
+
+```
+narrowing [ spec: Spec ; variable: Variable ; option: Option ] : set Variable
+  the variables whose assumptions are in the same core
+```
+
+For a settled value the corresponding question is answered by state rather
+than by a read. `following` records, beside `owing`, which of the
+specification's assumptions the settlement rests on: the core that settles
+a value names the assumptions as well as the rules, and until 2026-09-11
+only the rules were kept. Together `following` and `narrowing` are what
+[Framing](framing.md) reads to narrow the canvas to what followed from one
+assertion.
 
 ## Why the explanation is not its own concept
 

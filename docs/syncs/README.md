@@ -32,6 +32,31 @@ it.
 | `APersonAnswersAQuestion` | [Gestures](gestures.md) |
 | `APersonDeclinesToAnswer` | [Gestures](gestures.md) |
 | `APersonFocusesASurface` | [Gestures](gestures.md) |
+| `APersonShowsAFacet` | [Gestures](gestures.md) |
+| `APersonHidesAFacet` | [Gestures](gestures.md) |
+| `APersonFramesTheCanvas` | [Gestures](gestures.md) |
+| `APersonUnframesTheCanvas` | [Gestures](gestures.md) |
+| `APersonIntroducesThemselves` | [Gestures](gestures.md) |
+| `APersonEntitlesTheJob` | [Gestures](gestures.md) |
+| `APersonRequestsAQuote` | [Gestures](gestures.md) |
+| `APersonCommitsToAQuote` | [Gestures](gestures.md) |
+| `APersonRevokesAQuote` | [Gestures](gestures.md) |
+| `APersonStatesAClause` | [Gestures](gestures.md) |
+| `APersonSettlesAClause` | [Gestures](gestures.md) |
+| `APersonRelaxesAClause` | [Gestures](gestures.md) |
+| `APersonStrikesAClause` | [Gestures](gestures.md) |
+| `APersonRewordsAClause` | [Gestures](gestures.md) |
+| `APersonClassifiesAClause` | [Gestures](gestures.md) |
+| `APersonMovesAClause` | [Gestures](gestures.md) |
+| `APersonAnswersAClause` | [Binding](binding.md) |
+| `APersonSubstitutesAnAnswer` | [Binding](binding.md) |
+| `AStartedSpecificationIsOpened` | [Binding](binding.md) |
+| `ADiscardedSpecificationIsClosed` | [Binding](binding.md) |
+| `AChoiceReachesTheAssertions` | [Binding](binding.md) |
+| `ASubstituteReachesTheAssertions` | [Binding](binding.md) |
+| `AWithdrawnValueRetractsItsChoices` | [Binding](binding.md) |
+| `AnOverwrittenValueRetractsItsChoices` | [Binding](binding.md) |
+| `AStruckClauseReleasesItsChoices` | [Binding](binding.md) |
 | `ANewSpecificationIsGivenToTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationLeavesTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationsQuestionsAreWithdrawn` | [Propagation](propagation.md) |
@@ -41,9 +66,19 @@ it.
 | `AConflictIsPutToThePerson` | [Propagation](propagation.md) |
 | `UnmetAssertionsAreTriedAgain` | [Propagation](propagation.md) |
 | `TheConcededAssertionIsWithdrawn` | [Propagation](propagation.md) |
+| `AnIssuedQuoteIsShown` | [Propagation](propagation.md) |
+| `AWithdrawnAssertionUnframesTheCanvas` | [Propagation](propagation.md) |
+| `ADiscardedSpecificationUnframesTheCanvas` | [Propagation](propagation.md) |
 | `TheModelMayAssertAValue` | [Conduct](conduct.md) |
 | `TheModelMayWithdrawAnAssertion` | [Conduct](conduct.md) |
 | `TheModelMayProposeACompletion` | [Conduct](conduct.md) |
+| `TheModelMayIntroduceThePerson` | [Conduct](conduct.md) |
+| `TheModelMayEntitleTheJob` | [Conduct](conduct.md) |
+| `TheModelMayRequestAQuote` | [Conduct](conduct.md) |
+| `TheModelMayShowAFacet` | [Conduct](conduct.md) |
+| `TheModelMayHideAFacet` | [Conduct](conduct.md) |
+| `TheModelMayFrameTheCanvas` | [Conduct](conduct.md) |
+| `TheModelMayUnframeTheCanvas` | [Conduct](conduct.md) |
 | `ACompletionIsPutToThePerson` | [Conduct](conduct.md) |
 | `AnAdoptedCompletionBecomesAssertions` | [Conduct](conduct.md) |
 | `AChangedSpecificationWithdrawsItsProposal` | [Conduct](conduct.md) |
@@ -51,18 +86,42 @@ it.
 
 ## Seeding
 
-The catalogue arrives as a file and leaves as facts in four concepts. Which of
-those four are reached by a rule, and which by the wiring at boot, is a
-question about what depends on what — worked through in
-[Seeding](seeding.md).
+The catalogue arrives as a file and leaves as facts in six concepts — the
+seller's profile and terms among them, since 2026-09-11. Which of those are
+reached by a rule, and which by the wiring at boot, is a question about what
+depends on what — worked through in [Seeding](seeding.md).
 
 ## What a person may do
 
 Every click, and every chat message, is one root action carrying an `act`, and
-these eight rules decide what follows from it. There is no HTTP route per
+these twenty-five rules decide what follows from it. There is no HTTP route per
 concept action, and [Gestures](gestures.md) says why that matters — as does why
 the vocabulary of acts is ours and lives there, and why the chat message is
 performed before the model node of the graph rather than from the browser.
+
+## A clause is answered
+
+What a person requires, in their own words, lives in
+[Specifying](../concepts/specifying.md); which value answers each clause lives
+in [Binding](../concepts/binding.md); and the value itself is an assertion
+like any other. One gesture answers a clause with an option, two rules decide
+whether that is a first answer or a substitution, two more carry the choice
+into `Asserting` — the person having done the mapping by picking the option —
+and three retract a choice whose value was withdrawn, overwritten or whose
+clause was struck. Nothing carries a choice out of `Binding` except by way of
+an assertion changing. See [Binding](binding.md).
+
+## An offer is held still
+
+A quote is a third kind of fact beside the asserted and the entailed: a
+snapshot with a price and its terms, which the specification can move away
+from without changing. One rule issues it, to the person, when every variable
+is settled, nothing asserted is unmet, the person is named and the job has a
+site; one lets the person accept it; one lets them revoke it; and one gives
+the quote surface the viewer's attention when a quote is issued. Two more let
+the person say who they are and where the lift is going, which is what makes
+the proposal addressed. The model may ask for one and may not accept it, which is the
+[second asymmetry](gestures.md#the-two-asymmetries).
 
 ## Assertions reach the solver
 
@@ -82,12 +141,26 @@ question, and the person answers it. A lone refusal has nothing to choose
 between and raises no question — the account appears, the banner does not. See
 [Propagation](propagation.md#when-assertions-cannot-hold-together).
 
+## What the canvas shows
+
+Which facts the canvas shows beside each item — a price on every option, the
+rule that struck one through, the requirement a value answers — lives in
+[Showing](../concepts/showing.md), and both actors may change it on the same
+terms: two gestures, two tool permissions, and no fact of the specification
+touched by any of the four. Which items it shows — narrowed to what followed
+from one assertion, or everything — is [Framing](../concepts/framing.md),
+reached the same way, plus two rules that take a frame away when the
+assertion it framed is withdrawn or the specification discarded. See
+[Gestures](gestures.md#what-the-canvas-shows-is-chosen),
+[Conduct](conduct.md#what-the-canvas-shows) and
+[Propagation](propagation.md#a-frame-goes-with-what-it-framed).
+
 ## What the model may do
 
 The model is a second root actor, and every one of its invocations reaches a
 concept action by way of a rule that says it may. There is no rule that lets it
-adopt a completion, change a price, or list a catalogue option, and that is the
-whole of the enforcement. See [Conduct](conduct.md).
+adopt a completion, commit to a quote, change a price, or list a catalogue
+option, and that is the whole of the enforcement. See [Conduct](conduct.md).
 
 ## Checking these against the design rules
 

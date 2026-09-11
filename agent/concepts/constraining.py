@@ -13,6 +13,7 @@ state
   possible: Spec -> Variable -> set Option
   settled:  Spec -> Variable -> Option
   owing:    Spec -> Variable -> set Rule
+  following: Spec -> Variable -> set Variable
   refused:  Spec -> Variable -> set Rule
 
 A change to the rule base recomputes every specification being tracked.  Only
@@ -53,6 +54,7 @@ class Constraining:
         self._possible: dict[str, dict[str, list[str]]] = {}
         self._settled: dict[str, dict[str, str]] = {}
         self._owing: dict[str, dict[str, list[str]]] = {}
+        self._following: dict[str, dict[str, list[str]]] = {}
         self._refused: dict[str, dict[str, list[str]]] = {}
         self._solver: z3.Solver | None = None
         self._sel: dict[tuple[str, str], z3.BoolRef] = {}
@@ -72,6 +74,10 @@ class Constraining:
             "settled": {s: dict(m) for s, m in self._settled.items()},
             "owing": {
                 s: {v: list(rs) for v, rs in m.items()} for s, m in self._owing.items()
+            },
+            "following": {
+                s: {v: list(vs) for v, vs in m.items()}
+                for s, m in self._following.items()
             },
             "refused": {
                 s: {v: list(rs) for v, rs in m.items()}
@@ -184,6 +190,7 @@ class Constraining:
             self._possible,
             self._settled,
             self._owing,
+            self._following,
             self._refused,
         ):
             held.pop(spec, None)
@@ -229,6 +236,59 @@ class Constraining:
             "cost": round(float(total), 2),
             "objective": str(objective.value()),
         }
+
+    # -- reads --------------------------------------------------------------
+
+    def excluding(self, spec: str, variable: str, option: str) -> list[str]:
+        """Which rules rule the option out for this specification.
+
+        A read, not an action — `docs/concepts/constraining.md`, "Why an
+        option is ruled out is a read".  One solver check: can the rules and
+        the assumptions hold with this option selected, and if not, which
+        rules are in the core.  Empty for an option still possible, and empty
+        when the core holds no rule at all — the option is then ruled out by
+        an assumption alone, which is the person having asserted otherwise for
+        the same variable, and the card already says so.
+        """
+        return self._core_against(spec, variable, option)[0]
+
+    def narrowing(self, spec: str, variable: str, option: str) -> list[str]:
+        """Which of the specification's assumptions rule the option out.
+
+        The same core as `excluding`, read for its other half: the variables
+        whose assumed options took part.  What `Framing` reads to say which
+        open variables one assertion narrowed.
+        """
+        return self._core_against(spec, variable, option)[1]
+
+    def _core_against(
+        self, spec: str, variable: str, option: str
+    ) -> tuple[list[str], list[str]]:
+        if option in self._possible.get(spec, {}).get(variable, []):
+            return [], []
+        literal = self._built_sel().get((variable, option))
+        if literal is None:
+            return [], []
+        solver = self._built()
+        rules = list(self._rule_lit.values())
+        if solver.check(*rules, *self._assumption_literals(spec), literal) != z3.unsat:
+            return [], []
+        return self._read_core(solver, exclude=variable)
+
+    def _read_core(self, solver: z3.Solver, exclude: str | None = None) -> tuple[list[str], list[str]]:
+        """The rules and the assumed variables in the solver's last core."""
+        core = {str(term) for term in solver.unsat_core()}
+        rules = sorted(
+            rule for rule, rule_literal in self._rule_lit.items() if str(rule_literal) in core
+        )
+        variables = sorted(
+            {
+                v
+                for (v, o), sel in self._sel.items()
+                if str(sel) in core and v != exclude
+            }
+        )
+        return rules, variables
 
     # -- the solver ---------------------------------------------------------
 
@@ -424,27 +484,28 @@ class Constraining:
         settled = {v: os[0] for v, os in ordered.items() if len(os) == 1}
         asked = self._assumed.get(spec, {})
         owing: dict[str, list[str]] = {}
+        following: dict[str, list[str]] = {}
         for variable, option in settled.items():
             if variable in asked:
                 # Settled because you said so, not because a rule said so.
                 continue
             literal = self._sel[(variable, option)]
             if solver.check(*rules, *assumptions, z3.Not(literal)) == z3.unsat:
-                core = {str(term) for term in solver.unsat_core()}
-                blamed = sorted(
-                    rule
-                    for rule, rule_literal in self._rule_lit.items()
-                    if str(rule_literal) in core
-                )
+                # The same core, both halves: the rules that force the value
+                # and the assumptions it rests on.
+                blamed, rests = self._read_core(solver, exclude=variable)
                 if blamed:
                     owing[variable] = blamed
+                    following[variable] = rests
 
         self._possible[spec] = ordered
         self._settled[spec] = settled
         self._owing[spec] = owing
+        self._following[spec] = following
         return {
             "spec": spec,
             "possible": ordered,
             "settled": settled,
             "owing": owing,
+            "following": following,
         }

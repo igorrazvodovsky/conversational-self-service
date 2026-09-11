@@ -3,10 +3,11 @@
 What the model may do, stated positively.  MSM §5.3.
 
 The enforcement is in what is absent.  No rule below invokes `Deciding/choose`,
-`Pricing`, `Footprinting` or `Cataloguing`, so the model cannot adopt a
-completion, set a price or change the catalogue.  Not because it is told not
-to — because an action reaches the log only by way of some synchronization, and
-there is no rule that would carry the invocation through.
+`Quoting/commit`, `Pricing`, `Footprinting` or `Cataloguing`, so the model
+cannot adopt a completion, accept a quote, set a price or change the
+catalogue.  Not because it is told not to — because an action reaches the log
+only by way of some synchronization, and there is no rule that would carry the
+invocation through.
 
 "Can the agent change a price?" is therefore answered by reading the `then`
 clauses in this file, rather than by reasoning about what a language model is
@@ -18,6 +19,8 @@ from __future__ import annotations
 from typing import Any
 
 from engine import Completion, Invocation, States, Sync
+
+from .gestures import DETAILS, offer
 
 WORKSPACE = "workspace"
 
@@ -233,10 +236,45 @@ def _a_changed_specification_withdraws_its_proposal(
     ]
 
 
+def _the_model_may_introduce_the_person(c: Completion, _: States) -> list[Invocation]:
+    """What the person said of themselves, recorded on their behalf.
+
+    The party is the person, as with `TheModelMayAssertAValue`: the model
+    writes the person's profile and has none of its own.
+    """
+    if c.output.get("tool") != "introduce":
+        return []
+    given = {d: c.output[d] for d in DETAILS if c.output.get(d)}
+    return [Invocation("Profiling", "introduce", {"party": PERSON, **given})]
+
+
+def _the_model_may_entitle_the_job(c: Completion, _: States) -> list[Invocation]:
+    if c.output.get("tool") != "entitle":
+        return []
+    given = {k: c.output[k] for k in ("title", "site") if c.output.get(k)}
+    return [Invocation("Naming", "entitle", {"item": c.output["spec"], **given})]
+
+
+def _the_model_may_request_a_quote(c: Completion, states: States) -> list[Invocation]:
+    """The same `where` and the same `then` as `APersonRequestsAQuote`.
+
+    Down to the party: the quote is issued to the person whoever asked for it,
+    because the person is the only party an offer can be made to here.  What
+    tells the two apart is the provenance edge.  What the model cannot do is
+    the next thing — no rule carries an invocation to `Quoting/commit`.
+    """
+    if c.output.get("tool") != "quote":
+        return []
+    input = offer(states, c.output["spec"])
+    return [Invocation("Quoting", "quote", input)] if input else []
+
+
 def _the_canvas_is_shown_before_it_changes(
     c: Completion, _: States
 ) -> list[Invocation]:
-    if c.output.get("tool") not in {"assert", "withdraw", "propose"}:
+    if c.output.get("tool") not in {
+        "assert", "withdraw", "propose", "quote", "show", "hide", "frame", "unframe",
+    }:
         return []
     return [
         Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
@@ -286,6 +324,48 @@ rules = [
         "AChangedSpecificationWithdrawsItsProposal",
         ("Asserting", "withdraw"),
         _a_changed_specification_withdraws_its_proposal,
+    ),
+    Sync(
+        "TheModelMayIntroduceThePerson",
+        ("Copiloting", "invoke"),
+        _the_model_may_introduce_the_person,
+    ),
+    Sync(
+        "TheModelMayEntitleTheJob",
+        ("Copiloting", "invoke"),
+        _the_model_may_entitle_the_job,
+    ),
+    Sync(
+        "TheModelMayRequestAQuote",
+        ("Copiloting", "invoke"),
+        _the_model_may_request_a_quote,
+    ),
+    # The one permission the model holds on the same terms as the person, and
+    # the one that changes no fact: which facts the canvas shows beside each
+    # item.  A facet names something a concept already holds, so the model
+    # can choose what the person sees and cannot make a fact up.
+    Sync(
+        "TheModelMayShowAFacet",
+        ("Copiloting", "invoke"),
+        _tool("show", "Showing", "show", "facet", lens=WORKSPACE),
+    ),
+    Sync(
+        "TheModelMayHideAFacet",
+        ("Copiloting", "invoke"),
+        _tool("hide", "Showing", "hide", "facet", lens=WORKSPACE),
+    ),
+    # Likewise which items: the model may narrow the canvas to what followed
+    # from one assertion, and widen it again.  The frame it passes is the
+    # same value a person's click passes.
+    Sync(
+        "TheModelMayFrameTheCanvas",
+        ("Copiloting", "invoke"),
+        _tool("frame", "Framing", "frame", "frame", lens=WORKSPACE),
+    ),
+    Sync(
+        "TheModelMayUnframeTheCanvas",
+        ("Copiloting", "invoke"),
+        _tool("unframe", "Framing", "unframe", lens=WORKSPACE),
     ),
     Sync(
         "TheCanvasIsShownBeforeItChanges",

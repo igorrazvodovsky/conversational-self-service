@@ -65,6 +65,17 @@ In order, once, at boot:
 | `footprint.service_life_years`, `fabrication_multiplier`, `module_scope` | `Footprinting/frame` |
 | each `table` constraint | `Constraining/tabulate` |
 | each `implication` constraint | `Constraining/imply` |
+| `vendor` | `Profiling/introduce`, for the party `seller` |
+| `terms.validity_days`, `warranty_months`, `approval_weeks`, `installation_weeks` | `Stipulating/stipulate` |
+| each entry of `terms.schedule` | `Stipulating/stage` |
+| each text under each section of `terms.clauses` | `Stipulating/clause` |
+| each variable in `terms.by_others` | `Stipulating/delegate` |
+
+The last five rows arrived on 2026-09-11 with the proposal. They are the
+seller's side of a quotation — who is offering and on what conditions — and
+they are seeded rather than gestured for the same reason a price is: no actor
+in this application is the seller. [Stipulating](../concepts/stipulating.md)
+says what that costs.
 
 Every one of them appears in the [action log](../method/implementation.md#the-action-log)
 like any other action, which means the catalogue's arrival is as accountable as

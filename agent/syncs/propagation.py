@@ -16,6 +16,47 @@ from typing import Any
 
 from engine import Completion, Invocation, States, Sync
 
+WORKSPACE = "workspace"
+
+
+def _an_issued_quote_is_shown(c: Completion, _: States) -> list[Invocation]:
+    """An offer that nobody sees is not an offer that was made.
+
+    Whichever party asked for it, the quote surface takes the viewer's
+    attention when a quote is issued — the same shape as
+    `TheCanvasIsShownBeforeItChanges`, one concept further along.
+    """
+    if c.failed:
+        return []
+    return [Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "quote"})]
+
+
+def _a_withdrawn_assertion_unframes_the_canvas(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """A frame lasts as long as what it framed.
+
+    The `where`: the workspace's frame is by assertion, on the variable just
+    withdrawn.  Otherwise the rule declines, and a frame on some other
+    assertion stays.
+    """
+    if c.failed:
+        return []
+    frame = states["Framing"].state()["framed"].get(WORKSPACE)
+    if not isinstance(frame, dict) or frame.get("by") != "assertion":
+        return []
+    if frame.get("variable") != c.output.get("variable"):
+        return []
+    return [Invocation("Framing", "unframe", {"lens": WORKSPACE})]
+
+
+def _a_discarded_specification_unframes_the_canvas(
+    c: Completion, states: States
+) -> list[Invocation]:
+    if c.failed or WORKSPACE not in states["Framing"].state()["framed"]:
+        return []
+    return [Invocation("Framing", "unframe", {"lens": WORKSPACE})]
+
 
 def _assertions_reach_the_solver(c: Completion, _: States) -> list[Invocation]:
     if c.failed:
@@ -254,5 +295,16 @@ rules = [
         "TheConcededAssertionIsWithdrawn",
         ("Deciding", "choose"),
         _the_conceded_assertion_is_withdrawn,
+    ),
+    Sync("AnIssuedQuoteIsShown", ("Quoting", "quote"), _an_issued_quote_is_shown),
+    Sync(
+        "AWithdrawnAssertionUnframesTheCanvas",
+        ("Asserting", "withdraw"),
+        _a_withdrawn_assertion_unframes_the_canvas,
+    ),
+    Sync(
+        "ADiscardedSpecificationUnframesTheCanvas",
+        ("Asserting", "discard"),
+        _a_discarded_specification_unframes_the_canvas,
     ),
 ]
