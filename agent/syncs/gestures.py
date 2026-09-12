@@ -108,7 +108,6 @@ def _requires(states: States, spec: str) -> list[dict[str, Any]]:
         {
             "clause": clause,
             "text": specifying["text"][clause],
-            "discipline": specifying["discipline"][clause],
             "negotiability": specifying["negotiability"][clause],
             "answeredBy": [
                 binding["value"][ch] for ch in choices if binding["answers"][ch] == clause
@@ -265,16 +264,7 @@ rules = [
     Sync(
         "APersonStatesAClause",
         ("Copiloting", "gesture"),
-        _carry(
-            "require",
-            "Specifying",
-            "require",
-            "spec",
-            "text",
-            "discipline",
-            "negotiability",
-            party=PERSON,
-        ),
+        _carry("require", "Specifying", "require", "spec", "text", party=PERSON),
     ),
     Sync(
         "APersonSettlesAClause",
@@ -290,11 +280,6 @@ rules = [
         "APersonRewordsAClause",
         ("Copiloting", "gesture"),
         _carry("reword", "Specifying", "reword", "clause", "text"),
-    ),
-    Sync(
-        "APersonClassifiesAClause",
-        ("Copiloting", "gesture"),
-        _carry("classify", "Specifying", "classify", "clause", "discipline"),
     ),
     Sync(
         "APersonMovesAClause",

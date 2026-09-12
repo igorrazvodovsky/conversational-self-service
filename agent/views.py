@@ -16,6 +16,7 @@ already recorded and needs no extra field anywhere.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import Any
 
@@ -291,7 +292,7 @@ def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
     """The requirement ledger: `docs/syncs/binding.md`, "The ledger is a read".
 
     For each clause of the specification, in the order stated: its text,
-    discipline, negotiability, who stated it and what it formerly said, and
+    negotiability, who stated it and what it formerly said, and
     the choices currently answering it — each with its value, the variable
     the catalogue says offers it, who decided it, what it replaced and why,
     and a standing read against Asserting and Constraining.  Four concepts'
@@ -344,7 +345,6 @@ def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
         {
             "clause": clause,
             "text": specifying["text"][clause],
-            "discipline": specifying["discipline"][clause],
             "negotiability": specifying["negotiability"][clause],
             "statedBy": specifying["statedBy"][clause],
             "formerly": specifying["formerly"].get(clause, []),
@@ -458,6 +458,19 @@ def _issued(engine: Engine) -> dict[str, tuple[str, str]]:
     return issued
 
 
+# A catalogue individual or value named inside a clause's words, as the
+# document writes it: `[[id|label]]`, the id a variable's or an option's.
+# `Specifying` holds the token as words; the readers that quote a clause show
+# the label.  See docs/syncs/gestures.md, "A clause is stated in the person's
+# words".
+REFERENCE = re.compile(r"\[\[[a-z0-9_:]+\|([^\]]*)\]\]", re.I)
+
+
+def plain(text: str) -> str:
+    """A clause's words with each reference read as its label."""
+    return REFERENCE.sub(r"\1", text)
+
+
 def digest(engine: Engine, spec: str) -> dict[str, Any]:
     """The same reading, small enough to hand a language model."""
     view = canvas(engine, spec)
@@ -477,8 +490,7 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
         "required": [
             {
                 "clause": c["clause"],
-                "text": c["text"],
-                "discipline": c["discipline"],
+                "text": plain(c["text"]),
                 "negotiability": c["negotiability"],
                 "answered_by": [
                     f"{a['heading']}: {a['label']}" for a in c["answers"]
@@ -489,7 +501,7 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
         "asked": [
             say(v)
             + (
-                f" — answers: {'; '.join(a['text'] for a in v['answers'])}"
+                f" — answers: {'; '.join(plain(a['text']) for a in v['answers'])}"
                 if v["answers"]
                 else " — answers no stated requirement"
             )

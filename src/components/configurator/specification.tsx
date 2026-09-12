@@ -6,13 +6,15 @@
  * A Tiptap editor whose schema is a sequence of clause nodes and nothing
  * else. Each node carries the clause's identity from `Specifying` as an
  * attribute; the text is editable in place, and everything else about the
- * clause — its discipline, its negotiability, what answers it — is rendered
- * beside the text by the node view and is not text.
+ * clause — its negotiability, what answers it — is rendered beside the text
+ * by the node view and is not text. Nothing is asked of a line as it is
+ * typed: it is a clause the moment it has words. The words may name the
+ * catalogue — `@` offers it — and a reference so placed is part of the text,
+ * written as a token (`references.tsx`).
  *
  * The document is never the state. A transaction here is a stimulus: a node
  * that appears is `require`, one that vanishes is `strike`, changed text is
- * `reword`, and the node view's controls are `classify`, `settle`, `move` and
- * `relax`. The mapping lives in `flush` below and holds nothing across
+ * `reword`, and the node view's controls are `settle`, `move` and `relax`. The mapping lives in `flush` below and holds nothing across
  * renders except what has not yet been sent. See
  * docs/concepts/specifying.md, "The specification is edited as a document".
  *
@@ -22,8 +24,10 @@
  */
 
 import { mergeAttributes, Node } from "@tiptap/core";
+import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
+import { Placeholder } from "@tiptap/extensions";
 import {
   EditorContent,
   NodeViewContent,
@@ -33,15 +37,28 @@ import {
   type Editor,
   type NodeViewProps,
 } from "@tiptap/react";
-import { ArrowDownIcon, ArrowUpIcon, XIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { DISCIPLINES, NEGOTIABILITY, useAnswering } from "./clauses";
+import {
+  NEGOTIABILITY,
+  segments,
+  token,
+  useAnswering,
+  type Reference,
+} from "./clauses";
+import { referencing } from "./references";
 import {
   useConfigurator,
   type Answer,
@@ -63,13 +80,11 @@ function spansClauses(editor: Editor): boolean {
 const ClauseNode = Node.create({
   name: "clause",
   group: "block",
-  content: "text*",
+  content: "inline*",
   defining: true,
   addAttributes() {
     return {
       clause: { default: null },
-      // What a new clause will be classified as when it is required.
-      discipline: { default: "performance" },
     };
   },
   parseHTML() {
@@ -83,8 +98,8 @@ const ClauseNode = Node.create({
   },
   addKeyboardShortcuts() {
     return {
-      // A new clause after this one, of the same discipline. Not `splitBlock`,
-      // which would carry half the text into a new clause and reword this one.
+      // A new clause after this one. Not `splitBlock`, which would carry
+      // half the text into a new clause and reword this one.
       Enter: ({ editor }) => {
         const { $from } = editor.state.selection;
         const node = $from.parent;
@@ -94,7 +109,7 @@ const ClauseNode = Node.create({
           .chain()
           .insertContentAt(after, {
             type: "clause",
-            attrs: { clause: null, discipline: node.attrs.discipline },
+            attrs: { clause: null },
           })
           .setTextSelection(after + 1)
           .run();
@@ -132,6 +147,38 @@ const ClauseNode = Node.create({
 
 const ClauseDocument = Document.extend({ content: "clause+" });
 
+/**
+ * The hint on an empty clause. The extension decides which empty clauses
+ * carry one and what it says; it lands as a decoration on the clause node,
+ * and the node view reads it there and puts it where the words go, since the
+ * extension's own `::before` would sit on the wrapper and not on the line.
+ */
+const ClausePlaceholder = Placeholder.configure({
+  showOnlyCurrent: false,
+  placeholder: ({ editor, pos }) =>
+    pos === 0 && editor.state.doc.childCount === 1
+      ? "What the lift must do, in your words"
+      : "Another requirement, in your words",
+});
+
+/** The placeholder's hint on this node, if the extension put one there. */
+function hintOf(decorations: NodeViewProps["decorations"]): string | null {
+  for (const decoration of decorations) {
+    const hint = decoration.type.attrs?.["data-placeholder"];
+    if (typeof hint === "string") return hint;
+  }
+  return null;
+}
+
+/** A clause's text as inline content: words, and a reference node per token. */
+function inlineOf(text: string) {
+  return segments(text).map((segment) =>
+    "text" in segment
+      ? { type: "text", text: segment.text }
+      : { type: "reference", attrs: segment.reference },
+  );
+}
+
 /** The document a view describes, for writing into the editor. */
 function documentOf(view: View | null) {
   const clauses = view?.clauses ?? [];
@@ -140,23 +187,30 @@ function documentOf(view: View | null) {
     content: clauses.length
       ? clauses.map((c) => ({
           type: "clause",
-          attrs: { clause: c.clause, discipline: c.discipline },
-          content: c.text ? [{ type: "text", text: c.text }] : [],
+          attrs: { clause: c.clause },
+          content: inlineOf(c.text),
         }))
-      : [{ type: "clause", attrs: { clause: null, discipline: "performance" } }],
+      : [{ type: "clause", attrs: { clause: null } }],
   };
+}
+
+/** A clause node's text as `Specifying` holds it: words, with each reference as its token. */
+function textOf(node: ProseMirrorNode): string {
+  let out = "";
+  node.forEach((child) => {
+    out += child.type.name === "reference" ? token(child.attrs as Reference) : (child.text ?? "");
+  });
+  return out.trim();
 }
 
 /** The clauses a document holds, in order, for diffing against the view. */
 function clausesOf(editor: Editor) {
-  const out: { pos: number; clause: string | null; discipline: string; text: string }[] =
-    [];
+  const out: { pos: number; clause: string | null; text: string }[] = [];
   editor.state.doc.forEach((node, offset) => {
     out.push({
       pos: offset,
       clause: node.attrs.clause ?? null,
-      discipline: node.attrs.discipline,
-      text: node.textContent.trim(),
+      text: textOf(node),
     });
   });
   return out;
@@ -217,14 +271,14 @@ function Relax({ clause, onDone }: { clause: Clause; onDone: () => void }) {
  * The node view. The text is `NodeViewContent`, editable; the rest is read
  * from the view by the clause's identity and is not part of the document.
  */
-function ClauseView({ node, editor, getPos }: NodeViewProps) {
+function ClauseView({ node, decorations }: NodeViewProps) {
   const { view, gesture, busy } = useConfigurator();
   const { answering, setAnswering } = useAnswering();
   const [relaxing, setRelaxing] = useState(false);
   const id: string | null = node.attrs.clause;
   const clause = id ? (view?.clauses.find((c) => c.clause === id) ?? null) : null;
   const active = !!clause && answering?.clause === clause.clause;
-  const empty = node.content.size === 0;
+  const hint = hintOf(decorations);
   const open = clause?.negotiability === "open";
 
   // Where this clause sits, for `move`.
@@ -235,19 +289,6 @@ function ClauseView({ node, editor, getPos }: NodeViewProps) {
     const before =
       direction < 0 ? order[at - 1] : (order[at + 2] ?? null);
     void gesture({ act: "move", clause: clause.clause, before });
-  };
-
-  const discipline = clause?.discipline ?? node.attrs.discipline;
-  const setDiscipline = (value: string) => {
-    if (!value) return;
-    if (clause) void gesture({ act: "classify", clause: clause.clause, discipline: value });
-    else {
-      const pos = getPos();
-      if (pos !== undefined)
-        editor.view.dispatch(
-          editor.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, discipline: value }),
-        );
-    }
   };
 
   return (
@@ -265,12 +306,12 @@ function ClauseView({ node, editor, getPos }: NodeViewProps) {
             </div>
           ) : (
             <div className="relative">
-              {empty ? (
+              {hint ? (
                 <span
                   contentEditable={false}
                   className="pointer-events-none absolute inset-0 text-sm text-muted-foreground"
                 >
-                  What the lift must do, in your words
+                  {hint}
                 </span>
               ) : null}
               <NodeViewContent
@@ -278,60 +319,15 @@ function ClauseView({ node, editor, getPos }: NodeViewProps) {
               />
             </div>
           )}
-          <div
-            contentEditable={false}
-            className="flex flex-wrap items-center gap-1.5 select-none"
-          >
-            <ToggleGroup
-              type="single"
-              size="sm"
-              variant="outline"
-              spacing={0}
-              value={discipline}
-              onValueChange={setDiscipline}
-              aria-label="Discipline"
-              className="flex-wrap"
+          {clause?.formerly.length ? (
+            <p
+              contentEditable={false}
+              className="text-xs text-muted-foreground select-none"
+              title={clause.formerly.join(" → ")}
             >
-              {DISCIPLINES.map(([key, label]) => (
-                <ToggleGroupItem key={key} value={key} disabled={busy} className="h-6 px-2 text-xs">
-                  {label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
-            {clause ? (
-              <ToggleGroup
-                type="single"
-                size="sm"
-                variant="outline"
-                spacing={0}
-                value={clause.negotiability}
-                onValueChange={(negotiability) => {
-                  if (negotiability && negotiability !== clause.negotiability)
-                    void gesture({ act: "settle", clause: clause.clause, negotiability });
-                }}
-                aria-label="How firmly this is meant"
-              >
-                {(Object.keys(NEGOTIABILITY) as Negotiability[]).map((key) => (
-                  <ToggleGroupItem key={key} value={key} disabled={busy} className="h-6 px-2 text-xs">
-                    {NEGOTIABILITY[key]}
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            ) : (
-              <Badge variant="outline" className="text-muted-foreground">
-                not yet required
-              </Badge>
-            )}
-            {clause?.formerly.length ? (
-              <span
-                className="text-xs text-muted-foreground"
-                title={clause.formerly.join(" → ")}
-              >
-                relaxed from{" "}
-                <s>{clause.formerly[clause.formerly.length - 1]}</s>
-              </span>
-            ) : null}
-          </div>
+              relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
+            </p>
+          ) : null}
           {clause ? (
             <div contentEditable={false} className="select-none">
               {clause.answers.length ? (
@@ -371,6 +367,37 @@ function ClauseView({ node, editor, getPos }: NodeViewProps) {
               </Button>
             ) : null}
             <div className="flex gap-0.5">
+              {/* How firmly the clause is meant: fixed until settled otherwise.
+                  Out of the way, since it is asked only when it matters. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    disabled={busy}
+                    title={`${NEGOTIABILITY[clause.negotiability]} — how firmly this is meant`}
+                    aria-label="How firmly this is meant"
+                  >
+                    <EllipsisIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>How firmly this is meant</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={clause.negotiability}
+                    onValueChange={(negotiability) => {
+                      if (negotiability !== clause.negotiability)
+                        void gesture({ act: "settle", clause: clause.clause, negotiability });
+                    }}
+                  >
+                    {(Object.keys(NEGOTIABILITY) as Negotiability[]).map((key) => (
+                      <DropdownMenuRadioItem key={key} value={key}>
+                        {NEGOTIABILITY[key]}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 variant="ghost"
                 size="icon-xs"
@@ -419,9 +446,11 @@ export function Specification() {
   viewRef.current = view;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushing = useRef(false);
+  // Made once: it reads the view through the ref when the popup opens.
+  const [Referencing] = useState(() => referencing(viewRef));
 
   const editor = useEditor({
-    extensions: [ClauseDocument, Text, ClauseNode],
+    extensions: [ClauseDocument, Text, ClauseNode, ClausePlaceholder, Referencing],
     content: documentOf(view),
     immediatelyRender: false,
     editorProps: {
@@ -457,12 +486,7 @@ export function Specification() {
         }
         if (!n.text) continue;
         const before = new Set((viewRef.current?.clauses ?? []).map((c) => c.clause));
-        const next = await gesture({
-          act: "require",
-          text: n.text,
-          discipline: n.discipline,
-          negotiability: "fixed",
-        });
+        const next = await gesture({ act: "require", text: n.text });
         const added = next?.clauses.find((c) => !before.has(c.clause));
         if (!added) continue;
         // The node is now that clause. Found again by position, since the
@@ -515,7 +539,8 @@ export function Required() {
         <span className="text-xs text-muted-foreground">
           {view.clauses.length} · in your words
           {unanswered ? ` · ${unanswered} not yet answered` : ""}
-          {" · "}Enter for another, Backspace on an empty line to strike
+          {" · "}Enter for another, Backspace on an empty line to strike, @ to
+          name the catalogue
         </span>
       </header>
       <Card className="gap-0 py-0">

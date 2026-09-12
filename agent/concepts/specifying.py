@@ -7,14 +7,18 @@ state
   open:          set Spec
   clauses:       Spec -> seq Clause
   text:          Clause -> string
-  discipline:    Clause -> string
   statedBy:      Clause -> Party
   negotiability: Clause -> ("fixed" | "negotiable" | "open")
   formerly:      Clause -> seq string
 
-A clause is text in the party's vocabulary and nothing else: no variable, no
-option, no catalogue.  What answers it is `Binding`'s business, and whether it
-can be met is a read across concepts that this one never makes.
+A clause is text in the party's vocabulary and nothing else: no relation here
+points at a variable, an option, the catalogue or a classification.  The
+words may name the catalogue by a reference token (`docs/syncs/gestures.md`,
+"A clause is stated in the person's words"), and this concept holds that as
+words too.  A clause is meant as fixed until settled otherwise, and nothing
+about it is asked at entry.  What answers it is
+`Binding`'s business, and whether it can be met is a read across concepts
+that this one never makes.
 
 A clause is an individual, so two clauses with the same text are two clauses.
 The identity is minted here, in sequence, which is also what lets the canvas
@@ -35,7 +39,6 @@ class Specifying:
         self._open: set[str] = set()
         self._clauses: dict[str, list[str]] = {}
         self._text: dict[str, str] = {}
-        self._discipline: dict[str, str] = {}
         self._stated_by: dict[str, str] = {}
         self._negotiability: dict[str, str] = {}
         self._formerly: dict[str, list[str]] = {}
@@ -46,7 +49,6 @@ class Specifying:
             "open": sorted(self._open),
             "clauses": {s: list(c) for s, c in self._clauses.items()},
             "text": dict(self._text),
-            "discipline": dict(self._discipline),
             "statedBy": dict(self._stated_by),
             "negotiability": dict(self._negotiability),
             "formerly": {c: list(f) for c, f in self._formerly.items()},
@@ -65,31 +67,20 @@ class Specifying:
         self._clauses.setdefault(spec, [])
         return {"spec": spec}
 
-    def require(
-        self,
-        spec: str,
-        party: str,
-        text: str,
-        discipline: str,
-        negotiability: str = "fixed",
-    ) -> dict[str, Any]:
+    def require(self, spec: str, party: str, text: str) -> dict[str, Any]:
         """Not `state`, the catalogue's name: that is the method every concept
-        exposes its relations through, and the engine reads it for every view.
-        See the note's "Why the action is not called `state`"."""
+        exposes its relations through, and the engine reads it for every view."""
         if spec not in self._open:
             return {"error": f"{spec} is not open"}
         wording = str(text).strip()
         if not wording:
             return {"error": "a clause needs some words"}
-        if negotiability not in NEGOTIABILITY:
-            return {"error": f"{negotiability!r} is not fixed, negotiable or open"}
         self._minted += 1
         clause = f"c{self._minted}"
         self._clauses[spec].append(clause)
         self._text[clause] = wording
-        self._discipline[clause] = str(discipline).strip() or "other"
         self._stated_by[clause] = party
-        self._negotiability[clause] = negotiability
+        self._negotiability[clause] = "fixed"
         self._formerly[clause] = []
         return {"clause": clause, "spec": spec}
 
@@ -111,13 +102,6 @@ class Specifying:
         if not wording:
             return {"error": "a clause needs some words"}
         self._text[clause] = wording
-        return {"clause": clause, "spec": spec}
-
-    def classify(self, clause: str, discipline: str) -> dict[str, Any]:
-        spec = self._spec_of(clause)
-        if spec is None:
-            return {"error": f"there is no clause {clause}"}
-        self._discipline[clause] = str(discipline).strip() or "other"
         return {"clause": clause, "spec": spec}
 
     def move(self, clause: str, before: str | None = None) -> dict[str, Any]:
@@ -155,7 +139,6 @@ class Specifying:
         self._clauses[spec].remove(clause)
         for relation in (
             self._text,
-            self._discipline,
             self._stated_by,
             self._negotiability,
             self._formerly,
@@ -168,7 +151,6 @@ class Specifying:
         for clause in self._clauses.pop(spec, []):
             for relation in (
                 self._text,
-                self._discipline,
                 self._stated_by,
                 self._negotiability,
                 self._formerly,

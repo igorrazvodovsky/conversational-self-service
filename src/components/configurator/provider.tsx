@@ -110,7 +110,6 @@ export interface Answer {
 export interface Clause {
   clause: string;
   text: string;
-  discipline: string;
   negotiability: Negotiability;
   statedBy: string;
   formerly: string[];
@@ -187,7 +186,6 @@ export interface Quote {
   requires: {
     clause: string;
     text: string;
-    discipline: string;
     negotiability: Negotiability;
     answeredBy: { value: string; label: string }[];
   }[];

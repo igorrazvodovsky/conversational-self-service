@@ -71,10 +71,8 @@ when  { Copiloting/gesture: [ act: "entitle" ; spec: ?s ; title: ?t ; site: ?whe
 then  { Naming/entitle: [ item: ?s ; title: ?t ; site: ?where ] }
 
 sync APersonStatesAClause
-when  { Copiloting/gesture: [ act: "require" ; spec: ?s ; text: ?t ;
-          discipline: ?d ; negotiability: ?n ] => [] }
-then  { Specifying/require: [ spec: ?s ; party: person ; text: ?t ;
-          discipline: ?d ; negotiability: ?n ] }
+when  { Copiloting/gesture: [ act: "require" ; spec: ?s ; text: ?t ] => [] }
+then  { Specifying/require: [ spec: ?s ; party: person ; text: ?t ] }
 
 sync APersonSettlesAClause
 when  { Copiloting/gesture: [ act: "settle" ; clause: ?c ; negotiability: ?n ] => [] }
@@ -91,10 +89,6 @@ then  { Specifying/strike: [ clause: ?c ] }
 sync APersonRewordsAClause
 when  { Copiloting/gesture: [ act: "reword" ; clause: ?c ; text: ?t ] => [] }
 then  { Specifying/reword: [ clause: ?c ; text: ?t ] }
-
-sync APersonClassifiesAClause
-when  { Copiloting/gesture: [ act: "classify" ; clause: ?c ; discipline: ?d ] => [] }
-then  { Specifying/classify: [ clause: ?c ; discipline: ?d ] }
 
 sync APersonMovesAClause
 when  { Copiloting/gesture: [ act: "move" ; clause: ?c ; before: ?b ] => [] }
@@ -213,21 +207,36 @@ away when what it framed goes.
 
 ## A clause is stated in the person's words
 
-The seven rules on [Specifying](../concepts/specifying.md) carry a
-document's edits and decide nothing: the concept holds the text as written,
-the discipline and the negotiability as chosen, and refuses a relax on a
-fixed clause itself. `APersonStatesAClause` names the party in its `then`, as
+The rules on [Specifying](../concepts/specifying.md) carry a document's
+edits and decide nothing: the concept holds the text as written, treats a
+clause as fixed until it is settled otherwise, and refuses a relax on a
+fixed clause itself. Nothing is asked of a clause as it is typed. What it is
+for and how firmly it is meant come later, if at all: a line is a clause the
+moment it has words, and the structure is added where it matters rather than
+at entry. `APersonStatesAClause` names the party in its `then`, as
 `APersonAssertsAValue` does, because `statedBy` is a fact the concept holds
 and a rule that says who is stating is the readable form of it.
 
 The person edits the specification as a document, and the editor's
 transactions are stimuli and not writes: a block that appears is `require`,
-one that vanishes is `strike`, changed text is `reword`, a changed
-discipline `classify`, a changed order `move`, a changed negotiability
-`settle`, and *relax* is a control pressed on purpose. The mapping from
+one that vanishes is `strike`, changed text is `reword`, a changed order
+`move`, a changed negotiability `settle`, and *relax* is a control pressed
+on purpose. The mapping from
 transaction to act is in `src/components/configurator/specification.tsx`
 and it holds no state: the document renders the clauses, and holding its
 JSON in a concept would be a whole-list setter one level up.
+
+The words may name the catalogue. A `@` in the document offers its
+individuals and values, and one picked is a reference in the clause, written
+into the text as `[[id|label]]` — a variable's name, or an option's, which
+names its variable already — and shown as a chip wherever the clause is
+quoted. To `Specifying` it is words:
+no relation of the concept points at a variable or an option, and nothing
+here reads the token. A reference names; it does not answer. The person who
+writes *at least [[1250 kg]]* has said what they mean in the catalogue's
+terms without yet saying the lift must have it. What answers the clause is
+still `answer`, below; the value's chip offers that act where the value was
+named, and shows when it holds.
 
 The fifth act on this side, `answer`, is the one that reaches
 [Binding](../concepts/binding.md), and it is written up with its consequences
@@ -241,7 +250,7 @@ it fires is a fact of that concept's state. It is the slice 1 counterpart of
 no state and decides nothing. So the `act` values above — `start`, `say`,
 `assert`, `withdraw`, `discard`, `choose`, `decline`, `focus`, `introduce`,
 `entitle`, `quote`, `commit`, `revoke`, `require`, `settle`, `relax`, `strike`,
-`reword`, `classify`, `move`, `show`, `hide`, `frame`, `unframe`, and
+`reword`, `move`, `show`, `hide`, `frame`, `unframe`, and
 `answer` in [Binding](binding.md) — are not defined in the bootstrap
 concept, and there is nowhere else they could be defined either. This file is
 their definition.

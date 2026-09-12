@@ -46,7 +46,6 @@ it.
 | `APersonRelaxesAClause` | [Gestures](gestures.md) |
 | `APersonStrikesAClause` | [Gestures](gestures.md) |
 | `APersonRewordsAClause` | [Gestures](gestures.md) |
-| `APersonClassifiesAClause` | [Gestures](gestures.md) |
 | `APersonMovesAClause` | [Gestures](gestures.md) |
 | `APersonAnswersAClause` | [Binding](binding.md) |
 | `APersonSubstitutesAnAnswer` | [Binding](binding.md) |

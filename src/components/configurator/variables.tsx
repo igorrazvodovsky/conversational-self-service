@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
-import { useAnswering } from "./clauses";
+import { ClauseText, useAnswering } from "./clauses";
 import { adds, kilos } from "./format";
 import { useConfigurator, type Option, type Variable } from "./provider";
 import { useShown } from "./showing";
@@ -200,7 +200,7 @@ export function AskedCard({ variable }: { variable: Variable }) {
             <ul className="space-y-0.5 text-xs">
               {variable.answers.map((answer) => (
                 <li key={answer.clause}>
-                  <span className="text-muted-foreground">for:</span> {answer.text}
+                  <span className="text-muted-foreground">for:</span> <ClauseText text={answer.text} />
                 </li>
               ))}
             </ul>

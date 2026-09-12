@@ -187,8 +187,9 @@
       "bases:Create new base": false
     }
   },
-  "active": "83ee5d50279fef92",
+  "active": "69f135f0772fe19f",
   "lastOpenFiles": [
+    "visit.md",
     "conceptual-model.md",
     "method/synchronization.md",
     "concepts/specifying.md",
@@ -215,7 +216,6 @@
     "concept-relations.md",
     "concept-relations.canvas",
     "concepts/footprinting.md",
-    "concepts/moding.md",
     "syncs",
     "concepts",
     "method"

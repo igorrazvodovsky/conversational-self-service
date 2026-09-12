@@ -18,8 +18,8 @@ Meaningful_ (MSM) and _What You See Is What It Does_ (WYSIWID) — plus Jackson'
 _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 
 - [`docs/method/`](docs/method/README.md) — the vocabulary: individuals, values, actions, facts, concepts, synchronizations, and how they map to code
-- [`docs/concepts/`](docs/concepts/README.md) — the twelve concepts, specified
-- [`docs/syncs/`](docs/syncs/README.md) — the twenty-six rules, the only way two concepts interact
+- [`docs/concepts/`](docs/concepts/README.md) — the concepts, specified
+- [`docs/syncs/`](docs/syncs/README.md) — the rules, the only way two concepts interact
 
 **The notes are the source, and the code is generated from them.** WYSIWID
 §7.3: the prompt for the implementation is exactly the concept design spec. If
@@ -90,7 +90,7 @@ layer beside the agent.
 │   ├── wiring.py          # discovers concepts, wires rules, reads the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
 │   ├── webapp.py          # POST /gesture, GET /view — mounted by langgraph.json
-│   ├── tools.py           # the model's eleven tools
+│   ├── tools.py           # the model's tools
 │   ├── hearing.py         # the chat message, as a person's `say` gesture
 │   ├── instance.py        # the one engine both actors share
 │   ├── journal.py         # the log, kept: appended as written, replayed at boot

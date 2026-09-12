@@ -141,7 +141,7 @@ concepts' exposed state, in `agent/views.py`, on the read side of WYSIWID §6.4'
 
 ```
 ledger(s)   =  for each clause c in Specifying.clauses(s), in order:
-                 text, discipline, negotiability, statedBy, formerly,
+                 text, negotiability, statedBy, formerly,
                  and the choices ch of Binding's selection for s with answers(ch) = c,
                  each with its value, the variable Cataloguing says offers it,
                  who decided it, what it replaced and why,

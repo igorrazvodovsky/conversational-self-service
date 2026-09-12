@@ -58,6 +58,8 @@ same function, so app code and primitives merge classes with one engine.
 | A value that follows | `Item` (muted) in an `ItemGroup` |
 | An open variable | `Collapsible` whose trigger is a ghost `Button`; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
 | Which facts are shown (`Showing`) | `DropdownMenu` of checkbox items, from a ghost `Button` |
+| The requirement document (`Specifying`) | A Tiptap editor in a `Card`; each clause a node view with `Button`s for answer, relax, move and strike and a `DropdownMenu` of radio items for how firmly it is meant; the empty-clause hint from Tiptap's `Placeholder`, placed by the node view |
+| A reference in a clause | `Badge` (`outline` for an individual, `secondary` for a value, `default` once the value answers the clause); the `@` list is `Command` with grouped `CommandItem`s |
 | The offers issued | `Table`, one row per quote, the selected row `data-state=selected`; a ghost `Button` per row to compare |
 | Two quotes compared | `Table` of the rows that differ, with the sums |
 | The frame (`Framing`) | A bordered strip with the counts of the slice and a ghost `Button` to show everything; the way in is a ghost `Button` on an asserted card |
