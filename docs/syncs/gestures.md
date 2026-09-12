@@ -168,8 +168,8 @@ as the reason the control is disabled, so nobody presses a button that goes
 nowhere.
 
 The item is a value, not a reference: the specification's identity and its
-settled assignment, copied. [Quoting](../concepts/quoting.md#why-the-quote-holds-an-item-and-not-a-reference-to-the-specification)
-says why. The amount is one sum — the equipment supplied and installed — read
+settled assignment, copied, so that the offer says the same thing tomorrow
+whatever the specification does. The amount is one sum — the equipment supplied and installed — read
 from Pricing's arithmetic on the catalogue basis; line prices are the
 catalogue's business and do not appear on a proposal. The terms are copied the
 same way: the seller's stipulations from
@@ -186,9 +186,8 @@ unchanged.
 The two rules above it are the addressee's. `APersonIntroducesThemselves`
 carries whatever details the form sent — each field is optional, and a field
 left alone stays as it was — and `APersonEntitlesTheJob` does the same for
-the title and the site. Both are partial for the reason
-[Profiling's note](../concepts/profiling.md#why-one-action-and-why-it-is-partial)
-gives.
+the title and the site. Both are partial because a person gives their name in one message and
+their company in the next, and a form is filled in one field at a time.
 
 `APersonCommitsToAQuote` supplies `today` for the same reason, and the concept
 does the comparison. `APersonRevokesAQuote` carries nothing but the identity.
@@ -227,8 +226,8 @@ one that vanishes is `strike`, changed text is `reword`, a changed
 discipline `classify`, a changed order `move`, a changed negotiability
 `settle`, and *relax* is a control pressed on purpose. The mapping from
 transaction to act is in `src/components/configurator/specification.tsx`
-and it holds no state; [Specifying's note](../concepts/specifying.md#the-specification-is-edited-as-a-document)
-says why the document is never the state.
+and it holds no state: the document renders the clauses, and holding its
+JSON in a concept would be a whole-list setter one level up.
 
 The fifth act on this side, `answer`, is the one that reaches
 [Binding](../concepts/binding.md), and it is written up with its consequences

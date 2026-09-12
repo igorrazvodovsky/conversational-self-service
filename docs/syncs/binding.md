@@ -76,8 +76,9 @@ The catalogue's `ApplyMapping` fires on a `Mapping/map` completion carrying
 attribute–value pairs. Here the value *is* an option, the variable that offers
 it is a read of [Cataloguing](../concepts/cataloguing.md), and the mapping is
 the identity — which is what *mapping is done by the person* means in code.
-[Binding's note](../concepts/binding.md#the-value-is-the-option-and-that-is-a-finding)
-says why that is a finding and not a shortcut.
+That is a finding and not a shortcut: a choice whose value is already in
+the model's vocabulary restates the value, and whether `answers` is worth a
+relation on its own is what slice 1 measures.
 
 From `Asserting/assert` on, nothing is new: `AssertionsReachTheSolver` carries
 the value to [Constraining](../concepts/constraining.md), a conflict comes
@@ -125,8 +126,8 @@ visible and reversible — met by a rule rather than by a gate, and the
 provenance edge on the `retract` says which assertion did it.
 
 The third does *not* withdraw the value. Striking a requirement is not the
-same act as taking back a value, and [Specifying's note](../concepts/specifying.md#why-there-is-a-strike)
-says why.
+same act as taking back a value: the value was asserted, and an assertion
+stays on record until somebody withdraws it.
 
 Nothing carries a `Binding/retract` back into `Asserting`. A retraction is a
 consequence of an assertion changing, never a cause of one, and that
@@ -136,9 +137,7 @@ asymmetry keeps the two concepts from chasing each other round a loop.
 
 <a id="the-ledger-is-a-read"></a>
 No action lists the clauses with their answers. It is a calculation over four
-concepts' exposed state, in `agent/views.py`, on the line
-[Pricing](../concepts/pricing.md#the-total-is-a-read-and-here-is-the-arithmetic)
-draws:
+concepts' exposed state, in `agent/views.py`, on the read side of WYSIWID §6.4's line:
 
 ```
 ledger(s)   =  for each clause c in Specifying.clauses(s), in order:

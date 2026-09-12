@@ -42,7 +42,7 @@ Recency alone is *not* the rule. The objects piece is the most recent source and
 
 ## Specification format
 
-From WYSIWID §4. Every concept note in [`../concepts/`](../concepts/README.md) uses it verbatim — except the one held at the abstract tier, which carries a purpose and nothing else. See [Two tiers of concept](boundaries.md).
+From WYSIWID §4. Every concept note in [`../concepts/`](../concepts/README.md) is this block and nothing else, as in the paper's Appendix B — no rationale before or after it. The purpose is the argument for the concept; what a concept is *not* is said by the concepts that hold those facts, and how it meets its neighbours is said by the [rules](../syncs/README.md). The one exception is the note held at the abstract tier, which carries a purpose and the contract relied on. See [Two tiers of concept](boundaries.md).
 
 ```
 concept Name [TypeParams]

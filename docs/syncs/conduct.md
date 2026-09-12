@@ -158,16 +158,14 @@ in.
 
 So a proposal lasts exactly as long as the state it assumed. Ask again and you
 get one for the state you are actually in. The case arises because a conflict
-and a completion can be open together, as
-[Deciding](../concepts/deciding.md#why-a-request-names-the-question-and-not-its-subject)
-arranges.
+and a completion can be open together, because a request is
+`[ spec ; about ]` and the two questions are distinct requests.
 
 The `about` in the request is what keeps `AnAdoptedCompletionBecomesAssertions` and
 [`TheConcededAssertionIsWithdrawn`](propagation.md#when-assertions-cannot-hold-together)
 apart. Both match `Deciding/choose`; without it they would have to be told
 apart by the shape of an unconstrained value, and a completion of one variable
-would be indistinguishable from a conflict candidate. See
-[Deciding](../concepts/deciding.md#why-a-request-names-the-question-and-not-its-subject).
+would be indistinguishable from a conflict candidate.
 
 Only genuinely open variables are asserted. Adopting a completion fills the
 gaps: it does not restate what you already asserted, and it does not turn what

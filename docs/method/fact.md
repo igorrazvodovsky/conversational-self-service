@@ -38,7 +38,7 @@ _The same individual bears facts owned by four concepts._ `rated_load:kg1000`
 appears in `Cataloguing`, `Pricing`, `Footprinting` and `Constraining`, and
 none of them owns it. That is the asymmetry the method rests on: actions are
 partitioned among concepts, individuals are not. The
-[source file](../concepts/cataloguing.md#the-record-in-elevatorjson-is-three-concepts-facts-in-one-object)
+[source file](../../agent/catalogue/elevator.json)
 bundles all four into one JSON object, and splitting it on load is the whole of
 what the seeding step does.
 
@@ -52,7 +52,7 @@ configurator shows it.
 _A three-place relation stays three-place._ `demand: (Class, Usage, Travel) ->
 Energy` is not separable into three factors, and writing it as three would
 assert an independence the physics does not have. See
-[Footprinting](../concepts/footprinting.md#why-demand-is-a-three-place-relation).
+[Footprinting](../concepts/footprinting.md).
 
 _And one state declaration depends on no other's._ WYSIWID §7.2's second design
 rule, satisfied by construction: each concept in `agent/concepts/` holds its own

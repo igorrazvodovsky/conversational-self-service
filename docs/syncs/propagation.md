@@ -66,7 +66,7 @@ asserted  minus  assumed   =   what you asked for and cannot have
 
 A configurator that validated before recording would have nowhere to put that
 difference, and would be back to the last write winning. See
-[Asserting](../concepts/asserting.md#why-this-is-separate-from-constraining).
+[Asserting](../concepts/asserting.md).
 
 ## A discarded specification leaves the solver
 
@@ -155,7 +155,8 @@ Note that `error` is matched alongside two other output arguments. No construct
 is needed for that: a failing case is an ordinary case, and `error` is an
 ordinary argument name (WYSIWID §5.3). The rules responsible arrive with the
 failure that produced them rather than from a separate query, which is
-[why there is no `Explaining` concept](../concepts/constraining.md#why-the-explanation-is-not-its-own-concept).
+why there is no `Explaining` concept: nobody performs *explain*, so it would
+have no actions.
 
 ## What `Deciding` is instantiated with here
 

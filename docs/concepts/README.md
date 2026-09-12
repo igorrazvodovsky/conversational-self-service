@@ -8,10 +8,11 @@ source the code is generated from — see
 [From meaning to code](../method/implementation.md#generation). The rules by
 which they interact are in [`../syncs/`](../syncs/README.md).
 
-Notes come at two tiers. Concepts we own carry a full WYSIWID §4 specification.
-The one concept naming third-party machinery carries a purpose and a statement
-of what we rely on it for, and nothing more — the policy is
-[Two tiers of concept](../method/boundaries.md).
+A note is the WYSIWID §4 specification block and nothing else. Concepts we
+own carry a full one. The one concept naming third-party machinery carries a
+purpose and a statement of what we rely on it for — the policy is
+[Two tiers of concept](../method/boundaries.md). Why a concept is separate
+from its neighbours is said by the [rules](../syncs/README.md) between them.
 
 ## The configurator — ours, fully specified
 
@@ -61,31 +62,24 @@ kinds of fact, and that a configurator storing them in one field cannot answer
 the question a person most often has.
 
 [Specifying](specifying.md) and [Binding](binding.md) are the case's slice 1:
-the requirement in the buyer's words, and the relation from
-a value to the clause it answers. Between them and Asserting the same value
-appears twice, once as a choice and once as an assertion.
+the requirement in the buyer's words, and the relation from a value to the
+clause it answers. Between them and Asserting the same value appears twice,
+once as a choice and once as an assertion.
 
-[Cataloguing](cataloguing.md) is the shortest route to why concepts are not
-entities: it takes one JSON object apart into four concepts' facts and says
-what each of the pieces is for.
+[Cataloguing](cataloguing.md), [Pricing](pricing.md), [Footprinting](footprinting.md)
+and Constraining each hold one kind of fact about the same catalogue option,
+which is the shortest route to why concepts are not entities.
 
-[Conversing](conversing.md) is, like Specifying and Binding, taken from the
-case's catalogue, and it is the only concept nothing reads from. Its note says
-why a concept whose completions appear in no `when` is worth having.
+[Conversing](conversing.md) is the only concept nothing reads from: its
+completions appear in no `when`, and it exists so that the log's first entry
+for a turn is the person's words.
 
-[Quoting](quoting.md) is where the configuration stops being the point. The
-end of a configuration is an offer somebody can accept, and its note says why
-an offer is a third kind of fact — a snapshot the specification can move away
-from without changing — and why accepting it is the second thing the model
-cannot do.
+[Quoting](quoting.md) is where the configuration stops being the point: an
+offer, frozen as issued, that the specification can move away from without
+changing.
 
-[Showing](showing.md) is the one concept here taken from a pair of papers on
-interfaces rather than on concepts — Min et al.'s malleable overview-detail
-work — and its note says what was taken from them and what was refused: the
-facts beside each item are the viewer's to choose, and the sections are not.
-[Framing](framing.md) is its sibling for which items are shown, and its one
-frame — what followed from one assertion — is the design's one idea asked
-as a question.
+[Showing](showing.md) and [Framing](framing.md) are the two viewer's-choice
+concepts — which facts appear beside an item, and which items appear at all.
 
 ## What was here before
 
@@ -99,19 +93,7 @@ They are worth knowing about because the finding they carried survived the
 change of domain. Seven user-meaningful task actions were implemented as one
 whole-list setter; the equivalent mistake here would be a single
 `configure(spec)` taking the whole assignment, and it is the mistake
-[Asserting](asserting.md#why-this-is-separate-from-constraining) exists to
-make impossible.
-
-## On "In the code" sections
-
-Some notes carry one and some do not, and the difference is deliberate. A note
-grows an "In the code" section when the implementation *departs* from the
-specification — that section is an alignment finding, not documentation.
-[Querying](querying.md), [Scheduling](scheduling.md) and [Theming](theming.md)
-have one each, and each records something the code does not do. The rest have
-none because there is nothing to report: the code was generated from the
-specification and answers to it. If you find yourself writing one, you have
-found a finding.
+[Asserting](asserting.md) exists to make impossible.
 
 ## Before writing another one
 
@@ -124,14 +106,13 @@ is the cheapest and catches the most.
 
 _Explaining._ It would have no actions; nobody performs *explain*. The rules
 responsible for a conflict are an output argument of the failing case of
-`Constraining/assume`. See
-[Constraining](constraining.md#why-the-explanation-is-not-its-own-concept).
+`Constraining/assume`.
 
 _Versioning or comparing a specification._ There is one specification per
 session. A configurator sold to anyone would need both, and each is a concept
 rather than a field; leaving them out is a scope decision, not a claim that
 they do not exist. [Quoting](quoting.md) holds the one snapshot the
-application cannot do without, and its note says why that is not a version;
+application cannot do without, and an offer is not a version;
 [Naming](naming.md) gives the one specification a title and a site, which
 makes it findable and not comparable.
 
@@ -141,10 +122,10 @@ deliberately only the half of a profile that appears on a letterhead.
 
 _Agreeing._ A qualified acceptance — *yes, subject to* — with conditions that
 have owners and dates, voided when the thing agreed to changes. The case's
-catalogue has it on the horizon, depending on `Binding`, and
-[Quoting](quoting.md#why-commit-is-here-and-not-a-concept-of-its-own) says why
-accepting a fixed offer is not the same concept.
+catalogue has it on the horizon, depending on `Binding`. Accepting a fixed
+offer as it stands is `Quoting/commit`, and not the same concept.
 
-_Chart components and suggestion pills._ Reasons in
-[Concept](../method/concept.md#what-is-deliberately-not-a-concept) and
-[Copiloting](copiloting.md#two-deliberate-exclusions).
+_Chart components and suggestion pills._ A chart is a rendering of
+[Querying](querying.md)'s state, and a suggestion pill submits a message, so
+each is an affordance on an existing stimulus. See
+[Concept](../method/concept.md#what-is-deliberately-not-a-concept).

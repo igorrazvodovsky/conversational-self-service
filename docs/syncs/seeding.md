@@ -83,6 +83,6 @@ answer with a timestamp on it.
 
 ## See also
 
-- [Cataloguing](../concepts/cataloguing.md#the-record-in-elevatorjson-is-three-concepts-facts-in-one-object) — the record, read as facts
-- [Constraining](../concepts/constraining.md#why-the-ranges-are-here-as-well-as-in-the-catalogue) — why the range is held twice
+- [Cataloguing](../concepts/cataloguing.md) — the record, read as facts
+- [Constraining](../concepts/constraining.md) — `range`, held beside `offers` because neither concept may read the other's
 - [From meaning to code](../method/implementation.md) — what `main` is for
