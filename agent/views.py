@@ -38,15 +38,32 @@ HOW = {
     "TheModelMayRequestAQuote": "the assistant asked for this",
 }
 
+# The same edge under a second actor.  A browser agent's invocations fire the
+# model's rules — the rules match on the tool, not on who called it — so the
+# provenance edge alone reads "the assistant", and the actor on the record is
+# what says otherwise.  See docs/syncs/conduct.md, "A browser agent, on the
+# same terms".
+BROWSER = "browser"
+SAID = {
+    ("TheModelMayAssertAValue", BROWSER): "a browser agent asked for this",
+    ("TheModelMayRequestAQuote", BROWSER): "a browser agent asked for this",
+}
 
-def _provenance(engine: Engine, spec: str) -> dict[str, str]:
-    """The rule behind the most recent assertion recorded for each variable.
+
+def said(via: str | None, actor: str | None, default: str | None = None) -> str | None:
+    """The sentence for a provenance edge, read with the actor beside it."""
+    return SAID.get((via or "", actor or "")) or HOW.get(via or "", default)
+
+
+def _provenance(engine: Engine, spec: str) -> dict[str, tuple[str, str]]:
+    """The rule behind the most recent assertion recorded for each variable,
+    and the actor that performed the root action it followed from.
 
     Scanned from the boot mark rather than from the start of the log: the
     catalogue's arrival is a thousand-odd records of `Cataloguing` and
     `Pricing`, and no assertion can precede it.
     """
-    how: dict[str, str] = {}
+    how: dict[str, tuple[str, str]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if record.kind != "completion" or record.concept != "Asserting":
             continue
@@ -58,7 +75,7 @@ def _provenance(engine: Engine, spec: str) -> dict[str, str]:
         if record.action == "withdraw":
             how.pop(output["variable"], None)
         else:
-            how[output["variable"]] = record.via or "recorded at boot"
+            how[output["variable"]] = (record.via or "recorded at boot", record.actor)
     return how
 
 
@@ -156,7 +173,9 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "family": catalogue["family"].get(name, "other"),
                 "standing": standing,
                 "asked": asked,
-                "how": HOW.get(how.get(name, ""), how.get(name)) if asked else None,
+                "how": said(*how[name], default=how[name][0])
+                if asked and name in how
+                else None,
                 "answers": answering.get(asked, []) if asked else [],
                 "value": value,
                 "owing": [
@@ -390,7 +409,7 @@ def _quotes(
             standing = "lapsed"
         else:
             standing = "open"
-        via, on = issued.get(quote, ("", None))
+        via, actor, on = issued.get(quote, ("", "", None))
         quotes.append(
             {
                 "quote": quote,
@@ -402,7 +421,7 @@ def _quotes(
                 "until": quoting["until"][quote],
                 "committed": quoting["committed"].get(quote),
                 "issuedTo": quoting["issuedTo"][quote],
-                "how": HOW.get(via, None),
+                "how": said(via, actor),
                 "holds": [
                     {
                         "name": name,
@@ -439,14 +458,15 @@ def _quotes(
     return quotes
 
 
-def _issued(engine: Engine) -> dict[str, tuple[str, str]]:
-    """For each quote, the rule that issued it and the day it was issued.
+def _issued(engine: Engine) -> dict[str, tuple[str, str, str]]:
+    """For each quote, the rule that issued it, the actor whose call it
+    followed from, and the day it was issued.
 
     Both come off the log rather than the concept.  The rule is a provenance
     edge, as for assertions; the date is the completion's timestamp, which the
     concept does not hold because it holds no clock.
     """
-    issued: dict[str, tuple[str, str]] = {}
+    issued: dict[str, tuple[str, str, str]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if record.kind != "completion" or record.concept != "Quoting":
             continue
@@ -454,7 +474,11 @@ def _issued(engine: Engine) -> dict[str, tuple[str, str]]:
             continue
         quote = (record.output or {}).get("quote")
         if quote:
-            issued[quote] = (record.via or "", date.fromtimestamp(record.at).isoformat())
+            issued[quote] = (
+                record.via or "",
+                record.actor,
+                date.fromtimestamp(record.at).isoformat(),
+            )
     return issued
 
 

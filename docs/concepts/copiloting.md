@@ -20,10 +20,13 @@ policy is [Two tiers of concept](../method/boundaries.md).
 | a person acts on an application surface | in | the canvas (`src/components/configurator/`), reaching `POST /configurator/gesture` |
 | a person acts on a rendered surface | in | `useHumanInTheLoop` (`src/hooks/use-generative-ui-examples.tsx`), A2UI events |
 | the model calls a named tool | in | `agent/tools.py`, the MCP client (`src/app/api/copilotkit/[[...slug]]/route.ts`) |
+| a browser agent calls a named tool | in | `useFrontendTool` with `webmcp` (`src/components/configurator/webmcp.tsx`), reaching `POST /configurator/invoke` |
 | the model returns prose | out | `CopilotChat` |
 | the model asks that a surface be shown | out | `useComponent`, `useDefaultRenderTool`, A2UI (`agent/src/a2ui_fixed_schema.py`) |
 | the viewer's environment changes | in | `prefers-color-scheme` (`src/hooks/use-theme.tsx`) |
 
 Its two root actions, `gesture` and `invoke`, record a stimulus and decide
 nothing; what follows from each is in [Gestures](../syncs/gestures.md) and
-[Conduct](../syncs/conduct.md).
+[Conduct](../syncs/conduct.md). `invoke` is performed by the in-app model
+and by a browser agent alike, and the actor on the record is what tells
+them apart — see [A browser agent, on the same terms](../syncs/conduct.md#a-browser-agent-on-the-same-terms).

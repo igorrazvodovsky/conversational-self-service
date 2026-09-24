@@ -4,6 +4,7 @@ import { ExampleLayout } from "@/components/example-layout";
 import { ConfiguratorCanvas } from "@/components/configurator";
 import { ConfiguratorProvider } from "@/components/configurator/provider";
 import { QuoteSurface } from "@/components/configurator/quotes";
+import { BrowserAgentTools } from "@/components/configurator/webmcp";
 import { ConfiguratorChat } from "@/components/chat";
 import { useGenerativeUIExamples, useExampleSuggestions } from "@/hooks";
 
@@ -34,6 +35,12 @@ export function HomeRoot({ canvasPercent }: { canvasPercent: number }) {
         nothing in the CopilotKit state channel would report them.
       */}
       <ConfiguratorProvider>
+        {/*
+          The model's tools, registered on the page for a browser agent
+          (WebMCP). Inside the provider because each call is performed through
+          it, so the canvas renders the outcome as it does for a click.
+        */}
+        <BrowserAgentTools />
         <ExampleLayout
           canvasPercent={canvasPercent}
           chatContent={<ConfiguratorChat />}

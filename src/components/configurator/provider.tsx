@@ -12,6 +12,10 @@
  * actions land in the same log and the same state, and nothing in the
  * CopilotKit state channel would tell us — by design: state lives behind the
  * actions now, not in the channel.
+ *
+ * A browser agent is a third caller and needs no polling: its tool calls run
+ * in this page (`webmcp.tsx`), go to `POST /invoke`, and the view comes back
+ * with the outcome as it does for a gesture.
  */
 
 import { useAgent } from "@copilotkit/react-core/v2";
@@ -251,6 +255,14 @@ export interface View {
 
 export type Stimulus = Record<string, unknown> & { act: string };
 
+/** What a tool returns to a model: what the rules did with the call, in the
+ * vocabulary they did it in, and the reading afterwards. The same shape
+ * `agent/tools.py` hands the in-app model. */
+export interface Outcome {
+  did: { action: string; "by rule"?: string; refused?: string }[];
+  state: unknown;
+}
+
 interface Configurator {
   view: View | null;
   grid: Grid;
@@ -259,6 +271,12 @@ interface Configurator {
   error: string | null;
   /** Perform a root action; resolves to the view as the rules left it, or null if refused. */
   gesture: (stimulus: Stimulus) => Promise<View | null>;
+  /** A browser agent calls one of the model's tools. Resolves to what the
+   * tool returns a model; rejects when the engine refuses the call, so the
+   * agent hears the refusal rather than a silent nothing. */
+  invoke: (tool: string, args?: Record<string, unknown>) => Promise<Outcome>;
+  /** The reading a model gets — `review` in `agent/tools.py` — for a browser agent. */
+  review: () => Promise<unknown>;
   label: (id: string | null) => string;
 }
 
@@ -335,6 +353,42 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const invoke = useCallback(
+    async (tool: string, args: Record<string, unknown> = {}) => {
+      setBusy(true);
+      try {
+        const response = await fetch(
+          `/api/configurator/invoke?grid=${gridRef.current}`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ tool, ...args }),
+          },
+        );
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error ?? "the call was refused");
+        setView(body.view);
+        setError(null);
+        return { did: body.did, state: body.state } as Outcome;
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : String(cause));
+        throw cause;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [],
+  );
+
+  const review = useCallback(async () => {
+    const response = await fetch("/api/configurator/digest", {
+      cache: "no-store",
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error ?? "could not read the state");
+    return body as unknown;
+  }, []);
+
   const labels = useMemo(() => {
     const index = new Map<string, string>();
     for (const variable of view?.variables ?? [])
@@ -348,8 +402,8 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ view, grid, setGrid, busy, error, gesture, label }),
-    [view, grid, busy, error, gesture, label],
+    () => ({ view, grid, setGrid, busy, error, gesture, invoke, review, label }),
+    [view, grid, busy, error, gesture, invoke, review, label],
   );
 
   return (

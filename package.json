@@ -17,10 +17,11 @@
     "dev:infra": "node scripts/copilotkit-dev-infra.mjs"
   },
   "dependencies": {
-    "@copilotkit/a2ui-renderer": "1.70.0",
-    "@copilotkit/channels": "0.9.0",
-    "@copilotkit/react-core": "1.70.0",
-    "@copilotkit/runtime": "1.70.0",
+    "@copilotkit/a2ui-renderer": "1.72.0",
+    "@copilotkit/channels": "0.10.0",
+    "@copilotkit/react-core": "1.72.0",
+    "@copilotkit/runtime": "1.72.0",
+    "@mcp-b/webmcp-local-relay": "5.1.0",
     "@tiptap/core": "^3.31.3",
     "@tiptap/extension-document": "^3.31.3",
     "@tiptap/extension-mention": "^3.31.3",

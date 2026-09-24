@@ -125,7 +125,7 @@ though somebody had performed it.
 
 Booting writes about 1,300 records — the catalogue's arrival, as accountable as
 a click — and `engine.settled_at` marks where that stopped and behaviour began.
-Every record after it carries an actor (`person`, `model`) and, unless it is a
+Every record after it carries an actor (`person`, `model`, `browser`) and, unless it is a
 root action, the name of the rule that authorised it. The interface reads those
 edges directly: *you asked for this*, *the assistant asked for this*, *adopted
 from a proposal* are three different `via` values on the same action, and no

@@ -4,6 +4,7 @@ import "./globals.css";
 import "@copilotkit/react-core/v2/styles.css";
 
 import { CopilotKit } from "@copilotkit/react-core/v2";
+import Script from "next/script";
 import { ThemeProvider } from "@/hooks/use-theme";
 // A2UI catalog: definitions + renderers in ./declarative-generative-ui/
 import { demonstrationCatalog } from "./declarative-generative-ui/renderers";
@@ -42,6 +43,12 @@ export default function RootLayout({
         everything rendered inside <body> is still fully hydration-checked.
       */}
       <body className={`antialiased`} suppressHydrationWarning>
+        {/*
+          Carries the page's WebMCP tools to a desktop MCP client. The script
+          talks to the MCP-B local relay on localhost; when no relay is
+          running it idles. Served from the package by `webmcp-relay/[file]`.
+        */}
+        <Script src="/webmcp-relay/embed.js" strategy="afterInteractive" />
         <ThemeProvider>
           <CopilotKit
             runtimeUrl="/api/copilotkit"

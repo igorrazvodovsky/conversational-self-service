@@ -62,6 +62,7 @@ layer beside the agent.
 │   ├── app/
 │   │   ├── page.tsx                      # wires the providers together
 │   │   ├── quotes/[quote]/               # one quote, as a printable document
+│   │   ├── webmcp-relay/[file]/          # the MCP-B relay's embed script, served from the package
 │   │   └── api/
 │   │       ├── copilotkit/[[...slug]]/   # CopilotKit runtime
 │   │       └── configurator/[...path]/   # proxy onto the concept layer
@@ -78,6 +79,7 @@ layer beside the agent.
 │   │   │   ├── quotes.tsx                # the quote surface: every offer issued, two compared, the addressee, one proposal at a time
 │   │   │   ├── document.tsx              # a quote laid out as a commercial proposal
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
+│   │   │   ├── webmcp.tsx                # the model's tools, registered for a browser agent (WebMCP)
 │   │   │   └── variables.tsx             # asked / follows / open rows
 │   │   ├── example-layout/               # the artifact panel (canvas or quote, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features
@@ -89,7 +91,7 @@ layer beside the agent.
 │   ├── catalogue/         # elevator.json
 │   ├── wiring.py          # discovers concepts, wires rules, reads the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
-│   ├── webapp.py          # POST /gesture, GET /view — mounted by langgraph.json
+│   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest — mounted by langgraph.json
 │   ├── tools.py           # the model's tools
 │   ├── hearing.py         # the chat message, as a person's `say` gesture
 │   ├── instance.py        # the one engine both actors share
@@ -119,19 +121,24 @@ in a concept or a rule.
 
 ### Two root actors, and what each may do
 
-|  | person | model |
-|---|---|---|
-| state, relax or strike a requirement, in their own words | yes | no |
-| say which requirement a value answers | yes | no |
-| assert or withdraw a value | yes | yes |
-| propose a completion | — | yes |
-| **adopt one** | **yes** | **no** |
-| say who the person is, and where the lift goes | yes | yes |
-| request a quote | yes | yes |
-| **accept or revoke one** | **yes** | **no** |
-| choose which facts the canvas shows beside each item | yes | yes |
-| narrow the canvas to what followed from one assertion | yes | yes |
-| change a price, the catalogue, or the seller's terms | no | no |
+The browser agent column is the model column: a WebMCP-capable browser
+visiting the page finds the model's ten verbs and its reading registered on
+`document.modelContext`, calls them as `Copiloting.invoke` under its own
+actor, and the same conduct rules decide what follows.
+
+|  | person | model | browser agent |
+|---|---|---|---|
+| state, relax or strike a requirement, in their own words | yes | no | no |
+| say which requirement a value answers | yes | no | no |
+| assert or withdraw a value | yes | yes | yes |
+| propose a completion | — | yes | yes |
+| **adopt one** | **yes** | **no** | **no** |
+| say who the person is, and where the lift goes | yes | yes | yes |
+| request a quote | yes | yes | yes |
+| **accept or revoke one** | **yes** | **no** | **no** |
+| choose which facts the canvas shows beside each item | yes | yes | yes |
+| narrow the canvas to what followed from one assertion | yes | yes | yes |
+| change a price, the catalogue, or the seller's terms | no | no | no |
 
 Every `no` is the absence of a rule, not a prohibition — the DSL has no way to
 write one, and an action no rule invokes does not happen. So *can the assistant
@@ -183,6 +190,30 @@ with the model's tools. `AGENT_URL` points the frontend proxy at it.
 The specification survives a restart: the action log is kept in
 `agent/.journal/actions.jsonl` (`AGENT_JOURNAL` moves it) and replayed at boot.
 `npm run reset:agent` deletes it, which starts over.
+
+WebMCP needs Chrome 149 or later with `chrome://flags/#enable-webmcp-testing`
+enabled (or the origin trial; headless, `--enable-features=WebMCPTesting`).
+Chrome's Model Context Tool Inspector then lists the tools the page registers
+and can call them; from the console, `document.modelContext.getTools()`.
+
+A desktop MCP client reaches the same tools through the MCP-B local relay:
+the layout loads `@mcp-b/webmcp-local-relay`'s embed script (served by
+`src/app/webmcp-relay/[file]/route.ts`), which forwards the tab's tools over a
+localhost WebSocket to the relay, and the relay is an MCP server over stdio.
+Claude Desktop's entry, with absolute paths because the app's `PATH` has no
+`npx`:
+
+```json
+"webmcp-local-relay": {
+  "command": "<node>",
+  "args": ["<repo>/node_modules/@mcp-b/webmcp-local-relay/dist/cli.mjs",
+           "--widget-origin", "http://localhost:3000"]
+}
+```
+
+The client then sees `review`, `assert_value` and the rest beside the relay's
+own `webmcp_list_sources`, and acts as the browser agent does — see
+[Conduct](docs/syncs/conduct.md#a-browser-agent-on-the-same-terms).
 
 ## UI components
 

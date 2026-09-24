@@ -277,6 +277,46 @@ The practical difference from a system prompt is that this list is checkable.
 not by reasoning about what a model is likely to infer from a paragraph of
 English.
 
+## A browser agent, on the same terms
+
+The ten verbs and the reading are also registered on the page's WebMCP model
+context (`document.modelContext`), through `useFrontendTool` with `webmcp`
+set ([`src/components/configurator/webmcp.tsx`](../../src/components/configurator/webmcp.tsx)).
+A browser agent that visits the page — Chrome's own, or any other that
+speaks WebMCP — finds the same tools the in-app assistant has, under the
+same names, with the same descriptions, and nothing else.
+
+Each call is `Copiloting/invoke` with the actor `browser`, reaching the
+engine at `POST /configurator/invoke` as the assistant's calls reach it from
+`agent/tools.py`. Every rule above matches on the tool and not on the actor,
+so the grant is the same grant: a browser agent may assert, withdraw,
+propose, introduce, entitle, quote, show, hide, frame and unframe, and the
+five absences hold for it exactly as they hold for the assistant. No rule
+carries its invocation to `Deciding/choose`, `Quoting/commit`, `Specifying`
+or `Binding`. It can fill the specification in, and it cannot adopt a
+proposal, accept an offer or state what the person requires — which is what
+makes the tools safe to hand to an agent nobody here wrote. The exposure
+adds no rule; it adds a second actor to rules that already existed.
+
+What tells the two models apart is the actor on the record, not a rule.
+`Asserting.assertedBy` writes `model` for both, because both are a model
+asserting on the person's behalf; the log's `actor` says which, and the
+canvas reads it: *the assistant asked for this* and *a browser agent asked
+for this* are one provenance edge under two actors. "The model" in the rule
+names is a role, and two things fill it.
+
+A desktop client is the same actor. The page also loads the MCP-B relay's
+embed script, which forwards the model context's tools over localhost to a
+relay that any MCP client — Claude Desktop, say — talks to over stdio. A
+call from there runs the same handler in the same tab and lands under
+`browser` too: the rules do not know, and do not need to know, whether the
+model that asked lives in the browser or beside it.
+
+The tools are registered under an agent id no in-app agent has, so the
+assistant is never offered a second copy of its own tools as frontend tools.
+`review` carries the WebMCP `readOnlyHint`; the rest carry none, since each
+changes a fact or the canvas.
+
 ## The tool names are ours
 
 `assert`, `withdraw`, `propose`, `introduce`, `entitle`, `quote`, `show`,
