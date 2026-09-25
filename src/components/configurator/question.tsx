@@ -154,6 +154,14 @@ export function Consequences({ foreseen }: { foreseen?: Foreseen }) {
             .join(", ")}
         </span>
       )}
+      {foreseen.buildable && foreseen.reopens.length > 0 && (
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          no longer forced:{" "}
+          {foreseen.reopens
+            .map((r) => `${r.heading} ${r.label}`)
+            .join(", ")}
+        </span>
+      )}
       {foreseen.buildable && (
         <span className="mt-0.5 block text-xs tabular-nums text-muted-foreground">
           {signed(foreseen.instalment, (n) => money(n, currency))} a month

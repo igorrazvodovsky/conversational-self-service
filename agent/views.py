@@ -282,11 +282,27 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             for v, o in after.items()
             if v not in would and settled.get(v) != o
         ]
+        # The other half of the ripple: what is settled now and would not
+        # be — the values an assertion forced, no longer forced once it goes.
+        # Without it a price drop stands with nothing said for it.
+        reopens = [
+            {
+                "variable": v,
+                "heading": heading.get(v, v),
+                "option": o,
+                "label": catalogue["label"].get(o, o),
+            }
+            for v, o in settled.items()
+            # Not the assertion given up itself: it is the answer, not a
+            # consequence of it.
+            if v not in would and v not in after and v not in asserted
+        ]
         price_then = pricing.total(after.values(), BASIS)
         footprint_then = footprinting.footprint(after.values(), grid, BASIS)
         return {
             "buildable": seen["buildable"],
             "follows": follows,
+            "reopens": reopens,
             "instalment": round(price_then["instalment"] - price_now["instalment"], 2),
             "lifetime": round(price_then["lifetime"] - price_now["lifetime"], 2),
             "carbon": (

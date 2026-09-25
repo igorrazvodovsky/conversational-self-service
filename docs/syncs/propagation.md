@@ -320,7 +320,9 @@ The question offers assertions to give up, and a person choosing between
 them needs to know what each answer does: what would then follow, and what it
 would cost in price and in carbon. Those are not facts of any concept. They
 are answers to *what if*. The amount worth showing is per answer, the values
-that would change and both deltas; the whole consequence set is one move
+that would then follow, the values that would no longer be forced — what the
+given-up assertion was holding in place, which is where a price drop comes
+from — and both deltas; the whole consequence set is one move
 away, because every touched variable at once is what makes a ripple read as
 noise, and the bare core without the costs leaves the person interrogating
 each answer in turn.

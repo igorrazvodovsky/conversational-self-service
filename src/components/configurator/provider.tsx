@@ -157,6 +157,8 @@ export interface Foreseen {
   option: string;
   buildable: boolean;
   follows: { variable: string; heading: string; option: string; label: string }[];
+  /** Settled now and not after: what the given-up assertion was forcing. */
+  reopens: { variable: string; heading: string; option: string; label: string }[];
   instalment: number;
   lifetime: number;
   carbon: number | null;
