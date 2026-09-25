@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // `next dev` would otherwise append its own block to CLAUDE.md on every
+  // start; that file is the project's, and the notes are the source.
+  agentRules: false,
   output: "standalone",
   serverExternalPackages: ["@copilotkit/runtime"],
   env: {
