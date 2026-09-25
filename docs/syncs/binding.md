@@ -4,12 +4,18 @@ How a clause comes to be answered, how an answer reaches the solver, and what
 takes an answer away. See [the index](README.md).
 
 These are the rules of the case's slice 1, written for a build in which the
-person does the mapping. The catalogue's chain for the same move is
+person does the mapping. The case catalogue's chain for the same move is
 `ProposeFromClause → MapProposed → ApplyMapping → AssertionReachesTheSolver`,
 with a language model inside `Mapping.map`; here there is no `Mapping`, the
 person's pick names the option, and the chain is two rules shorter.
 
-## A specification is opened and closed in three concepts at once
+`Binding/propose` keeps the case catalogue's name. There an interpreter
+proposes a choice and a person confirms it; here only a person's pick reaches
+it, so every choice it records is already the person's. It is not the model's
+`propose` tool, which reaches `Constraining/complete` and commits nothing
+([Conduct](conduct.md#proposing-and-not-adopting)).
+
+## A specification is opened and closed in several concepts at once
 
 ```
 sync AStartedSpecificationIsOpened
@@ -72,7 +78,7 @@ then  { Asserting/assert: [ party: ?p ; spec: ?s ;
           variable: ?v ; option: ?o ] }
 ```
 
-The catalogue's `ApplyMapping` fires on a `Mapping/map` completion carrying
+The case catalogue's `ApplyMapping` fires on a `Mapping/map` completion carrying
 attribute–value pairs. Here the value *is* an option, the variable that offers
 it is a read of [Cataloguing](../concepts/cataloguing.md), and the mapping is
 the identity — which is what *mapping is done by the person* means in code.

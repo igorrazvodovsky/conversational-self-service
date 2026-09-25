@@ -4,7 +4,7 @@
 concept Conversing [Party]
 
 purpose
-  to carry what a party says into the system, in the order it was said
+  to keep a record of what each party said, in the order it was said
 
 state
   utterances: seq Utterance

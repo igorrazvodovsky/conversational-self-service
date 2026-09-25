@@ -1,6 +1,6 @@
 """Binding — to keep every committed value bound to the requirement it
-answers, so that a value can later be substituted, explained and attributed
-rather than merely overwritten.
+answers, so that a value can later be substituted and explained rather than merely
+overwritten.
 
 Generated from `docs/concepts/binding.md`.
 

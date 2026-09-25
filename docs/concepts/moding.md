@@ -26,6 +26,10 @@ actions
 
 operational principle
   after offer [ workspace: w ; surface: canvas ] => [ workspace: w ]
+  and offer [ workspace: w ; surface: quote ] => [ workspace: w ]
   then focus [ workspace: w ; surface: canvas ] => [ workspace: w ]
   and active of w is canvas
+  and after focus [ workspace: w ; surface: quote ] => [ workspace: w ]
+  then active of w is quote, and canvas is still available
+  and focus [ workspace: w ; surface: chat ] => [ error: e ]
 ```

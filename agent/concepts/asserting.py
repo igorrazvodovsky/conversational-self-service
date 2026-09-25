@@ -1,5 +1,5 @@
-"""Asserting — to hold what a party asserted of a specification apart from what
-its rules entailed.
+"""Asserting — to keep what each party has asserted of a specification on
+record, as asserted, until it is withdrawn.
 
 Generated from `docs/concepts/asserting.md`.
 

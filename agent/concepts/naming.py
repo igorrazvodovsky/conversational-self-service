@@ -1,5 +1,5 @@
-"""Naming — to give an item a title and a place that a person will recognise
-it by.
+"""Naming — to identify an item the way a document names it, by its title and
+the site it is for.
 
 Generated from `docs/concepts/naming.md`.
 

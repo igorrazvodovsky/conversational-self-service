@@ -34,15 +34,28 @@ actions
     what multiple it applies to embodied figures,
     and the sentence saying what an estimate on it covers and omits
 
+queries
+  footprint [ chosen: set Option ; grid: Grid ; basis: Basis ]
+    => [ made: Mass ; annual: Energy ; run: Mass ; total: Mass ;
+         complete: boolean ]
+    made is the basis's uplift times the sum of embodied
+    over the chosen options
+    annual is the demand of the class, usage and travel among the chosen
+    run is annual times the grid's intensity times the basis's horizon
+    total is made plus run
+    complete when a demand is recorded for the chosen three
+
 operational principle
   after attribute [ option: mid_15_30 ; embodied: 2600 ] => [ option: mid_15_30 ]
   and meter [ class: b ; usage: medium ; travel: mid_15_30 ; energy: 3154 ] => []
   and rate [ grid: today ; intensity: 0.22 ] => [ grid: today ]
   and frame [ basis: en15804 ; horizon: 25 ; uplift: 1.9 ;
               scope: "embodied ≈ EN 15804 A1–A3 …" ] => [ basis: en15804 ]
-  then demand of (b, medium, mid_15_30) is 3154
+  then footprint [ chosen: {b, medium, mid_15_30} ; grid: today ; basis: en15804 ]
+    => [ made: 1.9 × 2600 ; run: 3154 × 0.22 × 25 ; complete: true ]
   and after rate [ grid: today ; intensity: 0.11 ] => [ grid: today ]
-  then intensity of today is 0.11 and demand is unchanged
+  then footprint [ chosen: {b, medium, mid_15_30} ; grid: today ; basis: en15804 ]
+    => [ made: 1.9 × 2600 ; run: 3154 × 0.11 × 25 ]
   and after frame [ basis: forty_year ; horizon: 40 ; uplift: 1.9 ; scope: "…" ]
     => [ basis: forty_year ]
   then horizon of en15804 is still 25

@@ -4,7 +4,9 @@
 concept Constraining [Spec, Variable, Option, Rule]
 
 purpose
-  to limit a specification to combinations that can actually be built
+  to work out what a specification can still become under the rules
+  that say what can be built, given what is asked of it firmly and
+  what only as a preference
 
 state
   range:    Variable -> set Option
@@ -100,6 +102,27 @@ actions
     if no such choice exists
     return the smallest set of rules that rules it out
 
+queries
+  excluding [ spec: Spec ; variable: Variable ; option: Option ]
+    => set Rule
+    the rules that, with the specification's assumptions and the
+    inclinations honoured in its recompute, rule the option out;
+    nothing when the option is still possible
+
+  narrowing [ spec: Spec ; variable: Variable ; option: Option ]
+    => set Variable
+    the variables whose assumptions or honoured inclinations take part
+    in ruling the option out, read from the same core as excluding
+
+  foreseeing [ spec: Spec ; assumptions: Variable -> Option ;
+               inclinations: Variable -> Option ]
+    => [ spec: Spec ; buildable: boolean ;
+         possible: Variable -> set Option ; settled: Variable -> Option ]
+    what would be possible and settled if these were the specification's
+    assumptions and inclinations in place of its own, the inclinations
+    honoured as in the recompute; not buildable, with nothing possible,
+    when the assumptions cannot hold together; records nothing
+
 operational principle
   after offer [ variable: drive ; option: hydraulic ] => [ variable: drive ]
   and imply [ rule: R32 ; given: { usage_profile among {heavy} } ;
@@ -112,6 +135,12 @@ operational principle
   and assume [ spec: s ; variable: drive ; option: hydraulic ]
     => [ error: e ; culprits: {R32} ; conceding: {usage_profile} ]
   and refused of (s, drive) is {R32}
+  and excluding [ spec: s ; variable: drive ; option: hydraulic ] is {R32}
+  and narrowing [ spec: s ; variable: drive ; option: hydraulic ] is {usage_profile}
+  and foreseeing [ spec: s ; assumptions: { drive: hydraulic } ; inclinations: {} ]
+    => [ spec: s ; buildable: true ; possible: p' ; settled: q' ]
+    in which p' maps usage_profile to a set without heavy,
+    and assumed of s still maps usage_profile to heavy
   and after release [ spec: s ; variable: usage_profile ] => [ spec: s ]
   then refused of (s, drive) is empty
 ```

@@ -1,5 +1,6 @@
-"""Constraining — to limit a specification to combinations that can actually
-be built.
+"""Constraining — to work out what a specification can still become under the
+rules that say what can be built, given what is asked of it firmly and what
+only as a preference.
 
 Generated from `docs/concepts/constraining.md`.
 
@@ -242,8 +243,7 @@ class Constraining:
     def excluding(self, spec: str, variable: str, option: str) -> list[str]:
         """Which rules rule the option out for this specification.
 
-        A read, not an action — `docs/concepts/constraining.md`, "Why an
-        option is ruled out is a read".  One solver check: can the rules and
+        A query, not an action — `docs/concepts/constraining.md`, `queries`.  One solver check: can the rules and
         the assumptions hold with this option selected, and if not, which
         rules are in the core.  Empty for an option still possible, and empty
         when the core holds no rule at all — the option is then ruled out by

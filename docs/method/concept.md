@@ -62,6 +62,11 @@ actions
     => [ error: string ]
     the conditions under which it fails
 
+queries
+  queryName [ input: Type ; input: Type ]
+    => [ output: Type ]
+    the calculation over the concept's own state; records nothing
+
 operational principle
   an archetypal scenario showing how the concept fulfils its purpose
 ```
@@ -70,7 +75,8 @@ Notes on the parts:
 
 - `purpose` is what makes the concept a unit of meaning rather than a bag of functions. A concept that cannot state one is not a concept.
 - `state` is [facts](fact.md) as relations, in Alloy style.
-- `actions` are split into cases by their outputs, in the pattern-matching style of functional languages. Error cases are ordinary cases; `error` is just an argument name (WYSIWID §5.3).
+- `actions` are split into cases in the pattern-matching style of functional languages. Usually the cases differ in their outputs, as WYSIWID §4's do, but a case may also differ in its inputs. Error cases are ordinary cases; `error` is just an argument name (WYSIWID §5.3).
+- `queries` is optional, and this project's addition to the format. It declares a calculation that a concept performs over its own state and that a rule or the read side needs, and that its exposed relations cannot answer on their own: a total, an estimate, what a solver would say under other assumptions. A query records nothing and appears in no `when`, so it is not an action. It belongs in the specification because the specification is what the concept is generated from, and a calculation left out of it is lost on regeneration. A record assembled from a concept's relations, or a filter over them, is not a query: that is what WYSIWID §6.4's getters were, and a `where` writes it over exposed state instead. When more than one reader needs it, it is named once in the sync notes, as *met* and *the pending questions* are.
 - Specifications are deliberately partial — WYSIWID §4 omits password well-formedness rules "because these details are not needed for synchronizations."
 - `operational principle` is an archetypal scenario, useful both for understanding the concept and for generating its test cases.
 

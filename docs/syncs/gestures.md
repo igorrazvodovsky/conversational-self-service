@@ -262,8 +262,7 @@ That is worth saying out loud because
 [the two-tier policy](../method/boundaries.md#what-the-policy-does-not-excuse)
 already makes the same point about the model's six tool names: shaped by
 CopilotKit's conventions, and ours all the same. The person-side root action is
-the exact parallel, and its vocabulary was for a while the one thing in the
-model with no home. Twenty-five acts, each named for something a person does, and the
+the exact parallel. Each act is named for something a person does, and the
 granularity is the same argument as the tools' — a log of these says what
 happened.
 

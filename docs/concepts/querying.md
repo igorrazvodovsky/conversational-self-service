@@ -15,7 +15,7 @@ actions
   ask [ question: Question ; text: string ]
     => [ question: Question ]
     record the text of the question
-    determine which records bear on it
+    determine, by a service that reads the records, which bear on it
     record those as matched for the question
 
   ask [ question: Question ; text: string ]

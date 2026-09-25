@@ -1,5 +1,6 @@
 """Specifying — to hold what a party requires, in their own words, as separate
-clauses each of which can be answered, relaxed, or deliberately left open.
+clauses each of which can be reworded, relaxed, struck, or deliberately left
+open.
 
 Generated from `docs/concepts/specifying.md`.
 

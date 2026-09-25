@@ -1,4 +1,4 @@
-"""Conversing — to carry what a party says into the system, in the order it was
+"""Conversing — to keep a record of what each party said, in the order it was
 said.
 
 Generated from `docs/concepts/conversing.md`.

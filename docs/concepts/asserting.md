@@ -4,8 +4,8 @@
 concept Asserting [Spec, Variable, Option, Party]
 
 purpose
-  to hold what a party asserted of a specification apart from what
-  its rules entailed
+  to keep what each party has asserted of a specification on record,
+  as asserted, until it is withdrawn
 
 state
   open:       set Spec

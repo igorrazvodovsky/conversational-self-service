@@ -55,7 +55,7 @@ then  { Framing/unframe: [ lens: workspace ] }
 sync TheCanvasIsShownBeforeItChanges
 when  { Copiloting/invoke: [ tool: ?t ] => [] }
 where { ?t is one of assert, withdraw, propose, quote, show, hide, frame, unframe }
-then  { Moding/focus: [ surface: canvas ] }
+then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
 ```
 
 The `party` in the first rule is what distinguishes it from
@@ -167,23 +167,46 @@ then  { Deciding/decline: [ request: ?p ] }
 
 ```
 sync AChangedSpecificationWithdrawsItsProposal
-when  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ] => [ spec: ?s ]
-        Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
+when  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ] => [ spec: ?s ] }
 where { Deciding: { [ spec: ?s ; about: "completion" ] offered: { ?a } }
-        for an assertion, ?a does not map ?v to ?o
+        ?a does not map ?v to ?o
+        ?r is that request, and every [ spec: ?s ; about: "completion" ; variable: _ ]
+          Deciding holds }
+then  { Deciding/withdraw: [ request: ?r ] }
+
+sync AChangedSpecificationWithdrawsItsProposal
+when  { Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
+where { Deciding: { [ spec: ?s ; about: "completion" ] offered: _ }
         ?r is that request, and every [ spec: ?s ; about: "completion" ; variable: _ ]
           Deciding holds }
 then  { Deciding/withdraw: [ request: ?r ] }
 
 sync ASettledVariableRetiresItsProposedValue
-when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ; settled: ?q ]
-        Constraining/incline: [ spec: ?s ] => [ spec: ?s ; settled: ?q ] }
-where { ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
-        Deciding: { ?p offered: _ }, and ?p is neither chosen nor declined
-        ?v is asserted of ?s, or ?q maps ?v
-        Deciding: { [ spec: ?s ; about: "completion" ] chosen: _ } does not bind }
+when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ; settled: ?q ] }
+where { *the proposed value is retired* }
+then  { Deciding/withdraw: [ request: ?p ] }
+
+sync ASettledVariableRetiresItsProposedValue
+when  { Constraining/incline: [ spec: ?s ] => [ spec: ?s ; settled: ?q ] }
+where { *the proposed value is retired* }
 then  { Deciding/withdraw: [ request: ?p ] }
 ```
+
+where *the proposed value is retired* is the `where` both triggers share:
+
+```
+the proposed value is retired
+  iff  ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
+  and  ?p is pending
+  and  ?v is asserted of ?s, or ?q maps ?v
+  and  Deciding: { [ spec: ?s ; about: "completion" ] chosen: _ } does not bind
+```
+
+Each of these is one rule with more than one trigger, written as one block per
+trigger under one name, as in
+[Propagation](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it):
+actions listed together in a `when` must all occur in the same flow
+(WYSIWID §5.3).
 
 ### The unit of adoption is a value, and the whole is a shortcut
 
@@ -214,9 +237,8 @@ state the completion was computed against, and then the proposal is about
 nothing. Ask again and there is one for the state you are in, which is the
 counter-proposal: the person's own assertion, and the model's answer to it.
 
-The alternative was a single act on a single bundle, which is what a
-completion of thirty-odd variables used to be here, and the literature on
-proposal surfaces is against it. Li, Zhang, Wang and Lu's study of
+The alternative is a single act on a single bundle, a whole completion taken
+or left at once, and the literature on proposal surfaces is against it. Li, Zhang, Wang and Lu's study of
 Contextify (*Mixed-Initiative Context*, 2026,
 [arXiv:2604.07121](https://arxiv.org/abs/2604.07121)) reports that "binary
 accept/reject proved insufficient": when the proposal was structural, people
@@ -376,10 +398,9 @@ sits in the one place that is allowed to know about both.
 
 `TheModelMayProposeACompletion` reads two other concepts' state in its `where`
 clause, which is exactly what a `where` clause is for and exactly what a
-concept action may not do. `Constraining` is handed a cost function and never
-learns that money exists; `Pricing` is never asked to solve anything. That the
-coupling is possible at all without either concept knowing the other is
-WYSIWID §7.2's first and third design rules doing their work together.
+concept action may not do. That the coupling is possible at all without
+either concept knowing the other is WYSIWID §7.2's first and third design
+rules doing their work together.
 
 ## What is not here, and why that is the enforcement
 

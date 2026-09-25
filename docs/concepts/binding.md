@@ -5,8 +5,8 @@ concept Binding [Spec, Requirement, Offering, Value, Party]
 
 purpose
   to keep every committed value bound to the requirement it answers,
-  so that a value can later be substituted, explained and attributed
-  rather than merely overwritten
+  so that a value can later be substituted and explained rather than
+  merely overwritten
 
 state
   selections: set Selection

@@ -4,8 +4,8 @@
 concept Naming [Item]
 
 purpose
-  to give an item a title and a place that a person will
-  recognise it by
+  to identify an item the way a document names it, by its title
+  and the site it is for
 
 state
   title: Item -> string

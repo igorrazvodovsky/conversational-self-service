@@ -4,7 +4,7 @@
 concept Scheduling [Meeting, Time]
 
 purpose
-  to fix a time that the parties to a meeting have agreed on
+  to settle a meeting on one of the times it could be held
 
 state
   occasion: Meeting -> string

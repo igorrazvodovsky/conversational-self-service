@@ -210,6 +210,20 @@ A configurator that validated before recording would have nowhere to put that
 difference, and would be back to the last write winning. See
 [Asserting](../concepts/asserting.md).
 
+## A specification is given to the solver
+
+<a id="a-specification-is-given-to-the-solver"></a>
+```
+sync ANewSpecificationIsGivenToTheSolver
+when  { Asserting/start: [ spec: ?s ] => [ spec: ?s ] }
+then  { Constraining/consider: [ spec: ?s ] }
+```
+
+A specification is started in `Asserting`, with nothing asserted of it, and
+the solver begins tracking it, with nothing assumed. From then on every
+variable has a set of possible options before anybody has asked for anything,
+which is what the canvas's *still open* section reads.
+
 ## A discarded specification leaves the solver
 
 ```
@@ -234,8 +248,9 @@ That concept cannot tell that a specification was discarded, because it does not
 know what a specification is. What it can do is stop holding a request, and
 which requests to stop holding is a question for a rule.
 
-The inverse of `ANewSpecificationIsGivenToTheSolver`, and it exists for the
-reason MSM §5.1.2 gives: an action whose inverse is missing is a trap, and
+`ADiscardedSpecificationLeavesTheSolver` is the inverse of
+[`ANewSpecificationIsGivenToTheSolver`](#a-specification-is-given-to-the-solver),
+and it exists for the reason MSM §5.1.2 gives: an action whose inverse is missing is a trap, and
 without it `discard` would be an action of [Asserting](../concepts/asserting.md)
 with its consequence for the solver unwritten. It is reachable by a gesture
 ([Gestures](gestures.md)) and its consequence for the solver is a rule, which
@@ -269,15 +284,13 @@ where { ?r is [ spec: ?s ; about: "conflict" ]
 then  { Asserting/withdraw: [ spec: ?s ; variable: ?v ] }
 ```
 
-Two clauses in that `where` were for a while only in the code, and both are
-decisions rather than transcription. The refused pair `[ ?v' ; ?o' ]` is
+Some clauses in that `where` are decisions rather than transcription. The refused pair `[ ?v' ; ?o' ]` is
 offered alongside the candidates because the thing a person most often wants to
 give up is the assertion they just made, and it is not in `asserted` — it never
 got there. And a question needs at least two answers: with one candidate there
 is nothing to choose between, so no question is asked. The refusal is still
 recorded in `Constraining.refused` and still reaches the card, which is why the
-person is not left without an account — but see below.
-
+person is not left without an account.
 
 The `where` clause discards `?why` and keeps the rules' own sentences. The
 error `Constraining` composes names variables and options by identity, because
@@ -311,10 +324,11 @@ away, because every touched variable at once is what makes a ripple read as
 noise, and the bare core without the costs leaves the person interrogating
 each answer in turn.
 
-`Constraining` therefore has a read beside `excluding` and `narrowing`:
-*foreseeing*, which takes a specification and a set of assumptions in place of
+`Constraining` therefore has a query beside `excluding` and `narrowing`:
+`foreseeing`, which takes a specification and a set of assumptions in place of
 its own and returns what would be possible and settled under them, or that
-they cannot hold together. It records nothing. The canvas view
+they cannot hold together. It records nothing; its specification is with the
+[concept](../concepts/constraining.md). The canvas view
 (`agent/views.py`) asks it once per answer, with that assertion left out and
 every unmet assertion put back — which is what `UnmetAssertionsAreTriedAgain`
 would do — and prices the result with the same reads the totals use. The
@@ -326,15 +340,35 @@ the one handed back.
 
 ```
 sync AResolvedConflictWithdrawsItsQuestion
-when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ]
-        Constraining/incline: [ spec: ?s ] => [ spec: ?s ]
-        Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
-where { ?r is [ spec: ?s ; about: "conflict" ]
-        Deciding: { ?r offered: _ }, and ?r is neither chosen nor declined
-        for every ?v such that Asserting: { ?s asserted: ?v -> ?o },
-          ?v -> ?o is met in ?s }
+when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ] }
+where { *the question is answered* }
+then  { Deciding/withdraw: [ request: ?r ] }
+
+sync AResolvedConflictWithdrawsItsQuestion
+when  { Constraining/incline: [ spec: ?s ] => [ spec: ?s ] }
+where { *the question is answered* }
+then  { Deciding/withdraw: [ request: ?r ] }
+
+sync AResolvedConflictWithdrawsItsQuestion
+when  { Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
+where { *the question is answered* }
 then  { Deciding/withdraw: [ request: ?r ] }
 ```
+
+where *the question is answered* is the `where` they share:
+
+```
+the question is answered
+  iff  ?r is [ spec: ?s ; about: "conflict" ]
+  and  ?r is pending, as Conduct defines it
+  and  for every ?v such that Asserting: { ?s asserted: ?v -> ?o },
+         ?v -> ?o is met in ?s
+```
+
+One rule with several triggers, written as one block per trigger under one name.
+Actions listed together in a `when` must all occur in the same flow
+(WYSIWID §5.3), so a single block naming them all would fire only on a flow
+that did all of them, which is not what is meant.
 
 `TheConcededAssertionIsWithdrawn` is one way a conflict ends, and it is not
 the only one. The person may answer the question in the chat instead of on
@@ -345,7 +379,7 @@ the clause the refused value answers to *negotiable*. None of
 those touch `Deciding`, and without this rule the canvas would go on asking a
 question that has been answered ([The moves](../moves.md#the-conflict-as-the-worked-case)).
 
-The `where` says what *answered* means: every assertion of the specification
+The shared condition says what *answered* means: every assertion of the specification
 is assumed or inclined. That is the condition the question was asked about,
 negated, and it is why the rule matches `assume` and `incline` as well as
 `withdraw`. Withdrawing the
@@ -374,10 +408,19 @@ being a concept at all:
 
 | | `Request` | `Option` |
 |---|---|---|
-| a conflict | a specification | an assertion that might be given up — `[ variable ; option ]` |
-| a completion | a specification | a whole assignment |
-| a proposed value | a specification and a variable | a value to be taken up — `[ variable ; option ]` |
+| a conflict | `[ spec ; about: "conflict" ]` | an assertion that might be given up — `[ variable ; option ]` |
+| a completion | `[ spec ; about: "completion" ]` | a whole assignment |
+| a proposed value | `[ spec ; about: "completion" ; variable ]` | a value to be taken up — `[ variable ; option ]` |
 | a meeting | a meeting | a time |
+
+A request here is a value, not an individual: it is identified by what it
+is about, so asking the same question again is the same request, and its
+earlier options come back as `displaced`. That is the sense MSM §4 gives a
+value, something interpretable by its structure, and it is why the rules can
+find the conflict question for a specification by writing it down rather than
+by looking it up. A request that had to be told apart from another about the
+same thing would need an identity minted for it, in a `where`, as WYSIWID
+mints a user's in §5.1.
 
 The `Option` of a conflict question is *not* a catalogue option. It is a pair
 naming the variable and what was asked for it, because the question is *which
@@ -413,7 +456,7 @@ merely look tidy. Give up the hospital and the 630 kg car you asked for
 half an hour ago becomes buildable — so it is assumed, and the red card turns
 into an ordinary one, without anybody asking for it a second time.
 
-It is the [§6.5 shape](../method/synchronization.md#flows) again: one binding
+It is the [§6.5 shape](../method/synchronization.md#form) again: one binding
 per unmet assertion, `then` once per binding. It cannot loop, because a
 retry that succeeds invokes no `release` and a retry that fails invokes
 nothing at all; and it terminates, because the set of assertions only ever

@@ -18,30 +18,41 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 
 | Concept | Purpose |
 |---|---|
-| [Specifying](specifying.md) | to hold what a party requires, in their own words, as separate clauses each of which can be answered, relaxed, or deliberately left open |
-| [Binding](binding.md) | to keep every committed value bound to the requirement it answers, so that a value can later be substituted, explained and attributed rather than merely overwritten |
-| [Asserting](asserting.md) | to hold what a party asserted of a specification apart from what its rules entailed |
-| [Conversing](conversing.md) | to carry what a party says into the system, in the order it was said |
-| [Constraining](constraining.md) | to limit a specification to combinations that can actually be built |
+| [Specifying](specifying.md) | to hold what a party requires, in their own words, as separate clauses each of which can be reworded, relaxed, struck, or deliberately left open |
+| [Binding](binding.md) | to keep every committed value bound to the requirement it answers, so that a value can later be substituted and explained rather than merely overwritten |
+| [Asserting](asserting.md) | to keep what each party has asserted of a specification on record, as asserted, until it is withdrawn |
+| [Conversing](conversing.md) | to keep a record of what each party said, in the order it was said |
+| [Constraining](constraining.md) | to work out what a specification can still become under the rules that say what can be built, given what is asked of it firmly and what only as a preference |
 | [Cataloguing](cataloguing.md) | to say what may be ordered, in terms a person can recognise |
 | [Pricing](pricing.md) | to say what each choice adds to the cost of a specification |
 | [Footprinting](footprinting.md) | to estimate the carbon a specification will emit over its service life |
 | [Quoting](quoting.md) | to hold an offer still — what is offered, at what price, on what terms, until when — so that a party can accept it as it stood |
 | [Stipulating](stipulating.md) | to hold the conditions on which an offer is made, so that every quote is made on stated terms |
 | [Profiling](profiling.md) | to hold what a party says of who they are, so that a document can name and address them |
-| [Naming](naming.md) | to give an item a title and a place that a person will recognise it by |
+| [Naming](naming.md) | to identify an item the way a document names it, by its title and the site it is for |
 
 ## The rest of the surface — ours, fully specified
 
 | Concept | Purpose |
 |---|---|
-| [Deciding](deciding.md) | to obtain a person's choice on a matter the system cannot settle alone |
-| [Scheduling](scheduling.md) | to fix a time that the parties to a meeting have agreed on |
-| [Querying](querying.md) | to retrieve the records that answer a question in the asker's own words |
+| [Deciding](deciding.md) | to obtain a person's choice on a matter the system cannot settle on its own |
 | [Moding](moding.md) | to give one of several surfaces a viewer's attention |
 | [Showing](showing.md) | to let a viewer choose which facts about an item are shown at a glance, and keep the choice |
 | [Framing](framing.md) | to let a viewer narrow what is shown to the items that bear on one question, and keep the choice |
-| [Theming](theming.md) | to let a viewer control the appearance of a surface, or defer it |
+
+## Specified, and outside the engine
+
+| Concept | Purpose |
+|---|---|
+| [Scheduling](scheduling.md) | to settle a meeting on one of the times it could be held |
+| [Querying](querying.md) | to retrieve the records that answer a question posed in the asker's own words |
+| [Theming](theming.md) | to let a viewer control the appearance of a surface, or defer that control to their environment |
+
+These are ours and fully specified, but they have no module in
+`agent/concepts/`, no rule reaches them, and nothing they do is in the log.
+They live in the frontend and the starter's showcase code: the meeting picker,
+the charts over `agent/src/query.py`, and the colour-scheme hook. Until one is
+generated into the concept layer, WYSIWID §7.2's rules say nothing about it.
 
 ## Bootstrap concept — theirs, purpose only
 

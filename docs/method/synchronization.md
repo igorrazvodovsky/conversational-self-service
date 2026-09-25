@@ -25,6 +25,11 @@ then  { Concept/action: [ input: ?var ] }
 - `where` queries the state of any number of concepts, and performs calculations. Optional; the only optional part.
 - `then` lists action *invocations* — action patterns with no `=>`.
 
+Actions listed together in one `when` must all have occurred, in the same flow
+(WYSIWID §5.3): it is a conjunction. A rule meant to fire on any one of several
+actions is written as one block per trigger under the same name, sharing a
+named `where` condition, which is also how the engine registers it.
+
 Variables carry a `?`, are scoped across the whole rule, and are implicitly quantified. Matching is partial: an action pattern names only the arguments the rule cares about, so `User/register: [] => [ user: ?user ]` fires on any successful registration whatsoever (WYSIWID §5.2).
 
 Two consequences of the `where` clause worth knowing. It is a function from one binding to a *set* of bindings, with `then` invoked once per binding — so a cascading delete over every comment on a post needs no explicit iteration (WYSIWID §6.5). And because errors are ordinary output arguments, a rule that fires on failure needs no special feature (WYSIWID §5.3).
