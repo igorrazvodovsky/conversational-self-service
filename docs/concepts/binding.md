@@ -25,16 +25,16 @@ actions
     add a selection for the spec against the offering, with no choices
 
   propose [ party: Party ; selection: Selection ;
-            requirement: Requirement ; value: Value ]
+            requirement: Requirement ; value: Value ; choice: Choice ]
     => [ choice: Choice ; selection: Selection ;
          requirement: Requirement ; value: Value ; party: Party ]
-    append a choice to the selection, holding the value as answering
+    append the choice to the selection, holding the value as answering
     the requirement, decided by the party
 
   propose [ party: Party ; selection: Selection ;
-            requirement: Requirement ; value: Value ]
+            requirement: Requirement ; value: Value ; choice: Choice ]
     => [ error: string ]
-    if there is no such selection
+    if there is no such selection, or the choice is already in one
     return the error description
 
   substitute [ party: Party ; choice: Choice ; value: Value ; reason: string ]
@@ -67,7 +67,7 @@ actions
 
 operational principle
   after begin [ spec: s ; offering: o ] => [ selection: sel ; spec: s ]
-  and propose [ party: p ; selection: sel ; requirement: c ; value: kg1000 ]
+  and propose [ party: p ; selection: sel ; requirement: c ; value: kg1000 ; choice: ch ]
     => [ choice: ch ; selection: sel ; requirement: c ; value: kg1000 ; party: p ]
   then value of ch is kg1000, answers of ch is c, decidedBy of ch is p
   and after substitute [ party: p ; choice: ch ; value: kg1250 ;

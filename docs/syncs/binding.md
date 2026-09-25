@@ -10,8 +10,11 @@ with a language model inside `Mapping.map`; here there is no `Mapping`, the
 person's pick names the option, and the chain is shorter.
 
 `Binding/propose` keeps the case catalogue's name. There an interpreter
-proposes a choice and a person confirms it; here only a person's pick reaches
-it, so every choice it records is already the person's. It is not the model's
+proposes a choice and a person confirms it; here a person's pick reaches it,
+and so does the answer to a requirement the model read, as far as the person
+has let the assistant go ([Reading](reading.md), [Delegation](delegation.md)).
+The choice's party says which, and a model's choice goes with the reading when
+the reply that made it is rewound. It is not the model's
 `propose` tool, which reaches `Constraining/complete` and commits nothing
 ([Conduct](conduct.md#proposing-and-not-adopting)).
 
@@ -40,9 +43,10 @@ when  { Copiloting/gesture: [ act: "answer" ; spec: ?s ;
 where { Specifying: { ?s clauses: ?c }
         Binding: { ?sel for: ?s }
         Cataloguing: { ?v offers: ?o }
-        no choice of ?sel answers ?c with a value ?v offers }
+        no choice of ?sel answers ?c with a value ?v offers
+        bind a fresh identity as ?ch }
 then  { Binding/propose: [ party: person ; selection: ?sel ;
-          requirement: ?c ; value: ?o ] }
+          requirement: ?c ; value: ?o ; choice: ?ch ] }
 
 sync APersonSubstitutesAnAnswer
 when  { Copiloting/gesture: [ act: "answer" ; spec: ?s ;
@@ -136,14 +140,21 @@ canvas, by the model on their behalf, or by an adopted completion — or the
 clause it answers is struck. Each is the §6.5 shape, one binding per choice,
 `then` once per binding.
 
-`AnOverwrittenValueRetractsItsChoices` is the one to read twice. The model may still assert a value with
-no clause behind it, and when it does so on a variable whose value answered a
-clause, the person's answer is retracted and the clause shows as unanswered
-again. That is correct: the value the person chose *for that reason* is
-gone, and a ledger that went on saying the clause was answered would be
-lying. It is also the case's constraint 7 — every interpreter-made selection
-visible and reversible — met by a rule rather than by a gate, and the
-provenance edge on the `retract` says which assertion did it.
+`AnOverwrittenValueRetractsItsChoices` is the one to read twice. When a
+different value is asserted for a variable whose value answered a clause, the
+answer is retracted and the clause shows as unanswered again: the value chosen
+*for that reason* is gone, and a ledger that went on saying the clause was
+answered would be lying. The provenance edge on the `retract` says which
+assertion did it.
+
+Who may cause that is narrower than who may assert. A person may, by picking
+another value or taking a suggestion. The model may not, at any latitude,
+where the clause is one the person stated: its call on such a value becomes a
+suggestion instead ([Delegation](delegation.md#the-latitude)), because a value
+the person chose for a reason is not the model's to swap. That is the case's
+constraint 7 — every interpreter-made selection visible and reversible — met
+by a rule, and it keeps a person's answer out of reach of the one path that
+would have undone it without asking.
 
 `AStruckClauseReleasesItsChoices` does *not* withdraw the value. Striking a requirement is not the
 same act as taking back a value: the value was asserted, and an assertion
@@ -200,5 +211,6 @@ choice answers, and the party who stated it.
 
 - [Gestures](gestures.md) — the acts that reach `Specifying`, and the one that reaches `Binding`
 - [Propagation](propagation.md) — where an assertion goes from here
-- [Conduct](conduct.md) — the rule that does not exist: no `Copiloting/invoke` reaches either concept
+- [Reading](reading.md) — the model's answer to a requirement it read
+- [Delegation](delegation.md) — how far the model may read and assert, and the rules that never let it make a reading the person's or substitute a person's answer
 - [Specifying](../concepts/specifying.md) · [Binding](../concepts/binding.md)

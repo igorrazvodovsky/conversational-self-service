@@ -109,7 +109,10 @@ fates(i)    =  for clause(i) = c, each that applies:
                               by the person answers c
 ```
 
-An item can carry several fates, and each is counted where it falls. The
+An item can carry several fates, and each is counted where it falls. An item
+read while the person had `read` at `suggest` has no `clause(i)` and no fate:
+these measures read the ungated form, the usual latitude
+([Delegation](syncs/delegation.md#the-latitude)). The
 fates group by what they argue for:
 
 - *Disowned at the clause*: struck, reworded or relaxed. The model read the

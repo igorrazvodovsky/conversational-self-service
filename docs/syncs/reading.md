@@ -44,24 +44,50 @@ fail the turn once the document is filed.
 ```
 sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; file: ?f ;
-          words: ?w ; answer: ?a ] => [] }
+          words: ?w ; answer: ?a ; reply: ?u ] => [] }
 where { Filing: { ?f text: ?t }
-        ?w occurs in ?t }
-then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ] }
+        ?w occurs in ?t
+        the latitude person grants for "read" is "act" or "suggest"
+        bind a fresh identity as ?i }
+then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ; item: ?i ] ;
+        Rewinding/note: [ turn: ?u ; act: [ item: ?i ] ] ;
+        Rewinding/note: [ turn: ?u ; act: *what the answer will assert* ] }
 
 sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; utterance: ?u ;
-          words: ?w ; answer: ?a ] => [] }
+          words: ?w ; answer: ?a ; reply: ?u ] => [] }
 where { Conversing: { ?u text: ?t }
-        ?w occurs in ?t }
-then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ] }
+        ?w occurs in ?t
+        the latitude person grants for "read" is "act" or "suggest"
+        bind a fresh identity as ?i }
+then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ; item: ?i ] ;
+        Rewinding/note: [ turn: ?u ; act: [ item: ?i ] ] ;
+        Rewinding/note: [ turn: ?u ; act: *what the answer will assert* ] }
 ```
+
+where *what the answer will assert* is, where `Specifying: { ?s in open }`,
+for each option `?o` in `?a` that `AReadAnswerIsProposed` below will
+propose — the latitude is `act`, and `Cataloguing: { ?v offers: ?o }` with
+`?v` not held for a reason in `?s` ([Delegation](delegation.md#the-latitude))
+— the act
+`[ spec: ?s ; variable: ?v ; option: ?o ; was: ?was ; wasBy: ?wasBy ]`, read
+as `TheModelMayAssertAValue` reads it, so a rewind can put back what the
+variable held before.
 
 One rule with two triggers, on the shape of the source. The utterance is the
 one that opened the turn, handed to the tool by `agent/hearing.py` as the
 flow token is, so a reading of the person's words names the words it read.
 A call with no file and no utterance, a browser agent's, reads nothing:
-there is no source to check it against.
+there is no source to check it against. `reply` is the turn the call answers,
+as on every delegated call ([Delegation](delegation.md#the-model-acts-within-the-latitude)),
+and for a reading of the person's words it is the utterance read.
+
+The latitude is how far the person has let the assistant go with `read`
+([Delegation](delegation.md#the-latitude)). At `act` and at `suggest` the
+reading is recorded, since what the model read is a record of what it was
+given and changes nothing the person said; what becomes of it differs, below
+and in [Delegation](delegation.md#the-model-suggests-within-the-latitude). At
+`withhold` the rule does not fire and nothing is read.
 
 The `where` is that check. A reading cites its source, and a citation the
 source does not bear out is not one: words from a document cited to the
@@ -91,8 +117,10 @@ note reads.
 ```
 sync AReadItemBecomesAClause
 when  { Reading/read: [] => [ item: ?i ; words: ?w ] }
-where { Specifying: { ?s in open } }
-then  { Specifying/require: [ spec: ?s ; party: model ; text: ?w ] }
+where { Specifying: { ?s in open }
+        the latitude person grants for "read" is "act"
+        bind a fresh identity as ?c }
+then  { Specifying/require: [ spec: ?s ; party: model ; text: ?w ; clause: ?c ] }
 
 sync AReadAnswerIsProposed
 when  { Specifying/require: [ party: model ] => [ clause: ?c ; spec: ?s ] }
@@ -100,9 +128,11 @@ where { Binding: { ?sel for: ?s }
         Reading: { ?i words: ?w ; ?i answer: ?a* }
           for the item most recently heard whose words are the clause's text
         ?o in ?a*
-        Cataloguing: { ?v offers: ?o } }
+        Cataloguing: { ?v offers: ?o }
+        ?v is not held for a reason in ?s
+        bind a fresh identity as ?ch }
 then  { Binding/propose: [ party: model ; selection: ?sel ;
-          requirement: ?c ; value: ?o ] }
+          requirement: ?c ; value: ?o ; choice: ?ch ] }
 ```
 
 From `Binding/propose` on, nothing is new: `AChoiceReachesTheAssertions`
@@ -119,26 +149,37 @@ conjunction of the two completions, which the engine does not offer. The two
 are one occasion all the same: a root action is atomic, the `require` is
 invoked by the rule on the `read`, and the item most recently heard with
 those words is, at that moment, the one. An option the catalogue does not
-offer binds no variable and is not proposed.
+offer binds no variable and is not proposed. An option whose variable holds a
+value the person chose for a requirement they stated is not proposed either:
+that value is not the model's to swap, and the answer is put to the person as
+a suggestion instead ([Delegation](delegation.md#the-model-suggests-within-the-latitude)).
 
-## The gate is a rule, and it is not written
+## The gate is the person's latitude
 
-A reading lands at once. Nothing waits for the person to adopt it: the
-clause is stated, the answer asserted, and the person corrects by striking
-the clause, answering it with another option, or withdrawing the value, each
-of which is a gesture that already exists. Everything the model read is
-attributed to it and cited to its source, and a value the reading asserted
-that cannot be met is a question the person answers, so the gate that the
-case's `Suggesting` supplies is here supplied by visibility and reversibility.
+At the usual latitude a reading lands at once. Nothing waits for the person
+to adopt it: the clause is stated, the answer asserted, and the person
+corrects by striking the clause, answering it with another option, or
+withdrawing the value, each of which is a gesture that already exists, or by
+rewinding the whole reply ([Delegation](delegation.md#the-person-rewinds-a-reply)).
+Everything the model read is attributed to it and cited to its source, and a
+value the reading asserted that cannot be met is a question the person
+answers, so the gate that the case's `Suggesting` supplies is here supplied
+by visibility and reversibility. The clause reads as the assistant's reading
+until the person keeps it, which makes it theirs.
 
-The gated form is the same two rules with one trigger moved. `AReadItemBecomesAClause`
-would fire on `Deciding/choose` of a request naming the item, with a request
-per item and one for the whole reading, exactly as a proposed completion is
-put to the person in [Conduct](conduct.md#proposing-and-not-adopting). The
+The gated form is the same rules with one trigger moved, and the person
+chooses it by setting `read` to `suggest`. `AReadItemBecomesAClause` then
+does not fire; the reading is put to the person as a question naming the
+item, and taking it states the clause in the person's name and proposes its
+answer, as a proposed completion is put to the person in
+[Conduct](conduct.md#proposing-and-not-adopting). Those rules are in
+[Delegation](delegation.md#the-model-suggests-within-the-latitude). The
 case's plan asks for the ungated form first, so that how often a read clause
-is disowned can be counted before a gate is paid for. That count is a read
-over the log, in [the measures](../measures.md#slice-2--what-became-of-a-reading):
-disowned at the clause or at the answer, which argue for different gates.
+is disowned can be counted before a gate is paid for, which is why it is the
+usual latitude. That count is a read over the log, in
+[the measures](../measures.md#slice-2--what-became-of-a-reading): disowned at
+the clause or at the answer, which argue for different gates. It reads the
+ungated form only.
 
 ## What the reading cannot say, and what is read instead
 
@@ -164,7 +205,10 @@ No rule here. Two clauses answered on the same variable, one read from the
 document and one from what the person said after, meet in `Asserting`, which
 holds one value per variable; the later assertion replaces the earlier, and
 `AnOverwrittenValueRetractsItsChoices` ([Binding](binding.md#what-takes-a-choice-away))
-takes the earlier clause's choice away. The earlier clause reads as no longer
+takes the earlier clause's choice away. That holds while the earlier clause
+is a reading; once the person has stated or kept it, the value answering it is
+held for a reason, and the later reading's answer on that variable is a
+suggestion instead ([Delegation](delegation.md#the-latitude)). The earlier clause reads as no longer
 answered, and the canvas says what displaced it, from the provenance edge on
 the retraction and the reading in that flow: *displaced when the assistant
 read "make it faster" as 1.6 m/s*. Striking or relaxing the earlier clause
@@ -185,4 +229,5 @@ checked against its source whole.
 - [Conduct](conduct.md) — the model's other permissions, and the absences this note narrows
 - [Gestures](gestures.md) — the `file` act beside `say`
 - [Binding](binding.md) — where a proposed answer goes, and what takes it away
+- [Delegation](delegation.md) — how far the model may read, the gated form, and rewinding a reading
 - [Reading](../concepts/reading.md) · [Filing](../concepts/filing.md)

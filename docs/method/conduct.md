@@ -82,10 +82,16 @@ MSM notes that runtime enforcement mechanisms are described in a separate submis
 There is a code of conduct, and it is [`../syncs/conduct.md`](../syncs/conduct.md).
 
 The MSM §5.3.1 concepts do not transfer — this agent forms no hypotheses and
-runs no experiments. The shape does. Its activities are stating a requirement,
-preferring an option, withdrawing one, and proposing a completion; each is a
-tool that only records that the model asked; and what follows from each is a
-rule that says it may.
+runs no experiments. The shape does. Its activities are setting and taking back a value, reading a
+requirement from a source, proposing a completion and requesting a quote; each is a tool that only records that the model asked;
+and what follows from each is a rule that says it may.
+
+For the acts that change what the specification says, the rule's `where`
+also reads how far the person has let the assistant go, held in
+[Delegating](../concepts/delegating.md). That is §5.3.1's
+`CommitRequiresHypothesis` shape with a person's grant in place of a
+hypothesis: the permission is still stated positively, and the condition on
+it is a fact the person controls. See [Delegation](../syncs/delegation.md).
 
 The enforcement is entirely in what is absent. No rule carries a
 `Copiloting/invoke` to `Deciding/choose`, so the model cannot adopt the

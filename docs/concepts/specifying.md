@@ -21,15 +21,26 @@ actions
     => [ spec: Spec ]
     add the spec to those open, with no clauses
 
-  require [ spec: Spec ; party: Party ; text: string ]
-    => [ clause: Clause ; spec: Spec ]
-    append a clause to the spec's sequence, carrying the text
+  require [ spec: Spec ; party: Party ; text: string ; clause: Clause ]
+    => [ clause: Clause ; spec: Spec ; party: Party ]
+    append the clause to the spec's sequence, carrying the text
     in the party's words and who stated it, and meant as fixed
     until settled otherwise
 
-  require [ spec: Spec ; party: Party ; text: string ]
+  require [ spec: Spec ; party: Party ; text: string ; clause: Clause ]
     => [ error: string ]
-    if the spec is not open, or the text is empty
+    if the spec is not open, the text is empty,
+    or the clause is already in a spec
+    return the error description
+
+  adopt [ clause: Clause ; party: Party ]
+    => [ clause: Clause ; spec: Spec ; party: Party ; formerly: Party ]
+    record the party as having stated the clause, in place of
+    whoever stated it before, and return who that was
+
+  adopt [ clause: Clause ; party: Party ]
+    => [ error: string ]
+    if there is no such clause, or the party stated it already
     return the error description
 
   reword [ clause: Clause ; text: string ]
@@ -88,8 +99,8 @@ actions
 
 operational principle
   after open [ spec: s ] => [ spec: s ]
-  and require [ spec: s ; party: p ; text: "a bed must fit, with a porter" ]
-    => [ clause: c ; spec: s ]
+  and require [ spec: s ; party: p ; text: "a bed must fit, with a porter" ; clause: c ]
+    => [ clause: c ; spec: s ; party: p ]
   then c is last in clauses of s
   and text of c is "a bed must fit, with a porter"
   and statedBy of c is p
@@ -103,8 +114,13 @@ operational principle
   and after reword [ clause: c ; text: "a bed must fit, lengthways" ] => [ clause: c ; spec: s ]
   then text of c is "a bed must fit, lengthways"
   and formerly of c is still ["a bed must fit, with a porter"]
-  and after require [ spec: s ; party: p ; text: "1.6 m/s" ]
-    => [ clause: d ; spec: s ]
+  and after require [ spec: s ; party: m ; text: "1.6 m/s" ; clause: d ]
+    => [ clause: d ; spec: s ; party: m ]
+  then statedBy of d is m
+  and after adopt [ clause: d ; party: p ]
+    => [ clause: d ; spec: s ; party: p ; formerly: m ]
+  then statedBy of d is p
+  and adopt [ clause: d ; party: p ] => [ error: e ]
   and move [ clause: d ; before: c ] => [ clause: d ; spec: s ]
   then clauses of s is [d, c]
   and after strike [ clause: c ] => [ clause: c ; spec: s ]

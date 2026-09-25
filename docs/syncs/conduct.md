@@ -3,20 +3,16 @@
 What the model may do, stated positively. See [the index](README.md) and
 [Code of conduct](../method/conduct.md) for why it is stated that way.
 
+The acts that change what the person's specification says — setting or
+taking back a value, and reading a requirement — are permitted as far as the
+person lets the assistant go. Setting and taking back a value are in
+[Delegation](delegation.md), reading in [Reading](reading.md), and what
+happens at less latitude in Delegation again. The ones here change no fact of
+the specification, and hold at every latitude.
+
 ## The permissions
 
 ```
-sync TheModelMayAssertAValue
-when  { Copiloting/invoke: [ tool: "assert" ;
-          spec: ?s ; variable: ?v ; option: ?o ] => [] }
-then  { Asserting/assert: [ party: model ;
-          spec: ?s ; variable: ?v ; option: ?o ] }
-
-sync TheModelMayWithdrawAnAssertion
-when  { Copiloting/invoke: [ tool: "withdraw" ;
-          spec: ?s ; variable: ?v ] => [] }
-then  { Asserting/withdraw: [ spec: ?s ; variable: ?v ] }
-
 sync TheModelMayIntroduceThePerson
 when  { Copiloting/invoke: [ tool: "introduce" ; name: ?n ; organisation: ?o ;
           address: ?a ; email: ?e ; phone: ?p ] => [] }
@@ -58,9 +54,10 @@ where { ?t is one of assert, withdraw, read, propose, quote, show, hide, frame, 
 then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
 ```
 
-The `party` in the first rule is what distinguishes it from
-[`APersonAssertsAValue`](gestures.md) in the state as well as in the trace. Two
-rules, two parties, one action — and `Asserting.assertedBy` records which,
+The `party` in [`TheModelMayAssertAValue`](delegation.md#the-model-acts-within-the-latitude)
+is what distinguishes it from [`APersonAssertsAValue`](gestures.md) in the
+state as well as in the trace. Two rules, two parties, one action — and
+`Asserting.assertedBy` records which,
 independently of the provenance edge the log already carries. The edge is finer:
 `APersonAssertsAValue` and `AnAdoptedValueBecomesAnAssertion` are two
 different things a person did, and both write `person`.
@@ -492,10 +489,18 @@ in its `then`. What the model may do is *read*: `TheModelMayReadARequirement`
 ([Reading](reading.md)) records a requirement with the words it was read from
 and the options it took to answer them, and only when those words are a
 passage of the source it cites. The rules there state the words
-as a clause and propose the answer. A clause so stated carries the model as
-its stater and its source beside it, and only the person's gestures change
-or remove it. The model may still assert a value with no clause behind it,
-and the canvas says so beside the value.
+as a clause and propose the answer, as far as the person has let the
+assistant go ([Delegation](delegation.md)). A clause so stated carries the
+model as its stater and its source beside it, and only the person's gestures
+change or remove it. No rule carries the model's call to `Specifying/adopt`,
+so only the person makes a reading theirs, and none to `Binding/substitute`,
+so a value the person chose for a reason is not the model's to swap. The
+model may still assert a value with no clause behind it, and the canvas says
+so beside the value.
+
+_No rule lets the model set its own latitude._ No `when { Copiloting/invoke: … }`
+has `Delegating` in its `then`. How far the assistant may go is the person's to
+say.
 
 _No rule adopts a completion._ `Constraining/complete` changes nothing — it
 returns an assignment. The only path from an assignment into
@@ -546,11 +551,14 @@ Each call is `Copiloting/invoke` with the actor `browser`, reaching the
 engine at `POST /configurator/invoke` as the assistant's calls reach it from
 `agent/tools.py`. Every rule above matches on the tool and not on the actor,
 so the grant is the same grant: a browser agent may assert, withdraw,
-propose, introduce, entitle, quote, show, hide, frame and unframe, and the
-absences hold for it exactly as they hold for the assistant. No rule
-carries its invocation to `Deciding/choose`, `Quoting/commit`, `Specifying`
-or `Binding`. It can fill the specification in, and it cannot adopt a
-proposal, accept an offer or state what the person requires — which is what
+propose, introduce, entitle, quote, show, hide, frame and unframe, asserting
+and withdrawing within the same latitude the person has set, and the
+absences hold for it exactly as they hold for the assistant. It reads
+nothing, since it has no source to cite ([Reading](reading.md#the-model-reads)).
+No rule carries its invocation to `Deciding/choose`, `Quoting/commit`,
+`Specifying`, `Binding` or `Delegating`. It can fill the specification in, as
+far as the person allows, and it cannot adopt a proposal, accept an offer,
+state what the person requires or widen its own latitude — which is what
 makes the tools safe to hand to an agent nobody here wrote. The exposure
 adds no rule; it adds another actor to rules that already existed.
 

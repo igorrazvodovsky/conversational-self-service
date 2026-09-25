@@ -76,7 +76,8 @@ then  { Naming/entitle: [ item: ?s ; title: ?t ; site: ?where ] }
 
 sync APersonStatesAClause
 when  { Copiloting/gesture: [ act: "require" ; spec: ?s ; text: ?t ] => [] }
-then  { Specifying/require: [ spec: ?s ; party: person ; text: ?t ] }
+where { bind a fresh identity as ?c }
+then  { Specifying/require: [ spec: ?s ; party: person ; text: ?t ; clause: ?c ] }
 
 sync APersonSettlesAClause
 when  { Copiloting/gesture: [ act: "settle" ; clause: ?c ; negotiability: ?n ] => [] }
@@ -349,8 +350,9 @@ it fires is a fact of that concept's state. It is the slice 1 counterpart of
 no state and decides nothing. So the `act` values above — `start`, `say`,
 `file`, `assert`, `withdraw`, `discard`, `choose`, `decline`, `focus`, `introduce`,
 `entitle`, `quote`, `commit`, `revoke`, `require`, `settle`, `relax`, `strike`,
-`reword`, `move`, `show`, `hide`, `frame`, `unframe`, and
-`answer` in [Binding](binding.md) — are not defined in the bootstrap
+`reword`, `move`, `show`, `hide`, `frame`, `unframe`, `answer` in
+[Binding](binding.md), and `entrust`, `keep` and `rewind` in
+[Delegation](delegation.md) — are not defined in the bootstrap
 concept, and there is nowhere else they could be defined either. This file is
 their definition.
 

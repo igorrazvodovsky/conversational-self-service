@@ -86,8 +86,6 @@ it.
 | `AWithdrawnAssertionUnframesTheCanvas` | [Propagation](propagation.md) |
 | `AStruckClauseUnframesTheCanvas` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationUnframesTheCanvas` | [Propagation](propagation.md) |
-| `TheModelMayAssertAValue` | [Conduct](conduct.md) |
-| `TheModelMayWithdrawAnAssertion` | [Conduct](conduct.md) |
 | `TheModelMayProposeACompletion` | [Conduct](conduct.md) |
 | `TheModelMayIntroduceThePerson` | [Conduct](conduct.md) |
 | `TheModelMayEntitleTheJob` | [Conduct](conduct.md) |
@@ -104,6 +102,26 @@ it.
 | `AnOvertakenProposedValueIsRetired` | [Conduct](conduct.md) |
 | `AnEmptiedProposalIsWithdrawn` | [Conduct](conduct.md) |
 | `TheCanvasIsShownBeforeItChanges` | [Conduct](conduct.md) |
+| `TheAssistantsLatitudeIsSet` | [Delegation](delegation.md) |
+| `APersonDelegates` | [Delegation](delegation.md) |
+| `TheModelMayAssertAValue` | [Delegation](delegation.md) |
+| `TheModelMayWithdrawAnAssertion` | [Delegation](delegation.md) |
+| `TheModelMaySuggestAValue` | [Delegation](delegation.md) |
+| `TheModelMaySuggestAWithdrawal` | [Delegation](delegation.md) |
+| `TheModelMaySuggestAReading` | [Delegation](delegation.md) |
+| `AReadAnswerOnAHeldValueIsSuggested` | [Delegation](delegation.md) |
+| `ASuggestedValueIsTaken` | [Delegation](delegation.md) |
+| `ASuggestedWithdrawalIsTaken` | [Delegation](delegation.md) |
+| `ASuggestedReadingIsTaken` | [Delegation](delegation.md) |
+| `ASuggestedAnswerIsTaken` | [Delegation](delegation.md) |
+| `AnOvertakenSuggestionIsWithdrawn` | [Delegation](delegation.md) |
+| `APersonKeepsAReading` | [Delegation](delegation.md) |
+| `APersonRewindsAReply` | [Delegation](delegation.md) |
+| `ARewoundValueIsRestored` | [Delegation](delegation.md) |
+| `ARewoundValueIsTakenBack` | [Delegation](delegation.md) |
+| `ARewoundWithdrawalIsUndone` | [Delegation](delegation.md) |
+| `ARewoundReadingIsStruck` | [Delegation](delegation.md) |
+| `ARewoundReadingIsWithdrawn` | [Delegation](delegation.md) |
 
 ## Seeding
 
@@ -143,8 +161,9 @@ their source, and the options it took to answer them. One rule lets the model
 record a reading; one states the reading as a clause, with the model as its
 stater; one proposes its answer, from where the binding rules assert it. The
 reading lands at once and the person corrects it with the gestures they
-already have, which is the gate in this composition; the gated form is the
-same rules with one trigger moved. Whether a reading was wrong is not a fact
+already have, which is the gate at the usual latitude; at less latitude the
+reading is put to the person instead, which is the same rules with one
+trigger moved ([Delegation](delegation.md)). Whether a reading was wrong is not a fact
 any rule establishes, and the note says what is read instead. See
 [Reading](reading.md).
 
@@ -202,6 +221,16 @@ adopt a completion, commit to a quote, change a price, or list a catalogue
 option, and that is the whole of the enforcement. A browser agent reaching
 the page through WebMCP performs the same root action under its own actor,
 and the same rules decide what follows. See [Conduct](conduct.md).
+
+## How far the model may go
+
+For the acts that change what the specification says — setting or taking
+back a value, and reading a requirement from a source — the model's
+permissions read how far the person has let the
+assistant go. The person sets that act by act, and the model cannot. At the
+fullest latitude the model acts; at the next it suggests, and the person
+answers; at the last nothing happens. Whatever the model did in reply to one
+thing the person said can be taken back as one. See [Delegation](delegation.md).
 
 ## Checking these against the design rules
 
