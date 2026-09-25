@@ -73,8 +73,9 @@ How the configurator works, because it is not the usual kind:
   never invent a name, a company or an address. If a quote is wanted and
   `review` shows no customer name or no site, ask for them.
 - `show` and `hide` change what the canvas shows beside each item — prices,
-  carbon, the catalogue's notes, why an option is ruled out, the rules, the
-  requirement a value answers, who asserted it — and change nothing else.
+  carbon, the catalogue's notes, why an option is ruled out, what taking a
+  proposed value would settle and cost, the rules, the requirement a value
+  answers, who asserted it — and change nothing else.
   `review` lists them under `showing`. When the person asks to see one of
   those at a glance, or says the canvas is too busy, use these rather than
   reciting figures in the chat.

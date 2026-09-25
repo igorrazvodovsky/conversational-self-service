@@ -63,6 +63,7 @@ FACETS: list[tuple[str, str, bool]] = [
     ("carbon", "what each option adds to the embodied carbon", False),
     ("notes", "the catalogue's note on each option", False),
     ("excluded", "for each option ruled out, the rule that rules it out", False),
+    ("consequences", "on a proposed value, what taking it would settle and cost", False),
     ("rules", "on a value that follows, the rule that forces it and the assertion it rests on", True),
     ("answers", "on an asserted value, the requirement it answers", True),
     ("how", "on an asserted value, who asserted it and by what route", True),

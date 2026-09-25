@@ -83,7 +83,14 @@ export interface Variable {
   refused: { rule: string; because: string }[];
   /** What the assistant proposed for a variable still open: a `Deciding`
    * request of its own, to take or leave beside the row. */
-  proposed: { option: string; label: string; request: Request } | null;
+  proposed: {
+    option: string;
+    label: string;
+    request: Request;
+    /** What taking it would settle and cost; only while the
+     * `consequences` facet is shown. */
+    foreseen?: Foreseen;
+  } | null;
   options: Option[];
 }
 

@@ -18,6 +18,7 @@ import {
 import { Item, ItemContent } from "@/components/ui/item";
 import { cn } from "@/lib/utils";
 import { ClauseText, useAnswering } from "./clauses";
+import { Consequences } from "./question";
 import { adds, kilos } from "./format";
 import { useConfigurator, type Option, type Variable } from "./provider";
 import { useShown } from "./showing";
@@ -382,6 +383,11 @@ export function OpenRow({ variable }: { variable: Variable }) {
           >
             Not this one
           </Button>
+          {proposed.foreseen ? (
+            <div className="basis-full">
+              <Consequences foreseen={proposed.foreseen} />
+            </div>
+          ) : null}
         </div>
       ) : null}
       <CollapsibleContent className="px-3 pb-3">

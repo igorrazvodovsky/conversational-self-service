@@ -265,6 +265,36 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     # assertion again, which is what the rules would do.
     price_now = pricing.total(chosen, BASIS)
     footprint_now = footprinting.footprint(chosen, grid, BASIS)
+
+    def foresee(would: dict[str, str], softly_would: dict[str, str]) -> dict[str, Any]:
+        """What the specification would settle under these assumptions in
+        place of its own, and what that would cost against now."""
+        seen = solver.foreseeing(spec, would, softly_would)
+        after = seen["settled"]
+        follows = [
+            {
+                "variable": v,
+                "heading": heading.get(v, v),
+                "option": o,
+                "label": catalogue["label"].get(o, o),
+            }
+            for v, o in after.items()
+            if v not in would and settled.get(v) != o
+        ]
+        price_then = pricing.total(after.values(), BASIS)
+        footprint_then = footprinting.footprint(after.values(), grid, BASIS)
+        return {
+            "buildable": seen["buildable"],
+            "follows": follows,
+            "instalment": round(price_then["instalment"] - price_now["instalment"], 2),
+            "lifetime": round(price_then["lifetime"] - price_now["lifetime"], 2),
+            "carbon": (
+                footprint_then["total"] - footprint_now["total"]
+                if footprint_then["complete"] and footprint_now["complete"]
+                else None
+            ),
+        }
+
     for q in questions:
         if q["about"] != "conflict":
             continue
@@ -281,35 +311,19 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 for v, o in asserted.items()
                 if v != given_up and inclined.get(v) == o
             }
-            seen = solver.foreseeing(spec, would, softly_would)
-            after = seen["settled"]
-            follows = [
-                {
-                    "variable": v,
-                    "heading": heading.get(v, v),
-                    "option": o,
-                    "label": catalogue["label"].get(o, o),
-                }
-                for v, o in after.items()
-                if v not in would and settled.get(v) != o
-            ]
-            price_then = pricing.total(after.values(), BASIS)
-            footprint_then = footprinting.footprint(after.values(), grid, BASIS)
-            foreseen.append(
-                {
-                    **option,
-                    "buildable": seen["buildable"],
-                    "follows": follows,
-                    "instalment": round(price_then["instalment"] - price_now["instalment"], 2),
-                    "lifetime": round(price_then["lifetime"] - price_now["lifetime"], 2),
-                    "carbon": (
-                        footprint_then["total"] - footprint_now["total"]
-                        if footprint_then["complete"] and footprint_now["complete"]
-                        else None
-                    ),
-                }
-            )
+            foreseen.append({**option, **foresee(would, softly_would)})
         q["foreseen"] = foreseen
+
+    # What taking a proposed value would do — the same read, asked with the
+    # value assumed on top of what holds.  One solver survey per proposed
+    # value, so it is a facet, computed only while it is shown, as `excluded`
+    # is.  `docs/syncs/conduct.md`, "What taking a value would do is a read".
+    if "consequences" in shown:
+        for v in variables:
+            if v["proposed"]:
+                v["proposed"]["foreseen"] = foresee(
+                    {**assumed, v["name"]: v["proposed"]["option"]}, dict(inclined)
+                )
 
     quotes = _quotes(engine, spec, grid, settled)
     customer = engine.concepts["Profiling"].profile("person")

@@ -28,6 +28,7 @@ const LABEL: Record<string, string> = {
   carbon: "Carbon of each option",
   notes: "Notes on the options",
   excluded: "Why an option is ruled out",
+  consequences: "What a proposed value would do",
   rules: "The rule behind what follows",
   answers: "The requirement a value answers",
   how: "Who asserted a value",

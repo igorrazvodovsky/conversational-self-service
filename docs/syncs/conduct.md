@@ -262,6 +262,24 @@ Modani, Mahapatra and Agarwal give (*Dialogue to Discovery*, 2026,
 [arXiv:2606.24194](https://arxiv.org/abs/2606.24194)): given the same
 state, a language model deciding for itself did worse than the arithmetic.
 
+### What taking a value would do is a read
+
+A person deciding whether to take a proposed value wants the same thing a
+person answering a conflict wants: what would then follow, and what it would
+cost. `Constraining`'s *foreseeing* read, asked with the value assumed on top
+of what already holds, answers both, and the canvas view (`agent/views.py`)
+prices the result with the reads the totals use, as it does for
+[each answer to a conflict](propagation.md#what-each-answer-would-cost-is-a-read).
+Nothing is recorded, and the proposed value itself is untouched, because
+`Deciding/choose` has to recognise the one handed back.
+
+It differs from the conflict's read in one respect: cost. A conflict has a
+few answers; a proposal has one value per open variable, and each costs a
+solver survey. So the figures are a facet of [Showing](../concepts/showing.md),
+*consequences*, computed only while it is shown, as the rule behind a
+ruled-out option is. The person or the model turns it on when it is wanted,
+and an idle canvas asks the solver nothing.
+
 ### A proposal lasts as long as the state it assumed
 
 A completion is computed against the assumptions holding when `propose` ran.

@@ -118,8 +118,6 @@ function Answer({
   disabled: boolean;
   onClick: () => void;
 }) {
-  const { view } = useConfigurator();
-  const currency = view?.currency ?? "";
   return (
     <Button
       variant="outline"
@@ -129,12 +127,26 @@ function Answer({
       className="block h-auto w-full whitespace-normal px-3 py-2 text-left font-normal"
     >
       <span className="font-medium">Give up {name}</span>
-      {foreseen && !foreseen.buildable && (
+      <Consequences foreseen={foreseen} />
+    </Button>
+  );
+}
+
+/** What one answer would do: whether it can be built, what would then
+ * follow, and both deltas. Shared by a conflict's answers and a proposed
+ * value's row. */
+export function Consequences({ foreseen }: { foreseen?: Foreseen }) {
+  const { view } = useConfigurator();
+  const currency = view?.currency ?? "";
+  if (!foreseen) return null;
+  return (
+    <>
+      {!foreseen.buildable && (
         <span className="mt-0.5 block text-xs text-muted-foreground">
           still cannot be built
         </span>
       )}
-      {foreseen && foreseen.buildable && foreseen.follows.length > 0 && (
+      {foreseen.buildable && foreseen.follows.length > 0 && (
         <span className="mt-0.5 block text-xs text-muted-foreground">
           then follows:{" "}
           {foreseen.follows
@@ -142,7 +154,7 @@ function Answer({
             .join(", ")}
         </span>
       )}
-      {foreseen && foreseen.buildable && (
+      {foreseen.buildable && (
         <span className="mt-0.5 block text-xs tabular-nums text-muted-foreground">
           {signed(foreseen.instalment, (n) => money(n, currency))} a month
           {" · "}
@@ -155,7 +167,7 @@ function Answer({
           )}
         </span>
       )}
-    </Button>
+    </>
   );
 }
 
