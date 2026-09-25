@@ -99,7 +99,7 @@ when  { Copiloting/gesture: [ act: "quote" ; spec: ?s ] => [] }
 where { Constraining: { ?s settled: ?holds }
         every variable in Constraining.range is settled for ?s
         Asserting: { ?s asserted: ?v -> ?o } implies
-          Constraining: { ?s assumed: ?v -> ?o }
+          ?v -> ?o is met in ?s   — Propagation's calculation
         ?amount, ?months, ?recurring are Pricing's total over the values
           of ?holds on the catalogue basis, and it is complete
         Profiling: { person name: ?n }  — the proposal is addressed
@@ -151,7 +151,10 @@ The catalogue's `Quoting.quote` *requires `valid` and `priced`*, and this
 `where` is what that means for the stand-in engine: every variable settled,
 nothing asserted left unmet, and [Pricing](../concepts/pricing.md)'s total
 complete — which it is exactly when a term has been chosen rather than
-presumed. A quote on a presumed term would be an offer resting on an assumption
+presumed. A value held softly counts as met whether it was honoured or
+yielded: a preference that gave way is not a requirement the offer fails,
+and the proposal's basis of design shows the clause beside what the offer
+supplies for it. A quote on a presumed term would be an offer resting on an assumption
 the person has not made. A proposal is also *addressed*, so the `where` asks
 two more things: that the person has given a name
 ([Profiling](../concepts/profiling.md)) and that the job has a site

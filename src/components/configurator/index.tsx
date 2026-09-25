@@ -62,6 +62,7 @@ function FrameBanner() {
   const count = (standing: string) =>
     inside.filter((v) => v.standing === standing).length;
   const unmet = count("unmet");
+  const yielded = count("yielded");
   return (
     <div className="mt-6 flex flex-wrap items-center gap-2 border bg-muted/40 px-3 py-2 text-xs">
       <span>
@@ -76,6 +77,7 @@ function FrameBanner() {
       </span>
       <span className="text-muted-foreground">
         · {count("follows")} follow · {count("open")} narrowed
+        {yielded ? ` · ${yielded} gave way` : ""}
         {unmet ? ` · ${unmet} unmet` : ""}
       </span>
       <Button
@@ -182,8 +184,13 @@ function Canvas() {
   // and leaves the sections themselves alone — `Framing`. With no frame,
   // `framed` is true of everything.
   const framed = view.variables.filter((v) => v.framed);
+  // A yielded value is asserted: it sits with what was asked for, not with
+  // what followed, because nothing about the person's requirement changed.
   const asked = framed.filter(
-    (v) => v.standing === "asked" || v.standing === "unmet",
+    (v) =>
+      v.standing === "asked" ||
+      v.standing === "yielded" ||
+      v.standing === "unmet",
   );
   const follows = framed.filter((v) => v.standing === "follows");
   const open = framed.filter((v) => v.standing === "open");
@@ -194,8 +201,8 @@ function Canvas() {
         <h1 className="text-base font-semibold">{view.product}</h1>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           <p className="text-xs text-muted-foreground">
-            {view.clauses.length} required · {view.counts.asked + view.counts.unmet}{" "}
-            asserted
+            {view.clauses.length} required ·{" "}
+            {view.counts.asked + view.counts.yielded + view.counts.unmet} asserted
             {view.counts.unbound ? ` (${view.counts.unbound} answering nothing)` : ""}
             {" · "}
             {view.counts.follows} follow · {view.counts.open} open

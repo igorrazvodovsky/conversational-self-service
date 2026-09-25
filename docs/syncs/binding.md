@@ -80,8 +80,12 @@ That is a finding and not a shortcut: a choice whose value is already in
 the model's vocabulary restates the value, and whether `answers` is worth a
 relation on its own is what slice 1 measures.
 
-From `Asserting/assert` on, nothing is new: `AssertionsReachTheSolver` carries
-the value to [Constraining](../concepts/constraining.md), a conflict comes
+From `Asserting/assert` on, one thing is new: the value reaches
+[Constraining](../concepts/constraining.md) hard through
+`AssertionsReachTheSolver`, or softly through
+`ANegotiableAnswerReachesTheSolverSoftly` when every clause it answers is
+negotiable, and which is read from the clause
+([Propagation](propagation.md#assertions-reach-the-solver)). A conflict comes
 back through `Deciding`, and the canvas reads the provenance edge. The edge
 for a value that answers a clause is `AChoiceReachesTheAssertions`, which is
 a fourth sentence beside *you asked for this*, *the assistant asked for this*
@@ -127,7 +131,11 @@ provenance edge on the `retract` says which assertion did it.
 
 The third does *not* withdraw the value. Striking a requirement is not the
 same act as taking back a value: the value was asserted, and an assertion
-stays on record until somebody withdraws it.
+stays on record until somebody withdraws it. What the strike does change is
+the value's strength, when the struck clause was negotiable: with no clause
+behind it the value is an ordinary assertion, and
+`ARetractedChoiceHardensItsValue` ([Propagation](propagation.md)) carries it
+to the solver hard.
 
 Nothing carries a `Binding/retract` back into `Asserting`. A retraction is a
 consequence of an assertion changing, never a cause of one, and that
@@ -146,8 +154,11 @@ ledger(s)   =  for each clause c in Specifying.clauses(s), in order:
                  each with its value, the variable Cataloguing says offers it,
                  who decided it, what it replaced and why,
                  and a standing read against Asserting and Constraining:
-                   asked   if the value is asserted and assumed
-                   unmet   if the value is asserted and not assumed
+                   asked   if the value is asserted and met, and settled on
+                   yielded if the value is asserted and met, and not settled on
+                   unmet   if the value is asserted and not met
+                 (met as Propagation defines it: assumed, or inclined with
+                  nothing refused against the variable)
 
 unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
 ```

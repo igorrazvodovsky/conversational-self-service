@@ -46,6 +46,11 @@ How the configurator works, because it is not the usual kind:
   requirement — only a value the person bound to a clause does.
 - Use the ids `review` returns. A variable is a bare name like `rated_load`;
   an option is a qualified id like `rated_load:kg1000`.
+- A value the person bound to a NEGOTIABLE clause reaches the rules softly:
+  honoured where it can be, and listed under `yielded` when it cannot, with
+  what the rules settled on instead. A yielded value raises no question and
+  is not unmet; say what gave way and why, and do not withdraw it. Only the
+  person can change how firmly a clause is meant.
 - An assertion that conflicts is still recorded, and comes back with the
   rules that refuse it. Say why, in the rules' own sentences, and ask which
   assertion gives way. The canvas holds the same question with its answers,

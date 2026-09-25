@@ -108,6 +108,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
 
     asserted = asserting["asserted"].get(spec, {})
     assumed = constraining["assumed"].get(spec, {})
+    inclined = constraining["inclined"].get(spec, {})
     possible = constraining["possible"].get(spec, {})
     settled = constraining["settled"].get(spec, {})
     owing = constraining["owing"].get(spec, {})
@@ -130,8 +131,9 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             return True
         if name == framed_on or framed_on in following.get(name, []):
             return True
-        if name in asserted and assumed.get(name) != asserted[name]:
-            # Unmet: did the framing assertion take part in refusing it?
+        if name in asserted and settled.get(name) != asserted[name]:
+            # Unmet or yielded: did the framing assertion take part in
+            # refusing it, or in the inclination giving way?
             return framed_on in solver.narrowing(spec, name, asserted[name])
         if name not in asserted and name not in settled:
             # Open: did the framing assertion rule any of its options out?
@@ -156,16 +158,22 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     for name, offered in catalogue["offers"].items():
         allowed = set(possible.get(name, offered))
         asked = asserted.get(name)
-        unmet = name in asserted and assumed.get(name) != asserted[name]
         value = settled.get(name)
-        if unmet:
-            standing = "unmet"
-        elif asked is not None:
+        # The value reached the solver softly: it answers only negotiable
+        # clauses, and `Constraining` inclines rather than assumes it.
+        softly = asked is not None and inclined.get(name) == asked
+        if asked is None:
+            standing = "follows" if value is not None else "open"
+        elif assumed.get(name) == asked:
             standing = "asked"
-        elif value is not None:
-            standing = "follows"
+        elif softly and not refused.get(name):
+            # Met softly.  Honoured where it could be, and yielded where it
+            # could not: read from `settled` beside `inclined`, recorded by
+            # nobody.  A refusal against an inclined value is a hardening
+            # that failed, and that is unmet.
+            standing = "asked" if value == asked else "yielded"
         else:
-            standing = "open"
+            standing = "unmet"
         variables.append(
             {
                 "name": name,
@@ -173,6 +181,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "family": catalogue["family"].get(name, "other"),
                 "standing": standing,
                 "asked": asked,
+                "softly": softly,
                 "how": said(*how[name], default=how[name][0])
                 if asked and name in how
                 else None,
@@ -246,9 +255,14 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             would = {
                 v: o
                 for v, o in asserted.items()
-                if v != given_up
+                if v != given_up and inclined.get(v) != o
             }
-            seen = solver.foreseeing(spec, would)
+            softly_would = {
+                v: o
+                for v, o in asserted.items()
+                if v != given_up and inclined.get(v) == o
+            }
+            seen = solver.foreseeing(spec, would, softly_would)
             after = seen["settled"]
             follows = [
                 {
@@ -333,6 +347,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             "follows": sum(1 for v in variables if v["standing"] == "follows"),
             "open": sum(1 for v in variables if v["standing"] == "open"),
             "unmet": sum(1 for v in variables if v["standing"] == "unmet"),
+            "yielded": sum(1 for v in variables if v["standing"] == "yielded"),
             # The plan's two numbers for slice 1: clauses nobody has answered
             # (the ones left open on purpose excluded), and values asserted
             # with no clause behind them — the control, inside the same build.
@@ -371,6 +386,9 @@ def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
     constraining = engine.state("Constraining")
     asserted = engine.state("Asserting")["asserted"].get(spec, {})
     assumed = constraining["assumed"].get(spec, {})
+    inclined = constraining["inclined"].get(spec, {})
+    refused = constraining["refused"].get(spec, {})
+    settled = constraining["settled"].get(spec, {})
     variable_of = {
         option: variable
         for variable, offered in catalogue["offers"].items()
@@ -384,7 +402,11 @@ def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
             return "unrealisable"
         if asserted.get(variable) != option:
             return "displaced"
-        return "unmet" if assumed.get(variable) != option else "asked"
+        if assumed.get(variable) == option:
+            return "asked"
+        if inclined.get(variable) == option and not refused.get(variable):
+            return "asked" if settled.get(variable) == option else "yielded"
+        return "unmet"
 
     def describe(choice: str) -> dict[str, Any]:
         option = binding["value"][choice]
@@ -572,6 +594,7 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
         ],
         "asked": [
             say(v)
+            + (" (negotiable)" if v["softly"] else "")
             + (
                 f" — answers: {'; '.join(plain(a['text']) for a in v['answers'])}"
                 if v["answers"]
@@ -579,6 +602,15 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
             )
             for v in view["variables"]
             if v["standing"] == "asked"
+        ],
+        # A value asked for softly that the rules could not honour: still
+        # asserted, still answering its clause, and no question asked, because
+        # a preference is by the person's own account the thing to give up.
+        "yielded": [
+            f"{v['heading']}: {label.get(v['asked'], v['asked'])} was negotiable and gave way"
+            + (f"; settled on {label.get(v['value'], v['value'])}" if v["value"] else "")
+            for v in view["variables"]
+            if v["standing"] == "yielded"
         ],
         "follows": [
             f"{say(v)} — {', '.join(o['because'] for o in v['owing'])}"

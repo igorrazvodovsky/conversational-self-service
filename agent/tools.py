@@ -20,11 +20,13 @@ choose which facts the canvas shows beside each item
 option* and *what followed from the hospital?* are things the model does
 rather than things it recites.
 
-`prefer` is gone with `Asserting/prefer`.  Strength is a fact of a clause in
-the buyer's words, and this build holds no clauses — see
-`docs/concepts/asserting.md`.  The Python function is `assert_value` because
-Python reserves `assert`; the tool string the rules match on is `assert`, which
-is the vocabulary.
+There is no `prefer`.  Strength is a fact of a clause in the buyer's words —
+`Specifying.negotiability`, which the person sets on the canvas and no tool
+reaches — and a value the person bound to a negotiable clause reaches the
+solver softly by a rule that reads the tag (`docs/syncs/propagation.md`).
+`assert_value` is always hard: a value the model asserts answers no clause.
+The Python function is `assert_value` because Python reserves `assert`; the
+tool string the rules match on is `assert`, which is the vocabulary.
 """
 
 from __future__ import annotations

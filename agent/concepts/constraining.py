@@ -271,7 +271,7 @@ class Constraining:
             return [], []
         solver = self._built()
         rules = list(self._rule_lit.values())
-        if solver.check(*rules, *self._assumption_literals(spec), literal) != z3.unsat:
+        if solver.check(*rules, *self._effective_literals(spec), literal) != z3.unsat:
             return [], []
         return self._read_core(solver, exclude=variable)
 
@@ -371,6 +371,48 @@ class Constraining:
                 literals.append(literal)
         return literals
 
+    def _honoured(
+        self,
+        solver: z3.Solver,
+        rules: list[z3.BoolRef],
+        assumptions: list[z3.BoolRef],
+        inclinations: dict[str, str],
+    ) -> tuple[list[z3.BoolRef], dict[str, str]]:
+        """Which inclinations can hold together with the rules, the
+        assumptions and the inclinations honoured before them, earlier first.
+
+        Returns the assumptions with the honoured inclinations' literals
+        appended, and the honoured inclinations themselves.  An inclination
+        that cannot hold is dropped here and nowhere else: it stays recorded
+        in `inclined`, and the canvas reads it as yielded from `settled`
+        beside it.  Order is the order of inclination, which is what makes
+        two preferences that cannot both hold resolve the same way twice.
+        """
+        held = list(assumptions)
+        honoured: dict[str, str] = {}
+        for variable, option in inclinations.items():
+            literal = self._sel.get((variable, option))
+            if literal is None:
+                continue
+            if solver.check(*rules, *held, literal) == z3.sat:
+                held.append(literal)
+                honoured[variable] = option
+        return held, honoured
+
+    def _effective_literals(self, spec: str) -> list[z3.BoolRef]:
+        """The assumptions and the honoured inclinations, as the recompute
+        sees them.  What `possible`, `settled` and the two reads beside them
+        are computed against; never what `assume`'s check is, which is the
+        assumptions alone."""
+        solver = self._built()
+        held, _ = self._honoured(
+            solver,
+            list(self._rule_lit.values()),
+            self._assumption_literals(spec),
+            self._inclined.get(spec, {}),
+        )
+        return held
+
     def _adopt(
         self, spec: str, variable: str, option: str, *, hard: bool
     ) -> dict[str, Any]:
@@ -449,17 +491,21 @@ class Constraining:
         return ordered, settled
 
     def foreseeing(
-        self, spec: str, assumptions: dict[str, str]
+        self,
+        spec: str,
+        assumptions: dict[str, str],
+        inclinations: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """What the specification would settle under these assumptions instead
-        of its own.
+        """What the specification would settle under these assumptions and
+        inclinations instead of its own.
 
         A read, not an action — `docs/syncs/propagation.md`, "What each
         answer would cost is a read".  Nothing is recorded: the question
         *what if this were given up* is asked of the solver and answered,
         and the specification's own assumptions are untouched.  `buildable`
         is false when the assumptions cannot hold together, in which case
-        nothing is possible and nothing settled.
+        nothing is possible and nothing settled.  Inclinations are honoured
+        where they can be, as in the recompute.
         """
         solver = self._built()
         rules = list(self._rule_lit.values())
@@ -471,7 +517,8 @@ class Constraining:
         buildable = solver.check(*rules, *literals) == z3.sat
         if not buildable:
             return {"spec": spec, "buildable": False, "possible": {}, "settled": {}}
-        possible, settled = self._survey(solver, rules, literals)
+        held, _ = self._honoured(solver, rules, literals, inclinations or {})
+        possible, settled = self._survey(solver, rules, held)
         return {"spec": spec, "buildable": True, "possible": possible, "settled": settled}
 
     def _built_sel(self) -> dict[tuple[str, str], z3.BoolRef]:
@@ -514,15 +561,20 @@ class Constraining:
         """
         solver = self._built()
         rules = list(self._rule_lit.values())
-        assumptions = self._assumption_literals(spec)
+        # The assumptions, and every inclination that can hold with them:
+        # honoured where it can be, dropped where it cannot, earlier first.
+        assumptions, honoured = self._honoured(
+            solver, rules, self._assumption_literals(spec), self._inclined.get(spec, {})
+        )
 
         ordered, settled = self._survey(solver, rules, assumptions)
         asked = self._assumed.get(spec, {})
         owing: dict[str, list[str]] = {}
         following: dict[str, list[str]] = {}
         for variable, option in settled.items():
-            if variable in asked:
-                # Settled because you said so, not because a rule said so.
+            if variable in asked or variable in honoured:
+                # Settled because you said so, firmly or as a preference the
+                # rules could honour, not because a rule said so.
                 continue
             literal = self._sel[(variable, option)]
             if solver.check(*rules, *assumptions, z3.Not(literal)) == z3.unsat:

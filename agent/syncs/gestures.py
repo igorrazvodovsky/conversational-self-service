@@ -58,8 +58,17 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
     if any(variable not in settled for variable in constraining["range"]):
         return None
     assumed = constraining["assumed"].get(spec, {})
+    inclined = constraining["inclined"].get(spec, {})
+    refused = constraining["refused"].get(spec, {})
     asserted = asserting["asserted"].get(spec, {})
-    if any(assumed.get(v) != o for v, o in asserted.items()):
+    # `?v -> ?o is met in ?s`, as Propagation defines it: assumed, or inclined
+    # with nothing refused.  A value held softly counts as met whether
+    # honoured or yielded: a preference that gave way is not a requirement
+    # the offer fails.
+    if any(
+        assumed.get(v) != o and not (inclined.get(v) == o and not refused.get(v))
+        for v, o in asserted.items()
+    ):
         return None
     total = states["Pricing"].total(settled.values(), BASIS)
     if not total["complete"]:

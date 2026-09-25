@@ -220,14 +220,26 @@ function clausesOf(editor: Editor) {
 
 function OneAnswer({ answer }: { answer: Answer }) {
   const unmet = answer.standing === "unmet";
+  const yielded = answer.standing === "yielded";
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 text-xs">
       <span className="uppercase tracking-wide text-muted-foreground">
         {answer.heading ?? "no variable offers this"}
       </span>
-      <span className={cn("text-sm", unmet && "text-destructive")}>{answer.label}</span>
+      <span
+        className={cn(
+          "text-sm",
+          unmet && "text-destructive",
+          yielded && "text-muted-foreground line-through",
+        )}
+      >
+        {answer.label}
+      </span>
       {unmet ? (
         <span className="text-destructive">not buildable alongside the rest</span>
+      ) : null}
+      {yielded ? (
+        <span className="text-muted-foreground">negotiable, and gave way</span>
       ) : null}
       {answer.replaced ? (
         <span className="text-muted-foreground">

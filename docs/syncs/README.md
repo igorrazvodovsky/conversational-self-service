@@ -60,8 +60,11 @@ it.
 | `ADiscardedSpecificationLeavesTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationsQuestionsAreWithdrawn` | [Propagation](propagation.md) |
 | `AssertionsReachTheSolver` | [Propagation](propagation.md) |
-| `PreferencesReachTheSolverSoftly` — registered, reached by nothing | [Propagation](propagation.md) |
+| `ANegotiableAnswerReachesTheSolverSoftly` | [Propagation](propagation.md) |
 | `AWithdrawalReachesTheSolver` | [Propagation](propagation.md) |
+| `ASettledClauseSoftensItsAnswer` | [Propagation](propagation.md) |
+| `ASettledClauseHardensItsAnswer` | [Propagation](propagation.md) |
+| `ARetractedChoiceHardensItsValue` | [Propagation](propagation.md) |
 | `AConflictIsPutToThePerson` | [Propagation](propagation.md) |
 | `UnmetAssertionsAreTriedAgain` | [Propagation](propagation.md) |
 | `TheConcededAssertionIsWithdrawn` | [Propagation](propagation.md) |
@@ -126,11 +129,13 @@ the proposal addressed. The model may ask for one and may not accept it, which i
 ## Assertions reach the solver
 
 What a party asserts lives in [Asserting](../concepts/asserting.md); what
-follows from it lives in [Constraining](../concepts/constraining.md). Two
-rules carry the first into the second, and they are the only path between them.
-A third is registered and reached by nothing, which
-[Propagation](propagation.md#the-rule-that-is-registered-and-reached-by-nothing)
-argues for rather than hides.
+follows from it lives in [Constraining](../concepts/constraining.md). Three
+rules carry the first into the second, and they are the only path between
+them: a value reaches the solver hard, or softly when every clause it answers
+is negotiable, and a withdrawal releases it. Which of the first two fires is
+read from the person's own tag on the clause, and three more rules move a
+value between the two strengths when the tag changes or the clause goes. See
+[Propagation](propagation.md#assertions-reach-the-solver).
 
 ## A conflict is put to the person
 

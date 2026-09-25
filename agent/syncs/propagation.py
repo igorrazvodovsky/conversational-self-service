@@ -1,13 +1,15 @@
 """Propagation — `docs/syncs/propagation.md`.
 
-Two rules carry what a party asserted into the solver, and two carry a
-conflict back out to the person.  Nothing carries anything from Constraining
-into Asserting except by way of somebody answering a question.
+Three rules carry what a party asserted into the solver — hard, softly, or
+released — and two carry a conflict back out to the person.  Nothing carries
+anything from Constraining into Asserting except by way of somebody answering
+a question.
 
-`PreferencesReachTheSolverSoftly` is the third, and it is dead: `Asserting` has
-no `prefer`, so no completion ever matches its `when`.  It and
-`Constraining/incline` are kept against the case's step 1 answering whether the
-real solver takes a soft constraint at all.  See `docs/syncs/propagation.md`.
+Whether a value reaches the solver hard or softly is read from the clause it
+answers: `Specifying.negotiability`, by way of `Binding.answers`.  `Asserting`
+records nothing about strength, and no tool of the model reaches the tag.
+Three more rules move a value between the two strengths when the tag changes
+or the clause is struck.
 """
 
 from __future__ import annotations
@@ -59,8 +61,55 @@ def _a_discarded_specification_unframes_the_canvas(
     return [Invocation("Framing", "unframe", {"lens": WORKSPACE})]
 
 
-def _assertions_reach_the_solver(c: Completion, _: States) -> list[Invocation]:
-    if c.failed:
+def _held_softly(states: States, spec: str, option: Any) -> bool:
+    """`?o is held softly in ?s` — `docs/syncs/propagation.md`.
+
+    True when at least one choice of the specification's selection holds the
+    option, and every clause those choices answer is negotiable.  A value that
+    answers no clause is hard; one that answers a fixed clause beside a
+    negotiable one is hard, because the firmer requirement governs; and `open`
+    is not a strength, so an answer to an open clause is hard too.
+    """
+    binding = states["Binding"].state()
+    negotiability = states["Specifying"].state()["negotiability"]
+    selection = next((sel for sel, of in binding["for"].items() if of == spec), None)
+    if selection is None:
+        return False
+    answered = [
+        binding["answers"][choice]
+        for choice in binding["choices"].get(selection, [])
+        if binding["value"][choice] == option
+    ]
+    return bool(answered) and all(
+        negotiability.get(clause) == "negotiable" for clause in answered
+    )
+
+
+def _met(constraining: dict[str, Any], spec: str, variable: str, option: Any) -> bool:
+    """`?v -> ?o is met in ?s` — `docs/syncs/propagation.md`.
+
+    Assumed, or inclined with nothing refused against the variable.  The one
+    way a refusal stands against an inclined value is a hardening that
+    failed, and until it clears the value is unmet.
+    """
+    if constraining["assumed"].get(spec, {}).get(variable) == option:
+        return True
+    return constraining["inclined"].get(spec, {}).get(variable) == option and not (
+        constraining["refused"].get(spec, {}).get(variable)
+    )
+
+
+def _variable_offering(states: States, option: Any) -> str | None:
+    """`Cataloguing: { ?v offers: ?o }`."""
+    for variable, offered in states["Cataloguing"].state()["offers"].items():
+        if option in offered:
+            return variable
+    return None
+
+
+def _assertions_reach_the_solver(c: Completion, states: States) -> list[Invocation]:
+    """The `where`: the value is not held softly.  Otherwise the rule below."""
+    if c.failed or _held_softly(states, c.output["spec"], c.output["option"]):
         return []
     return [
         Invocation(
@@ -75,9 +124,13 @@ def _assertions_reach_the_solver(c: Completion, _: States) -> list[Invocation]:
     ]
 
 
-def _preferences_reach_the_solver_softly(c: Completion, _: States) -> list[Invocation]:
-    """Dead: no action completes as `Asserting/prefer`.  Kept, not reached."""
-    if c.failed:
+def _a_negotiable_answer_reaches_the_solver_softly(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """One completion, two rules with complementary `where` clauses, and no
+    field on the assertion says which.  The strength is the person's tag on
+    the clause, read through `Binding.answers`."""
+    if c.failed or not _held_softly(states, c.output["spec"], c.output["option"]):
         return []
     return [
         Invocation(
@@ -88,6 +141,100 @@ def _preferences_reach_the_solver_softly(c: Completion, _: States) -> list[Invoc
                 "variable": c.output["variable"],
                 "option": c.output["option"],
             },
+        )
+    ]
+
+
+def _answers_of(states: States, spec: str, clause: str) -> list[tuple[str, Any]]:
+    """`Binding: { ?sel for: ?s ; ?ch answers: ?c ; ?ch value: ?o }` with
+    `Cataloguing: { ?v offers: ?o }` and `Asserting: { ?s asserted: ?v -> ?o }`:
+    the (variable, option) pairs currently answering the clause and asserted."""
+    binding = states["Binding"].state()
+    asserted = states["Asserting"].state()["asserted"].get(spec, {})
+    selection = next((sel for sel, of in binding["for"].items() if of == spec), None)
+    if selection is None:
+        return []
+    pairs = []
+    for choice in binding["choices"].get(selection, []):
+        if binding["answers"][choice] != clause:
+            continue
+        option = binding["value"][choice]
+        variable = _variable_offering(states, option)
+        if variable is not None and asserted.get(variable) == option:
+            pairs.append((variable, option))
+    return pairs
+
+
+def _a_settled_clause_softens_its_answer(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """A clause settled to negotiable after it was answered moves its value
+    from assumed to inclined.  Cannot fail: an unmet value made negotiable
+    becomes an inclination, and is honoured or yields in the recompute."""
+    if c.failed:
+        return []
+    spec = c.output["spec"]
+    constraining = states["Constraining"].state()
+    inclined = constraining["inclined"].get(spec, {})
+    refused = constraining["refused"].get(spec, {})
+    # Unless already inclined with nothing refused: a value the solver
+    # inclines and has since refused firmly is inclined again, so that the
+    # refusal clears.
+    return [
+        Invocation("Constraining", "incline", {"spec": spec, "variable": v, "option": o})
+        for v, o in _answers_of(states, spec, c.output["clause"])
+        if _held_softly(states, spec, o)
+        and not (inclined.get(v) == o and not refused.get(v))
+    ]
+
+
+def _a_settled_clause_hardens_its_answer(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """A clause settled to fixed, or open, after it was answered moves its
+    value from inclined to assumed.  Can fail, and then
+    `AConflictIsPutToThePerson` fires as for any assertion: making a
+    requirement firm is how a person finds out what it costs."""
+    if c.failed:
+        return []
+    spec = c.output["spec"]
+    inclined = states["Constraining"].state()["inclined"].get(spec, {})
+    return [
+        Invocation("Constraining", "assume", {"spec": spec, "variable": v, "option": o})
+        for v, o in _answers_of(states, spec, c.output["clause"])
+        if not _held_softly(states, spec, o) and inclined.get(v) == o
+    ]
+
+
+def _a_retracted_choice_hardens_its_value(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """A value whose clause was struck is an ordinary assertion again.
+
+    Matches every retraction and declines on two of the three: a withdrawn
+    value is no longer asserted, and an overwritten value's variable now
+    asserts something else.  Only the struck clause leaves an inclined value
+    asserted with nothing negotiable behind it.
+    """
+    if c.failed:
+        return []
+    binding = states["Binding"].state()
+    spec = binding["for"].get(c.output["selection"])
+    option = c.output["value"]
+    variable = _variable_offering(states, option)
+    if spec is None or variable is None:
+        return []
+    asserted = states["Asserting"].state()["asserted"].get(spec, {})
+    inclined = states["Constraining"].state()["inclined"].get(spec, {})
+    if asserted.get(variable) != option or inclined.get(variable) != option:
+        return []
+    if _held_softly(states, spec, option):
+        return []
+    return [
+        Invocation(
+            "Constraining",
+            "assume",
+            {"spec": spec, "variable": variable, "option": option},
         )
     ]
 
@@ -164,7 +311,10 @@ def _unmet_assertions_are_tried_again(
         return []
     spec = c.output["spec"]
     asserted = states["Asserting"].state()["asserted"].get(spec, {})
-    assumed = states["Constraining"].state()["assumed"].get(spec, {})
+    constraining = states["Constraining"].state()
+    # An inclined value with nothing refused against it is met, honoured or
+    # yielded, so it is not tried again: the recompute after the release
+    # reconsiders it.  One a hardening refused is tried again hard.
     return [
         Invocation(
             "Constraining",
@@ -172,7 +322,7 @@ def _unmet_assertions_are_tried_again(
             {"spec": spec, "variable": variable, "option": option},
         )
         for variable, option in asserted.items()
-        if assumed.get(variable) != option
+        if not _met(constraining, spec, variable, option)
     ]
 
 
@@ -236,12 +386,14 @@ def _a_resolved_conflict_withdraws_its_question(
     """A question about a conflict lasts as long as the conflict.
 
     The `where`: a conflict request for this specification is pending, and
-    every assertion of the specification is assumed.  That is the condition
-    the question was asked about, negated — however it came to hold: the
-    person answered in words and the model withdrew at their word, or they
-    withdrew the refused assertion themselves.  Matched on `assume` as well
-    as `withdraw` because giving up a conceding assertion only resolves the
-    conflict once the refused one is tried again and taken.
+    every assertion of the specification is assumed or inclined.  That is the
+    condition the question was asked about, negated — however it came to
+    hold: the person answered in words and the model withdrew at their word,
+    they withdrew the refused assertion themselves, or they settled its clause
+    to negotiable.  Matched on `assume` and `incline` as well as `withdraw`
+    because giving up a conceding assertion only resolves the conflict once
+    the refused one is tried again and taken, and softening the refused one
+    resolves it the moment it is inclined.
     """
     if c.failed:
         return []
@@ -254,8 +406,11 @@ def _a_resolved_conflict_withdraws_its_question(
     if key in deciding["chosen"] or key in deciding["declined"]:
         return []
     asserted = states["Asserting"].state()["asserted"].get(spec, {})
-    assumed = states["Constraining"].state()["assumed"].get(spec, {})
-    if any(assumed.get(variable) != option for variable, option in asserted.items()):
+    constraining = states["Constraining"].state()
+    if any(
+        not _met(constraining, spec, variable, option)
+        for variable, option in asserted.items()
+    ):
         return []
     return [Invocation("Deciding", "withdraw", {"request": request})]
 
@@ -301,16 +456,30 @@ rules = [
         ("Asserting", "assert"),
         _assertions_reach_the_solver,
     ),
-    # Registered, and reached by nothing: `Asserting` has no `prefer`.
     Sync(
-        "PreferencesReachTheSolverSoftly",
-        ("Asserting", "prefer"),
-        _preferences_reach_the_solver_softly,
+        "ANegotiableAnswerReachesTheSolverSoftly",
+        ("Asserting", "assert"),
+        _a_negotiable_answer_reaches_the_solver_softly,
     ),
     Sync(
         "AWithdrawalReachesTheSolver",
         ("Asserting", "withdraw"),
         _a_withdrawal_reaches_the_solver,
+    ),
+    Sync(
+        "ASettledClauseSoftensItsAnswer",
+        ("Specifying", "settle"),
+        _a_settled_clause_softens_its_answer,
+    ),
+    Sync(
+        "ASettledClauseHardensItsAnswer",
+        ("Specifying", "settle"),
+        _a_settled_clause_hardens_its_answer,
+    ),
+    Sync(
+        "ARetractedChoiceHardensItsValue",
+        ("Binding", "retract"),
+        _a_retracted_choice_hardens_its_value,
     ),
     Sync(
         "UnmetAssertionsAreTriedAgain",
@@ -330,6 +499,11 @@ rules = [
     Sync(
         "AResolvedConflictWithdrawsItsQuestion",
         ("Constraining", "assume"),
+        _a_resolved_conflict_withdraws_its_question,
+    ),
+    Sync(
+        "AResolvedConflictWithdrawsItsQuestion",
+        ("Constraining", "incline"),
         _a_resolved_conflict_withdraws_its_question,
     ),
     Sync(

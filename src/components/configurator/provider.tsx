@@ -30,7 +30,9 @@ import {
   type ReactNode,
 } from "react";
 
-export type Standing = "asked" | "unmet" | "follows" | "open";
+/** `yielded`: asked for softly, and the rules could not honour it. Still
+ * asserted, still answering its clause; the solver's answer is what moved. */
+export type Standing = "asked" | "yielded" | "unmet" | "follows" | "open";
 /** The surfaces `Moding` offers: the specification and the offer. The chat
  * is not one — where it sits is the person's view state
  * (`example-layout/chat-surface.tsx`), which no rule reaches. */
@@ -67,6 +69,8 @@ export interface Variable {
   family: string;
   standing: Standing;
   asked: string | null;
+  /** The value reached the solver softly: every clause it answers is negotiable. */
+  softly: boolean;
   how: string | null;
   /** The clauses the asserted value answers, from `Binding`. Empty is a finding. */
   answers: { clause: string; text: string }[];
@@ -103,7 +107,7 @@ export interface Answer {
   decidedBy: string;
   reason: string | null;
   replaced: string | null;
-  standing: "asked" | "unmet" | "displaced" | "unrealisable";
+  standing: "asked" | "yielded" | "unmet" | "displaced" | "unrealisable";
 }
 
 /**

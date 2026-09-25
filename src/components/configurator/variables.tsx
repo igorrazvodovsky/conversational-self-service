@@ -165,14 +165,22 @@ export function AskedCard({ variable }: { variable: Variable }) {
   const { gesture, busy, label, view } = useConfigurator();
   const shown = useShown();
   const unmet = variable.standing === "unmet";
+  const yielded = variable.standing === "yielded";
   const framedOnThis = view?.frame?.variable === variable.name;
   return (
     <Card size="sm" className={cn(unmet && "ring-destructive/60")}>
       <CardHeader>
         <CardDescription className="uppercase tracking-wide">
           {variable.heading}
+          {/* Held softly: the value answers only negotiable clauses, and
+              reached the rules as a preference rather than a requirement. */}
+          {variable.softly ? (
+            <span className="ml-2 normal-case tracking-normal">negotiable</span>
+          ) : null}
         </CardDescription>
-        <CardTitle>{label(variable.asked)}</CardTitle>
+        <CardTitle className={cn(yielded && "text-muted-foreground line-through")}>
+          {label(variable.asked)}
+        </CardTitle>
         <CardAction>
           <Button
             variant="ghost"
@@ -218,7 +226,7 @@ export function AskedCard({ variable }: { variable: Variable }) {
             </CollapsibleTrigger>
             {/* The requirement slice: narrow the canvas to what this
                 assertion forced, ruled out or refused — `Framing`. */}
-            {!framedOnThis && !unmet ? (
+            {!framedOnThis && !unmet && !yielded ? (
               <Button
                 variant="ghost"
                 size="xs"
@@ -248,6 +256,35 @@ export function AskedCard({ variable }: { variable: Variable }) {
                 than only carried in the question — so the account survives the
                 banner being dismissed. */}
             <Rules rules={variable.refused} tone="refused" />
+          </div>
+        ) : null}
+        {yielded ? (
+          <div className="space-y-1">
+            {/* A preference the rules could not honour. Not red: by the
+                person's own account this was the thing to give up, so no
+                question is asked and nothing is refused. `Constraining`
+                records nothing about it; the read is `settled` beside
+                `inclined`. */}
+            <p className="text-xs text-muted-foreground">
+              Negotiable, and gave way
+              {variable.value ? (
+                <>
+                  {" "}
+                  to <span className="text-foreground">{label(variable.value)}</span>
+                </>
+              ) : null}
+              .
+            </p>
+            {shown("rules") ? (
+              <>
+                <Rules rules={variable.owing} />
+                {variable.following.length ? (
+                  <p className="text-xs text-muted-foreground">
+                    from {variable.following.map((f) => f.heading).join(", ")}
+                  </p>
+                ) : null}
+              </>
+            ) : null}
           </div>
         ) : null}
       </CardContent>

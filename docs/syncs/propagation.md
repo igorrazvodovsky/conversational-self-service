@@ -9,7 +9,14 @@ See [the index](README.md).
 sync AssertionsReachTheSolver
 when  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ]
           => [ spec: ?s ; variable: ?v ; option: ?o ] }
+where { ?o is not held softly in ?s }
 then  { Constraining/assume: [ spec: ?s ; variable: ?v ; option: ?o ] }
+
+sync ANegotiableAnswerReachesTheSolverSoftly
+when  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ]
+          => [ spec: ?s ; variable: ?v ; option: ?o ] }
+where { ?o is held softly in ?s }
+then  { Constraining/incline: [ spec: ?s ; variable: ?v ; option: ?o ] }
 
 sync AWithdrawalReachesTheSolver
 when  { Asserting/withdraw: [ spec: ?s ; variable: ?v ]
@@ -17,39 +24,174 @@ when  { Asserting/withdraw: [ spec: ?s ; variable: ?v ]
 then  { Constraining/release: [ spec: ?s ; variable: ?v ] }
 ```
 
-Two rules, one direction. Nothing carries anything from
+where *held softly* is one calculation, shared by the rules on this page:
+
+```
+?o is held softly in ?s
+  iff  Binding: { ?sel for: ?s ; ?ch in choices of ?sel ; ?ch value: ?o }
+         binds at least one ?ch,
+  and  for every such ?ch, with ?ch answers: ?c,
+         Specifying: { ?c negotiability: "negotiable" }
+```
+
+and *met* is the other, read by the rules and the canvas alike:
+
+```
+?v -> ?o is met in ?s
+  iff  Constraining: { ?s assumed: ?v -> ?o }
+  or   Constraining: { ?s inclined: ?v -> ?o } and nothing is refused against ?v
+```
+
+Three rules, one direction. Nothing carries anything from
 [Constraining](../concepts/constraining.md) back into
 [Asserting](../concepts/asserting.md) except by way of a person answering a
 question, and that asymmetry is the design.
 
-## The rule that is registered and reached by nothing
+### Which of the first two fires is a fact of the state
+
+One completion, two rules with complementary `where` clauses, and no field on
+the assertion says which. Strength is a fact of a *clause*, which is
+[Specifying](../concepts/specifying.md)'s `negotiability`, and not of an
+assertion: `Asserting` records the value and nothing about how firmly it is
+meant, so the rule has to look up what the value is *for*. That lookup is
+[Binding](../concepts/binding.md)'s `answers`, which the person wrote by
+picking an option while answering a clause, so the tag that routes a value to
+the solver is the person's own. Nothing infers a strength, and the model
+cannot set one: no tool reaches `Specifying/settle`
+([Conduct](conduct.md)).
+
+The calculation is strict on purpose. A value that answers no clause is an
+ordinary assertion and reaches the solver hard, as the model's `assert_value`
+and a bare pick on the canvas always have. A value that answers two clauses,
+one fixed and one negotiable, is hard, because the firmer requirement governs.
+And `open` is not a strength: a clause the person has deliberately left open
+says nothing about how firmly its answer is meant, so an answer to it is hard.
+The solver knows two strengths, and the calculation maps the three
+negotiabilities onto them by asking one question, *is every reason for this
+value a preference*.
+
+### What the solver does with a soft value
+
+`Constraining/incline` records the value as inclined, not assumed: honoured
+where it can be, and dropped where it cannot, with earlier inclinations
+honoured before later ones. An honoured inclination narrows the canvas exactly
+as an assumption does, and what follows from it is shown as following from
+it. The difference appears when something hard contradicts it. `assume` is
+checked against the rules and the assumptions alone, so it succeeds; the
+inclination gives way in the recompute; and no question is asked, because a
+preference is by the person's own account the thing to give up. The canvas
+reads the outcome from `Constraining.settled` beside `Constraining.inclined`:
+an inclined value the specification settled on is *asked*, and one it did not
+is *yielded*. A yielded value stays asserted, stays on the canvas, and stays
+bound to its clause, because nothing about the person's requirement changed.
+Only the solver's answer did.
+
+`incline` never fails, so an inclination is met the moment it is recorded,
+whether it is then honoured or yields. The one way a refusal comes to stand
+against an inclined value is a hardening that failed, below, and *met* is
+defined so that such a value counts as unmet until the refusal is cleared:
+`UnmetAssertionsAreTriedAgain` tries it again hard when the obstacle goes,
+and `AResolvedConflictWithdrawsItsQuestion` keeps its question until then.
+
+### A clause's strength can change after it is answered
 
 ```
-sync PreferencesReachTheSolverSoftly
-when  { Asserting/prefer: [ spec: ?s ; variable: ?v ; option: ?o ]
-          => [ spec: ?s ; variable: ?v ; option: ?o ] }
+sync ASettledClauseSoftensItsAnswer
+when  { Specifying/settle: [] => [ clause: ?c ; spec: ?s ] }
+where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ;
+                   ?ch answers: ?c ; ?ch value: ?o }
+        Cataloguing: { ?v offers: ?o }
+        Asserting: { ?s asserted: ?v -> ?o }
+        ?o is held softly in ?s
+        unless Constraining: { ?s inclined: ?v -> ?o }
+          with nothing refused against ?v }
 then  { Constraining/incline: [ spec: ?s ; variable: ?v ; option: ?o ] }
+
+sync ASettledClauseHardensItsAnswer
+when  { Specifying/settle: [] => [ clause: ?c ; spec: ?s ] }
+where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ;
+                   ?ch answers: ?c ; ?ch value: ?o }
+        Cataloguing: { ?v offers: ?o }
+        Asserting: { ?s asserted: ?v -> ?o }
+        ?o is not held softly in ?s
+        Constraining: { ?s inclined: ?v -> ?o } }
+then  { Constraining/assume: [ spec: ?s ; variable: ?v ; option: ?o ] }
+
+sync ARetractedChoiceHardensItsValue
+when  { Binding/retract: [] => [ selection: ?sel ; value: ?o ] }
+where { Binding: { ?sel for: ?s }
+        Cataloguing: { ?v offers: ?o }
+        Asserting: { ?s asserted: ?v -> ?o }
+        Constraining: { ?s inclined: ?v -> ?o }
+        ?o is not held softly in ?s }
+then  { Constraining/assume: [ spec: ?s ; variable: ?v ; option: ?o ] }
 ```
 
-`Asserting` has no `prefer`. Strength is a fact of a *clause* —
-[Specifying](../concepts/specifying.md)'s `negotiability` — and not of an
-assertion, so no completion can ever match this rule's `when`, and
-`Constraining/incline` is an action nothing invokes.
+A person can settle a clause after answering it, and the value has to follow.
+`assume` and `incline` each replace whatever the other recorded for the
+variable, so moving a value between the two relations is one invocation
+either way, and the last condition in each `where` is what keeps the rules
+from re-recording a value that is already where it belongs.
 
-Both are kept anyway, and deliberately. Whether the real configurator's solver
-accepts a soft constraint at all is one of the **[unknown]**s in step 1 of the
-case's `Prototype plan`, and it is not this repository's to answer: the z3
-stand-in here obviously supports one, which is evidence about z3 and not about
-Tacton. Deleting the pair would throw away a working answer to a question that
-has not been asked yet; giving `Asserting` a `prefer` to reach it would put
-back an action its specification does not have. So it stays as a dead rule
-with the reason written down, which is the honest third option and is why this
-section exists rather than a deletion.
+Hardening can fail. A value that was honoured softly, or that had yielded,
+may not hold together with the rest once it is meant firmly, and then
+`assume`'s failing case fires `AConflictIsPutToThePerson` as for any other
+assertion. The solver leaves the value inclined as it was and records the
+refusal against it, so the value is unmet until the refusal clears, by the
+obstacle going or by the clause being softened again. Making a requirement
+fixed is how a person finds out what it costs, which is the right moment to
+ask. Softening cannot fail: an unmet value made negotiable becomes an
+inclination, its refusal is cleared, and it is honoured or yields in the
+recompute, so settling a clause to *negotiable* is a second way of answering
+a conflict, in the document rather than on the canvas, and the question goes
+with it. That is why the softening rule's last condition reads *with nothing
+refused*: a value the solver already inclines, and has since refused firmly,
+is inclined again so that the refusal clears.
 
-Read it as a fact about the code: `agent/syncs/propagation.py` registers a rule
-whose `when` names an action of a concept that does not have it. The engine
-matches `(concept, action)` pairs and validates neither, so this costs a tuple
-comparison per dispatch and nothing else.
+The third rule is for a struck clause. `AStruckClauseReleasesItsChoices`
+([Binding](binding.md)) retracts the choice and leaves the value asserted,
+and a value with no clause behind it is an ordinary assertion, so it hardens.
+The same rule matches the other two retractions and declines on both: a
+withdrawn value is no longer asserted, and an overwritten value's variable
+now asserts something else.
+
+### Why the strength is the person's tag and not a weight
+
+The routing key is categorical and the person's own, and that is a finding
+from the literature rather than a convenience. U-Define (Lee et al., 2026;
+`Resources/Papers/notes/2605.02765v1.md`) reports that people readily say
+what *must* hold versus what *should*, and do poorly at mapping those onto
+numbers; it sends hard constraints to a formal checker and soft ones
+elsewhere, and reads the formal rule back in prose for confirmation. The
+generative UI project's `concepts/hard-soft-constraint-typology.md` states the
+tag as "categorical and user-declared, not numeric weights", and its
+`concepts/constraint-type-routed-verification.md` that "the user's authoring
+tag *is* the routing key". Draco (Moritz et al., 2018;
+`Resources/Papers/notes/Formalizing Visualization Design Knowledge as
+Constraints - Actionable and Extensible Models in Draco.md`) is the solver
+side of the same shape: hard constraints plus weighted soft ones, and a solver
+returning "the optimal completion of a partial specification". The reading
+thread `Resources/Papers/threads/Shopping agents - preferences, negotiation and
+authority.md` draws the line this application uses: a requirement filters, a
+preference ranks within what is eligible, and an inference stays a proposal.
+*Fixed* and *negotiable* are the first two; a proposed completion
+([Conduct](conduct.md)) is the third.
+
+The one weight in the code is the `1` that `Constraining/complete` gives every
+inclination, and it is not a strength the person chose. It is what makes a
+completion honour preferences before cost.
+
+### What this does not answer
+
+Whether the real configurator's solver accepts a soft constraint at all is one
+of the **[unknown]**s in step 1 of the case's `Prototype plan`, and it is not
+this repository's to answer. The z3 stand-in supports one, which is evidence
+about z3 and not about Tacton. What the rules above establish is narrower and
+is still worth having: that negotiability can reach validity by a rule that
+reads the person's tag, without an action added to `Asserting` and without a
+weight anywhere the person can see. If the real solver has no soft constraint,
+the consequence the plan records stands, and the two rules above that invoke
+`incline` are the ones that would have nothing to invoke.
 
 ## The assertion is recorded before it is known to be satisfiable
 
@@ -185,11 +327,12 @@ the one handed back.
 ```
 sync AResolvedConflictWithdrawsItsQuestion
 when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ]
+        Constraining/incline: [ spec: ?s ] => [ spec: ?s ]
         Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
 where { ?r is [ spec: ?s ; about: "conflict" ]
         Deciding: { ?r offered: _ }, and ?r is neither chosen nor declined
         for every ?v such that Asserting: { ?s asserted: ?v -> ?o },
-          Constraining: { ?s assumed: ?v -> ?o } }
+          ?v -> ?o is met in ?s }
 then  { Deciding/withdraw: [ request: ?r ] }
 ```
 
@@ -197,18 +340,21 @@ then  { Deciding/withdraw: [ request: ?r ] }
 the only one. The person may answer the question in the chat instead of on
 the canvas — *keep the hospital* — and the model, permitted to withdraw,
 withdraws the 630 kg at their word. Or the person withdraws the refused
-assertion themselves, or asserts something else for that variable. None of
+assertion themselves, or asserts something else for that variable, or settles
+the clause the refused value answers to *negotiable*. None of
 those touch `Deciding`, and without this rule the canvas would go on asking a
 question that has been answered ([The moves](../moves.md#the-conflict-as-the-worked-case)).
 
 The `where` says what *answered* means: every assertion of the specification
-is assumed. That is the condition the question was asked about, negated, and
-it is why the rule matches `assume` as well as `withdraw`. Withdrawing the
+is assumed or inclined. That is the condition the question was asked about,
+negated, and it is why the rule matches `assume` and `incline` as well as
+`withdraw`. Withdrawing the
 assertion that was refused satisfies it at once, since that one was never
 assumed. Withdrawing one that was conceding does not — the refused assertion
 is still unmet — until `UnmetAssertionsAreTriedAgain` assumes it, and it is
-that `assume`'s completion the rule then matches. Either way the question goes
-when the conflict does, and not before.
+that `assume`'s completion the rule then matches. Softening the refused
+assertion inclines it, and it is that `incline`'s completion the rule
+matches. Either way the question goes when the conflict does, and not before.
 
 It is narrower than [`AChangedSpecificationWithdrawsItsProposal`](conduct.md),
 which withdraws a completion on any change. A completion is computed against a
@@ -247,9 +393,14 @@ possible to get wrong quietly, which is why it is written down.
 sync UnmetAssertionsAreTriedAgain
 when  { Constraining/release: [ spec: ?s ] => [ spec: ?s ] }
 where { Asserting: { ?s asserted: ?v -> ?o }
-        and Constraining: { ?s has no assumption for ?v } }
+        and ?v -> ?o is not met in ?s }
 then  { Constraining/assume: [ spec: ?s ; variable: ?v ; option: ?o ] }
 ```
+
+An inclined value with nothing refused against it is met, whether honoured or
+yielded, so it is not tried again; the recompute that follows the `release`
+is what reconsiders it. One that a hardening refused is tried again hard,
+which is what the hardening was asking for.
 
 This is what makes *the assertion stays on record* mean something rather than
 merely look tidy. Give up the hospital and the 630 kg car you asked for

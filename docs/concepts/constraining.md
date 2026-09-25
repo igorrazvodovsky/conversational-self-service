@@ -69,9 +69,13 @@ actions
 
   incline [ spec: Spec ; variable: Variable ; option: Option ]
     => [ spec: Spec ; possible: Variable -> set Option ; settled: Variable -> Option ]
-    record the option as inclined for the variable —
-    to be honoured where it can be and dropped where it cannot —
-    then recompute as for assume
+    record the option as inclined for the variable,
+    replacing any option previously assumed or inclined for it,
+    and clear any refusal recorded against the variable
+    then recompute as for assume, counting among the assumptions
+    every inclination that can hold together with the rules, the
+    assumptions and the inclinations honoured before it, earlier first;
+    an inclination that cannot is dropped from the recompute and stays recorded
 
   release [ spec: Spec ; variable: Variable ]
     => [ spec: Spec ; possible: Variable -> set Option ; settled: Variable -> Option ]
