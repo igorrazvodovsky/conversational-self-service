@@ -47,7 +47,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 
 | Concept | Purpose |
 |---|---|
-| [Copiloting](copiloting.md) | to carry stimuli between a person, an application surface and a model |
+| [Copiloting](copiloting.md) | to carry what happens outside the application into it, whether a person acts, a model calls a tool or the application starts, so that the rules can act on it |
 
 Per WYSIWID §6.7, every framework mechanism belongs here rather than becoming a
 concept of its own. It carries no state, no action signatures and no

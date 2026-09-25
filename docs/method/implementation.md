@@ -44,6 +44,8 @@ Developers only ever touch `concepts/` and `syncs/`. A concept can be dropped in
 
 MSM §5.2.4 records that this boundary is load-bearing when LLMs are involved: agents "sometimes decided to modify engine code as a shortcut to implementing behavior that belonged within a concept or synchronization," and "no example of a modification to engine code was found to be legitimate."
 
+The finding is about behaviour, and the rule here is scoped to it: `agent/engine/` is never edited to get a behaviour. In MSM the engine is provided by the framework's authors. Here there is no one else to provide it, so a change to its own contract, such as a new kind of stimulus for the bootstrap concept, is made here, on purpose and with the reason stated. `Copiloting/boot` is one.
+
 ## What "ontology" does not mean here
 
 Worth stating plainly, because the word invites the wrong reading. The [ontology](README.md) is the four kinds of phenomena. It is not a knowledge graph, and there is no ontology artifact to build alongside the code — no schema file, no triple store of domain entities. It lives in the code as naming discipline and module shape.
@@ -104,7 +106,7 @@ The layout follows §5.2.1, on the agent side, in Python:
 | `src/concepts/` — one class per concept | `agent/concepts/` — one module per concept, each a singleton class whose actions take and return dicts |
 | `src/syncs/` — independent blocks | `agent/syncs/` — `seeding.py`, `gestures.py`, `propagation.py`, `conduct.py`, each a list of `Sync` values |
 | `src/engine/` — provided, untouched | `agent/engine/` — the log, flows, provenance, and the dispatcher |
-| `src/main.ts` — discovers concepts, wires syncs | `agent/wiring.py`, which also reads the catalogue in |
+| `src/main.ts` — discovers concepts, wires syncs | `agent/wiring.py`, which also reads the catalogue in and hands it to the bootstrap concept as `Copiloting/boot` |
 
 _The engine has no DSL._ It provides the log, the flow token, the provenance edge and the once-only guarantee; a rule is a function, not a parsed string. The `when`/`where`/`then` notation lives in [`../syncs/`](../syncs/README.md). This is the only place where a reader has to hold two representations of one thing in their head, and it is the cost of not building a matcher.
 
@@ -123,8 +125,9 @@ though somebody had performed it.
 
 ### The log
 
-Booting writes about 1,300 records — the catalogue's arrival, as accountable as
-a click — and `engine.settled_at` marks where that stopped and behaviour began.
+Booting writes the catalogue's arrival into the log: one `Copiloting/boot`
+root action and everything the seeding rules carry from it, as accountable as
+a click. `engine.settled_at` marks where that stopped and behaviour began.
 Every record after it carries an actor (`person`, `model`, `browser`) and, unless it is a
 root action, the name of the rule that authorised it. The interface reads those
 edges directly: *you asked for this*, *the assistant asked for this*, *adopted

@@ -5,7 +5,7 @@
 		{"id":"00000000c0de001a","type":"group","x":1100,"y":1500,"width":440,"height":368,"label":"Deciding [Request, Option]"},
 		{"id":"00000000c0de0027","type":"group","x":3440,"y":1560,"width":440,"height":272,"label":"No synchronizations"},
 		{"id":"00000000c0de0016","type":"group","x":2400,"y":-480,"width":440,"height":252,"label":"Cataloguing [Variable, Option]"},
-		{"id":"00000000c0de0001","type":"group","x":-840,"y":500,"width":440,"height":252,"color":"2","label":"Copiloting"},
+		{"id":"00000000c0de0001","type":"group","x":-840,"y":500,"width":440,"height":310,"color":"2","label":"Copiloting"},
 		{"id":"00000000c0de0020","type":"group","x":-1400,"y":1080,"width":380,"height":180,"label":"Moding [Workspace, Surface]"},
 		{"id":"00000000c0de0023","type":"group","x":3720,"y":0,"width":440,"height":148,"label":"Pricing [Option, Basis]"},
 		{"id":"00000000c0de0025","type":"group","x":3720,"y":1000,"width":440,"height":148,"label":"Footprinting [Option, Grid, Basis]"},
@@ -103,7 +103,9 @@
 		{"id":"00000000c0de00b6","type":"text","text":"`APersonEntitlesTheJob`","x":160,"y":2190,"width":300,"height":50,"color":"4"},
 		{"id":"00000000c0de00b7","type":"text","text":"`TheModelMayIntroduceThePerson`","x":160,"y":2280,"width":320,"height":50,"color":"6"},
 		{"id":"00000000c0de00b8","type":"text","text":"`TheModelMayEntitleTheJob`","x":160,"y":2370,"width":320,"height":50,"color":"6"},
-		{"id":"00000000c0de00b9","type":"text","text":"*where:* the person named, the job sited, and the seller's stipulations, profiles and name copied into the terms","x":1700,"y":2480,"width":440,"height":110}
+		{"id":"00000000c0de00b9","type":"text","text":"*where:* the person named, the job sited, and the seller's stipulations, profiles and name copied into the terms","x":1700,"y":2480,"width":440,"height":110},
+		{"id":"00000000c0de0100","type":"text","text":"**boot**","x":-820,"y":744,"width":400,"height":46,"color":"2"},
+		{"id":"00000000c0de0101","type":"text","color":"2","x":300,"y":-420,"width":460,"height":260,"text":"`TheSellerIsIntroduced`\n`TheSellersTermsAreStipulated`\n`TheCatalogueIsListed`\n`TheCatalogueIsPriced`\n`TheCatalogueIsFootprinted`\n`TheCatalogueSetsTheRules`\n`TheWorkspaceIsLaidOut`\n`ASpecificationIsStartedAtBoot`"}
 	],
 	"edges":[
 		{"id":"00000000c0de002f","fromNode":"00000000c0de002d","fromSide":"bottom","toNode":"00000000c0de000e","toSide":"left","color":"2"},
@@ -191,6 +193,15 @@
 		{"id":"00000000c0de00c2","fromNode":"00000000c0de00aa","fromSide":"bottom","toNode":"00000000c0de00b9","toSide":"top","color":"4"},
 		{"id":"00000000c0de00c3","fromNode":"00000000c0de00ad","fromSide":"bottom","toNode":"00000000c0de00b9","toSide":"top","color":"4"},
 		{"id":"00000000c0de00c4","fromNode":"00000000c0de00b0","fromSide":"bottom","toNode":"00000000c0de00b9","toSide":"top","color":"4"},
-		{"id":"00000000c0de00c5","fromNode":"00000000c0de00b9","fromSide":"left","toNode":"00000000c0de0093","toSide":"right","color":"4"}
+		{"id":"00000000c0de00c5","fromNode":"00000000c0de00b9","fromSide":"left","toNode":"00000000c0de0093","toSide":"right","color":"4"},
+		{"id":"00000000c0de0102","fromNode":"00000000c0de0100","fromSide":"right","toNode":"00000000c0de0101","toSide":"left","toEnd":"none","color":"2"},
+		{"id":"00000000c0de0103","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de00a9","toSide":"left","color":"2"},
+		{"id":"00000000c0de0104","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de00af","toSide":"left","color":"2"},
+		{"id":"00000000c0de0105","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de0016","toSide":"left","color":"2"},
+		{"id":"00000000c0de0106","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de0023","toSide":"left","color":"2"},
+		{"id":"00000000c0de0107","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de0025","toSide":"left","color":"2"},
+		{"id":"00000000c0de0108","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de000c","toSide":"left","color":"2"},
+		{"id":"00000000c0de0109","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de0020","toSide":"left","color":"2"},
+		{"id":"00000000c0de010a","fromNode":"00000000c0de0101","fromSide":"right","toNode":"00000000c0de0005","toSide":"left","color":"2"}
 	]
 }

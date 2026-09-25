@@ -1,9 +1,11 @@
 """main — discovers the concepts, wires the synchronizations, and reads the
 catalogue in.
 
-MSM §5.2.1's `src/main.ts`.  This is the one place outside a concept or a rule
-where an action may be invoked, and everything it invokes is invoked as an
-action: the catalogue's arrival is as accountable as a person's click.
+MSM §5.2.1's `src/main.ts`, which "discovers and registers all concepts" and
+"wires all declared synchronizations".  It invokes no concept action.  The
+catalogue's arrival is one stimulus of the bootstrap concept, `Copiloting/boot`,
+and the rules in `syncs/seeding.py` carry it into the concepts, so every fact
+the catalogue leaves reaches the log by way of a rule (MSM §5.2.3).
 
 Why option identities are qualified.  The source file names options inside a
 variable — `standard` is a service level, an energy package, a control panel
@@ -17,7 +19,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 from concepts.asserting import Asserting
 from concepts.binding import Binding
@@ -70,10 +71,6 @@ FACETS: list[tuple[str, str, bool]] = [
 ]
 
 
-def oid(variable: str, value: str) -> str:
-    return f"{variable}:{value}"
-
-
 def build(path: Path = CATALOGUE) -> Engine:
     engine = Engine()
     for concept in (
@@ -107,8 +104,21 @@ def build(path: Path = CATALOGUE) -> Engine:
     )
 
     catalogue = json.loads(path.read_text())
-    _load(engine, catalogue)
-    _open(engine)
+    engine.root(
+        "Copiloting",
+        "boot",
+        actor="boot",
+        catalogue=catalogue,
+        basis=BASIS,
+        grids=GRIDS,
+        workspace=WORKSPACE,
+        # The specification's surface first: it is the one given attention.
+        # The conversation is not a surface; where the chat sits is the
+        # person's view state, which no rule reaches (docs/concepts/moding.md).
+        surfaces=["canvas", "quote"],
+        facets=[{"facet": f, "about": a, "shown": s} for f, a, s in FACETS],
+        spec=SPEC,
+    )
 
     engine.catalogue = catalogue
     engine.settled_at = engine.log.last_seq
@@ -126,167 +136,3 @@ def _alias_assert(engine: Engine) -> None:
     """
     asserting = engine.concepts["Asserting"]
     setattr(asserting, "assert", asserting.assert_)
-
-
-def _load(engine: Engine, catalogue: dict[str, Any]) -> None:
-    flow = engine.log.open_flow()
-
-    def do(concept: str, action: str, **input: Any) -> None:
-        engine.root(concept, action, actor="boot", flow=flow, **input)
-
-    vendor = catalogue.get("vendor")
-    if vendor:
-        # The seller's profile, seeded like a price: a fact of the catalogue.
-        do(
-            "Profiling",
-            "introduce",
-            party=vendor.get("party", "seller"),
-            **{k: vendor[k] for k in ("name", "organisation", "address", "email", "phone") if k in vendor},
-        )
-
-    terms = catalogue.get("terms")
-    if terms:
-        basis = terms.get("basis", BASIS)
-        do(
-            "Stipulating",
-            "stipulate",
-            basis=basis,
-            validity=terms.get("validity_days", 30),
-            warranty=terms.get("warranty_months", 12),
-            approval=terms.get("approval_weeks", 4),
-            installation=terms.get("installation_weeks", 6),
-        )
-        for stage in terms.get("schedule", []):
-            do("Stipulating", "stage", basis=basis, upon=stage["upon"], share=stage["share"])
-        for section, texts in terms.get("clauses", {}).items():
-            for text in texts:
-                do("Stipulating", "clause", basis=basis, section=section, text=text)
-        for variable in terms.get("by_others", []):
-            do("Stipulating", "delegate", basis=basis, variable=variable)
-
-    for variable in catalogue["variables"]:
-        name = variable["name"]
-        do(
-            "Cataloguing",
-            "describe",
-            variable=name,
-            heading=variable.get("label", name),
-            family=variable.get("group", "other"),
-        )
-        for option in variable["options"]:
-            identity = oid(name, option["value"])
-            # Cataloguing/list, and by rule Constraining/offer.
-            do(
-                "Cataloguing",
-                "list",
-                variable=name,
-                option=identity,
-                label=option.get("label", option["value"]),
-            )
-            if option.get("note"):
-                do("Cataloguing", "annotate", option=identity, note=option["note"])
-            if option.get("price") is not None:
-                do("Pricing", "list", option=identity, capital=option["price"])
-            if option.get("monthly_price") is not None:
-                do("Pricing", "list", option=identity, monthly=option["monthly_price"])
-            if option.get("co2") is not None:
-                do("Footprinting", "attribute", option=identity, embodied=option["co2"])
-
-    pricing = catalogue.get("pricing", {})
-    for value, months in pricing.get("term_months", {}).items():
-        do("Pricing", "span", option=oid("contract_term", value), months=months)
-    if pricing.get("default_term"):
-        do(
-            "Pricing",
-            "presume",
-            basis=BASIS,
-            option=oid("contract_term", pricing["default_term"]),
-        )
-    if pricing.get("financing_factor") is not None:
-        do("Pricing", "finance", basis=BASIS, factor=pricing["financing_factor"])
-
-    footprint = catalogue.get("footprint", {})
-    for klass, by_usage in footprint.get("annual_kwh", {}).items():
-        for usage, by_travel in by_usage.items():
-            for travel, energy in by_travel.items():
-                do(
-                    "Footprinting",
-                    "meter",
-                    klass=oid("energy_class", klass),
-                    usage=oid("usage_profile", usage),
-                    travel=oid("travel", travel),
-                    energy=energy,
-                )
-    for key, grid in GRIDS.items():
-        if footprint.get(key) is not None:
-            do("Footprinting", "rate", grid=grid, intensity=footprint[key])
-    do(
-        "Footprinting",
-        "frame",
-        basis=BASIS,
-        horizon=footprint.get("service_life_years", 0),
-        uplift=footprint.get("fabrication_multiplier", 1.0),
-        scope=footprint.get("module_scope", ""),
-    )
-
-    for rule in catalogue.get("constraints", []):
-        if rule["type"] == "table":
-            over = rule["vars"]
-            do(
-                "Constraining",
-                "tabulate",
-                rule=rule["id"],
-                over=over,
-                allows=[
-                    [oid(variable, value) for variable, value in zip(over, tuple_)]
-                    for tuple_ in rule["allowed"]
-                ],
-                because=rule["label"],
-            )
-        else:
-            do(
-                "Constraining",
-                "imply",
-                rule=rule["id"],
-                given=[
-                    {
-                        "variable": condition["var"],
-                        "among": [
-                            oid(condition["var"], value) for value in condition["in"]
-                        ],
-                    }
-                    for condition in rule["if_all"]
-                ],
-                entails={
-                    "variable": rule["then"]["var"],
-                    "among": [
-                        oid(rule["then"]["var"], value) for value in rule["then"]["in"]
-                    ],
-                },
-                because=rule["label"],
-            )
-
-
-def _open(engine: Engine) -> None:
-    flow = engine.log.open_flow()
-    # Two surfaces: the specification and the offer.  The conversation is not
-    # one since 2026-09-11 — where the chat sits is the person's view state,
-    # which no rule reaches (docs/concepts/moding.md).
-    for surface in ("canvas", "quote"):
-        engine.root(
-            "Moding", "offer", actor="boot", flow=flow, workspace=WORKSPACE, surface=surface
-        )
-    engine.root(
-        "Moding", "focus", actor="boot", flow=flow, workspace=WORKSPACE, surface="canvas"
-    )
-    # What the canvas can show at a glance, and what it shows to begin with.
-    for facet, about, shown in FACETS:
-        engine.root(
-            "Showing", "offer", actor="boot", flow=flow,
-            lens=WORKSPACE, facet=facet, about=about,
-        )
-        if shown:
-            engine.root(
-                "Showing", "show", actor="boot", flow=flow, lens=WORKSPACE, facet=facet
-            )
-    engine.root("Asserting", "start", actor="boot", flow=flow, spec=SPEC)

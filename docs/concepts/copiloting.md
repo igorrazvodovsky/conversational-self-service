@@ -4,8 +4,9 @@
 concept Copiloting
 
 purpose
-  to carry stimuli between a person, an application surface and a
-  model, so that each can act on what the others did
+  to carry what happens outside the application into it, whether a
+  person acts, a model calls a tool or the application starts, so
+  that the rules can act on it
 ```
 
 The bootstrap concept, held at the abstract tier: a purpose and the assumed
@@ -24,9 +25,10 @@ policy is [Two tiers of concept](../method/boundaries.md).
 | the model returns prose | out | `CopilotChat` |
 | the model asks that a surface be shown | out | `useComponent`, `useDefaultRenderTool`, A2UI (`agent/src/a2ui_fixed_schema.py`) |
 | the viewer's environment changes | in | `prefers-color-scheme` (`src/hooks/use-theme.tsx`) |
+| the application starts, with its catalogue | in | `agent/wiring.py`, performing `boot` |
 
-Its two root actions, `gesture` and `invoke`, record a stimulus and decide
-nothing; what follows from each is in [Gestures](../syncs/gestures.md) and
-[Conduct](../syncs/conduct.md). `invoke` is performed by the in-app model
+Its root actions, `gesture`, `invoke` and `boot`, record a stimulus and
+decide nothing; what follows from each is in [Gestures](../syncs/gestures.md),
+[Conduct](../syncs/conduct.md) and [Seeding](../syncs/seeding.md). `invoke` is performed by the in-app model
 and by a browser agent alike, and the actor on the record is what tells
 them apart — see [A browser agent, on the same terms](../syncs/conduct.md#a-browser-agent-on-the-same-terms).

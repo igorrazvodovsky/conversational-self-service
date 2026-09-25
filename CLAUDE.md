@@ -88,9 +88,9 @@ layer beside the agent.
 ├── agent/
 │   ├── concepts/          # one module per concept — MSM §5.2.1
 │   ├── syncs/             # seeding, gestures, binding, propagation, conduct
-│   ├── engine/            # log, flows, provenance, dispatch — do not edit
+│   ├── engine/            # log, flows, provenance, dispatch — never edited for a behaviour
 │   ├── catalogue/         # elevator.json
-│   ├── wiring.py          # discovers concepts, wires rules, reads the catalogue
+│   ├── wiring.py          # discovers concepts, wires rules, boots with the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
 │   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest — mounted by langgraph.json
 │   ├── tools.py           # the model's tools
@@ -107,8 +107,10 @@ layer beside the agent.
 `agent/syncs/`. If you find yourself wanting to read another concept's state
 from inside a concept, that is a synchronization you have not written yet.
 
-**Only the bootstrap concept initiates.** `Copiloting.gesture` (a person) and
-`Copiloting.invoke` (the model) are the only root actions. There is no HTTP
+**Only the bootstrap concept initiates.** `Copiloting.gesture` (a person),
+`Copiloting.invoke` (the model) and `Copiloting.boot` (the application starting,
+with its catalogue) are the only root actions. The catalogue's arrival reaches
+every concept by a seeding rule, like anything else. There is no HTTP
 route per concept action and no tool that changes state directly — a tool
 records that the model asked, and a rule decides what follows.
 
@@ -116,9 +118,12 @@ records that the model asked, and a rule decides what follows.
 calculations over exposed state, in `agent/views.py`. Nobody performs *compute
 the total*.
 
-**Do not edit `agent/engine/`.** MSM §5.2.4 observed that no case of an agent
-modifying engine code to get a behaviour was ever legitimate. Behaviour belongs
-in a concept or a rule.
+**Do not edit `agent/engine/` to get a behaviour.** MSM §5.2.4 observed that
+no case of an agent modifying engine code to get a behaviour was ever
+legitimate. Behaviour belongs in a concept or a rule. The engine changes only
+when its own contract does, such as a new kind of stimulus for the bootstrap
+concept, and then on purpose, with the reason in the change. Correcting its
+comments is ordinary maintenance.
 
 ### Two root actors, and what each may do
 

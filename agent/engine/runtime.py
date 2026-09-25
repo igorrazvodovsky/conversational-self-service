@@ -5,6 +5,8 @@ invokes an action.  MSM §5.2.1 lists this under `src/engine/` — "provided;
 developers do not touch it" — and §5.2.4 records that every observed case of
 an agent editing engine code to get a behaviour was a defect in the change.
 Behaviour belongs in `concepts/` and `syncs/`.
+This file changes only when the engine's own contract does, such as a new
+kind of stimulus for the bootstrap concept, and the change says why.
 
 What is deliberately *not* here: a `when`/`where`/`then` parser.  The notation
 lives in `docs/syncs/`, where the papers' notation belongs.  A rule is a Python
@@ -133,8 +135,8 @@ class Engine:
 
         WYSIWID §6.7 — root actions belong to the bootstrap concept and are the
         only ones with completions but no invocations.  A flow may be supplied
-        when several root actions are one occasion, as the catalogue's arrival
-        at boot is.
+        when several root actions are one occasion; the catalogue's arrival is
+        a single one, `Copiloting/boot`, and its flow is the one opened here.
         """
         with self._turn:
             return self._perform(

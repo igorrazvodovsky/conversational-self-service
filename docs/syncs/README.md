@@ -22,6 +22,14 @@ it.
 
 | Rule | Where |
 |---|---|
+| `TheSellerIsIntroduced` | [Seeding](seeding.md) |
+| `TheSellersTermsAreStipulated` | [Seeding](seeding.md) |
+| `TheCatalogueIsListed` | [Seeding](seeding.md) |
+| `TheCatalogueIsPriced` | [Seeding](seeding.md) |
+| `TheCatalogueIsFootprinted` | [Seeding](seeding.md) |
+| `TheCatalogueSetsTheRules` | [Seeding](seeding.md) |
+| `TheWorkspaceIsLaidOut` | [Seeding](seeding.md) |
+| `ASpecificationIsStartedAtBoot` | [Seeding](seeding.md) |
 | `TheCatalogueSeedsTheSolver` | [Seeding](seeding.md) |
 | `ADelistedOptionLeavesTheSolver` | [Seeding](seeding.md) |
 | `APersonStartsASpecification` | [Gestures](gestures.md) |
@@ -93,10 +101,12 @@ it.
 
 ## Seeding
 
-The catalogue arrives as a file and leaves as facts in six concepts — the
-seller's profile and terms among them. Which of those are
-reached by a rule, and which by the wiring at boot, is a question about what
-depends on what — worked through in [Seeding](seeding.md).
+The catalogue arrives as a file, and the application's start is a stimulus of
+the bootstrap concept that carries it. Rules take it from there into each
+concept that holds a fact of it, the seller's profile and terms among them,
+so the catalogue's arrival reaches the log the way a click does. Which rule
+hangs off the stimulus and which off another concept's action is a question
+about what follows from what, worked through in [Seeding](seeding.md).
 
 ## What a person may do
 

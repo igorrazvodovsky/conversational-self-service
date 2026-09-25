@@ -10,10 +10,11 @@ record the log can hold, and it deliberately does nothing else: the actions
 below have no state and decide nothing.  What may follow from each of them is
 in `docs/syncs/gestures.md` and `docs/syncs/conduct.md`.
 
-Two root actions, not one, because this application has two independent root
-actors and the rules that authorise them differ.  A person may adopt a proposed
-completion; the model may not.  That difference has to be visible to the rules,
-so it has to be visible here.
+One root action per kind of stimulus, because the rules that authorise them
+differ.  A person may adopt a proposed completion; the model may not.  That
+difference has to be visible to the rules, so it has to be visible here.  The
+application's own start is a stimulus too: the catalogue arrives with it, and
+what the catalogue leaves in each concept is in `docs/syncs/seeding.md`.
 """
 
 from __future__ import annotations
@@ -33,4 +34,8 @@ class Copiloting:
 
     def invoke(self, **stimulus: Any) -> dict[str, Any]:
         """The model called a named tool."""
+        return dict(stimulus)
+
+    def boot(self, **stimulus: Any) -> dict[str, Any]:
+        """The application started, with its catalogue."""
         return dict(stimulus)
