@@ -81,9 +81,10 @@ once as a choice and once as an assertion.
 and Constraining each hold one kind of fact about the same catalogue option,
 which is the shortest route to why concepts are not entities.
 
-[Conversing](conversing.md) is the only concept nothing reads from: its
-completions appear in no `when`, and it exists so that the log's first entry
-for a turn is the person's words.
+[Conversing](conversing.md) is the only concept no rule reads from: its
+completions appear in no `when`. It exists so that the log's first entry for a
+turn is the person's words, and the canvas reads an utterance back by its
+flow, beside each value the model asserted in reply.
 
 [Quoting](quoting.md) is where the configuration stops being the point: an
 offer, frozen as issued, that the specification can move away from without

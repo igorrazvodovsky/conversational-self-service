@@ -2,7 +2,9 @@
 
 Ten verbs and one reading.  Each is a root action of the bootstrap concept
 and nothing more: the tool records that the model called it, and the rules in
-`syncs/conduct.py` decide what follows.  A tool body that changed state
+`syncs/conduct.py` decide what follows.  Each is performed in the flow the
+person's message opened (`hearing.turn()`), so the log joins the words to the
+call made in reply and the canvas can show which words a value was read from.  A tool body that changed state
 directly would make the model a second initiator, which is the thing WYSIWID
 §7.2's fourth design rule exists to prevent and the thing the starter this
 replaces did in every frontend tool it defined.
@@ -35,14 +37,23 @@ from typing import Any, Literal
 
 from langchain.tools import tool
 
+from engine import Record
+from hearing import turn
 from instance import SPEC, engine
 from views import digest
 
 
-def _outcome(flow: str) -> dict[str, Any]:
-    """What the rules did with the stimulus, in the vocabulary they did it in."""
+def _outcome(completion: Record) -> dict[str, Any]:
+    """What the rules did with the stimulus, in the vocabulary they did it in.
+
+    Read from the completion onward rather than from the start of the flow:
+    a tool call made in reply to a message runs in the flow the message
+    opened, alongside the words themselves and any earlier calls of the turn.
+    """
     did = []
-    for record in engine.log.flow(flow):
+    for record in engine.log.flow(completion.flow):
+        if record.seq <= completion.seq:
+            continue
         if record.kind != "completion" or record.concept == "Copiloting":
             continue
         entry: dict[str, Any] = {"action": f"{record.concept}/{record.action}"}
@@ -65,10 +76,10 @@ def assert_value(variable: str, option: str) -> dict[str, Any]:
     and comes back with the rules that refuse it.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="assert",
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="assert",
         spec=SPEC, variable=variable, option=option,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -79,10 +90,10 @@ def withdraw(variable: str) -> dict[str, Any]:
     only ever an entailment reverts to being open.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="withdraw",
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="withdraw",
         spec=SPEC, variable=variable,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -95,10 +106,10 @@ def propose(measure: Literal["cost", "carbon"] = "cost") -> dict[str, Any]:
     saying that you have would be false.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="propose",
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="propose",
         spec=SPEC, measure=measure,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -112,9 +123,9 @@ def quote() -> dict[str, Any]:
     lift has been ordered would be false.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="quote", spec=SPEC,
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="quote", spec=SPEC,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -132,10 +143,10 @@ def introduce(
     A quote cannot be issued until at least a name is on record.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="introduce",
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="introduce",
         name=name, organisation=organisation, address=address, email=email, phone=phone,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -147,10 +158,10 @@ def entitle(title: str | None = None, site: str | None = None) -> dict[str, Any]
     lift". Pass only what the person said.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="entitle",
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="entitle",
         spec=SPEC, title=title, site=site,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -162,14 +173,14 @@ def show(facet: str) -> dict[str, Any]:
     each option adds), `notes` (the catalogue's note on each option),
     `excluded` (which rule rules an option out), `rules` (the rule behind a
     value that follows), `answers` (the requirement an asserted value
-    answers), `how` (who asserted a value). Changes what the person sees and
+    answers), `how` (who asserted a value, and the words it was read from). Changes what the person sees and
     nothing else; use it when they ask to see something at a glance rather
     than reciting the figures.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="show", facet=facet,
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="show", facet=facet,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -179,9 +190,9 @@ def hide(facet: str) -> dict[str, Any]:
     asks to hide something.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="hide", facet=facet,
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="hide", facet=facet,
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
@@ -199,17 +210,19 @@ def frame(variable: str) -> dict[str, Any]:
     false.
     """
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", tool="frame",
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="frame",
         frame={"by": "assertion", "variable": variable},
     )
-    return _outcome(completion.flow)
+    return _outcome(completion)
 
 
 @tool
 def unframe() -> dict[str, Any]:
     """Show the whole canvas again. The inverse of `frame`."""
-    completion = engine.root("Copiloting", "invoke", actor="model", tool="unframe")
-    return _outcome(completion.flow)
+    completion = engine.root(
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="unframe"
+    )
+    return _outcome(completion)
 
 
 @tool

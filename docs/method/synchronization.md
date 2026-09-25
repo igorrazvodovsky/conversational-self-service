@@ -60,6 +60,8 @@ The objects piece adds one framing note about what the mechanism *is*: concept d
 
 All action records carry a flow token, and every action matched in one `when` must share it. Invocations in `then` inherit it (WYSIWID §6.3). A flow is therefore a directed acyclic subgraph of action occurrences rooted in an external stimulus — which recovers the one advantage traditional route handlers have, that the scope of each test and action is tied to a single request.
 
+Several root actions share a flow when they are one occasion: the catalogue's arrival at boot, and a chat turn, which the person's words open and the model's tool calls in reply run in. The second is the join the canvas reads to say which words a value was read from ([Gestures](../syncs/gestures.md#the-turn-is-one-flow)).
+
 ## Provenance
 
 Each action occurrence is linked back to the actions that precipitated it, labelled with the name of the synchronization responsible (WYSIWID §6.6). This is what makes the action log an account rather than a log: given an undesirable action you can find the rule that authorised it, and MSM §5.2.3 makes the invariant explicit — every action reaches the log by way of some synchronization.

@@ -9,11 +9,12 @@ state
   text:       Utterance -> Text
 
 The concept promises nothing beyond the record.  What an utterance *does* is
-decided by the rules that read it, and at this slice exactly one rule does:
-`APersonSays` carries a person's chat message here, and nothing fires from the
-completion.  That is deliberate — the point of the concept at this slice is
-that the log's first entry for a turn is what the person said, rather than what
-the model did with it.
+decided by the rules that read it, and exactly one rule writes here:
+`APersonSays` carries a person's chat message in, and nothing fires from the
+completion.  That is deliberate — the point of the concept is that the log's
+first entry for a turn is what the person said, rather than what the model did
+with it.  The canvas reads the utterance back by its flow, beside each value
+the model asserted in reply (`views.py`); no rule and no other concept does.
 
 An utterance is an individual and needs an identity that does not collide, so
 this concept mints one.  `Deciding` does not, because a request is a value; an

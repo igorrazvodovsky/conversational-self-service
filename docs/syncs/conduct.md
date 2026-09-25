@@ -65,6 +65,12 @@ independently of the provenance edge the log already carries. The edge is finer:
 `APersonAssertsAValue` and `AnAdoptedValueBecomesAnAssertion` are two
 different things a person did, and both write `person`.
 
+The model's call is performed in the flow the person's message opened, so an
+assertion made in reply to their words shares a flow token with the
+utterance, and the canvas reads the words off it: *the assistant read
+"hospital, six storeys" as this*. That is a fact of the trace and not of any
+concept — see [The turn is one flow](gestures.md#the-turn-is-one-flow).
+
 There is no `TheModelMayPreferAnOption`. `Asserting` has no `prefer`: how
 firmly a value is meant is a clause's negotiability, the person's own tag,
 and [Propagation](propagation.md#which-of-the-first-two-fires-is-a-fact-of-the-state)
@@ -489,6 +495,10 @@ or `Binding`. It can fill the specification in, and it cannot adopt a
 proposal, accept an offer or state what the person requires — which is what
 makes the tools safe to hand to an agent nobody here wrote. The exposure
 adds no rule; it adds another actor to rules that already existed.
+
+A browser agent's call opens a flow of its own, since no message opened one
+for it, so no utterance is joined to what it asserts and the canvas shows
+none beside the value.
 
 What tells the two models apart is the actor on the record, not a rule.
 `Asserting.assertedBy` writes `model` for both, because both are a model

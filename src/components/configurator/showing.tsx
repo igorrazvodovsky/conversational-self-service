@@ -31,7 +31,7 @@ const LABEL: Record<string, string> = {
   consequences: "What a proposed value would do",
   rules: "The rule behind what follows",
   answers: "The requirement a value answers",
-  how: "Who asserted a value",
+  how: "Who asserted a value, and from which words",
 };
 
 /** Whether a facet is shown, for the components that draw one. */

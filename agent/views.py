@@ -12,6 +12,12 @@ provenance edge: every completion carries the name of the synchronization that
 authorised it (WYSIWID §6.6), so the difference between a value you asked for,
 one you adopted from a proposal, and one the assistant stated on your behalf is
 already recorded and needs no extra field anywhere.
+
+The log also answers *from which words*.  A person's message opens a flow and
+the model's tool calls in reply run in it (`hearing.py`), so an assertion
+whose flow holds a `Conversing/say` was made in reply to those words, and the
+canvas says so — *the assistant read "hospital, six storeys" as this* — from
+the flow token alone.  No concept holds the reading; the trace does.
 """
 
 from __future__ import annotations
@@ -56,28 +62,54 @@ def said(via: str | None, actor: str | None, default: str | None = None) -> str 
     return SAID.get((via or "", actor or "")) or HOW.get(via or "", default)
 
 
-def _provenance(engine: Engine, spec: str) -> dict[str, tuple[str, str]]:
+def _provenance(engine: Engine, spec: str) -> dict[str, tuple[str, str, str | None]]:
     """The rule behind the most recent assertion recorded for each variable,
-    and the actor that performed the root action it followed from.
+    the actor that performed the root action it followed from, and the
+    person's words when the assertion was made in reply to some.
+
+    The words are the `Conversing/say` in the assertion's flow: a chat turn
+    is one flow, opened by the message and shared by the tool calls made in
+    reply (`hearing.py`).  A gesture's flow and a browser agent's hold no
+    utterance, and those assertions carry none.
 
     Scanned from the boot mark rather than from the start of the log: the
     catalogue's arrival is a thousand-odd records of `Cataloguing` and
     `Pricing`, and no assertion can precede it.
     """
-    how: dict[str, tuple[str, str]] = {}
+    words: dict[str, str] = {}
+    how: dict[str, tuple[str, str, str | None]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
-        if record.kind != "completion" or record.concept != "Asserting":
-            continue
-        if record.action not in {"assert", "withdraw"}:
+        if record.kind != "completion":
             continue
         output = record.output or {}
+        if record.concept == "Conversing" and record.action == "say":
+            if output.get("party") == "person" and output.get("text"):
+                words[record.flow] = output["text"]
+            continue
+        if record.concept != "Asserting" or record.action not in {"assert", "withdraw"}:
+            continue
         if output.get("spec") != spec or "variable" not in output:
             continue
         if record.action == "withdraw":
             how.pop(output["variable"], None)
         else:
-            how[output["variable"]] = (record.via or "recorded at boot", record.actor)
+            how[output["variable"]] = (
+                record.via or "recorded at boot",
+                record.actor,
+                words.get(record.flow),
+            )
     return how
+
+
+def _how(via: str, actor: str, words: str | None) -> str:
+    """The sentence beside an asserted value.
+
+    With words in the flow, the sentence says what they were: the reading is
+    what the person corrects, so it stands where the value does.
+    """
+    if words and via == "TheModelMayAssertAValue":
+        return f"the assistant read “{words}” as this"
+    return said(via, actor, default=via) or via
 
 
 def canvas(engine: Engine, spec: str, grid: str = "today") -> dict[str, Any]:
@@ -203,9 +235,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "standing": standing,
                 "asked": asked,
                 "softly": softly,
-                "how": said(*how[name], default=how[name][0])
-                if asked and name in how
-                else None,
+                "how": _how(*how[name]) if asked and name in how else None,
                 "answers": answering.get(asked, []) if asked else [],
                 "value": value,
                 "owing": [

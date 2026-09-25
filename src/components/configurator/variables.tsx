@@ -198,8 +198,13 @@ export function AskedCard({ variable }: { variable: Variable }) {
         </CardAction>
       </CardHeader>
       <CardContent className="space-y-2">
+        {/* Who asserted the value and, when the assistant asserted it in
+            reply to a message, the person's words: read off the flow the
+            message opened, so the reading stands where the value does. */}
         {shown("how") && variable.how ? (
-          <p className="text-xs text-muted-foreground">{variable.how}</p>
+          <p className="line-clamp-2 text-xs text-muted-foreground" title={variable.how}>
+            {variable.how}
+          </p>
         ) : null}
         {/* What the value is for, from `Binding`. An assertion answering no
             clause is the slice 0 case and is said so, not hidden — unless

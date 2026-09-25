@@ -141,6 +141,43 @@ Only a person says anything. `Conversing/say` takes a party and no rule invokes
 it with the machine, so the assistant's replies stay in CopilotKit's thread and
 out of the log. That is an absence in this file, not a property of the concept.
 
+### The turn is one flow
+
+<a id="the-turn-is-one-flow"></a>
+A person's message and the tool calls the model makes in reply are one
+occasion, as the catalogue's arrival at boot is one, so the `say` opens a flow
+and `agent/tools.py` performs every root action of that turn in it
+(`agent/hearing.py` keeps the token per thread and hands it to the tools).
+That is what makes the model's reading of the person's words a fact rather
+than a sentence in its reply: *the person said "hospital, six storeys"* and
+*the model asserted `building_type:hospital`* carry the same flow token. The
+canvas reads the utterance off the assertion's flow (`agent/views.py`) and
+shows it beside the value under the `how` facet — *the assistant read
+"hospital, six storeys" as this* — in place of *the assistant asked for this*.
+No field records the link and no rule writes one; the trace holds it, which is
+where the case's catalogue booked the record when it declined a concept for
+the model call.
+
+Three shapes were possible and two were declined. A relation in
+[Conversing](../concepts/conversing.md) fails the purpose test: the concept's
+purpose is order, and *what an utterance was taken to mean* is a second
+purpose, so the note would need an "and". A concept of its own would be
+written by a rule on `Copiloting/invoke` reading the latest utterance in its
+`where`, which is the inference the flow already records, kept twice and
+claiming more than is known: not that the model parsed those words into that
+value, only that it asserted the value in reply to them. The shared flow
+states exactly that claim, and it is read rather than recorded, so the actor
+table in `CLAUDE.md` gains no row.
+
+A browser agent's call arrives with no message and opens a flow of its own,
+so nothing joins it to any words and the canvas says *a browser agent asked
+for this* with none. Nothing declines it, because nothing was asked. A
+person's click is the same: a gesture opens its own flow, and a value the
+person asserted or adopted carries no words.
+
+What a tool returns to the model is scoped the same way: the effects it
+reports are those that followed the call, not everything in the turn's flow.
+
 ## A quote is requested
 
 <a id="a-quote-is-requested"></a>

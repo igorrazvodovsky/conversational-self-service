@@ -18,9 +18,9 @@ was offered. It survives the thread, the reload and the restart, because the
 state it reads is reconstructed from the log.
 
 The chat is where the two parties address each other. The person's message is
-recorded first, as an utterance ([Conversing](concepts/conversing.md)), and the
-model's reply is a turn: an interpretation, an explanation, an argument, a
-question, a proposal. That is what the chat is for, and a configurator whose
+recorded first, as an utterance ([Conversing](concepts/conversing.md)) that
+opens the turn's flow, and the model's reply is a turn: an interpretation, an
+explanation, an argument, a question, a proposal. That is what the chat is for, and a configurator whose
 chat only takes instructions has given up the thing a conversational
 interface is worth having for.
 
@@ -46,8 +46,9 @@ their request, and reads that way in the log.
 
 | Move | Where | What it reaches | What the chat carries |
 |---|---|---|---|
-| Describe the situation — "a hospital, six storeys, in Lyon" | chat | `Conversing/say`, then the model's `assert_value` calls through [`TheModelMayAssertAValue`](syncs/conduct.md) | the model's reading of it, so it can be corrected: *I took that as a hospital, six stops, and a European code regime* |
+| Describe the situation — "a hospital, six storeys, in Lyon" | chat | `Conversing/say`, then the model's `assert_value` calls through [`TheModelMayAssertAValue`](syncs/conduct.md), in [the flow the words opened](syncs/gestures.md#the-turn-is-one-flow); the canvas shows the words beside each value asserted in reply | the model's reading of it, so it can be corrected: *I took that as a hospital, six stops, and a European code regime* |
 | State, relax, reword or strike a requirement, in their own words | canvas | [`Specifying`](concepts/specifying.md) through the clause gestures | nothing; the model cannot write or answer a clause |
+| Say how firmly a requirement is meant — fixed, negotiable, or left open | canvas | `Specifying/settle`; a value answering only negotiable clauses reaches the solver softly ([Propagation](syncs/propagation.md#which-of-the-first-two-fires-is-a-fact-of-the-state)) and reads as *yielded* where the rules could not honour it | what gave way and why; the model cannot change how firmly a clause is meant, and does not withdraw a yielded value |
 | Say which value answers a clause | canvas | [`Binding`](concepts/binding.md), then `Asserting` | nothing |
 | Assert or withdraw a value | canvas, or chat | `Asserting/assert` or `withdraw`, by gesture or by the model's tool | on the canvas, nothing — the model is not run; in the chat, what followed and why |
 | Ask why — "why can't I have 630 kg?" | chat | nothing; `review` reads state | the rule's own sentence, and the argument if the person pushes back. This lives in the chat and only there |
@@ -68,7 +69,7 @@ what the chat exists for. The reply's moves:
 
 | Move | When | What it says | What it must not do |
 |---|---|---|---|
-| Interpretation | after reading the person's words into assertions | what it took them to mean, in the model's vocabulary, inviting correction | present the reading as the person's choice |
+| Interpretation | after reading the person's words into assertions | what it took them to mean, in the model's vocabulary, inviting correction — the canvas holds the words beside each value asserted in reply, the chat explains the reading | present the reading as the person's choice; recite the words the canvas shows |
 | Consequence | after an assertion, when the rules forced something | what followed and the rule's sentence — the canvas shows the edge, the chat explains it | list every entailment; restate the canvas |
 | Argument | when asked why | the rule, in its own words, and what would have to give | compose a reason no rule states |
 | Asking | when a conflict is open, or a completion needs a choice the rules do not settle | the question, addressed to the person, with the answers open | answer it; treat its own turn as the person's answer |
@@ -115,10 +116,6 @@ withdrawing at the person's word is the person's answer, carried out.
 - *The model's reply is specified only in the prompt.* The table above is the
   first place the reply's moves are written down; `agent/main.py` carries them
   as instructions, and nothing measures whether they are followed.
-- *Nothing reads `Conversing`.* The person's words are recorded so that the
-  log's first entry for a turn is what they said, and so far that is all. The
-  interpretation move — what the model took the words to mean — is not yet a
-  recorded fact, only a sentence in the reply.
 
 ## See also
 

@@ -67,7 +67,7 @@ FACETS: list[tuple[str, str, bool]] = [
     ("consequences", "on a proposed value, what taking it would settle and cost", False),
     ("rules", "on a value that follows, the rule that forces it and the assertion it rests on", True),
     ("answers", "on an asserted value, the requirement it answers", True),
-    ("how", "on an asserted value, who asserted it and by what route", True),
+    ("how", "on an asserted value, who asserted it, and the words it was read from", True),
 ]
 
 
