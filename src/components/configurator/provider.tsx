@@ -127,6 +127,19 @@ export interface Question {
   about: "conflict" | "completion";
   reason: string;
   options: ({ variable: string; option: string } | Record<string, string>)[];
+  /** A conflict question only: what each answer would do, in the options'
+   * order. The options are what `choose` takes back; this is beside them. */
+  foreseen?: Foreseen[];
+}
+
+export interface Foreseen {
+  variable: string;
+  option: string;
+  buildable: boolean;
+  follows: { variable: string; heading: string; option: string; label: string }[];
+  instalment: number;
+  lifetime: number;
+  carbon: number | null;
 }
 
 export type QuoteStanding = "open" | "committed" | "revoked" | "lapsed";

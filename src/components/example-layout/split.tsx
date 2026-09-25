@@ -2,8 +2,7 @@
 
 /**
  * The split between the artifact panel and the chat, and the four geometries
- * the chat takes against it. Adopted from `conv-pro-conf`'s
- * `workspace-split.tsx`.
+ * the chat takes against it.
  *
  * The chat is mounted exactly once, in one place in the tree, in every mode.
  * Modes change `className` on its container and nothing else, because the

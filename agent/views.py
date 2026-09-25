@@ -230,6 +230,54 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     for q in questions:
         q["about"] = q["request"].get("about")
 
+    # What each answer to a conflict would cost — the ripple and both deltas,
+    # per option, so the person chooses with the consequences in view rather
+    # than by the assertion's name alone.  A read of `Constraining` against
+    # assumptions nobody has made: give this one up, and try every unmet
+    # assertion again, which is what the rules would do.
+    price_now = pricing.total(chosen, BASIS)
+    footprint_now = footprinting.footprint(chosen, grid, BASIS)
+    for q in questions:
+        if q["about"] != "conflict":
+            continue
+        foreseen = []
+        for option in q["options"]:
+            given_up = option.get("variable")
+            would = {
+                v: o
+                for v, o in asserted.items()
+                if v != given_up
+            }
+            seen = solver.foreseeing(spec, would)
+            after = seen["settled"]
+            follows = [
+                {
+                    "variable": v,
+                    "heading": heading.get(v, v),
+                    "option": o,
+                    "label": catalogue["label"].get(o, o),
+                }
+                for v, o in after.items()
+                if v not in would and settled.get(v) != o
+            ]
+            price_then = pricing.total(after.values(), BASIS)
+            footprint_then = footprinting.footprint(after.values(), grid, BASIS)
+            foreseen.append(
+                {
+                    **option,
+                    "buildable": seen["buildable"],
+                    "follows": follows,
+                    "instalment": round(price_then["instalment"] - price_now["instalment"], 2),
+                    "lifetime": round(price_then["lifetime"] - price_now["lifetime"], 2),
+                    "carbon": (
+                        footprint_then["total"] - footprint_now["total"]
+                        if footprint_then["complete"] and footprint_now["complete"]
+                        else None
+                    ),
+                }
+            )
+        q["foreseen"] = foreseen
+
     quotes = _quotes(engine, spec, grid, settled)
     customer = engine.concepts["Profiling"].profile("person")
     seller = engine.concepts["Profiling"].profile("seller")

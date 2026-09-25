@@ -12,6 +12,7 @@ real solver takes a soft constraint at all.  See `docs/syncs/propagation.md`.
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from engine import Completion, Invocation, States, Sync
@@ -229,6 +230,36 @@ def _a_conflict_is_put_to_the_person(c: Completion, states: States) -> list[Invo
     ]
 
 
+def _a_resolved_conflict_withdraws_its_question(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """A question about a conflict lasts as long as the conflict.
+
+    The `where`: a conflict request for this specification is pending, and
+    every assertion of the specification is assumed.  That is the condition
+    the question was asked about, negated — however it came to hold: the
+    person answered in words and the model withdrew at their word, or they
+    withdrew the refused assertion themselves.  Matched on `assume` as well
+    as `withdraw` because giving up a conceding assertion only resolves the
+    conflict once the refused one is tried again and taken.
+    """
+    if c.failed:
+        return []
+    spec = c.output["spec"]
+    request = {"spec": spec, "about": "conflict"}
+    deciding = states["Deciding"].state()
+    key = json.dumps(request, sort_keys=True, default=str)
+    if key not in deciding["offered"]:
+        return []
+    if key in deciding["chosen"] or key in deciding["declined"]:
+        return []
+    asserted = states["Asserting"].state()["asserted"].get(spec, {})
+    assumed = states["Constraining"].state()["assumed"].get(spec, {})
+    if any(assumed.get(variable) != option for variable, option in asserted.items()):
+        return []
+    return [Invocation("Deciding", "withdraw", {"request": request})]
+
+
 def _the_conceded_assertion_is_withdrawn(
     c: Completion, _: States
 ) -> list[Invocation]:
@@ -295,6 +326,16 @@ rules = [
         "TheConcededAssertionIsWithdrawn",
         ("Deciding", "choose"),
         _the_conceded_assertion_is_withdrawn,
+    ),
+    Sync(
+        "AResolvedConflictWithdrawsItsQuestion",
+        ("Constraining", "assume"),
+        _a_resolved_conflict_withdraws_its_question,
+    ),
+    Sync(
+        "AResolvedConflictWithdrawsItsQuestion",
+        ("Asserting", "withdraw"),
+        _a_resolved_conflict_withdraws_its_question,
     ),
     Sync("AnIssuedQuoteIsShown", ("Quoting", "quote"), _an_issued_quote_is_shown),
     Sync(

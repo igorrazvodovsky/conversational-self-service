@@ -1,0 +1,128 @@
+# The moves
+
+What either party can do in a turn, what it changes, and which surface carries
+it. The canvas and the chat are two surfaces over one specification, and every
+question of the form *should this be a message or a section?* is answered here,
+move by move, rather than by a rule of thumb.
+
+This is a placement note. It changes no concept, action or rule; where a move
+reaches state, the rule that carries it is linked, and the rule is the
+authority.
+
+## The two surfaces
+
+The canvas is a view over concept state (`agent/views.py`). It shows what is
+the case: what the person requires, what was asserted and by whom, what
+follows and from which rule, what is still open, what is being asked, what
+was offered. It survives the thread, the reload and the restart, because the
+state it reads is reconstructed from the log.
+
+The chat is where the two parties address each other. The person's message is
+recorded first, as an utterance ([Conversing](concepts/conversing.md)), and the
+model's reply is a turn: an interpretation, an explanation, an argument, a
+question, a proposal. That is what the chat is for, and a configurator whose
+chat only takes instructions has given up the thing a conversational
+interface is worth having for.
+
+The two jobs are different, and the test for which surface a thing belongs on
+is this:
+
+> Could you delete the transcript and still have everything the person needs
+> to check?
+
+If deleting the transcript would lose something the person needs to *check*,
+that thing is a fact and belongs on the canvas. If it would lose something the
+person needs to *understand*, that is what the chat was for. Neither surface
+does the other's job: the chat does not restate the canvas, and the canvas
+does not carry reasoning about intent.
+
+## The person's moves
+
+The person acts on the canvas by gesture, or in the chat by saying something
+the model then acts on. Both reach the same actions by way of rules; the
+difference is provenance, which the canvas shows. A gesture is the person's
+own act. A tool call made after they asked for it is the model's act, made at
+their request, and reads that way in the log.
+
+| Move | Where | What it reaches | What the chat carries |
+|---|---|---|---|
+| Describe the situation — "a hospital, six storeys, in Lyon" | chat | `Conversing/say`, then the model's `assert_value` calls through [`TheModelMayAssertAValue`](syncs/conduct.md) | the model's reading of it, so it can be corrected: *I took that as a hospital, six stops, and a European code regime* |
+| State, relax, reword or strike a requirement, in their own words | canvas | [`Specifying`](concepts/specifying.md) through the clause gestures | nothing; the model cannot write or answer a clause |
+| Say which value answers a clause | canvas | [`Binding`](concepts/binding.md), then `Asserting` | nothing |
+| Assert or withdraw a value | canvas, or chat | `Asserting/assert` or `withdraw`, by gesture or by the model's tool | on the canvas, nothing — the model is not run; in the chat, what followed and why |
+| Ask why — "why can't I have 630 kg?" | chat | nothing; `review` reads state | the rule's own sentence, and the argument if the person pushes back. This lives in the chat and only there |
+| Ask what a choice cost | chat, or canvas | [`Framing`](concepts/framing.md) | one sentence saying what the narrowed canvas now shows |
+| Answer a conflict question | canvas, or chat | `Deciding/choose` or `decline` by gesture; in the chat, the model withdraws the conceded assertion at the person's word, under its own actor | the model saying what it withdrew and what came back |
+| Adopt a completion | canvas only | `Deciding/choose`, then [`AnAdoptedCompletionBecomesAssertions`](syncs/conduct.md) | the model may say the proposal is waiting; it cannot adopt |
+| Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote |
+| Request a quote | canvas, or chat | `Quoting/quote` when the specification is complete and addressed | what is missing, if anything, and where the proposal is |
+| Accept or revoke a quote | canvas only | `Quoting/commit`, `revoke` | nothing; the model cannot accept |
+| Choose what the canvas shows beside each item | canvas, or chat | [`Showing`](concepts/showing.md) | nothing; the point of the move is that the figure is on the canvas rather than recited |
+| Discard the specification | canvas | `Asserting/discard` | nothing |
+
+## The model's moves
+
+The model has two kinds of move: the tool calls [Conduct](syncs/conduct.md)
+permits, which reach state, and the reply, which reaches nobody's state and is
+what the chat exists for. The reply's moves:
+
+| Move | When | What it says | What it must not do |
+|---|---|---|---|
+| Interpretation | after reading the person's words into assertions | what it took them to mean, in the model's vocabulary, inviting correction | present the reading as the person's choice |
+| Consequence | after an assertion, when the rules forced something | what followed and the rule's sentence — the canvas shows the edge, the chat explains it | list every entailment; restate the canvas |
+| Argument | when asked why | the rule, in its own words, and what would have to give | compose a reason no rule states |
+| Asking | when a conflict is open, or a completion needs a choice the rules do not settle | the question, addressed to the person, with the answers open | answer it; treat its own turn as the person's answer |
+| Proposing | when the specification is incomplete and the person seems done stating context | the offer to work out the rest, or what a proposal assumed | say the proposal was adopted |
+| Declining | when asked to do something no rule permits — adopt, accept, change a price | that it cannot, and who can | do it another way |
+| Silence | when the person acted on the canvas | nothing — the model is not run on a gesture | narrate a gesture after the fact |
+
+The last row is by construction rather than by instruction: a gesture is
+performed against the engine directly (`agent/webapp.py`) and never enters the
+graph. Asking a model for an empty reply is an instruction it can fail to
+follow; here there is no turn to be silent in.
+
+## The conflict, as the worked case
+
+A conflict is the move that lives on both surfaces, and it shows why the
+placement is not a duplicate.
+
+On the canvas it is a fact: a `Deciding` request, asked by
+[`AConflictIsPutToThePerson`](syncs/propagation.md#when-assertions-cannot-hold-together)
+whenever a solve fails, holding the rules' sentences as its reason and the
+assertions that could give way as its options. It stays until it is answered,
+declined or withdrawn, and it is there after a reload. It is asked the same
+way whoever caused it — the person by a click, the model by a tool, a browser
+agent over WebMCP — which is why it cannot live in the chat: two of those three
+have no turn to attach it to.
+
+In the chat it is a question: the model says which rules refuse the value and
+asks which assertion gives way. The person may answer with a click, in which
+case the model was never involved, or in words, in which case the model
+withdraws the conceded assertion — a permitted move, made at the person's
+word, recorded under the model's actor — and
+[`AResolvedConflictWithdrawsItsQuestion`](syncs/propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)
+takes the question off the canvas once every assertion holds again. The chat
+poses; the canvas holds; either settles.
+
+What the chat must not do: state that a rejected value was recorded, walk
+the options the canvas already lists, or decide for the person. Each is a
+turn standing in for a fact, and the first is the model reporting a state it
+never checked. The prompt's rule is against withdrawing *unasked*;
+withdrawing at the person's word is the person's answer, carried out.
+
+## What is not yet in place
+
+- *The model's reply is specified only in the prompt.* The table above is the
+  first place the reply's moves are written down; `agent/main.py` carries them
+  as instructions, and nothing measures whether they are followed.
+- *Nothing reads `Conversing`.* The person's words are recorded so that the
+  log's first entry for a turn is what they said, and so far that is all. The
+  interpretation move — what the model took the words to mean — is not yet a
+  recorded fact, only a sentence in the reply.
+
+## See also
+
+- [Conduct](syncs/conduct.md) — which of the model's moves reach state, and which do not exist
+- [Gestures](syncs/gestures.md) — the person's moves, as root actions
+- [Propagation](syncs/propagation.md#when-assertions-cannot-hold-together) — how a conflict becomes a question
+- [The UI vocabulary](ui.md) — what the surfaces are built from

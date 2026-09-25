@@ -2,9 +2,7 @@
 
 /**
  * The chat's geometry: where the conversation sits relative to the artifact
- * panel. Adopted from the sibling prototype, `conv-pro-conf`
- * (`docs/specs/chat-surface/design.md` there), whose decisions this file
- * keeps:
+ * panel. The decisions this file keeps:
  *
  * 1. The mode is React view state and nothing else. It is not a `Moding`
  *    surface: `Moding` says which artifact has the viewer's attention, the

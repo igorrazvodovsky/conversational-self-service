@@ -413,6 +413,67 @@ class Constraining:
         self._refused.setdefault(spec, {}).pop(variable, None)
         return self._recompute(spec)
 
+    def _survey(
+        self, solver: z3.Solver, rules: list[z3.BoolRef], assumptions: list[z3.BoolRef]
+    ) -> tuple[dict[str, list[str]], dict[str, str]]:
+        """The first pass: which options survive, and which variables are
+        settled to one, under these assumptions.  Shared by `_recompute` and
+        by `foreseeing`, which asks it of assumptions nobody has made."""
+        possible: dict[str, set[str]] = {v: set() for v in self._range}
+        while True:
+            unseen = [
+                self._sel[(variable, option)]
+                for variable, options in self._range.items()
+                for option in options
+                if option not in possible[variable]
+            ]
+            if not unseen:
+                break
+            solver.push()
+            solver.add(*assumptions)
+            solver.add(z3.Or(*unseen))
+            found = solver.check(*rules) == z3.sat
+            model = solver.model() if found else None
+            solver.pop()
+            if not found:
+                break
+            for (variable, option), literal in self._sel.items():
+                if z3.is_true(model.eval(literal, model_completion=True)):
+                    possible[variable].add(option)
+
+        ordered = {
+            variable: [o for o in options if o in possible[variable]]
+            for variable, options in self._range.items()
+        }
+        settled = {v: os[0] for v, os in ordered.items() if len(os) == 1}
+        return ordered, settled
+
+    def foreseeing(
+        self, spec: str, assumptions: dict[str, str]
+    ) -> dict[str, Any]:
+        """What the specification would settle under these assumptions instead
+        of its own.
+
+        A read, not an action — `docs/syncs/propagation.md`, "What each
+        answer would cost is a read".  Nothing is recorded: the question
+        *what if this were given up* is asked of the solver and answered,
+        and the specification's own assumptions are untouched.  `buildable`
+        is false when the assumptions cannot hold together, in which case
+        nothing is possible and nothing settled.
+        """
+        solver = self._built()
+        rules = list(self._rule_lit.values())
+        literals = [
+            self._sel[(variable, option)]
+            for variable, option in assumptions.items()
+            if (variable, option) in self._sel
+        ]
+        buildable = solver.check(*rules, *literals) == z3.sat
+        if not buildable:
+            return {"spec": spec, "buildable": False, "possible": {}, "settled": {}}
+        possible, settled = self._survey(solver, rules, literals)
+        return {"spec": spec, "buildable": True, "possible": possible, "settled": settled}
+
     def _built_sel(self) -> dict[tuple[str, str], z3.BoolRef]:
         self._built()
         return self._sel
@@ -455,33 +516,7 @@ class Constraining:
         rules = list(self._rule_lit.values())
         assumptions = self._assumption_literals(spec)
 
-        possible: dict[str, set[str]] = {v: set() for v in self._range}
-        while True:
-            unseen = [
-                self._sel[(variable, option)]
-                for variable, options in self._range.items()
-                for option in options
-                if option not in possible[variable]
-            ]
-            if not unseen:
-                break
-            solver.push()
-            solver.add(*assumptions)
-            solver.add(z3.Or(*unseen))
-            found = solver.check(*rules) == z3.sat
-            model = solver.model() if found else None
-            solver.pop()
-            if not found:
-                break
-            for (variable, option), literal in self._sel.items():
-                if z3.is_true(model.eval(literal, model_completion=True)):
-                    possible[variable].add(option)
-
-        ordered = {
-            variable: [o for o in options if o in possible[variable]]
-            for variable, options in self._range.items()
-        }
-        settled = {v: os[0] for v, os in ordered.items() if len(os) == 1}
+        ordered, settled = self._survey(solver, rules, assumptions)
         asked = self._assumed.get(spec, {})
         owing: dict[str, list[str]] = {}
         following: dict[str, list[str]] = {}

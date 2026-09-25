@@ -20,6 +20,7 @@ _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 - [`docs/method/`](docs/method/README.md) — the vocabulary: individuals, values, actions, facts, concepts, synchronizations, and how they map to code
 - [`docs/concepts/`](docs/concepts/README.md) — the concepts, specified
 - [`docs/syncs/`](docs/syncs/README.md) — the rules, the only way two concepts interact
+- [`docs/moves.md`](docs/moves.md) — what either party can do in a turn, and which surface carries it: the canvas holds what is the case, the chat is where the parties address each other
 
 **The notes are the source, and the code is generated from them.** WYSIWID
 §7.3: the prompt for the implementation is exactly the concept design spec. If

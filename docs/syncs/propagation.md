@@ -158,6 +158,67 @@ failure that produced them rather than from a separate query, which is
 why there is no `Explaining` concept: nobody performs *explain*, so it would
 have no actions.
 
+### What each answer would cost is a read
+
+The question offers assertions to give up, and a person choosing between
+them needs to know what each answer does: what would then follow, and what it
+would cost in price and in carbon. Those are not facts of any concept. They
+are answers to *what if*. The amount worth showing is per answer, the values
+that would change and both deltas; the whole consequence set is one move
+away, because every touched variable at once is what makes a ripple read as
+noise, and the bare core without the costs leaves the person interrogating
+each answer in turn.
+
+`Constraining` therefore has a read beside `excluding` and `narrowing`:
+*foreseeing*, which takes a specification and a set of assumptions in place of
+its own and returns what would be possible and settled under them, or that
+they cannot hold together. It records nothing. The canvas view
+(`agent/views.py`) asks it once per answer, with that assertion left out and
+every unmet assertion put back — which is what `UnmetAssertionsAreTriedAgain`
+would do — and prices the result with the same reads the totals use. The
+figures ride beside the question as `foreseen`, one entry per option; the
+options themselves are untouched, because `Deciding/choose` has to recognise
+the one handed back.
+
+## A conflict resolved another way takes its question with it
+
+```
+sync AResolvedConflictWithdrawsItsQuestion
+when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ]
+        Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
+where { ?r is [ spec: ?s ; about: "conflict" ]
+        Deciding: { ?r offered: _ }, and ?r is neither chosen nor declined
+        for every ?v such that Asserting: { ?s asserted: ?v -> ?o },
+          Constraining: { ?s assumed: ?v -> ?o } }
+then  { Deciding/withdraw: [ request: ?r ] }
+```
+
+`TheConcededAssertionIsWithdrawn` is one way a conflict ends, and it is not
+the only one. The person may answer the question in the chat instead of on
+the canvas — *keep the hospital* — and the model, permitted to withdraw,
+withdraws the 630 kg at their word. Or the person withdraws the refused
+assertion themselves, or asserts something else for that variable. None of
+those touch `Deciding`, and without this rule the canvas would go on asking a
+question that has been answered ([The moves](../moves.md#the-conflict-as-the-worked-case)).
+
+The `where` says what *answered* means: every assertion of the specification
+is assumed. That is the condition the question was asked about, negated, and
+it is why the rule matches `assume` as well as `withdraw`. Withdrawing the
+assertion that was refused satisfies it at once, since that one was never
+assumed. Withdrawing one that was conceding does not — the refused assertion
+is still unmet — until `UnmetAssertionsAreTriedAgain` assumes it, and it is
+that `assume`'s completion the rule then matches. Either way the question goes
+when the conflict does, and not before.
+
+It is narrower than [`AChangedSpecificationWithdrawsItsProposal`](conduct.md),
+which withdraws a completion on any change. A completion is computed against a
+state and is stale the moment that state moves; a conflict question is about a
+condition, and holds as long as the condition does.
+
+A chosen request is not pending, so a question answered on the canvas is left
+alone: the answer is the record of what was chosen, and this rule only takes
+away a question nobody answered.
+
 ## What `Deciding` is instantiated with here
 
 [`Deciding [Request, Option]`](../concepts/deciding.md) is used twice in this

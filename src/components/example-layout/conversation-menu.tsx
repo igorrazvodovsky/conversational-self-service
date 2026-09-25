@@ -1,11 +1,9 @@
 "use client";
 
 /**
- * The conversation list, in the chat's header. Adopted from `conv-pro-conf`
- * (`docs/specs/chat-surface/design.md` decision 7 there), where it replaced
- * `CopilotThreadsDrawer` for the same reason it does here: the list is a view
- * onto the pane it changes, so it belongs with that pane rather than in a
- * column of its own.
+ * The conversation list, in the chat's header. It replaces
+ * `CopilotThreadsDrawer`: the list is a view onto the pane it changes, so it
+ * belongs with that pane rather than in a column of its own.
  *
  * The menu takes props only. The page owns the list and the active thread
  * (`useConversations`, below), so a streaming reply, which re-renders the

@@ -1,6 +1,5 @@
 // The division between the artifact panel and the chat, remembered across
-// reloads. Adopted from the sibling prototype, `conv-pro-conf`
-// (`docs/specs/remembered-split/design.md` there).
+// reloads.
 //
 // A cookie rather than `localStorage` because the server renders this split
 // too: `react-resizable-panels` writes the division inline, so a value the

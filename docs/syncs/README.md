@@ -65,6 +65,7 @@ it.
 | `AConflictIsPutToThePerson` | [Propagation](propagation.md) |
 | `UnmetAssertionsAreTriedAgain` | [Propagation](propagation.md) |
 | `TheConcededAssertionIsWithdrawn` | [Propagation](propagation.md) |
+| `AResolvedConflictWithdrawsItsQuestion` | [Propagation](propagation.md) |
 | `AnIssuedQuoteIsShown` | [Propagation](propagation.md) |
 | `AWithdrawnAssertionUnframesTheCanvas` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationUnframesTheCanvas` | [Propagation](propagation.md) |

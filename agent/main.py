@@ -47,9 +47,13 @@ How the configurator works, because it is not the usual kind:
 - Use the ids `review` returns. A variable is a bare name like `rated_load`;
   an option is a qualified id like `rated_load:kg1000`.
 - An assertion that conflicts is still recorded, and comes back with the
-  rules that refuse it. Report which rules, by their sentences. Do not
-  quietly withdraw the person's earlier assertion to make room — the
-  question of which one gives way goes to them.
+  rules that refuse it. Say why, in the rules' own sentences, and ask which
+  assertion gives way. The canvas holds the same question with its answers,
+  so do not list them again. If the person answers in words, `withdraw` the
+  one they gave up — that is their answer, carried out. Never withdraw one
+  unasked to make room.
+- Say what you took the person's words to mean, so they can correct you.
+  Never restate what the canvas already shows; explain it.
 - `propose` computes a completion. You cannot adopt it; the person does, on
   the canvas. Say that it is waiting for them rather than that it is done.
 - `quote` freezes the settled values and their price into a written proposal,

@@ -2,9 +2,7 @@
 
 Every surface this prototype draws is built from [shadcn/ui](https://ui.shadcn.com)
 components in `src/components/ui/`, installed with the shadcn CLI rather than
-written by hand. The setup follows the sibling prototype,
-`conv-pro-conf` (`docs/specs/ui-component-library/design.md` there), so the two
-read as one product: shadcn's zinc palette in oklch, and the Lyra style, which is
+written by hand: shadcn's zinc palette in oklch, and the Lyra style, which is
 square, dense and sharp.
 
 This is presentation only. No concept, action or rule changed, and nothing here
@@ -88,8 +86,7 @@ and the markdown body of an assistant turn, which is set at 14px to match.
 
 ## The chat against the artifact panel
 
-The layout is `conv-pro-conf`'s (its *chat surface* and *remembered split*
-specs), carried over in `src/components/example-layout/`: an artifact panel
+The layout is in `src/components/example-layout/`: an artifact panel
 that is always mounted, and a chat with four geometries — sidebar, floating,
 full screen, hidden — switched from one menu in its header. The chat is
 mounted once and the modes change its container's classes only, because the
@@ -104,8 +101,7 @@ writes it inline and a value the server did not know would hydrate as a
 mismatch. Both menus mount a tick after hydration, since a Radix menu present
 during the hydration pass shifts the `useId` values of the whole page.
 
-The conversation list is the other `conv-pro-conf` carry-over: a menu at the
-left of the chat's header (`conversation-menu.tsx`), rows labelled by start
+The conversation list is a menu at the left of the chat's header (`conversation-menu.tsx`), rows labelled by start
 time and grouped by day, with no navigation column beside the split. It is
 used instead of `CopilotThreadsDrawer`, which does not fetch until the runtime
 reports a license status. Only CopilotKit Intelligence reports one, so without
@@ -140,9 +136,7 @@ configurator is one engine, not one per thread.
 
 - The attachment queue above the composer, and a sent attachment's thumbnail,
   are CopilotKit's own components with no slot, so they keep their rounded
-  corners. Replacing them means taking over `CopilotChatView`'s whole layout, as
-  `conv-pro-conf`'s chat pane does, and porting that pane means porting the
-  gesture conventions it depends on.
+  corners. Replacing them means taking over `CopilotChatView`'s whole layout.
 - The "View in Inspector" button under an assistant turn is drawn by
   CopilotKit's dev inspector, on a local run only.
 - `src/lib/a2ui-theme.css` is imported by nothing.
