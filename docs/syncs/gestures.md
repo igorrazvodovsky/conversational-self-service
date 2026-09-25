@@ -133,9 +133,9 @@ The stimulus does not come from the browser. A chat message posted as a second
 HTTP request would race the model's run, so the ordering the rule exists to
 establish would hold by luck; it is performed instead in `agent/hearing.py`,
 which runs before the model node of the graph, so the ordering is one the graph
-enforces. Three surfaces perform a root action — a click (`webapp.py`), a
-tool call (`tools.py`) and a chat message (`hearing.py`) — and all three do the
-same nothing with it.
+enforces. A click (`webapp.py`), a tool call (`tools.py`) and a chat message
+(`hearing.py`) each perform a root action, and each does the same nothing
+with it.
 
 Only a person says anything. `Conversing/say` takes a party and no rule invokes
 it with the machine, so the assistant's replies stay in CopilotKit's thread and
@@ -180,7 +180,7 @@ yielded: a preference that gave way is not a requirement the offer fails,
 and the proposal's basis of design shows the clause beside what the offer
 supplies for it. A quote on a presumed term would be an offer resting on an assumption
 the person has not made. A proposal is also *addressed*, so the `where` asks
-two more things: that the person has given a name
+more of it: that the person has given a name
 ([Profiling](../concepts/profiling.md)) and that the job has a site
 ([Naming](../concepts/naming.md)). When the `where` does not bind, the rule
 declines to fire and the gesture does nothing, which is the ordinary meaning
@@ -204,7 +204,7 @@ The validity period is the seller's stipulation, read from the same basis.
 the stipulated days to today and the concept would serve a different period
 unchanged.
 
-The two rules above it are the addressee's. `APersonIntroducesThemselves`
+`APersonIntroducesThemselves` and `APersonEntitlesTheJob` are the addressee's. `APersonIntroducesThemselves`
 carries whatever details the form sent — each field is optional, and a field
 left alone stays as it was — and `APersonEntitlesTheJob` does the same for
 the title and the site. Both are partial because a person gives their name in one message and
@@ -216,19 +216,19 @@ does the comparison. `APersonRevokesAQuote` carries nothing but the identity.
 ## What the canvas shows is chosen
 
 `APersonShowsAFacet` and `APersonHidesAFacet` carry a tick in a menu into
-[Showing](../concepts/showing.md). They are the two gestures that change no
+[Showing](../concepts/showing.md). They change no
 fact of the specification: a facet names something a concept already holds,
 and the act decides whether the canvas reads it. The lens is the workspace,
 as the surface's workspace is in `APersonFocusesASurface`. Both have
 counterparts in [Conduct](conduct.md#what-the-canvas-shows) on identical
-terms, which is the first pair of permissions the two actors hold alike.
+terms, which makes them permissions both actors hold alike.
 
 `APersonFramesTheCanvas` and `APersonUnframesTheCanvas` are the same shape
 one concept over, into [Framing](../concepts/framing.md): which *items* the
 canvas shows rather than which facts about each. The frame is a value the
 click passes and the read side interprets — today
 `[ by: "assertion" ; variable: ?v ]`, from a control on an asserted card —
-and the rule carries it without looking inside. Two rules in
+and the rule carries it without looking inside. Rules in
 [Propagation](propagation.md#a-frame-goes-with-what-it-framed) take a frame
 away when what it framed goes.
 
@@ -265,9 +265,9 @@ terms without yet saying the lift must have it. What answers the clause is
 still `answer`, below; the value's chip offers that act where the value was
 named, and shows when it holds.
 
-The fifth act on this side, `answer`, is the one that reaches
+One more act on this side, `answer`, is the one that reaches
 [Binding](../concepts/binding.md), and it is written up with its consequences
-in [Binding](binding.md#a-person-answers-a-clause) because which of two rules
+in [Binding](binding.md#a-person-answers-a-clause) because which rule
 it fires is a fact of that concept's state. It is the slice 1 counterpart of
 `assert`: the same click on the same option, carrying the clause it answers.
 
@@ -284,13 +284,13 @@ their definition.
 
 That is worth saying out loud because
 [the two-tier policy](../method/boundaries.md#what-the-policy-does-not-excuse)
-already makes the same point about the model's six tool names: shaped by
+already makes the same point about the model's tool names: shaped by
 CopilotKit's conventions, and ours all the same. The person-side root action is
 the exact parallel. Each act is named for something a person does, and the
 granularity is the same argument as the tools' — a log of these says what
 happened.
 
-## The two asymmetries
+## What only a person may do
 
 <a id="the-two-asymmetries"></a>
 `APersonAnswersAQuestion` has no counterpart in [Conduct](conduct.md). No rule
@@ -303,10 +303,9 @@ rules leave open as a question of its own; and a question is answered by a
 person or by nobody. There is no prompt instruction to that effect, and
 there does not need to be one.
 
-`APersonCommitsToAQuote` is the second, and it has the same shape one step
-later. The model may request a quote, as it may propose a completion; no rule
+`APersonCommitsToAQuote` has the same shape one step later. The model may request a quote, as it may propose a completion; no rule
 carries a `Copiloting/invoke` to `Quoting/commit`, so an offer is accepted by
-the person or by nobody. Between them the two absences say what the model is
+the person or by nobody. Between them the absences say what the model is
 for here: it can work out what to build and what it would cost, and it can make
 neither of those yours.
 
@@ -344,5 +343,5 @@ the letterhead they can write, and the seller's is seeded at boot.
 - [Binding](binding.md) — the `answer` gesture, and what follows from a clause being answered
 - [Propagation](propagation.md) — what happens after a value is asserted
 - [Conversing](../concepts/conversing.md) — the concept `APersonSays` writes into
-- [Quoting](../concepts/quoting.md) — the concept the last three rules reach
+- [Quoting](../concepts/quoting.md) — the concept the quote rules reach
 - [Code of conduct](../method/conduct.md) — why permissions rather than prohibitions

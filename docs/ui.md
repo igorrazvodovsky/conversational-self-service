@@ -20,7 +20,7 @@ string, and take the installed file as it comes: the next `add --overwrite` will
 replace any edit made to it.
 
 Do not run `shadcn init`. It writes `src/app/globals.css` wholesale and would
-drop things it knows nothing about. Three of them fail silently:
+drop things it knows nothing about. Some of them fail silently:
 
 - The `@theme inline` block. It is what makes `bg-background` or
   `text-muted-foreground` a utility at all. Without it those classes compile to
@@ -87,8 +87,8 @@ and the markdown body of an assistant turn, which is set at 14px to match.
 ## The chat against the artifact panel
 
 The layout is in `src/components/example-layout/`: an artifact panel
-that is always mounted, and a chat with four geometries — sidebar, floating,
-full screen, hidden — switched from one menu in its header. The chat is
+that is always mounted, and a chat whose geometry is sidebar, floating, full screen or hidden,
+switched from one menu in its header. The chat is
 mounted once and the modes change its container's classes only, because the
 transcript's scroll offset belongs to a DOM node and re-parenting it loses the
 place. Hidden is `inert` and transparent rather than `display:none` for the

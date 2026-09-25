@@ -76,7 +76,7 @@ WYSIWID §7.2 states the four rules the pattern imposes.
 
 ## In this repository
 
-There is an engine, in `agent/engine/`, and twenty-seven rules in `agent/syncs/`,
+There is an engine, in `agent/engine/`, and the rules in `agent/syncs/`,
 written up in [`../syncs/`](../syncs/README.md). Concepts import nothing from
 each other; every interaction between two of them is a rule.
 
@@ -89,17 +89,16 @@ completion and returning invocations, and the notation stays in the notes,
 where the papers' notation belongs. All four design rules below are checkable
 against that shape, and none of them needs a matcher.
 
-Three of the rules are worth naming here because of what they demonstrate.
+Some of the rules are worth naming here because of what they demonstrate.
 
 _`AConflictIsPutToThePerson`_ matches a *failing* completion —
 `assume => [ error ; culprits ; conceding ]` — and needs no construct to do it,
 because `error` is an ordinary argument name (WYSIWID §5.3). It also aggregates
-in its `where` rather than firing once per binding, since five conflicting
-assertions are one question with five answers.
+in its `where` rather than firing once per binding, since several conflicting assertions are one question with several answers.
 
 _`AProposedValueIsPutToThePerson`_ is the ordinary §6.5 shape in the other
 direction: one binding per open pair in the assignment, `then` invoked once
-per binding, thirty-odd questions asked with no loop anywhere in a concept.
+per binding, a question per open value, asked with no loop anywhere in a concept.
 
 _`TheModelMayProposeACompletion`_ reads `Pricing` and `Footprinting` state in
 its `where` to build an objective, and hands it to `Constraining`. Neither

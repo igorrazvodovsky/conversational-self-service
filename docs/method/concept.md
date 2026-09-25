@@ -38,7 +38,7 @@ _The source addressing the axis wins._
 | Ontology and code shape | MSM §4–5.2 | The only systematic treatment of the four phenomena and their mapping to code. |
 | Why not objects | [The objects piece](objects.md) | MSM footnote 6 cites it for exactly this. |
 
-Recency alone is *not* the rule. The objects piece is the most recent source and writes actions as `register (name: String, pass: String): (user: User)` with `requires`/`effects`, state as "a set of `Users` with a username `String`", and no operational principle at all. Adopting that here would cost eight rewritten concept notes and lose the bracket-and-arrow form the DSL depends on. It is a prose exposition for readers, not a specification language for an engine, and it is not trying to supersede one.
+Recency alone is *not* the rule. The objects piece is the most recent source and writes actions as `register (name: String, pass: String): (user: User)` with `requires`/`effects`, state as "a set of `Users` with a username `String`", and no operational principle at all. Adopting that here would mean rewriting every concept note and losing the bracket-and-arrow form the DSL depends on. It is a prose exposition for readers, not a specification language for an engine, and it is not trying to supersede one.
 
 ## Specification format
 
@@ -98,15 +98,15 @@ Identity is never a state relation. "There is no need for a `userid` field; each
 
 ## The concepts of this repository
 
-Ten domain concepts and one bootstrap concept, indexed in [`../concepts/`](../concepts/README.md), with one module each in `agent/concepts/` and the rules between them in `agent/syncs/`.
+The domain concepts and the bootstrap concept are indexed in [`../concepts/`](../concepts/README.md). Those in the engine have one module each in `agent/concepts/`, and the rules between them are in `agent/syncs/`.
 
-The five that carry the configurator are [Asserting](../concepts/asserting.md), [Constraining](../concepts/constraining.md), [Cataloguing](../concepts/cataloguing.md), [Pricing](../concepts/pricing.md) and [Footprinting](../concepts/footprinting.md). The split worth defending is the first two: what a person asked for and what follows from it are two concepts, not two fields, and [Asserting](../concepts/asserting.md#why-this-is-separate-from-constraining) argues it.
+The concepts that carry the configurator are [Asserting](../concepts/asserting.md), [Constraining](../concepts/constraining.md), [Cataloguing](../concepts/cataloguing.md), [Pricing](../concepts/pricing.md) and [Footprinting](../concepts/footprinting.md). The split worth defending is the first two: what a person asked for and what follows from it are two concepts, not two fields, and the [rules between them](../syncs/propagation.md#the-assertion-is-recorded-before-it-is-known-to-be-satisfiable) argue it.
 
 The one worth defending in the other direction is [Constraining](../concepts/constraining.md), which holds the rules *and* answers what they still allow. That looks like two concerns and is one, on the `Password` precedent: WYSIWID §4 gives that concept both `set` and `check` under a single purpose, because holding the secret and testing against it are the same job.
 
 ## What is deliberately not a concept
 
-The repository has eight framework mechanisms that a naive reading would promote to concepts: `CopilotChat`, `useFrontendTool`, `useComponent`, `useHumanInTheLoop`, `useDefaultRenderTool`, `useConfigureSuggestions`, the A2UI surfaces, the MCP client. None is a unit of meaning; each is a way of carrying a stimulus across a boundary. WYSIWID §6.7 collapses all such machinery into a single bootstrap concept, which is what [Copiloting](../concepts/copiloting.md) does.
+The repository has framework mechanisms that a naive reading would promote to concepts: `CopilotChat`, `useFrontendTool`, `useComponent`, `useHumanInTheLoop`, `useDefaultRenderTool`, `useConfigureSuggestions`, the A2UI surfaces, the MCP client. None is a unit of meaning; each is a way of carrying a stimulus across a boundary. WYSIWID §6.7 collapses all such machinery into a single bootstrap concept, which is what [Copiloting](../concepts/copiloting.md) does.
 
 The chart components are likewise not concepts. They have no state and no lifecycle — a pie chart is a rendering of [Querying](../concepts/querying.md)'s state, and "this data was displayed" is not a fact anyone needs recorded.
 

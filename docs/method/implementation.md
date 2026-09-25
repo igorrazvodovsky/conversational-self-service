@@ -104,7 +104,7 @@ The layout follows §5.2.1, on the agent side, in Python:
 | MSM §5.2.1 | Here |
 |---|---|
 | `src/concepts/` — one class per concept | `agent/concepts/` — one module per concept, each a singleton class whose actions take and return dicts |
-| `src/syncs/` — independent blocks | `agent/syncs/` — `seeding.py`, `gestures.py`, `propagation.py`, `conduct.py`, each a list of `Sync` values |
+| `src/syncs/` — independent blocks | `agent/syncs/` — one module per sync note, each a list of `Sync` values |
 | `src/engine/` — provided, untouched | `agent/engine/` — the log, flows, provenance, and the dispatcher |
 | `src/main.ts` — discovers concepts, wires syncs | `agent/wiring.py`, which also reads the catalogue in and hands it to the bootstrap concept as `Copiloting/boot` |
 
@@ -131,7 +131,7 @@ a click. `engine.settled_at` marks where that stopped and behaviour began.
 Every record after it carries an actor (`person`, `model`, `browser`) and, unless it is a
 root action, the name of the rule that authorised it. The interface reads those
 edges directly: *you asked for this*, *the assistant asked for this*, *adopted
-from a proposal* are three different `via` values on the same action, and no
+from a proposal* are different `via` values on the same action, and no
 field anywhere records which one applied.
 
 That is the property the CopilotKit starter cannot have. Its one write action

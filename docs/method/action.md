@@ -41,7 +41,7 @@ contrast with TLA and Z is exactly this — where only the transition is
 semantically real, those two are indistinguishable, and a log of them cannot
 answer *did I ask for this, or did the machine?*
 
-_Arguments are named, and the failing case carries three of them._
+_Arguments are named, and the failing case carries several of them._
 `assume => [ error ; culprits ; conceding ]` needs no special construct:
 `error` is an ordinary argument name (WYSIWID §5.3), and a rule matching on it
 gets the rules responsible and the requirements at stake in the same match. See

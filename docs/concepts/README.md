@@ -89,26 +89,26 @@ for a turn is the person's words.
 offer, frozen as issued, that the specification can move away from without
 changing.
 
-[Showing](showing.md) and [Framing](framing.md) are the two viewer's-choice
+[Showing](showing.md) and [Framing](framing.md) are the viewer's-choice
 concepts — which facts appear beside an item, and which items appear at all.
 
 ## What was here before
 
-This model replaced one reverse-engineered from the starter's todo list. Two
-concepts went with it:
+This model replaced one reverse-engineered from the starter's todo list, and
+these concepts went with it:
 
 - `Tasking` — tracking discrete pieces of work. Nothing in a configurator is a task.
 - `Adorning` — attaching a glyph to an item. It existed to hold `Todo.emoji`, and there is no emoji here.
 
 They are worth knowing about because the finding they carried survived the
-change of domain. Seven user-meaningful task actions were implemented as one
+change of domain. The user-meaningful task actions were implemented as one
 whole-list setter; the equivalent mistake here would be a single
 `configure(spec)` taking the whole assignment, and it is the mistake
 [Asserting](asserting.md) exists to make impossible.
 
 ## Before writing another one
 
-Three [bad smells](../method/objects.md#bad-smells) catch a concept that is
+The [bad smells](../method/objects.md#bad-smells) catch a concept that is
 really a class declaration: state with no sets, an action that cannot be
 defined on the individual it names, and a purpose that needs an "and". The last
 is the cheapest and catches the most.
@@ -122,9 +122,9 @@ responsible for a conflict are an output argument of the failing case of
 _Versioning or comparing a specification._ There is one specification per
 session. A configurator sold to anyone would need both, and each is a concept
 rather than a field; leaving them out is a scope decision, not a claim that
-they do not exist. [Quoting](quoting.md) holds the one snapshot the
+they do not exist. [Quoting](quoting.md) holds the snapshot the
 application cannot do without, and an offer is not a version;
-[Naming](naming.md) gives the one specification a title and a site, which
+[Naming](naming.md) gives the specification a title and a site, which
 makes it findable and not comparable.
 
 _Accounting._ Login, roles, price visibility. The case's catalogue puts

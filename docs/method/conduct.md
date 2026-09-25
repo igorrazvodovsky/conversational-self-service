@@ -2,7 +2,7 @@
 
 The vocabulary for governing an actor that acts in your absence. MSM §5.3.
 
-This is the note the rest of the method needs in order to say anything useful about the model. This application has two root actors, and one of them decides for itself which tools to call. §5.3 is the answer's shape.
+This is the note the rest of the method needs in order to say anything useful about the model. This application has more than one root actor, and the model decides for itself which tools to call. §5.3 is the answer's shape.
 
 > An agent that has been granted authority over a user's files, email, calendar or experimental codebase acts in the user's absence. What it did, why it did so, and whether it had the right to do so must be answered from a record largely produced by the agent itself. Direct observation, which mediates most software use, is no longer available.
 
@@ -117,5 +117,5 @@ rather than as done.
 
 - [Synchronization](synchronization.md) — the form a permission takes
 - [From meaning to code](implementation.md#the-action-log) — the log the trace is
-- [Copiloting](../concepts/copiloting.md) — the second root actor, unmodelled
+- [Copiloting](../concepts/copiloting.md) — the model's root action, unmodelled
 - [Misalignment](misalignment.md) — the other half of MSM's applications

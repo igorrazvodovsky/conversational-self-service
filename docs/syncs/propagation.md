@@ -42,14 +42,15 @@ and *met* is the other, read by the rules and the canvas alike:
   or   Constraining: { ?s inclined: ?v -> ?o } and nothing is refused against ?v
 ```
 
-Three rules, one direction. Nothing carries anything from
+These rules run one direction. Nothing carries anything from
 [Constraining](../concepts/constraining.md) back into
 [Asserting](../concepts/asserting.md) except by way of a person answering a
 question, and that asymmetry is the design.
 
-### Which of the first two fires is a fact of the state
+### Which strength a value reaches the solver with is a fact of the state
 
-One completion, two rules with complementary `where` clauses, and no field on
+<a id="which-of-the-first-two-fires-is-a-fact-of-the-state"></a>
+One completion, rules with complementary `where` clauses, and no field on
 the assertion says which. Strength is a fact of a *clause*, which is
 [Specifying](../concepts/specifying.md)'s `negotiability`, and not of an
 assertion: `Asserting` records the value and nothing about how firmly it is
@@ -66,8 +67,8 @@ and a bare pick on the canvas always have. A value that answers two clauses,
 one fixed and one negotiable, is hard, because the firmer requirement governs.
 And `open` is not a strength: a clause the person has deliberately left open
 says nothing about how firmly its answer is meant, so an answer to it is hard.
-The solver knows two strengths, and the calculation maps the three
-negotiabilities onto them by asking one question, *is every reason for this
+The solver knows a hard strength and a soft one, and the calculation maps
+every negotiability onto one of them by asking one question, *is every reason for this
 value a preference*.
 
 ### What the solver does with a soft value
@@ -142,16 +143,16 @@ obstacle going or by the clause being softened again. Making a requirement
 fixed is how a person finds out what it costs, which is the right moment to
 ask. Softening cannot fail: an unmet value made negotiable becomes an
 inclination, its refusal is cleared, and it is honoured or yields in the
-recompute, so settling a clause to *negotiable* is a second way of answering
+recompute, so settling a clause to *negotiable* is another way of answering
 a conflict, in the document rather than on the canvas, and the question goes
 with it. That is why the softening rule's last condition reads *with nothing
 refused*: a value the solver already inclines, and has since refused firmly,
 is inclined again so that the refusal clears.
 
-The third rule is for a struck clause. `AStruckClauseReleasesItsChoices`
+`ARetractedChoiceHardensItsValue` is for a struck clause. `AStruckClauseReleasesItsChoices`
 ([Binding](binding.md)) retracts the choice and leaves the value asserted,
 and a value with no clause behind it is an ordinary assertion, so it hardens.
-The same rule matches the other two retractions and declines on both: a
+The same rule matches the other retractions and declines on both: a
 withdrawn value is no longer asserted, and an overwritten value's variable
 now asserts something else.
 
@@ -190,7 +191,7 @@ about z3 and not about Tacton. What the rules above establish is narrower and
 is still worth having: that negotiability can reach validity by a rule that
 reads the person's tag, without an action added to `Asserting` and without a
 weight anywhere the person can see. If the real solver has no soft constraint,
-the consequence the plan records stands, and the two rules above that invoke
+the consequence the plan records stands, and the rules above that invoke
 `incline` are the ones that would have nothing to invoke.
 
 ## The assertion is recorded before it is known to be satisfiable
@@ -199,7 +200,7 @@ the consequence the plan records stands, and the two rules above that invoke
 the assumption fails, the assertion is already on record and stays there.
 
 This looks like a mistake and is the point. An assertion that cannot currently
-be met is not a nullity — it is the most important thing on the screen. The two
+be met is not a nullity — it is the most important thing on the screen. The
 relations are readable side by side:
 
 ```
@@ -238,7 +239,7 @@ where { Deciding: { ?r offered: ?options }
 then  { Deciding/withdraw: [ request: ?r ] }
 ```
 
-The second is the ordinary §6.5 shape — one binding per request, `then` once per
+`ADiscardedSpecificationsQuestionsAreWithdrawn` is the ordinary §6.5 shape — one binding per request, `then` once per
 binding. It exists because a conflict question outlives the assertions it is
 about: answering it after a discard would concede an assertion that no longer
 exists, and the canvas would go on asking about a specification that is gone.
@@ -302,11 +303,11 @@ a concept that knew there was an interface.
 `AConflictIsPutToThePerson` aggregates in its `where` rather than firing once
 per binding. WYSIWID §6.5's default — one binding, one invocation of `then` —
 is what gives a cascading delete its iteration for free, and it is the wrong
-default here: five conflicting assertions are one question with five answers,
-not five questions. The `where` clause "performs calculations" (WYSIWID §5), and
+default here: several conflicting assertions are one question with several
+answers, not several questions. The `where` clause "performs calculations" (WYSIWID §5), and
 collecting a set is one.
 
-Note that `error` is matched alongside two other output arguments. No construct
+Note that `error` is matched alongside other output arguments. No construct
 is needed for that: a failing case is an ordinary case, and `error` is an
 ordinary argument name (WYSIWID §5.3). The rules responsible arrive with the
 failure that produced them rather than from a separate query, which is
@@ -402,8 +403,8 @@ away a question nobody answered.
 
 ## What `Deciding` is instantiated with here
 
-[`Deciding [Request, Option]`](../concepts/deciding.md) is used three ways in
-this application with different parameters, which is the argument for it
+[`Deciding [Request, Option]`](../concepts/deciding.md) is used in several ways
+in this application with different parameters, which is the argument for it
 being a concept at all:
 
 | | `Request` | `Option` |

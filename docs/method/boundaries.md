@@ -39,7 +39,7 @@ MSM §5.2.2's `Requesting` concept is *not* the precedent, and it is worth being
 
 ## Where the line falls in this repository
 
-_Ours — full specifications, in [`../concepts/`](../concepts/README.md):_ [Asserting](../concepts/asserting.md), [Constraining](../concepts/constraining.md), [Cataloguing](../concepts/cataloguing.md), [Pricing](../concepts/pricing.md), [Footprinting](../concepts/footprinting.md), [Deciding](../concepts/deciding.md), [Scheduling](../concepts/scheduling.md), [Querying](../concepts/querying.md), [Theming](../concepts/theming.md), [Moding](../concepts/moding.md).
+_Ours — full specifications:_ every concept in [`../concepts/`](../concepts/README.md) except the bootstrap concept. The index says which of them are in the engine and which live outside it.
 
 _Depended on without being specified:_ z3. It is the decision procedure inside
 [Constraining](../concepts/constraining.md) and it gets no concept of its own —
@@ -54,12 +54,12 @@ The split is not a coincidence of this policy meeting the earlier domain/bootstr
 
 ## What the policy does not excuse
 
-Three things sit on our side of the line and are sometimes mistaken for the vendor's:
+These things sit on our side of the line and are sometimes mistaken for the vendor's:
 
 - _The system prompt._ `agent/main.py` is our code. The coordination the CopilotKit starter writes there as prose to a model that might decline it is [rules](../syncs/README.md) here, and what remains in the prompt is guidance about how to talk, not about what may happen.
-- _The tool definitions._ `assert_value`, `withdraw`, `propose` and `review` in `agent/tools.py` are ours. That they are shaped by CopilotKit's conventions does not make their names, arguments or granularity the vendor's responsibility, and the granularity is the whole difference between a log that says what happened and one that says only that something did.
-- _The gesture vocabulary._ `start`, `say`, `assert`, `withdraw`, `discard`, `choose`, `decline` and `focus` are the `act` values a person's gesture can carry. `Copiloting/gesture` accepts whatever arrives and decides nothing, so these are defined by the rules that react to them and nowhere else — [Gestures](../syncs/gestures.md#the-gesture-vocabulary-is-ours). The reasoning is the same as for the tool names one bullet up, applied to the other root actor.
-- _The gate on the model's actions._ The model is a second root actor, and what it may do is [stated positively as rules](../syncs/conduct.md). No third-party boundary absolves that; it is the part of MSM §5.3 that had to be built rather than adopted.
+- _The tool definitions._ The tools in `agent/tools.py` are ours. That they are shaped by CopilotKit's conventions does not make their names, arguments or granularity the vendor's responsibility, and the granularity is the whole difference between a log that says what happened and one that says only that something did.
+- _The gesture vocabulary._ The `act` values a person's gesture can carry are ours. `Copiloting/gesture` accepts whatever arrives and decides nothing, so these are defined by the rules that react to them and nowhere else — [Gestures](../syncs/gestures.md#the-gesture-vocabulary-is-ours). The reasoning is the same as for the tool names one bullet up, applied to the other root actor.
+- _The gate on the model's actions._ The model is a root actor of its own, and what it may do is [stated positively as rules](../syncs/conduct.md). No third-party boundary absolves that; it is the part of MSM §5.3 that had to be built rather than adopted.
 
 ## See also
 

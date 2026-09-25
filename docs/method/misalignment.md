@@ -81,7 +81,7 @@ are [Asserting](../concepts/asserting.md) and
 _The dark-concept test, applied to the assistant._ MSM §5.1.2's question is
 whether the act the user performed and the act the system recorded are the same
 act. The sharpest version here is the proposed completion: a model that
-computed a thirty-five-value assignment and wrote it in would be recording
+computed a whole assignment and wrote it in would be recording
 *the person specified this lift*, and the person performed nothing of the kind.
 So `Constraining/complete` writes nothing, and the only path from an assignment
 into a specification is `Deciding/choose`. See
@@ -89,8 +89,7 @@ into a specification is `Deciding/choose`. See
 
 _The asymmetry test._ "Is there an inverse action, and does it cost what the
 original cost?" `assert` costs one click; `withdraw` costs one click, from the
-card the assertion is displayed on. Adopting a completion makes thirty-odd
-assertions at once and there is no single action that unmakes them, which is
+card the assertion is displayed on. Adopting a completion makes an assertion for every open variable at once and there is no single action that unmakes them, which is
 a genuine asymmetry and the one place the test currently fails.
 
 _Substitution risk, live._ The estimates are the exposure. `Pricing` reckons

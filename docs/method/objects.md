@@ -111,7 +111,7 @@ On dialect: this is a third notation, with `requires`/`effects` where WYSIWID §
 ## In this repository
 
 The `User` bad smell is the catalogue's option record with different field
-names. Every one of the two hundred-odd options in `agent/catalogue/elevator.json`
+names. Every option in `agent/catalogue/elevator.json`
 has this shape:
 
 ```json
@@ -133,7 +133,7 @@ which module it lands in.
 _The purpose will not come out coherent._ There is no single answer to *what is
 this object for*. `label` and `note` exist so a person can recognise the
 option; `price` exists so a quotation can be totalled; `co2` exists so a
-footprint can be estimated. Three purposes, the same conflation as `email`
+footprint can be estimated. Several purposes, the same conflation as `email`
 against `password`.
 
 Read as [facts](fact.md), the same information distributes without residue and
@@ -161,7 +161,7 @@ relation — which is why no concept note here declares one. It is not a claim
 about code, where MSM §5.2 asks for the opposite: "Individuals → UUIDs."
 `wiring.py` mints `rated_load:kg1000` as the option's identity, and is right to,
 because `value` alone does not identify one — `standard` is a service level, an
-energy package, a control panel and a lead time, four different individuals
+energy package, a control panel and a lead time, different individuals
 spelled the same way. See [Individual](individual.md#two-levels).
 
 ## See also

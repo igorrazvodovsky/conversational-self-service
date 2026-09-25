@@ -25,7 +25,7 @@ _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 **The notes are the source, and the code is generated from them.** WYSIWID
 §7.3: the prompt for the implementation is exactly the concept design spec. If
 you want to change behaviour, edit the specification and regenerate — do not
-patch the generated code. Five project skills carry the procedures:
+patch the generated code. Project skills carry the procedures:
 `concept-spec`, `concept-sync`, `concept-generate`, `concept-audit`, `concept-coverage`.
 
 General-purpose concept-design material predates the synchronization scheme
@@ -38,7 +38,7 @@ used here — see [`docs/method/synchronization.md`](docs/method/synchronization
 > question a person most often has.
 
 Ask for a hospital lift and the usage profile becomes near-continuous, the
-rescue system becomes a full battery backup, and five of the seven rated loads
+rescue system becomes a full battery backup, and most of the rated loads
 disappear. None of that was chosen. The canvas therefore has three sections —
 **asserted**, **follows from that** (with the rule that forces it), and
 **still open** — and that grouping is a property of the current state, not of
@@ -51,7 +51,7 @@ Everything else in the design follows from taking that seriously:
 - [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. Nothing reads it yet; the point is that the log's first entry for a turn is the person's words rather than the model's tool call.
 - [`Constraining`](docs/concepts/constraining.md) holds the rules and answers what they still allow. z3 lives here.
 - An assertion that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
-- [`Quoting`](docs/concepts/quoting.md) holds the end of a configuration: an offer, frozen as issued, that the specification can move away from without changing. It is the fourth kind of fact on the canvas, and the person accepts it or nobody does. The offer is rendered as a commercial proposal on the seller's terms ([`Stipulating`](docs/concepts/stipulating.md), seeded), addressed to a party ([`Profiling`](docs/concepts/profiling.md)) for a named job at a site ([`Naming`](docs/concepts/naming.md)).
+- [`Quoting`](docs/concepts/quoting.md) holds the end of a configuration: an offer, frozen as issued, that the specification can move away from without changing. It is another kind of fact on the canvas, and the person accepts it or nobody does. The offer is rendered as a commercial proposal on the seller's terms ([`Stipulating`](docs/concepts/stipulating.md), seeded), addressed to a party ([`Profiling`](docs/concepts/profiling.md)) for a named job at a site ([`Naming`](docs/concepts/naming.md)).
 
 ## Architecture
 
@@ -95,7 +95,7 @@ layer beside the agent.
 │   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest — mounted by langgraph.json
 │   ├── tools.py           # the model's tools
 │   ├── hearing.py         # the chat message, as a person's `say` gesture
-│   ├── instance.py        # the one engine both actors share
+│   ├── instance.py        # the one engine every actor shares
 │   ├── journal.py         # the log, kept: appended as written, replayed at boot
 │   └── main.py            # the graph
 └── docs/                  # the method, the concepts, the rules, the analysis
@@ -127,10 +127,10 @@ when its own contract does, such as a new kind of stimulus for the bootstrap
 concept, and then on purpose, with the reason in the change. Correcting its
 comments is ordinary maintenance.
 
-### Two root actors, and what each may do
+### The root actors, and what each may do
 
 The browser agent column is the model column: a WebMCP-capable browser
-visiting the page finds the model's ten verbs and its reading registered on
+visiting the page finds the model's verbs and its reading registered on
 `document.modelContext`, calls them as `Copiloting.invoke` under its own
 actor, and the same conduct rules decide what follows.
 
@@ -158,7 +158,7 @@ reasoning about what a language model might infer from a prompt.
 
 Every action is recorded with its actor and the rule that authorised it. The
 canvas reads those provenance edges directly: *you asked for this*, *the
-assistant asked for this* and *adopted from a proposal* are three `via` values
+assistant asked for this* and *adopted from a proposal* are different `via` values
 on the same action, with no field anywhere recording which.
 
 The log is also what survives a restart. Nothing serialises concept state:

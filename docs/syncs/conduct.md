@@ -115,7 +115,7 @@ same grant to which *items* the canvas shows
 ([Framing](../concepts/framing.md)). *What did asking for a hospital cost
 me?* is answered by narrowing the canvas to what followed from that
 assertion, with the sections kept, and saying so in a sentence — rather
-than by eleven values in a chat bubble. The tool passes the same frame value
+than by a list of values in a chat bubble. The tool passes the same frame value
 a person's click passes, and the rule carries it without looking inside.
 
 ## Proposing, and not adopting
@@ -273,7 +273,7 @@ the interpreter made is visible and revocable on its own. A request here
 naming a variable is that instance of `Deciding`; the concept is unchanged,
 and the grain is a fact of the rules.
 
-The whole stays, as a shortcut over the parts. Thirty separate acts is the
+The whole stays, as a shortcut over the parts. A separate act per value is the
 review burden Zhang and Reicherts describe (*Augmenting Human Cognition With
 Generative AI*, 2025, [arXiv:2504.03207](https://arxiv.org/abs/2504.03207)),
 where a recommendation the person has to check item by item is worse than
@@ -370,10 +370,10 @@ trace.
 `AProposedValueIsPutToThePerson` and `AnAdoptedCompletionIsTakenValueByValue`
 are the ordinary WYSIWID §6.5 shape: the `where` binds once per pair in the
 assignment, or once per value still open, and `then` fires once per binding,
-so thirty-odd questions are asked and answered without a loop appearing
+so a question per open value is asked and answered without a loop appearing
 anywhere.
 
-### The two approximations in that `where` clause
+### The approximations in that `where` clause
 
 An objective handed to `Constraining/complete` has to be one number per option,
 because the sum being minimised is linear in the selection. Neither measure is
@@ -391,7 +391,7 @@ costs anything to buy.
 
 _Carbon._ Embodied carbon is already one number per option. The use phase is
 a lookup on energy class, usage profile and travel height together, and over
-twenty-five years it is the larger half. The rule charges it to each of those
+a service life it is the larger half. The rule charges it to each of those
 three variables, averaged over the possibilities the specification still allows
 on the other two. Annual demand rises monotonically along each of the three
 axes whatever the other two are, so no such average can reorder the options
@@ -413,7 +413,7 @@ sits in the one place that is allowed to know about both.
 
 ### Reading across concepts
 
-`TheModelMayProposeACompletion` reads two other concepts' state in its `where`
+`TheModelMayProposeACompletion` reads other concepts' state in its `where`
 clause, which is exactly what a `where` clause is for and exactly what a
 concept action may not do. That the coupling is possible at all without
 either concept knowing the other is WYSIWID §7.2's first and third design
@@ -421,7 +421,7 @@ rules doing their work together.
 
 ## What is not here, and why that is the enforcement
 
-Five absences carry more weight than any of the rules above.
+These absences carry more weight than any of the rules above.
 
 _No rule lets the model state a requirement, or say what a value is for._ No
 `when { Copiloting/invoke: … }` has [Specifying](../concepts/specifying.md) or
@@ -471,7 +471,7 @@ English.
 
 ## A browser agent, on the same terms
 
-The ten verbs and the reading are also registered on the page's WebMCP model
+The model's verbs and its reading are also registered on the page's WebMCP model
 context (`document.modelContext`), through `useFrontendTool` with `webmcp`
 set ([`src/components/configurator/webmcp.tsx`](../../src/components/configurator/webmcp.tsx)).
 A browser agent that visits the page — Chrome's own, or any other that
@@ -483,12 +483,12 @@ engine at `POST /configurator/invoke` as the assistant's calls reach it from
 `agent/tools.py`. Every rule above matches on the tool and not on the actor,
 so the grant is the same grant: a browser agent may assert, withdraw,
 propose, introduce, entitle, quote, show, hide, frame and unframe, and the
-five absences hold for it exactly as they hold for the assistant. No rule
+absences hold for it exactly as they hold for the assistant. No rule
 carries its invocation to `Deciding/choose`, `Quoting/commit`, `Specifying`
 or `Binding`. It can fill the specification in, and it cannot adopt a
 proposal, accept an offer or state what the person requires — which is what
 makes the tools safe to hand to an agent nobody here wrote. The exposure
-adds no rule; it adds a second actor to rules that already existed.
+adds no rule; it adds another actor to rules that already existed.
 
 What tells the two models apart is the actor on the record, not a rule.
 `Asserting.assertedBy` writes `model` for both, because both are a model
@@ -512,10 +512,10 @@ changes a fact or the canvas.
 ## The tool names are ours
 
 `assert`, `withdraw`, `propose`, `introduce`, `entitle`, `quote`, `show`,
-`hide`, `frame`, `unframe`. Ten, against the CopilotKit starter's one
-`manage_todos`, and the difference is the one [Action](../method/action.md)
-draws: a log of the ten says what happened, and a log of the one says only
-that something did.
+`hide`, `frame`, `unframe`: a verb per thing the model may do, against the
+CopilotKit starter's single `manage_todos`, and the difference is the one
+[Action](../method/action.md) draws: a log of these says what happened, and a
+log of the one says only that something did.
 
 The tool string and the Python function differ, and only in one direction:
 Python reserves `assert`, so `agent/tools.py` defines `assert_value` and passes
@@ -531,5 +531,5 @@ names, arguments or granularity the vendor's responsibility —
 ## See also
 
 - [Code of conduct](../method/conduct.md) — the structure this is an instance of
-- [Copiloting](../concepts/copiloting.md) — the bootstrap, and the second root actor
+- [Copiloting](../concepts/copiloting.md) — the bootstrap, and the model's root action
 - [Propagation](propagation.md) — what happens after a value is asserted

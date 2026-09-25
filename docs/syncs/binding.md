@@ -7,7 +7,7 @@ These are the rules of the case's slice 1, written for a build in which the
 person does the mapping. The case catalogue's chain for the same move is
 `ProposeFromClause → MapProposed → ApplyMapping → AssertionReachesTheSolver`,
 with a language model inside `Mapping.map`; here there is no `Mapping`, the
-person's pick names the option, and the chain is two rules shorter.
+person's pick names the option, and the chain is shorter.
 
 `Binding/propose` keeps the case catalogue's name. There an interpreter
 proposes a choice and a person confirms it; here only a person's pick reaches
@@ -52,7 +52,7 @@ then  { Binding/substitute: [ party: person ; choice: ?ch ;
           value: ?o ; reason: ?why ] }
 ```
 
-One gesture, two rules, and which fires is a fact of the state: a clause
+One gesture, a rule for each case, and which fires is a fact of the state: a clause
 nobody has answered gets a `propose`, a clause already answered gets a
 `substitute` with `replaces` and a reason. Answering a clause with the value
 it already has fires neither, which is the ordinary meaning of a `where` that
@@ -94,7 +94,7 @@ negotiable, and which is read from the clause
 ([Propagation](propagation.md#assertions-reach-the-solver)). A conflict comes
 back through `Deciding`, and the canvas reads the provenance edge. The edge
 for a value that answers a clause is `AChoiceReachesTheAssertions`, which is
-a fourth sentence beside *you asked for this*, *the assistant asked for this*
+another sentence beside *you asked for this*, *the assistant asked for this*
 and *adopted from a proposal*: *answers a requirement*.
 
 ## What takes a choice away
@@ -119,14 +119,14 @@ where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ; ?ch answers: ?c } }
 then  { Binding/retract: [ choice: ?ch ] }
 ```
 
-Three consequences, no gesture. A choice is the *current* answer to a clause,
-and it stops being current in three ways: the value it holds is withdrawn, a
+Consequences, with no gesture behind them. A choice is the *current* answer
+to a clause, and it stops being current in these ways: the value it holds is withdrawn, a
 different value is asserted for the same variable — by the person on the
 canvas, by the model on their behalf, or by an adopted completion — or the
 clause it answers is struck. Each is the §6.5 shape, one binding per choice,
 `then` once per binding.
 
-The second is the one to read twice. The model may still assert a value with
+`AnOverwrittenValueRetractsItsChoices` is the one to read twice. The model may still assert a value with
 no clause behind it, and when it does so on a variable whose value answered a
 clause, the person's answer is retracted and the clause shows as unanswered
 again. That is correct: the value the person chose *for that reason* is
@@ -135,7 +135,7 @@ lying. It is also the case's constraint 7 — every interpreter-made selection
 visible and reversible — met by a rule rather than by a gate, and the
 provenance edge on the `retract` says which assertion did it.
 
-The third does *not* withdraw the value. Striking a requirement is not the
+`AStruckClauseReleasesItsChoices` does *not* withdraw the value. Striking a requirement is not the
 same act as taking back a value: the value was asserted, and an assertion
 stays on record until somebody withdraws it. What the strike does change is
 the value's strength, when the struck clause was negotiable: with no clause
@@ -150,8 +150,8 @@ asymmetry keeps the two concepts from chasing each other round a loop.
 ## The ledger is a read
 
 <a id="the-ledger-is-a-read"></a>
-No action lists the clauses with their answers. It is a calculation over four
-concepts' exposed state, in `agent/views.py`, on the read side of WYSIWID §6.4's line:
+No action lists the clauses with their answers. It is a calculation over
+several concepts' exposed state, in `agent/views.py`, on the read side of WYSIWID §6.4's line:
 
 ```
 ledger(s)   =  for each clause c in Specifying.clauses(s), in order:
@@ -169,7 +169,7 @@ ledger(s)   =  for each clause c in Specifying.clauses(s), in order:
 unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
 ```
 
-The second is the plan's control number. A variable asserted with no clause
+`unbound` is the plan's control number. A variable asserted with no clause
 behind it is a value in the model's vocabulary that answers nothing — which
 is every value in slice 0. The canvas shows the clause beside the value where
 there is one, and shows *answers nothing* where there is not, so the share is
@@ -186,7 +186,7 @@ choice answers, and the party who stated it.
 
 ## See also
 
-- [Gestures](gestures.md) — the five acts that reach `Specifying`, and the one that reaches `Binding`
+- [Gestures](gestures.md) — the acts that reach `Specifying`, and the one that reaches `Binding`
 - [Propagation](propagation.md) — where an assertion goes from here
 - [Conduct](conduct.md) — the rule that does not exist: no `Copiloting/invoke` reaches either concept
 - [Specifying](../concepts/specifying.md) · [Binding](../concepts/binding.md)

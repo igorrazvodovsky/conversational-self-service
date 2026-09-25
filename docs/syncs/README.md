@@ -111,7 +111,7 @@ about what follows from what, worked through in [Seeding](seeding.md).
 ## What a person may do
 
 Every click, and every chat message, is one root action carrying an `act`, and
-these twenty-five rules decide what follows from it. There is no HTTP route per
+these rules decide what follows from it. There is no HTTP route per
 concept action, and [Gestures](gestures.md) says why that matters — as does why
 the vocabulary of acts is ours and lives there, and why the chat message is
 performed before the model node of the graph rather than from the browser.
@@ -121,34 +121,33 @@ performed before the model node of the graph rather than from the browser.
 What a person requires, in their own words, lives in
 [Specifying](../concepts/specifying.md); which value answers each clause lives
 in [Binding](../concepts/binding.md); and the value itself is an assertion
-like any other. One gesture answers a clause with an option, two rules decide
-whether that is a first answer or a substitution, two more carry the choice
+like any other. One gesture answers a clause with an option, rules decide
+whether that is a first answer or a substitution, others carry the choice
 into `Asserting` — the person having done the mapping by picking the option —
-and three retract a choice whose value was withdrawn, overwritten or whose
+and more retract a choice whose value was withdrawn, overwritten or whose
 clause was struck. Nothing carries a choice out of `Binding` except by way of
 an assertion changing. See [Binding](binding.md).
 
 ## An offer is held still
 
-A quote is a third kind of fact beside the asserted and the entailed: a
+A quote is another kind of fact beside the asserted and the entailed: a
 snapshot with a price and its terms, which the specification can move away
 from without changing. One rule issues it, to the person, when every variable
 is settled, nothing asserted is unmet, the person is named and the job has a
 site; one lets the person accept it; one lets them revoke it; and one gives
-the quote surface the viewer's attention when a quote is issued. Two more let
+the quote surface the viewer's attention when a quote is issued. Others let
 the person say who they are and where the lift is going, which is what makes
-the proposal addressed. The model may ask for one and may not accept it, which is the
-[second asymmetry](gestures.md#the-two-asymmetries).
+the proposal addressed. The model may ask for one and may not accept it, which is one of the things
+[only a person may do](gestures.md#the-two-asymmetries).
 
 ## Assertions reach the solver
 
 What a party asserts lives in [Asserting](../concepts/asserting.md); what
-follows from it lives in [Constraining](../concepts/constraining.md). Three
-rules carry the first into the second, and they are the only path between
+follows from it lives in [Constraining](../concepts/constraining.md). Rules
+carry the first into the second, and they are the only path between
 them: a value reaches the solver hard, or softly when every clause it answers
-is negotiable, and a withdrawal releases it. Which of the first two fires is
-read from the person's own tag on the clause, and three more rules move a
-value between the two strengths when the tag changes or the clause goes. See
+is negotiable, and a withdrawal releases it. Which strength it reaches the solver with is read from the person's own tag on the clause, and more rules move a
+value between the strengths when the tag changes or the clause goes. See
 [Propagation](propagation.md#assertions-reach-the-solver).
 
 ## A conflict is put to the person
@@ -165,10 +164,10 @@ between and raises no question — the account appears, the banner does not. See
 Which facts the canvas shows beside each item — a price on every option, the
 rule that struck one through, the requirement a value answers — lives in
 [Showing](../concepts/showing.md), and both actors may change it on the same
-terms: two gestures, two tool permissions, and no fact of the specification
-touched by any of the four. Which items it shows — narrowed to what followed
+terms: gestures, tool permissions, and no fact of the specification
+touched by any of them. Which items it shows — narrowed to what followed
 from one assertion, or everything — is [Framing](../concepts/framing.md),
-reached the same way, plus two rules that take a frame away when the
+reached the same way, plus rules that take a frame away when the
 assertion it framed is withdrawn or the specification discarded. See
 [Gestures](gestures.md#what-the-canvas-shows-is-chosen),
 [Conduct](conduct.md#what-the-canvas-shows) and
@@ -176,7 +175,7 @@ assertion it framed is withdrawn or the specification discarded. See
 
 ## What the model may do
 
-The model is a second root actor, and every one of its invocations reaches a
+The model is a root actor too, and every one of its invocations reaches a
 concept action by way of a rule that says it may. There is no rule that lets it
 adopt a completion, commit to a quote, change a price, or list a catalogue
 option, and that is the whole of the enforcement. A browser agent reaching

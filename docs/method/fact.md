@@ -34,12 +34,12 @@ assumed  (Spec, Variable, Option)    Constraining
 
 Three things are visible in that list that a record could not have shown.
 
-_The same individual bears facts owned by four concepts._ `rated_load:kg1000`
+_The same individual bears facts owned by several concepts._ `rated_load:kg1000`
 appears in `Cataloguing`, `Pricing`, `Footprinting` and `Constraining`, and
 none of them owns it. That is the asymmetry the method rests on: actions are
 partitioned among concepts, individuals are not. The
 [source file](../../agent/catalogue/elevator.json)
-bundles all four into one JSON object, and splitting it on load is the whole of
+bundles all of them into one JSON object, and splitting it on load is the whole of
 what the seeding step does.
 
 _`required` and `assumed` are two relations, not one._ They relate the same
