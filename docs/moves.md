@@ -53,7 +53,7 @@ their request, and reads that way in the log.
 | Ask why — "why can't I have 630 kg?" | chat | nothing; `review` reads state | the rule's own sentence, and the argument if the person pushes back. This lives in the chat and only there |
 | Ask what a choice cost | chat, or canvas | [`Framing`](concepts/framing.md) | one sentence saying what the narrowed canvas now shows |
 | Answer a conflict question | canvas, or chat | `Deciding/choose` or `decline` by gesture; in the chat, the model withdraws the conceded assertion at the person's word, under its own actor | the model saying what it withdrew and what came back |
-| Adopt a completion | canvas only | `Deciding/choose`, then [`AnAdoptedCompletionBecomesAssertions`](syncs/conduct.md) | the model may say the proposal is waiting; it cannot adopt |
+| Take a proposed value, or the whole proposal | canvas only | `Deciding/choose`, then [`AnAdoptedValueBecomesAnAssertion`](syncs/conduct.md#proposing-and-not-adopting) | the model may say what it proposed and that it is waiting; it cannot adopt any of it |
 | Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote |
 | Request a quote | canvas, or chat | `Quoting/quote` when the specification is complete and addressed | what is missing, if anything, and where the proposal is |
 | Accept or revoke a quote | canvas only | `Quoting/commit`, `revoke` | nothing; the model cannot accept |

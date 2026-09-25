@@ -158,24 +158,24 @@ now asserts something else.
 ### Why the strength is the person's tag and not a weight
 
 The routing key is categorical and the person's own, and that is a finding
-from the literature rather than a convenience. U-Define (Lee et al., 2026;
-`Resources/Papers/notes/2605.02765v1.md`) reports that people readily say
-what *must* hold versus what *should*, and do poorly at mapping those onto
-numbers; it sends hard constraints to a formal checker and soft ones
-elsewhere, and reads the formal rule back in prose for confirmation. The
-generative UI project's `concepts/hard-soft-constraint-typology.md` states the
-tag as "categorical and user-declared, not numeric weights", and its
-`concepts/constraint-type-routed-verification.md` that "the user's authoring
-tag *is* the routing key". Draco (Moritz et al., 2018;
-`Resources/Papers/notes/Formalizing Visualization Design Knowledge as
-Constraints - Actionable and Extensible Models in Draco.md`) is the solver
-side of the same shape: hard constraints plus weighted soft ones, and a solver
-returning "the optimal completion of a partial specification". The reading
-thread `Resources/Papers/threads/Shopping agents - preferences, negotiation and
-authority.md` draws the line this application uses: a requirement filters, a
-preference ranks within what is eligible, and an inference stays a proposal.
-*Fixed* and *negotiable* are the first two; a proposed completion
-([Conduct](conduct.md)) is the third.
+from the literature rather than a convenience. Lee, Wang, Albarghouthi,
+Porfirio and Mutlu (*U-Define: Designing User Workflows for Hard and Soft
+Constraints in LLM-Based Planning*, 2026,
+[arXiv:2605.02765](https://arxiv.org/abs/2605.02765)) report that people
+readily say what *must* hold versus what *should*, and do poorly at mapping
+those onto numbers; their system sends hard constraints to a formal checker
+and soft ones elsewhere, and reads the formal rule back in prose for
+confirmation. The tag is categorical and the person's own, never a weight,
+and the tag is what routes the value. Draco (Moritz, Wang, Nelson, Lin,
+Smith, Howe and Heer, *Formalizing Visualization Design Knowledge as
+Constraints: Actionable and Extensible Models in Draco*, IEEE TVCG 2019,
+[doi:10.1109/TVCG.2018.2865240](https://doi.org/10.1109/TVCG.2018.2865240))
+is the solver side of the same shape: hard constraints plus weighted soft
+ones, and a solver returning "the optimal completion of a partial
+specification". The line this application draws follows: a requirement
+filters, a preference ranks within what is eligible, and an inference stays
+a proposal. *Fixed* and *negotiable* are the first two; a proposed
+completion ([Conduct](conduct.md)) is the third.
 
 The one weight in the code is the `1` that `Constraining/complete` gives every
 inclination, and it is not a strength the person chose. It is what makes a
@@ -357,9 +357,10 @@ assertion inclines it, and it is that `incline`'s completion the rule
 matches. Either way the question goes when the conflict does, and not before.
 
 It is narrower than [`AChangedSpecificationWithdrawsItsProposal`](conduct.md),
-which withdraws a completion on any change. A completion is computed against a
-state and is stale the moment that state moves; a conflict question is about a
-condition, and holds as long as the condition does.
+which withdraws a completion on any change it did not already hold. A
+completion is computed against a state and is stale the moment that state
+moves; a conflict question is about a condition, and holds as long as the
+condition does.
 
 A chosen request is not pending, so a question answered on the canvas is left
 alone: the answer is the record of what was chosen, and this rule only takes
@@ -367,13 +368,15 @@ away a question nobody answered.
 
 ## What `Deciding` is instantiated with here
 
-[`Deciding [Request, Option]`](../concepts/deciding.md) is used twice in this
-application with entirely different parameters, which is the argument for it
+[`Deciding [Request, Option]`](../concepts/deciding.md) is used three ways in
+this application with different parameters, which is the argument for it
 being a concept at all:
 
 | | `Request` | `Option` |
 |---|---|---|
 | a conflict | a specification | an assertion that might be given up — `[ variable ; option ]` |
+| a completion | a specification | a whole assignment |
+| a proposed value | a specification and a variable | a value to be taken up — `[ variable ; option ]` |
 | a meeting | a meeting | a time |
 
 The `Option` of a conflict question is *not* a catalogue option. It is a pair
@@ -381,7 +384,10 @@ naming the variable and what was asked for it, because the question is *which
 of these requests do you give up*, and the answer has to identify a request.
 An implementation that passed catalogue options here would produce a question a
 person cannot answer — several conflicting assertions can name options of the
-same variable, and several variables can be offered the same option value.
+same variable, and several variables can be offered the same option value. A
+proposed value ([Conduct](conduct.md#proposing-and-not-adopting)) is the same
+pair read the other way, a request to take up rather than give up, and only
+the request's `about` tells the two apart.
 
 The type parameter is unconstrained (WYSIWID §4), so nothing in `Deciding`
 notices or cares. That is what makes it reusable, and it is also what makes it

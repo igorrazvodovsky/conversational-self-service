@@ -19,27 +19,36 @@ import { useConfigurator, type Foreseen, type Question } from "./provider";
  * might be given up, the other a whole proposed assignment. `Deciding`'s type
  * parameters cannot be constrained, which is what lets one concept carry both.
  *
+ * The completion is the whole; each value it proposes for a still-open
+ * variable is a question of its own, shown beside that row (`variables.tsx`).
+ * Adopting the whole chooses every proposed value still open, and declining
+ * it declines them — `docs/syncs/conduct.md`, "Proposing, and not adopting".
+ *
  * A conflict's answers come with what each would do — the values that would
  * then follow, and the price and carbon deltas — read from the solver against
  * assumptions nobody has made (`docs/syncs/propagation.md`, "What each answer
  * would cost is a read"). The person chooses with the consequences in view.
  */
 function OneQuestion({ question }: { question: Question }) {
-  const { gesture, busy, label } = useConfigurator();
+  const { gesture, busy, label, view } = useConfigurator();
   const isCompletion = question.about === "completion";
+  const proposed = (view?.variables ?? []).filter((v) => v.proposed).length;
+  // A completion whose every value has been taken or declined has nothing
+  // left to adopt as a whole; it goes when the specification next moves.
+  if (isCompletion && proposed === 0) return null;
 
   return (
     <Alert variant={isCompletion ? "default" : "destructive"}>
       {isCompletion ? <SparklesIcon /> : <TriangleAlertIcon />}
       <AlertTitle className="text-sm">
         {isCompletion
-          ? "A completion is waiting for you"
+          ? `The assistant proposed ${proposed} ${proposed === 1 ? "value" : "values"}`
           : "These cannot hold together"}
       </AlertTitle>
       <AlertDescription>
         <p>
           {isCompletion
-            ? "The assistant worked this out. It cannot adopt it — only you can."
+            ? "Each waits beside its variable under still open. Take them one at a time, or all at once; the assistant cannot."
             : question.reason}
         </p>
         {/* The destructive alert colours everything inside it; the choices
@@ -60,7 +69,7 @@ function OneQuestion({ question }: { question: Question }) {
                   })
                 }
               >
-                Adopt all {Object.keys(option).length} values
+                Adopt all {proposed}
               </Button>
             ) : (
               <Answer

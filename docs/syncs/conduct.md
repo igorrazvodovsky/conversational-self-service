@@ -62,11 +62,13 @@ The `party` in the first rule is what distinguishes it from
 [`APersonAssertsAValue`](gestures.md) in the state as well as in the trace. Two
 rules, two parties, one action — and `Asserting.assertedBy` records which,
 independently of the provenance edge the log already carries. The edge is finer:
-`APersonAssertsAValue` and `AnAdoptedCompletionBecomesAssertions` are two
+`APersonAssertsAValue` and `AnAdoptedValueBecomesAnAssertion` are two
 different things a person did, and both write `person`.
 
-There is no `TheModelMayPreferAnOption`. `Asserting` has no `prefer` — see
-[the dead rule](propagation.md#the-rule-that-is-registered-and-reached-by-nothing).
+There is no `TheModelMayPreferAnOption`. `Asserting` has no `prefer`: how
+firmly a value is meant is a clause's negotiability, the person's own tag,
+and [Propagation](propagation.md#which-of-the-first-two-fires-is-a-fact-of-the-state)
+reads it to route the value to the solver.
 
 `TheModelMayIntroduceThePerson` writes the *person's* profile, as
 `TheModelMayAssertAValue` writes the person's assertion: the party is the
@@ -131,55 +133,188 @@ when  { Constraining/complete: [ spec: ?s ] => [ assignment: ?a ; cost: ?c ] }
 then  { Deciding/ask: [ request: [ spec: ?s ; about: "completion" ] ;
           reason: "adopt this completion" ; options: { ?a } ] }
 
-sync AnAdoptedCompletionBecomesAssertions
-when  { Deciding/choose: [ request: ?r ; option: ?a ] => [ request: ?r ] }
-where { ?r is [ spec: ?s ; about: "completion" ]
-        ?a maps ?v to ?o
+sync AProposedValueIsPutToThePerson
+when  { Constraining/complete: [ spec: ?s ] => [ assignment: ?a ; cost: ?c ] }
+where { ?a maps ?v to ?o
         ?v is neither asserted of ?s nor settled for ?s, read from
           Asserting and Constraining }
+then  { Deciding/ask: [ request: [ spec: ?s ; about: "completion" ; variable: ?v ] ;
+          reason: "proposed to finish the specification" ;
+          options: { [ variable: ?v ; option: ?o ] } ] }
+
+sync AnAdoptedCompletionIsTakenValueByValue
+when  { Deciding/choose: [ request: ?r ; option: ?a ] => [ request: ?r ] }
+where { ?r is [ spec: ?s ; about: "completion" ]
+        ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
+        Deciding: { ?p offered: { ?value } }, and ?p is neither chosen nor declined }
+then  { Deciding/choose: [ request: ?p ; option: ?value ] }
+
+sync AnAdoptedValueBecomesAnAssertion
+when  { Deciding/choose: [ request: ?p ; option: ?value ] => [ request: ?p ] }
+where { ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
+        ?value is [ variable: ?v ; option: ?o ]
+        ?v is neither asserted of ?s nor settled for ?s }
 then  { Asserting/assert: [ party: person ;
           spec: ?s ; variable: ?v ; option: ?o ] }
+
+sync ADeclinedCompletionIsDeclinedValueByValue
+when  { Deciding/decline: [ request: ?r ] => [ request: ?r ] }
+where { ?r is [ spec: ?s ; about: "completion" ]
+        ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
+        Deciding: { ?p offered: _ }, and ?p is neither chosen nor declined }
+then  { Deciding/decline: [ request: ?p ] }
 ```
 
 ```
 sync AChangedSpecificationWithdrawsItsProposal
-when  { Asserting/assert: [ spec: ?s ] => [ spec: ?s ]
+when  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ] => [ spec: ?s ]
         Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
-then  { Deciding/withdraw: [ request: [ spec: ?s ; about: "completion" ] ] }
+where { Deciding: { [ spec: ?s ; about: "completion" ] offered: { ?a } }
+        for an assertion, ?a does not map ?v to ?o
+        ?r is that request, and every [ spec: ?s ; about: "completion" ; variable: _ ]
+          Deciding holds }
+then  { Deciding/withdraw: [ request: ?r ] }
+
+sync ASettledVariableRetiresItsProposedValue
+when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ; settled: ?q ]
+        Constraining/incline: [ spec: ?s ] => [ spec: ?s ; settled: ?q ] }
+where { ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
+        Deciding: { ?p offered: _ }, and ?p is neither chosen nor declined
+        ?v is asserted of ?s, or ?q maps ?v
+        Deciding: { [ spec: ?s ; about: "completion" ] chosen: _ } does not bind }
+then  { Deciding/withdraw: [ request: ?p ] }
 ```
 
-A completion is computed against the assumptions holding when `propose` ran. Let
-the specification move underneath it and adopting it restates values chosen for a
-state that has gone — including, in the worst case, the very assertion the
-person just gave up to resolve a conflict. The proposal is not wrong so much as
-no longer about anything, and a stale proposal is worse than none: it carries the
-authority of *the assistant worked this out* and the content of a state nobody is
-in.
+### The unit of adoption is a value, and the whole is a shortcut
 
-So a proposal lasts exactly as long as the state it assumed. Ask again and you
-get one for the state you are actually in. The case arises because a conflict
-and a completion can be open together, because a request is
-`[ spec ; about ]` and the two questions are distinct requests.
+A completion is one answer from the solver: an assignment of every variable
+that honours every rule and every assumption at the least cost. What it
+contains is two kinds of value. Some are settled by the rules given what has
+been asserted, and the canvas already shows those under *follows from that*;
+adopting them would turn an entailment into a demand, and no rule here does
+that. The rest are choices the rules leave open, and they are the only thing
+the person is being asked about. `AProposedValueIsPutToThePerson` puts each of
+those to them separately, as a request naming the variable, with the
+proposal's value as its one option: *the assistant proposes 1000 kg for the
+rated load; take it or not*. On the canvas that is a line beside each variable
+in *still open*.
 
-The `about` in the request is what keeps `AnAdoptedCompletionBecomesAssertions` and
+Nothing about the solver's answer requires the open values to be taken
+together. Assert any one of them and the rest of the assignment still holds:
+every rule was satisfied by the whole, so the whole is still a satisfying
+choice once part of it is assumed, and every choice the new assumption
+excludes was available before and cost no less. The remaining values are
+still the cheapest way to finish the specification that was proposed. That
+is why a proposal survives its own adoption one value at a time, and why
+`AChangedSpecificationWithdrawsItsProposal` leaves it in place when an
+assertion is one the proposal already holds, whoever made it. What the
+person cannot do is take a value the proposal did not offer and keep the
+proposal: an assertion that differs from it, or a withdrawal, moves the
+state the completion was computed against, and then the proposal is about
+nothing. Ask again and there is one for the state you are in, which is the
+counter-proposal: the person's own assertion, and the model's answer to it.
+
+The alternative was a single act on a single bundle, which is what a
+completion of thirty-odd variables used to be here, and the literature on
+proposal surfaces is against it. Li, Zhang, Wang and Lu's study of
+Contextify (*Mixed-Initiative Context*, 2026,
+[arXiv:2604.07121](https://arxiv.org/abs/2604.07121)) reports that "binary
+accept/reject proved insufficient": when the proposal was structural, people
+wanted to keep part of it, edit it before taking it, or answer it with their
+own. A proposal of many parts is many decisions, and one button forces a
+lossy reduction that trains people to reject. Ma et al.'s deliberation study
+(*Towards Human-AI Deliberation*, CHI 2025,
+[arXiv:2403.16812](https://arxiv.org/abs/2403.16812)) moved disagreement
+from the verdict to the dimension for the same reason, so that a person
+could accept most of the machine's reasoning and dispute one part;
+over-reliance fell. The case's catalogue had already drawn the
+line in its own terms: `Suggesting [Choice, Party]` proposes, confirms and
+rejects one choice at a time, and its constraint is that every selection
+the interpreter made is visible and revocable on its own. A request here
+naming a variable is that instance of `Deciding`; the concept is unchanged,
+and the grain is a fact of the rules.
+
+The whole stays, as a shortcut over the parts. Thirty separate acts is the
+review burden Zhang and Reicherts describe (*Augmenting Human Cognition With
+Generative AI*, 2025, [arXiv:2504.03207](https://arxiv.org/abs/2504.03207)),
+where a recommendation the person has to check item by item is worse than
+none. `ACompletionIsPutToThePerson` still asks about the assignment as one
+request, and `AnAdoptedCompletionIsTakenValueByValue` answers every value
+still open when the person chooses it. It does not assert them itself. It
+chooses each proposed value, and `AnAdoptedValueBecomesAnAssertion` then
+asks, for that value, whether its variable is still open at that moment. A
+value a sibling has meanwhile settled is chosen and asserts nothing, so the
+canvas reads *follows* for it and not *asked*, however many values were
+taken in one act. Declining the whole declines each part the same way,
+which is what *leave it for now* means; declining one part is *not that
+one*, and the whole then adopts the rest. Which of the two a person did is
+the `via` on the assertion's record, as `APersonAssertsAValue` and
+`AnAdoptedValueBecomesAnAssertion` are two things a person did that both
+write `person`.
+
+That is selective deferral with the roles the other way round. In the
+usual form the machine commits the parts it is confident of and hands the
+rest over; here the rules commit what they entail, confidence does not come
+into it, and the free choices are handed over. The split is a calculation
+over `Asserting` and `Constraining` in a `where` clause, not the model's
+judgement about which values are worth asking about, for the reason Harne,
+Modani, Mahapatra and Agarwal give (*Dialogue to Discovery*, 2026,
+[arXiv:2606.24194](https://arxiv.org/abs/2606.24194)): given the same
+state, a language model deciding for itself did worse than the arithmetic.
+
+### A proposal lasts as long as the state it assumed
+
+A completion is computed against the assumptions holding when `propose` ran.
+Let the specification move underneath it and adopting it restates values chosen
+for a state that has gone — including, in the worst case, the very assertion
+the person just gave up to resolve a conflict. The proposal is not wrong so
+much as no longer about anything, and a stale proposal is worse than none: it
+carries the authority of *the assistant worked this out* and the content of a
+state nobody is in.
+
+So `AChangedSpecificationWithdrawsItsProposal` takes the completion and every
+proposed value off the record on any change the proposal did not already hold.
+The case arises because a conflict and a completion can be open together,
+because a request is `[ spec ; about ]` and the two questions are distinct
+requests.
+
+A proposed value can also stop being a question without the proposal going
+stale. Assert one value from it and the rules may settle another the
+proposal had left open, to the value it proposed; the request for that
+variable now asks about a choice nobody has. `ASettledVariableRetiresItsProposedValue`
+withdraws it, as
+[`AResolvedConflictWithdrawsItsQuestion`](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)
+withdraws a conflict question once the condition it asked about no longer
+holds. Its last condition is the one that reads oddly: it leaves such a
+request alone while the completion itself is chosen. A chosen completion is
+the record that the person is taking every value, and
+`AnAdoptedCompletionIsTakenValueByValue` is at that moment choosing them in
+turn; a value settled by an earlier sibling is answered by the adoption
+already under way, and withdrawing it would make that answer fail.
+
+The `about` in the request is what keeps `AnAdoptedValueBecomesAnAssertion` and
 [`TheConcededAssertionIsWithdrawn`](propagation.md#when-assertions-cannot-hold-together)
-apart. Both match `Deciding/choose`; without it they would have to be told
-apart by the shape of an unconstrained value, and a completion of one variable
-would be indistinguishable from a conflict candidate.
+apart. Both match `Deciding/choose`, and their options have the same shape:
+a proposed value and a conflict candidate are each `[ variable ; option ]`,
+one to be taken up and the other to be given up. Without `about` the two
+rules would have to be told apart by the shape of an unconstrained value,
+and could not be.
 
-Only genuinely open variables are asserted. Adopting a completion fills the
+Only genuinely open variables are asserted. Adopting a proposal fills the
 gaps: it does not restate what you already asserted, and it does not turn what
 merely follows from the rules into something you demanded — which is what keeps
-*asserted* and *follows from* readable after a completion is adopted.
+*asserted* and *follows from* readable after a proposal is adopted.
 
 The party is the person. Adoption *is* asserting the values in the proposal,
 and the rule that performs it is the one the model has no counterpart for —
 which is the asymmetry below, showing up in `assertedBy` as well as in the
 trace.
 
-`AnAdoptedCompletionBecomesAssertions` is the ordinary WYSIWID §6.5 shape:
-the `where` binds once per pair in the assignment and `then` fires once per
-binding, so thirty-odd assertions are made without a loop appearing anywhere.
+`AProposedValueIsPutToThePerson` and `AnAdoptedCompletionIsTakenValueByValue`
+are the ordinary WYSIWID §6.5 shape: the `where` binds once per pair in the
+assignment, or once per value still open, and `then` fires once per binding,
+so thirty-odd questions are asked and answered without a loop appearing
+anywhere.
 
 ### The two approximations in that `where` clause
 
@@ -244,9 +379,10 @@ holds; until then the absence is the gate.
 
 _No rule adopts a completion._ `Constraining/complete` changes nothing — it
 returns an assignment. The only path from an assignment into
-[Asserting](../concepts/asserting.md) runs through `Deciding/choose`, which
-only a person performs. The model can compute the cheapest buildable lift that
-honours every assertion and it cannot make it yours.
+[Asserting](../concepts/asserting.md) runs through `Deciding/choose`, one
+value at a time or the whole at once, and only a person performs it. The
+model can compute the cheapest buildable lift that honours every assertion
+and it cannot make any of it yours.
 
 _No rule commits to a quote._ The model may ask for one, and the offer comes
 back issued to the person. No `when { Copiloting/invoke: … }` has

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -325,10 +325,17 @@ export function FollowsRow({ variable }: { variable: Variable }) {
   );
 }
 
-/** A variable still open, with what the rules have left of its range. */
+/** A variable still open, with what the rules have left of its range, and
+ * what the assistant proposed for it, if anything. The proposal is a
+ * `Deciding` request of its own: taking it is `choose`, and it becomes the
+ * person's assertion; *not this one* is `decline`, and the whole then adopts
+ * the rest. Neither is a pick from the options, which would be the person's
+ * own value and read that way. */
 export function OpenRow({ variable }: { variable: Variable }) {
+  const { gesture, busy } = useConfigurator();
   const live = variable.options.filter((option) => option.possible);
   const gone = variable.options.length - live.length;
+  const proposed = variable.proposed;
 
   return (
     <Collapsible className="border-b last:border-b-0">
@@ -344,6 +351,39 @@ export function OpenRow({ variable }: { variable: Variable }) {
           </span>
         </Button>
       </CollapsibleTrigger>
+      {proposed ? (
+        <div className="flex flex-wrap items-center gap-2 px-3 pb-2 text-xs">
+          <span className="text-muted-foreground">
+            <SparklesIcon className="mr-1 inline size-3 align-[-2px]" />
+            proposed: <span className="text-foreground">{proposed.label}</span>
+          </span>
+          <Button
+            variant="outline"
+            size="xs"
+            disabled={busy}
+            onClick={() =>
+              void gesture({
+                act: "choose",
+                request: proposed.request,
+                option: { variable: variable.name, option: proposed.option },
+              })
+            }
+          >
+            Take it
+          </Button>
+          <Button
+            variant="ghost"
+            size="xs"
+            disabled={busy}
+            className="text-muted-foreground"
+            onClick={() =>
+              void gesture({ act: "decline", request: proposed.request })
+            }
+          >
+            Not this one
+          </Button>
+        </div>
+      ) : null}
       <CollapsibleContent className="px-3 pb-3">
         <Options variable={variable} />
       </CollapsibleContent>

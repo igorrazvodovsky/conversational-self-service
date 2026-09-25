@@ -81,6 +81,9 @@ export interface Variable {
   /** Whether the current frame selects this item; always true with no frame. */
   framed: boolean;
   refused: { rule: string; because: string }[];
+  /** What the assistant proposed for a variable still open: a `Deciding`
+   * request of its own, to take or leave beside the row. */
+  proposed: { option: string; label: string; request: Request } | null;
   options: Option[];
 }
 
@@ -124,7 +127,13 @@ export interface Clause {
   answers: Answer[];
 }
 
-export type Request = { spec: string; about: "conflict" | "completion" };
+/** A conflict, a whole completion, or one proposed value; the last names its
+ * variable and is carried on the variable's row rather than in `questions`. */
+export type Request = {
+  spec: string;
+  about: "conflict" | "completion";
+  variable?: string;
+};
 
 export interface Question {
   request: Request;

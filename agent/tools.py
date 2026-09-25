@@ -89,9 +89,10 @@ def withdraw(variable: str) -> dict[str, Any]:
 def propose(measure: Literal["cost", "carbon"] = "cost") -> dict[str, Any]:
     """Work out the cheapest or lowest-carbon way to finish the specification.
 
-    Every assertion already on record is kept. The result is put to the person
-    to adopt or refuse — you cannot adopt it yourself, and saying that you have
-    would be false.
+    Every assertion already on record is kept. Each value proposed for a
+    still-open variable is put to the person beside that variable, to take
+    one at a time or all at once — you cannot adopt any of it yourself, and
+    saying that you have would be false.
     """
     completion = engine.root(
         "Copiloting", "invoke", actor="model", tool="propose",

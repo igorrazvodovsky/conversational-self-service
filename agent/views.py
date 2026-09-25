@@ -27,11 +27,11 @@ from wiring import BASIS, WORKSPACE
 # rules, and no field anywhere recording which: the difference between them is
 # a provenance edge.  `Asserting.assertedBy` answers a different question —
 # *whose value is this* — and `APersonAssertsAValue` and
-# `AnAdoptedCompletionBecomesAssertions` both answer it with the same party.
+# `AnAdoptedValueBecomesAnAssertion` both answer it with the same party.
 HOW = {
     "APersonAssertsAValue": "you asked for this",
     "TheModelMayAssertAValue": "the assistant asked for this",
-    "AnAdoptedCompletionBecomesAssertions": "adopted from a proposal",
+    "AnAdoptedValueBecomesAnAssertion": "adopted from a proposal",
     "AChoiceReachesTheAssertions": "answers a requirement",
     "ASubstituteReachesTheAssertions": "answers a requirement, in place of an earlier value",
     "APersonRequestsAQuote": "you asked for this",
@@ -154,6 +154,26 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 {"clause": clause["clause"], "text": clause["text"]}
             )
 
+    # What the assistant proposed for each variable still open, from the
+    # `Deciding` requests that name a variable.  Each is a question of its own
+    # beside its row; the completion as a whole is the question below.
+    pending = [
+        q
+        for q in engine.concepts["Deciding"].pending()
+        if isinstance(q["request"], dict) and q["request"].get("spec") == spec
+    ]
+    proposed = {
+        q["request"]["variable"]: {
+            "option": q["options"][0]["option"],
+            "label": catalogue["label"].get(q["options"][0]["option"], q["options"][0]["option"]),
+            "request": q["request"],
+        }
+        for q in pending
+        if q["request"].get("about") == "completion"
+        and "variable" in q["request"]
+        and q["options"]
+    }
+
     variables = []
     for name, offered in catalogue["offers"].items():
         allowed = set(possible.get(name, offered))
@@ -198,6 +218,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                     for v in following.get(name, [])
                 ],
                 "framed": in_frame(name, offered, allowed),
+                "proposed": proposed.get(name),
                 "refused": [
                     {"rule": rule, "because": constraining["because"].get(rule, rule)}
                     for rule in refused.get(name, [])
@@ -231,11 +252,9 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     # Every open question, not one.  A conflict and a proposed completion are
     # two requests about the same specification and can be pending together;
     # they used to share a request key, so asking either erased the other.
-    questions = [
-        q
-        for q in engine.concepts["Deciding"].pending()
-        if isinstance(q["request"], dict) and q["request"].get("spec") == spec
-    ]
+    # A proposed value is a question too, and rides beside its variable
+    # above rather than here.
+    questions = [q for q in pending if "variable" not in q["request"]]
     for q in questions:
         q["about"] = q["request"].get("about")
 
@@ -632,6 +651,7 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
             {
                 "variable": v["name"],
                 "heading": v["heading"],
+                "proposed": v["proposed"]["label"] if v["proposed"] else None,
                 "options": [
                     {"id": o["id"], "label": o["label"]}
                     for o in v["options"]

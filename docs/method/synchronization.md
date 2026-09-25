@@ -92,9 +92,9 @@ because `error` is an ordinary argument name (WYSIWID §5.3). It also aggregates
 in its `where` rather than firing once per binding, since five conflicting
 assertions are one question with five answers.
 
-_`AnAdoptedCompletionBecomesAssertions`_ is the ordinary §6.5 shape in the
-other direction: one binding per pair in the assignment, `then` invoked once per
-binding, thirty-odd assertions made with no loop anywhere in a concept.
+_`AProposedValueIsPutToThePerson`_ is the ordinary §6.5 shape in the other
+direction: one binding per open pair in the assignment, `then` invoked once
+per binding, thirty-odd questions asked with no loop anywhere in a concept.
 
 _`TheModelMayProposeACompletion`_ reads `Pricing` and `Footprinting` state in
 its `where` to build an objective, and hands it to `Constraining`. Neither

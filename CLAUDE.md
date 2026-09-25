@@ -133,7 +133,7 @@ actor, and the same conduct rules decide what follows.
 | say which requirement a value answers | yes | no | no |
 | assert or withdraw a value | yes | yes | yes |
 | propose a completion | — | yes | yes |
-| **adopt one** | **yes** | **no** | **no** |
+| **adopt one, a value at a time or whole** | **yes** | **no** | **no** |
 | say who the person is, and where the lift goes | yes | yes | yes |
 | request a quote | yes | yes | yes |
 | **accept or revoke one** | **yes** | **no** | **no** |

@@ -275,8 +275,9 @@ carries a `Copiloting/invoke` to `Deciding/choose`.
 
 That single absence is what makes the model's proposals proposals. It can
 compute the cheapest buildable lift that honours every assertion; the
-assignment comes back as an option of a question; and the question is answered
-by a person or by nobody. There is no prompt instruction to that effect, and
+assignment comes back as an option of a question, and each value in it the
+rules leave open as a question of its own; and a question is answered by a
+person or by nobody. There is no prompt instruction to that effect, and
 there does not need to be one.
 
 `APersonCommitsToAQuote` is the second, and it has the same shape one step

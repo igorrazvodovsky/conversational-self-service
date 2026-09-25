@@ -83,8 +83,12 @@ it.
 | `TheModelMayFrameTheCanvas` | [Conduct](conduct.md) |
 | `TheModelMayUnframeTheCanvas` | [Conduct](conduct.md) |
 | `ACompletionIsPutToThePerson` | [Conduct](conduct.md) |
-| `AnAdoptedCompletionBecomesAssertions` | [Conduct](conduct.md) |
+| `AProposedValueIsPutToThePerson` | [Conduct](conduct.md) |
+| `AnAdoptedCompletionIsTakenValueByValue` | [Conduct](conduct.md) |
+| `AnAdoptedValueBecomesAnAssertion` | [Conduct](conduct.md) |
+| `ADeclinedCompletionIsDeclinedValueByValue` | [Conduct](conduct.md) |
 | `AChangedSpecificationWithdrawsItsProposal` | [Conduct](conduct.md) |
+| `ASettledVariableRetiresItsProposedValue` | [Conduct](conduct.md) |
 | `TheCanvasIsShownBeforeItChanges` | [Conduct](conduct.md) |
 
 ## Seeding
