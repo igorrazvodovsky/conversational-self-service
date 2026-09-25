@@ -115,8 +115,10 @@ route per concept action and no tool that changes state directly — a tool
 records that the model asked, and a rule decides what follows.
 
 **Reads are not actions.** The price total and the carbon footprint are
-calculations over exposed state, in `agent/views.py`. Nobody performs *compute
-the total*.
+queries in the Pricing and Footprinting notes: calculations over each concept's
+own state that record nothing. A record assembled from exposed state is not
+even that; the rules and `agent/views.py` read it as a `where` would. Nobody
+performs *compute the total*.
 
 **Do not edit `agent/engine/` to get a behaviour.** MSM §5.2.4 observed that
 no case of an agent modifying engine code to get a behaviour was ever

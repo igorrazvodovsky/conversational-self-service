@@ -104,10 +104,10 @@ where { Constraining: { ?s settled: ?holds }
           of ?holds on the catalogue basis, and it is complete
         Profiling: { person name: ?n }  — the proposal is addressed
         Naming: { ?s site: ?site }      — and says where the lift goes
-        ?stipulated is everything Stipulating holds on the catalogue basis
+        ?stipulated is the terms on the catalogue basis
         ?item is [ spec: ?s ; holds: ?holds ]
-        ?terms is [ months ; recurring ; seller: Profiling's profile of seller ;
-                    customer: Profiling's profile of person ;
+        ?terms is [ months ; recurring ; seller: the profile of seller ;
+                    customer: the profile of person ;
                     title: Naming's title of ?s ; site: ?site ; ?stipulated… ]
         ?until is today plus ?stipulated's validity in days }
 then  { Quoting/quote: [ item: ?item ; to: person ;
@@ -146,9 +146,33 @@ out of the log. That is an absence in this file, not a property of the concept.
 <a id="a-quote-is-requested"></a>
 `APersonRequestsAQuote` is the rule with the longest `where` in this
 application, and every line of it is a decision rather than transcription.
+The readings it shares are named: `TheModelMayRequestAQuote` reads both,
+and the canvas reads the profile.
 
-The catalogue's `Quoting.quote` *requires `valid` and `priced`*, and this
-`where` is what that means for the stand-in engine: every variable settled,
+```
+the profile of ?p
+  =  [ name ; organisation ; address ; email ; phone ]
+       each read from Profiling: { ?p name: _ ; … } where recorded,
+       and left out where never given
+
+the terms on ?b
+  =  [ validity ; warranty ; approval ; installation ]
+       read from Stipulating: { ?b validity: _ ; … }
+     with byOthers: Stipulating: { ?b byOthers: _ }
+     and  stages: for each ?st in Stipulating: { ?b stages: _ }, in order,
+            [ upon ; share ] of ?st
+     and  clauses: for each ?cl in Stipulating: { ?b clauses: _ }, in order,
+            its text, grouped under its section
+```
+
+Neither is a method of the concept it reads. `Profiling` and `Stipulating`
+expose their relations, and assembling a record from them is the reader's
+business, as it is in WYSIWID §5.5's `RegistrationResponse`. The rule reads
+`Naming`'s title and site the same way. `agent/syncs/readings.py` holds the
+one implementation the rules and the canvas share.
+
+The case catalogue's `Quoting.quote` *requires `valid` and `priced`*, and this
+`where` is what that means here, with z3 standing in for the real solver: every variable settled,
 nothing asserted left unmet, and [Pricing](../concepts/pricing.md)'s total
 complete — which it is exactly when a term has been chosen rather than
 presumed. A value held softly counts as met whether it was honoured or

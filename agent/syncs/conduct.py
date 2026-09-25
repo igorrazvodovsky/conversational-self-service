@@ -19,6 +19,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from engine import Completion, Invocation, States, Sync
+from . import readings
 
 from .gestures import DETAILS, offer
 
@@ -185,7 +186,7 @@ def _pending_proposed(states: States, spec: str) -> list[dict[str, Any]]:
     """Every proposed value of the specification still asked and unanswered."""
     return [
         q
-        for q in states["Deciding"].pending()
+        for q in readings.pending(states["Deciding"].state())
         if _is_proposed(q["request"], spec)
     ]
 

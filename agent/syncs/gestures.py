@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from engine import Completion, Invocation, States, Sync
+from . import readings
 
 WORKSPACE = "workspace"
 
@@ -73,12 +74,12 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
     total = states["Pricing"].total(settled.values(), BASIS)
     if not total["complete"]:
         return None
-    customer = states["Profiling"].profile(PERSON)
+    customer = readings.profile(states["Profiling"].state(), PERSON)
     naming = states["Naming"].state()
     site = naming["site"].get(spec, "")
     if not customer.get("name") or not site:
         return None
-    stipulated = states["Stipulating"].terms(BASIS)
+    stipulated = readings.terms(states["Stipulating"].state(), BASIS)
     return {
         "item": {
             "spec": spec,
@@ -96,7 +97,7 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
             "basis": total["basis"],
             "months": total["term"],
             "recurring": total["recurring"],
-            "seller": states["Profiling"].profile(SELLER),
+            "seller": readings.profile(states["Profiling"].state(), SELLER),
             "customer": customer,
             "title": naming["title"].get(spec, ""),
             "site": site,

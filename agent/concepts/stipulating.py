@@ -90,24 +90,3 @@ class Stipulating:
         if variable not in delegated:
             delegated.append(variable)
         return {"basis": basis}
-
-    # -- the read -----------------------------------------------------------
-
-    def terms(self, basis: str) -> dict[str, Any]:
-        """Everything stipulated on the basis, as one record.  A read: the
-        issuing rule copies it into the offer, and the document renders it."""
-        clauses: dict[str, list[str]] = {}
-        for clause in self._clauses.get(basis, []):
-            clauses.setdefault(self._section[clause], []).append(self._text[clause])
-        return {
-            "validity": self._validity.get(basis, 0),
-            "warranty": self._warranty.get(basis, 0),
-            "approval": self._approval.get(basis, 0),
-            "installation": self._installation.get(basis, 0),
-            "byOthers": list(self._by_others.get(basis, [])),
-            "stages": [
-                {"upon": self._upon[s], "share": self._share[s]}
-                for s in self._stages.get(basis, [])
-            ],
-            "clauses": clauses,
-        }

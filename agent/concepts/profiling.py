@@ -55,11 +55,3 @@ class Profiling:
             if value is not None:
                 self._details[detail][party] = str(value).strip()
         return {"party": party}
-
-    # -- the read -----------------------------------------------------------
-
-    def profile(self, party: str) -> dict[str, str]:
-        """Every detail recorded for the party, as one record.  A read."""
-        return {
-            d: m[party] for d, m in self._details.items() if party in m and m[party]
-        }

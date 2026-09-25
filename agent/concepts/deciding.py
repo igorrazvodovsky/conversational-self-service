@@ -102,20 +102,3 @@ class Deciding:
         self._chosen.pop(key, None)
         self._declined.discard(key)
         return {"request": request, "offered": offered}
-
-    # -- the read -----------------------------------------------------------
-
-    def pending(self) -> list[dict[str, Any]]:
-        """Every request that has been asked and neither answered nor declined.
-
-        A read, not an action: nobody performs *list the open questions*.
-        """
-        return [
-            {
-                "request": self._request[key],
-                "reason": self._reason.get(key, ""),
-                "options": list(options),
-            }
-            for key, options in self._offered.items()
-            if key not in self._chosen and key not in self._declined
-        ]

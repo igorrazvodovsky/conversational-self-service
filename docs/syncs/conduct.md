@@ -146,7 +146,7 @@ sync AnAdoptedCompletionIsTakenValueByValue
 when  { Deciding/choose: [ request: ?r ; option: ?a ] => [ request: ?r ] }
 where { ?r is [ spec: ?s ; about: "completion" ]
         ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
-        Deciding: { ?p offered: { ?value } }, and ?p is neither chosen nor declined }
+        ?p is pending, and Deciding: { ?p offered: { ?value } } }
 then  { Deciding/choose: [ request: ?p ; option: ?value ] }
 
 sync AnAdoptedValueBecomesAnAssertion
@@ -161,9 +161,26 @@ sync ADeclinedCompletionIsDeclinedValueByValue
 when  { Deciding/decline: [ request: ?r ] => [ request: ?r ] }
 where { ?r is [ spec: ?s ; about: "completion" ]
         ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
-        Deciding: { ?p offered: _ }, and ?p is neither chosen nor declined }
+        ?p is pending }
 then  { Deciding/decline: [ request: ?p ] }
 ```
+
+where *pending* is one calculation over `Deciding`'s exposed state, read by
+the rules on this page, by
+[`AResolvedConflictWithdrawsItsQuestion`](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)
+and by the canvas, which lists the pending questions:
+
+```
+?r is pending
+  iff  Deciding: { ?r offered: _ }
+  and  Deciding: { ?r chosen: _ } does not bind
+  and  ?r is not in Deciding's declined
+```
+
+It is not a method of `Deciding`. The concept exposes what was offered, chosen
+and declined, and which requests are still open is a question its readers ask
+of that, as a `where` would (WYSIWID §6.4). `agent/syncs/readings.py` holds the
+one implementation the rules and the canvas share.
 
 ```
 sync AChangedSpecificationWithdrawsItsProposal

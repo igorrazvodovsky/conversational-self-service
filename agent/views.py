@@ -22,6 +22,7 @@ from typing import Any
 
 from engine import Engine
 from wiring import BASIS, WORKSPACE
+from syncs import readings
 
 # Which rule put an assertion on record, in words.  Three sentences, three
 # rules, and no field anywhere recording which: the difference between them is
@@ -159,7 +160,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     # beside its row; the completion as a whole is the question below.
     pending = [
         q
-        for q in engine.concepts["Deciding"].pending()
+        for q in readings.pending(engine.state("Deciding"))
         if isinstance(q["request"], dict) and q["request"].get("spec") == spec
     ]
     proposed = {
@@ -326,8 +327,9 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 )
 
     quotes = _quotes(engine, spec, grid, settled)
-    customer = engine.concepts["Profiling"].profile("person")
-    seller = engine.concepts["Profiling"].profile("seller")
+    profiling = engine.state("Profiling")
+    customer = readings.profile(profiling, "person")
+    seller = readings.profile(profiling, "seller")
     naming = engine.state("Naming")
     project = {"title": naming["title"].get(spec, ""), "site": naming["site"].get(spec, "")}
 
