@@ -389,8 +389,26 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const gridRef = useRef(grid);
   gridRef.current = grid;
+  // A poll and a gesture are both in flight at once while the assistant is
+  // running, and the answers can cross: a read started before the gesture
+  // and answered after it would put the state the gesture moved away from
+  // back on the canvas. So every response says where the log stood when it
+  // was rendered, and one from further back than what is shown is dropped.
+  // Equal positions are the same state; the later request wins so a change
+  // of grid shows.
+  const issued = useRef(0);
+  const shown = useRef({ at: -1, ticket: 0 });
+  const take = () => ++issued.current;
+  const show = useCallback((ticket: number, next: View) => {
+    const at = next.log.length ? next.log[next.log.length - 1].seq : 0;
+    const current = shown.current;
+    if (at < current.at || (at === current.at && ticket < current.ticket)) return;
+    shown.current = { at, ticket };
+    setView(next);
+  }, []);
 
   const refresh = useCallback(async () => {
+    const ticket = take();
     try {
       const response = await fetch(
         `/api/configurator/view?grid=${gridRef.current}`,
@@ -398,12 +416,12 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
       );
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "could not read the state");
-      setView(body);
+      show(ticket, body);
       setError(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     }
-  }, []);
+  }, [show]);
 
   useEffect(() => {
     void refresh();
@@ -421,6 +439,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
 
   const gesture = useCallback(async (stimulus: Stimulus) => {
     setBusy(true);
+    const ticket = take();
     try {
       const response = await fetch(
         `/api/configurator/gesture?grid=${gridRef.current}`,
@@ -435,7 +454,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
       );
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? "the action was refused");
-      setView(body.view);
+      show(ticket, body.view);
       setError(null);
       return body.view as View;
     } catch (cause) {
@@ -444,11 +463,12 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [show]);
 
   const invoke = useCallback(
     async (tool: string, args: Record<string, unknown> = {}) => {
       setBusy(true);
+      const ticket = take();
       try {
         const response = await fetch(
           `/api/configurator/invoke?grid=${gridRef.current}`,
@@ -460,7 +480,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
         );
         const body = await response.json();
         if (!response.ok) throw new Error(body.error ?? "the call was refused");
-        setView(body.view);
+        show(ticket, body.view);
         setError(null);
         return { did: body.did, state: body.state } as Outcome;
       } catch (cause) {
@@ -470,7 +490,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
         setBusy(false);
       }
     },
-    [],
+    [show],
   );
 
   const review = useCallback(async () => {

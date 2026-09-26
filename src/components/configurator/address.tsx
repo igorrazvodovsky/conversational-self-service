@@ -92,11 +92,19 @@ export function useFollowAddress() {
   }, [ready, hash, mode, gesture]);
 }
 
-/** Go to an address: set the fragment, or scroll again if it is already set. */
+/** Go to an address: set the fragment, or scroll again if it is already
+ * set. An item at the address the page is already at may be on the other
+ * surface — followed once, then the surfaces toggled — and setting the same
+ * fragment again fires nothing, so the fragment is cleared first and the
+ * change is followed as any other. */
 export function goTo(id: string) {
-  if (window.location.hash === `#${id}`) {
-    document.getElementById(id)?.scrollIntoView({ block: "start" });
-    return;
+  if (window.location.hash === `#${id}` || window.location.hash === `#${encodeURIComponent(id)}`) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ block: "start" });
+      return;
+    }
+    history.replaceState(null, "", window.location.pathname + window.location.search);
   }
   window.location.hash = id;
 }
@@ -123,6 +131,10 @@ export function To({
   return (
     <a
       href={href(id)}
+      onClick={(event) => {
+        event.preventDefault();
+        goTo(id);
+      }}
       title={title}
       className={
         "underline decoration-dotted underline-offset-2 hover:decoration-solid " +

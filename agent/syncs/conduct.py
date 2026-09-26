@@ -435,6 +435,15 @@ def _the_canvas_is_shown_before_it_changes(
 
 
 rules = [
+    # First, so that it fires before the rules below carry the call through:
+    # a quote the model requests ends with the quote surface forward
+    # (`AnIssuedQuoteIsShown`), which it would not if this focused the canvas
+    # after that rule had run.  The engine fires rules in registration order.
+    Sync(
+        "TheCanvasIsShownBeforeItChanges",
+        ("Copiloting", "invoke"),
+        _the_canvas_is_shown_before_it_changes,
+    ),
     Sync(
         "TheModelMayAssertAValue",
         ("Copiloting", "invoke"),
@@ -544,10 +553,5 @@ rules = [
         "TheModelMayUnframeTheCanvas",
         ("Copiloting", "invoke"),
         _tool("unframe", "Framing", "unframe", lens=WORKSPACE),
-    ),
-    Sync(
-        "TheCanvasIsShownBeforeItChanges",
-        ("Copiloting", "invoke"),
-        _the_canvas_is_shown_before_it_changes,
     ),
 ]

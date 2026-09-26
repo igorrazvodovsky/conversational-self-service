@@ -48,6 +48,8 @@ class Asserting:
     # -- actions ------------------------------------------------------------
 
     def start(self, spec: str) -> dict[str, Any]:
+        if spec in self._open:
+            return {"error": f"{spec} is already open"}
         self._open.add(spec)
         self._asserted[spec] = {}
         self._asserted_by[spec] = {}

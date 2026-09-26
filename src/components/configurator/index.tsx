@@ -250,7 +250,9 @@ const family = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
 export function ConfiguratorCanvas() {
   const { view, error } = useConfigurator();
 
-  if (error) {
+  // A read that failed says nothing about the state; what was last read
+  // stays up until one succeeds.
+  if (error && !view) {
     return (
       <Empty className="h-full">
         <EmptyHeader>

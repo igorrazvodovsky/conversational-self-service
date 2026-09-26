@@ -343,9 +343,7 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                   {hint}
                 </span>
               ) : null}
-              <NodeViewContent
-                className={cn("text-sm outline-none", clause?.formerly.length && "")}
-              />
+              <NodeViewContent className="text-sm outline-none" />
             </div>
           )}
           {clause?.formerly.length ? (
@@ -509,6 +507,11 @@ export function Specification() {
   viewRef.current = view;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushing = useRef(false);
+  // The clauses the document was last given. A clause the state holds and
+  // the document does not is struck only if the document once had it: one
+  // the assistant stated while the person was typing never reached the
+  // document, and its absence is not an edit.
+  const given = useRef(new Set((view?.clauses ?? []).map((c) => c.clause)));
   // Made once: it reads the view through the ref when the popup opens.
   const [Referencing] = useState(() => referencing(viewRef));
 
@@ -522,6 +525,17 @@ export function Specification() {
     onUpdate: () => schedule(),
     onBlur: () => void flush(),
   });
+
+  const writeBack = useCallback(
+    (next: View | null) => {
+      if (!editor || editor.isFocused) return;
+      const wanted = documentOf(next);
+      given.current = new Set((next?.clauses ?? []).map((c) => c.clause));
+      if (JSON.stringify(editor.getJSON()) !== JSON.stringify(wanted))
+        editor.commands.setContent(wanted, { emitUpdate: false });
+    },
+    [editor],
+  );
 
   /**
    * Send what the document says that the state does not: a strike for every
@@ -538,8 +552,11 @@ export function Specification() {
       const held = new Map(current.clauses.map((c) => [c.clause, c]));
       const inDoc = clausesOf(editor);
       const present = new Set(inDoc.map((n) => n.clause).filter(Boolean));
-      for (const c of current.clauses)
-        if (!present.has(c.clause)) await gesture({ act: "strike", clause: c.clause });
+      for (const c of current.clauses) {
+        if (present.has(c.clause) || !given.current.has(c.clause)) continue;
+        given.current.delete(c.clause);
+        await gesture({ act: "strike", clause: c.clause });
+      }
       for (const n of inDoc) {
         if (n.clause) {
           const was = held.get(n.clause);
@@ -552,6 +569,7 @@ export function Specification() {
         const next = await gesture({ act: "require", text: n.text });
         const added = next?.clauses.find((c) => !before.has(c.clause));
         if (!added) continue;
+        given.current.add(added.clause);
         // The node is now that clause. Found again by position, since the
         // document may have moved under us while the gesture was in flight.
         const node = editor.state.doc.nodeAt(n.pos);
@@ -564,8 +582,11 @@ export function Specification() {
       }
     } finally {
       flushing.current = false;
+      // The views that arrived while the gestures were in flight were not
+      // written back; the one standing now is.
+      writeBack(viewRef.current);
     }
-  }, [editor, gesture]);
+  }, [editor, gesture, writeBack]);
 
   const schedule = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -574,11 +595,9 @@ export function Specification() {
 
   // The view writes back into the document only while nobody is typing in it.
   useEffect(() => {
-    if (!editor || editor.isFocused || flushing.current) return;
-    const wanted = documentOf(view);
-    if (JSON.stringify(editor.getJSON()) !== JSON.stringify(wanted))
-      editor.commands.setContent(wanted, { emitUpdate: false });
-  }, [editor, view]);
+    if (flushing.current) return;
+    writeBack(view);
+  }, [writeBack, view]);
 
   useEffect(
     () => () => {

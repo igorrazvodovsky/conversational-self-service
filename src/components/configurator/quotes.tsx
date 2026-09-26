@@ -135,7 +135,14 @@ function Addressee() {
         </CardHeader>
         <CollapsibleContent>
           <CardContent>
-            <form onSubmit={(e) => void submit(e)} className="grid gap-3 sm:grid-cols-2">
+            <form
+              // Keyed on what is on record, so that a detail the assistant
+              // records while the form is open shows in its field rather than
+              // being sent back blank as the person's correction.
+              key={JSON.stringify([customer, project])}
+              onSubmit={(e) => void submit(e)}
+              className="grid gap-3 sm:grid-cols-2"
+            >
               {CUSTOMER.map((field) => (
                 <label
                   key={field.key}
@@ -219,9 +226,15 @@ function Issued({
           <TableRow
             key={q.quote}
             data-state={q.quote === selected ? "selected" : undefined}
-            aria-selected={q.quote === selected}
+            aria-current={q.quote === selected ? "true" : undefined}
             className="cursor-pointer"
+            tabIndex={0}
             onClick={() => onSelect(q.quote)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              onSelect(q.quote);
+            }}
           >
             <TableCell className="font-medium">{q.number}</TableCell>
             <TableCell>{STANDING[q.standing]}</TableCell>
@@ -371,7 +384,9 @@ export function QuoteSurface() {
     setSelected(latest);
   }, [latest]);
 
-  if (error) {
+  // A read that failed says nothing about the state; what was last read
+  // stays up until one succeeds.
+  if (error && !view) {
     return (
       <Empty className="h-full">
         <EmptyHeader>

@@ -58,6 +58,12 @@ class Constraining:
         self._following: dict[str, dict[str, list[str]]] = {}
         self._refused: dict[str, dict[str, list[str]]] = {}
         self._solver: z3.Solver | None = None
+        # The reads' own solver, over the same rules.  A solver learns from
+        # every question put to it and answers the next one differently for
+        # it, so a query made between two actions would leave the actions'
+        # answers depending on what the canvas happened to ask — and the log,
+        # which records actions and not reads, could not replay them.
+        self._reader: z3.Solver | None = None
         self._sel: dict[tuple[str, str], z3.BoolRef] = {}
         self._rule_lit: dict[str, z3.BoolRef] = {}
 
@@ -167,10 +173,10 @@ class Constraining:
         return self._adopt(spec, variable, option, hard=False)
 
     def consider(self, spec: str) -> dict[str, Any]:
-        """Begin tracking a specification, before anything has been assumed."""
-        self._assumed.setdefault(spec, {})
-        self._inclined.setdefault(spec, {})
-        self._refused.setdefault(spec, {})
+        """Begin tracking a specification, with nothing assumed of it."""
+        self._assumed[spec] = {}
+        self._inclined[spec] = {}
+        self._refused[spec] = {}
         return self._recompute(spec)
 
     def release(self, spec: str, variable: str) -> dict[str, Any]:
@@ -269,15 +275,43 @@ class Constraining:
         literal = self._built_sel().get((variable, option))
         if literal is None:
             return [], []
-        solver = self._built()
+        solver = self._reading()
         rules = list(self._rule_lit.values())
-        if solver.check(*rules, *self._effective_literals(spec), literal) != z3.unsat:
-            return [], []
-        return self._read_core(solver, exclude=variable)
+        return self._read_core(
+            solver, [*rules, *self._effective_literals(spec)], [literal], exclude=variable
+        )
 
-    def _read_core(self, solver: z3.Solver, exclude: str | None = None) -> tuple[list[str], list[str]]:
-        """The rules and the assumed variables in the solver's last core."""
+    def _read_core(
+        self,
+        solver: z3.Solver,
+        tracked: list[z3.BoolRef],
+        fixed: list[z3.BoolRef],
+        exclude: str | None = None,
+    ) -> tuple[list[str], list[str]]:
+        """The smallest set of rules and assumed variables among `tracked`
+        that cannot hold together with `fixed`; nothing when they all can.
+
+        The solver's own core is a starting point and not an answer: it is
+        not minimal, and it depends on what the solver happened to learn from
+        earlier questions, so the same specification could be explained one
+        way live and another way after the log is replayed.  So the core is
+        shrunk by deletion, in the fixed order `tracked` is given in, until
+        every literal left is one without which the rest hold.  One minimal
+        set is returned; where several exist the deletion order decides.
+        """
+        if solver.check(*tracked, *fixed) != z3.unsat:
+            return [], []
         core = {str(term) for term in solver.unsat_core()}
+        kept = [term for term in tracked if str(term) in core]
+        index = 0
+        while index < len(kept):
+            trial = kept[:index] + kept[index + 1 :]
+            if solver.check(*trial, *fixed) == z3.unsat:
+                core = {str(term) for term in solver.unsat_core()}
+                kept = [term for term in trial if str(term) in core]
+            else:
+                index += 1
+        core = {str(term) for term in kept}
         rules = sorted(
             rule for rule, rule_literal in self._rule_lit.items() if str(rule_literal) in core
         )
@@ -294,6 +328,16 @@ class Constraining:
 
     def _invalidate(self) -> None:
         self._solver = None
+        self._reader = None
+
+    def _reading(self) -> z3.Solver:
+        """The solver the queries use: the rules the actions' solver holds,
+        in a solver whose learning never reaches an action."""
+        if self._reader is None:
+            built = self._built()
+            self._reader = z3.Solver()
+            self._reader.add(*built.assertions())
+        return self._reader
 
     def _recompute_all(self) -> None:
         """Every specification being tracked, after the rule base moved.
@@ -404,7 +448,7 @@ class Constraining:
         sees them.  What `possible`, `settled` and the two reads beside them
         are computed against; never what `assume`'s check is, which is the
         assumptions alone."""
-        solver = self._built()
+        solver = self._reading()
         held, _ = self._honoured(
             solver,
             list(self._rule_lit.values()),
@@ -424,8 +468,11 @@ class Constraining:
             }
         assumed = self._assumed.setdefault(spec, {})
         inclined = self._inclined.setdefault(spec, {})
+        # As they were, in the order they were: the order of inclination is
+        # the order they are honoured in, and a refusal must not reshuffle it.
+        before_assumed = dict(assumed)
+        before_inclined = dict(inclined)
         was_assumed = assumed.get(variable)
-        was_inclined = inclined.get(variable)
         if hard:
             inclined.pop(variable, None)
             assumed[variable] = option
@@ -438,13 +485,18 @@ class Constraining:
             if solver.check(*self._rule_lit.values(), *self._assumption_literals(spec)) \
                     != z3.sat:
                 why = self._why_unsat(spec)
-                # leave the assumptions as they were
-                assumed.pop(variable, None)
-                if was_assumed is not None:
-                    assumed[variable] = was_assumed
-                if was_inclined is not None:
-                    inclined[variable] = was_inclined
+                assumed.clear()
+                assumed.update(before_assumed)
+                inclined.clear()
+                inclined.update(before_inclined)
                 self._refused.setdefault(spec, {})[variable] = why["rules"]
+                if was_assumed is not None and was_assumed != option:
+                    # The variable was assumed to be something else, and the
+                    # caller has replaced that with what was just refused.
+                    # An assumption nothing asserts any more would go on
+                    # narrowing the specification on nobody's authority.
+                    assumed.pop(variable, None)
+                    self._recompute(spec)
                 sentences = [self._because.get(r, r) for r in why["rules"]]
                 joined = "; ".join(sentences) if sentences else "the rules"
                 return {
@@ -507,7 +559,7 @@ class Constraining:
         nothing is possible and nothing settled.  Inclinations are honoured
         where they can be, as in the recompute.
         """
-        solver = self._built()
+        solver = self._reading()
         rules = list(self._rule_lit.values())
         literals = [
             self._sel[(variable, option)]
@@ -528,17 +580,8 @@ class Constraining:
     def _why_unsat(self, spec: str) -> dict[str, list[str]]:
         """The smallest set of rules and assumptions that cannot hold together."""
         solver = self._built()
-        solver.check(*self._rule_lit.values(), *self._assumption_literals(spec))
-        core = {str(term) for term in solver.unsat_core()}
-        rules = sorted(
-            rule for rule, literal in self._rule_lit.items() if str(literal) in core
-        )
-        variables = sorted(
-            {
-                variable
-                for (variable, option), literal in self._sel.items()
-                if str(literal) in core
-            }
+        rules, variables = self._read_core(
+            solver, [*self._rule_lit.values(), *self._assumption_literals(spec)], []
         )
         return {"rules": rules, "variables": variables}
 
@@ -577,13 +620,14 @@ class Constraining:
                 # rules could honour, not because a rule said so.
                 continue
             literal = self._sel[(variable, option)]
-            if solver.check(*rules, *assumptions, z3.Not(literal)) == z3.unsat:
-                # The same core, both halves: the rules that force the value
-                # and the assumptions it rests on.
-                blamed, rests = self._read_core(solver, exclude=variable)
-                if blamed:
-                    owing[variable] = blamed
-                    following[variable] = rests
+            # The same core, both halves: the rules that force the value and
+            # the assumptions it rests on.
+            blamed, rests = self._read_core(
+                solver, [*rules, *assumptions], [z3.Not(literal)], exclude=variable
+            )
+            if blamed:
+                owing[variable] = blamed
+                following[variable] = rests
 
         self._possible[spec] = ordered
         self._settled[spec] = settled

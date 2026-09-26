@@ -37,7 +37,8 @@ then  { Specifying/close: [ spec: ?s ] ;
 sync APersonAnswersAClause
 when  { Copiloting/gesture: [ act: "answer" ; spec: ?s ;
           clause: ?c ; option: ?o ] => [] }
-where { Binding: { ?sel for: ?s }
+where { Specifying: { ?s clauses: ?c }
+        Binding: { ?sel for: ?s }
         no choice of ?sel answers ?c }
 then  { Binding/propose: [ party: person ; selection: ?sel ;
           requirement: ?c ; value: ?o ] }

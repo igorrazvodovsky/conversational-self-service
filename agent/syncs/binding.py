@@ -87,10 +87,14 @@ def _a_person_answers_a_clause(c: Completion, states: States) -> list[Invocation
     """A clause nobody has answered gets a `propose`."""
     if c.output.get("act") != "answer":
         return []
+    clause, option = c.output["clause"], c.output["option"]
+    # A clause struck since the canvas was drawn is not one of the spec's,
+    # and a choice answering it would answer nothing.
+    if clause not in states["Specifying"].state()["clauses"].get(c.output["spec"], []):
+        return []
     selection = _selection_for(states, c.output["spec"])
     if selection is None:
         return []
-    clause, option = c.output["clause"], c.output["option"]
     if any(ch["answers"] == clause for ch in _choices_of(states, selection)):
         return []
     return [

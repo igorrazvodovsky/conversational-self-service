@@ -18,6 +18,11 @@ actions
     add the spec to those open
     with nothing asserted
 
+  start [ spec: Spec ]
+    => [ error: string ]
+    if the spec is already open
+    return the error description
+
   assert [ spec: Spec ; variable: Variable ; option: Option ; party: Party ]
     => [ spec: Spec ; variable: Variable ; option: Option ]
     record the option as asserted for the variable, and by whom,

@@ -64,7 +64,9 @@ actions
   assume [ spec: Spec ; variable: Variable ; option: Option ]
     => [ error: string ; culprits: set Rule ; conceding: set Variable ]
     if no combination satisfies every rule together with the assumptions
-    leave the assumptions as they were
+    leave the assumptions as they were, in the order they were,
+    except that an option previously assumed for the variable is dropped,
+    since the caller has replaced it, and the recompute then runs as for release
     record against the variable the rules that refused it
     return the smallest set of rules that cannot hold together with them,
     and the variables whose assumptions took part

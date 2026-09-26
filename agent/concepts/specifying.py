@@ -65,7 +65,7 @@ class Specifying:
 
     def open(self, spec: str) -> dict[str, Any]:
         self._open.add(spec)
-        self._clauses.setdefault(spec, [])
+        self._clauses[spec] = []
         return {"spec": spec}
 
     def require(self, spec: str, party: str, text: str) -> dict[str, Any]:
