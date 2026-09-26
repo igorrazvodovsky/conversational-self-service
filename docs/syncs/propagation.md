@@ -184,15 +184,17 @@ completion honour preferences before cost.
 
 ### What this does not answer
 
-Whether the real configurator's solver accepts a soft constraint at all is one
-of the **[unknown]**s in step 1 of the case's `Prototype plan`, and it is not
-this repository's to answer. The z3 stand-in supports one, which is evidence
-about z3 and not about Tacton. What the rules above establish is narrower and
-is still worth having: that negotiability can reach validity by a rule that
-reads the person's tag, without an action added to `Asserting` and without a
-weight anywhere the person can see. If the real solver has no soft constraint,
-the consequence the plan records stands, and the rules above that invoke
-`incline` are the ones that would have nothing to invoke.
+Whether a configurator's solver accepts a soft constraint at all is one of
+the **[unknown]**s in step 1 of the case's `Prototype plan`, and it is not
+this repository's to answer: the prototype is configurator-agnostic, and z3
+stands in for whichever configurator a solution built on it adopts. That z3
+supports one is evidence about z3 and not about that configurator. What the
+rules above establish is narrower and is still worth having: that
+negotiability can reach validity by a rule that reads the person's tag,
+without an action added to `Asserting` and without a weight anywhere the
+person can see. If the adopted solver has no soft constraint, the consequence
+the plan records stands, and the rules above that invoke `incline` are the
+ones that would have nothing to invoke.
 
 ## The assertion is recorded before it is known to be satisfiable
 
