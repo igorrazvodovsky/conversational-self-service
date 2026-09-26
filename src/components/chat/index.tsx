@@ -14,7 +14,7 @@
  * Inspector" button, which the dev inspector draws on a local run only.
  */
 
-import { forwardRef, useState, type ComponentProps } from "react";
+import { forwardRef, useState, type ComponentProps, type MouseEvent } from "react";
 import {
   ArrowUpIcon,
   Building2Icon,
@@ -32,6 +32,7 @@ import {
   CopilotChatUserMessage,
 } from "@copilotkit/react-core/v2";
 
+import { goTo } from "@/components/configurator/address";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import {
@@ -328,7 +329,29 @@ function WelcomeScreen({
   );
 }
 
+/**
+ * A reply may point at the canvas: a markdown link to an item's address
+ * (`configurator/address.tsx`). The markdown renderer opens every link in a
+ * new tab, which for a fragment of this page would open the page again, so a
+ * same-page fragment is taken back here and set on this window.
+ */
+function followAddress(event: MouseEvent<HTMLDivElement>) {
+  const anchor = (event.target as HTMLElement).closest("a");
+  const href = anchor?.getAttribute("href");
+  if (!anchor || !href?.startsWith("#")) return;
+  event.preventDefault();
+  goTo(decodeURIComponent(href.slice(1)));
+}
+
 export function ConfiguratorChat() {
+  return (
+    <div className="contents" onClickCapture={followAddress}>
+      <Chat />
+    </div>
+  );
+}
+
+function Chat() {
   return (
     <CopilotChat
       attachments={{ enabled: true }}

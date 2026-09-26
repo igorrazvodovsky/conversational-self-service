@@ -26,6 +26,7 @@ from concepts.cataloguing import Cataloguing
 from concepts.constraining import Constraining
 from concepts.conversing import Conversing
 from concepts.deciding import Deciding
+from concepts.filing import Filing
 from concepts.footprinting import Footprinting
 from concepts.framing import Framing
 from concepts.moding import Moding
@@ -33,12 +34,13 @@ from concepts.naming import Naming
 from concepts.pricing import Pricing
 from concepts.profiling import Profiling
 from concepts.quoting import Quoting
+from concepts.reading import Reading
 from concepts.showing import Showing
 from concepts.specifying import Specifying
 from concepts.stipulating import Stipulating
 from engine import Engine
 from engine.bootstrap import Copiloting
-from syncs import binding, conduct, gestures, propagation, seeding
+from syncs import binding, conduct, gestures, propagation, reading, seeding
 
 CATALOGUE = Path(__file__).parent / "catalogue" / "elevator.json"
 
@@ -83,6 +85,10 @@ def build(path: Path = CATALOGUE) -> Engine:
         Specifying(),
         Binding(),
         Conversing(),
+        # What a party brought, and what the model read from it or from
+        # their words.  Neither is seeded: both start empty.
+        Filing(),
+        Reading(),
         Deciding(),
         Quoting(),
         Profiling(),
@@ -99,6 +105,7 @@ def build(path: Path = CATALOGUE) -> Engine:
         *seeding.rules,
         *propagation.rules,
         *binding.rules,
+        *reading.rules,
         *gestures.rules,
         *conduct.rules,
     )
@@ -112,10 +119,12 @@ def build(path: Path = CATALOGUE) -> Engine:
         basis=BASIS,
         grids=GRIDS,
         workspace=WORKSPACE,
-        # The specification's surface first: it is the one given attention.
-        # The conversation is not a surface; where the chat sits is the
-        # person's view state, which no rule reaches (docs/concepts/moding.md).
-        surfaces=["canvas", "quote"],
+        # The configuration's surface first: it is the one given attention.
+        # The requirements are a surface of their own, linked to it; the quote
+        # is the third.  The conversation is not a surface; where the chat sits
+        # is the person's view state, which no rule reaches
+        # (docs/concepts/moding.md).
+        surfaces=["canvas", "requirements", "quote"],
         facets=[{"facet": f, "about": a, "shown": s} for f, a, s in FACETS],
         spec=SPEC,
     )

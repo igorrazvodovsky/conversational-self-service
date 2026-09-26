@@ -22,6 +22,7 @@ the flow token alone.  No concept holds the reading; the trace does.
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import date
 from typing import Any
@@ -62,54 +63,251 @@ def said(via: str | None, actor: str | None, default: str | None = None) -> str 
     return SAID.get((via or "", actor or "")) or HOW.get(via or "", default)
 
 
-def _provenance(engine: Engine, spec: str) -> dict[str, tuple[str, str, str | None]]:
-    """The rule behind the most recent assertion recorded for each variable,
-    the actor that performed the root action it followed from, and the
-    person's words when the assertion was made in reply to some.
+def _trace(engine: Engine, spec: str) -> dict[str, Any]:
+    """What the log says that no concept holds, in one pass from the boot mark.
 
-    The words are the `Conversing/say` in the assertion's flow: a chat turn
-    is one flow, opened by the message and shared by the tool calls made in
-    reply (`hearing.py`).  A gesture's flow and a browser agent's hold no
-    utterance, and those assertions carry none.
+    `how` — for each variable, the rule behind its most recent assertion, the
+    actor that performed the root action it followed from, and the words it
+    was read from.  The words are the `Conversing/say` in the assertion's
+    flow: a chat turn is one flow, opened by the message and shared by the
+    tool calls made in reply (`hearing.py`).  An assertion that followed from
+    a `Reading/read` in the same flow carries that reading's words and source
+    instead, since the chain from `read` to `assert` runs inside one root
+    action and the read most recently recorded in the flow is the one.  A
+    gesture's flow and a browser agent's hold no utterance, and those
+    assertions carry none.
+
+    `origin` — for each clause the model stated, the reading it came from:
+    the `require` carries the rule's name and the `read` in the same flow the
+    source and the words (`docs/syncs/reading.md`).
+
+    `displaced` — for each clause whose answer was retracted because a
+    different value was asserted for its variable, what displaced it: the
+    assertion in that flow, with its words.  Cleared when the clause is
+    answered again.
 
     Scanned from the boot mark rather than from the start of the log: the
     catalogue's arrival is a thousand-odd records of `Cataloguing` and
     `Pricing`, and no assertion can precede it.
     """
     words: dict[str, str] = {}
-    how: dict[str, tuple[str, str, str | None]] = {}
+    reads: dict[str, dict[str, Any]] = {}
+    asserting: dict[str, dict[str, Any]] = {}
+    how: dict[str, dict[str, Any]] = {}
+    origin: dict[str, dict[str, Any]] = {}
+    displaced: dict[str, dict[str, Any]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if record.kind != "completion":
             continue
         output = record.output or {}
+        if "error" in output:
+            continue
         if record.concept == "Conversing" and record.action == "say":
             if output.get("party") == "person" and output.get("text"):
                 words[record.flow] = output["text"]
-            continue
-        if record.concept != "Asserting" or record.action not in {"assert", "withdraw"}:
-            continue
-        if output.get("spec") != spec or "variable" not in output:
-            continue
-        if record.action == "withdraw":
-            how.pop(output["variable"], None)
-        else:
-            how[output["variable"]] = (
-                record.via or "recorded at boot",
-                record.actor,
-                words.get(record.flow),
-            )
-    return how
+        elif record.concept == "Reading" and record.action == "read":
+            reads[record.flow] = {
+                "item": output["item"],
+                "source": output["source"],
+                "words": output["words"],
+            }
+        elif record.concept == "Specifying" and record.action == "require":
+            if record.via == "AReadItemBecomesAClause" and record.flow in reads:
+                origin[output["clause"]] = dict(reads[record.flow])
+        elif record.concept == "Specifying" and record.action == "strike":
+            displaced.pop(output["clause"], None)
+        elif record.concept == "Binding" and record.action in {"propose", "substitute"}:
+            displaced.pop(output["requirement"], None)
+        elif record.concept == "Binding" and record.action == "retract":
+            if record.via == "AnOverwrittenValueRetractsItsChoices":
+                by = asserting.get(record.flow)
+                if by:
+                    displaced[output["requirement"]] = {"value": output["value"], **by}
+        elif record.concept == "Asserting" and record.action in {"assert", "withdraw"}:
+            if output.get("spec") != spec or "variable" not in output:
+                continue
+            if record.action == "withdraw":
+                how.pop(output["variable"], None)
+                continue
+            read = reads.get(record.flow) if record.actor != "person" else None
+            entry = {
+                "via": record.via or "recorded at boot",
+                "actor": record.actor,
+                "words": read["words"] if read else words.get(record.flow),
+                "source": read["source"] if read else None,
+            }
+            how[output["variable"]] = entry
+            asserting[record.flow] = {
+                "variable": output["variable"],
+                "option": output["option"],
+                **entry,
+            }
+    return {"how": how, "origin": origin, "displaced": displaced}
 
 
-def _how(via: str, actor: str, words: str | None) -> str:
+def _source_name(engine: Engine, source: Any) -> str | None:
+    """A source, named the way the canvas names it: the file's name, or nothing
+    for the person's own words."""
+    if isinstance(source, dict) and source.get("file"):
+        return engine.state("Filing")["name"].get(source["file"], source["file"])
+    return None
+
+
+def _how(engine: Engine, entry: dict[str, Any], cited: bool = False) -> str:
     """The sentence beside an asserted value.
 
     With words in the flow, the sentence says what they were: the reading is
-    what the person corrects, so it stands where the value does.
+    what the person corrects, so it stands where the value does.  When the
+    value answers a clause the model stated from those same words, the clause
+    already carries them beside the value (`cited`), and the sentence says
+    only who read it and where; the words come back the moment the value
+    stops answering the clause.
     """
+    via, actor, words = entry["via"], entry["actor"], entry.get("words")
     if words and via == "TheModelMayAssertAValue":
         return f"the assistant read “{words}” as this"
+    if words and via in {"AChoiceReachesTheAssertions", "ASubstituteReachesTheAssertions"}:
+        who = "a browser agent" if actor == BROWSER else "the assistant"
+        name = _source_name(engine, entry.get("source"))
+        if cited:
+            where = f"in {name}" if name else "from what you said"
+            return f"{who} read this {where}"
+        where = f" in {name}" if name else ""
+        return f"{who} read “{words}”{where} as this"
     return said(via, actor, default=via) or via
+
+
+def _touched(engine: Engine, spec: str) -> dict[str, Any] | None:
+    """What the last turn changed, for the canvas to mark.
+
+    The most recent flow that reached an assertion or a clause, and the
+    variables and clauses its records name.  A flow the person opened by a
+    gesture is theirs and marks nothing: they were looking.  A flow with the
+    model or a browser agent among its root actors is what moved while they
+    were not, and the marks stand until the person next changes the
+    specification themselves.  Read off the log; held by nobody.
+    """
+    flows: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if record.kind != "completion":
+            continue
+        flow = flows.get(record.flow)
+        if flow is None:
+            flow = flows[record.flow] = {"actors": set(), "variables": set(), "clauses": set()}
+            order.append(record.flow)
+        if record.via is None:
+            flow["actors"].add(record.actor)
+        output = record.output or {}
+        if "error" in output:
+            continue
+        if record.concept == "Asserting" and record.action in {"assert", "withdraw"}:
+            if output.get("spec") == spec and output.get("variable"):
+                flow["variables"].add(output["variable"])
+        elif record.concept == "Specifying" and output.get("clause"):
+            flow["clauses"].add(output["clause"])
+        elif record.concept == "Binding" and output.get("requirement"):
+            flow["clauses"].add(output["requirement"])
+    for token in reversed(order):
+        flow = flows[token]
+        if not (flow["variables"] or flow["clauses"]):
+            continue
+        others = flow["actors"] - {"person"}
+        if not others:
+            return None
+        return {
+            "by": "a browser agent" if BROWSER in others else "the assistant",
+            "variables": sorted(flow["variables"]),
+            "clauses": sorted(flow["clauses"]),
+        }
+    return None
+
+
+def filed(engine: Engine, file: str) -> dict[str, Any]:
+    """A document as it is on record, for the model to read from."""
+    filing = engine.state("Filing")
+    if file not in filing["name"]:
+        return {"error": f"there is no file {file}; `review` lists the files under `files`"}
+    return {"file": file, "name": filing["name"][file], "text": filing["text"][file]}
+
+
+def _sources(
+    engine: Engine, clauses: list[dict[str, Any]], origin: dict[str, dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """Every source, with what was read from it and what became of each item.
+
+    The files from `Filing` and the person's utterances from `Conversing`;
+    the items from `Reading`; the clause each item became from the trace;
+    and the clause's standing from the ledger.  A reading is checked against
+    its source whole, which is what this list is for.
+    """
+    reading = engine.state("Reading")
+    filing = engine.state("Filing")
+    conversing = engine.state("Conversing")
+    catalogue = engine.state("Cataloguing")
+    became = {o["item"]: clause for clause, o in origin.items()}
+    standing = {c["clause"]: c for c in clauses}
+
+    def items(source: dict[str, Any]) -> list[dict[str, Any]]:
+        key = json.dumps(source, sort_keys=True)
+        out = []
+        for item in reading["heard"].get(key, []):
+            clause = became.get(item)
+            line = standing.get(clause) if clause else None
+            out.append(
+                {
+                    "item": item,
+                    "words": reading["words"][item],
+                    "answer": [
+                        {"option": o, "label": catalogue["label"].get(o, o)}
+                        for o in reading["answer"].get(item, [])
+                    ],
+                    "clause": clause,
+                    # What became of it: answered, unanswered, or struck by
+                    # the person, which is the disowning the case counts.
+                    "became": (
+                        "struck"
+                        if clause and line is None
+                        else "answered"
+                        if line and line["answers"]
+                        else "unanswered"
+                        if line
+                        else None
+                    ),
+                }
+            )
+        return out
+
+    out = []
+    for file in filing["files"]:
+        text = filing["text"][file]
+        out.append(
+            {
+                "kind": "file",
+                "id": file,
+                "name": filing["name"][file],
+                "broughtBy": filing["broughtBy"][file],
+                "text": text,
+                "items": items({"file": file}),
+            }
+        )
+    for utterance in conversing["utterances"]:
+        if conversing["by"][utterance] != "person":
+            continue
+        read = items({"utterance": utterance})
+        if not read:
+            continue
+        out.append(
+            {
+                "kind": "utterance",
+                "id": utterance,
+                "name": None,
+                "broughtBy": "person",
+                "text": conversing["text"][utterance],
+                "items": read,
+            }
+        )
+    return out
 
 
 def canvas(engine: Engine, spec: str, grid: str = "today") -> dict[str, Any]:
@@ -149,17 +347,34 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     refused = constraining["refused"].get(spec, {})
     heading = catalogue["heading"]
 
-    # The frame, from `Framing`: which items the canvas shows.  One kind so
-    # far — what followed from one assertion — and the membership test is
-    # this read's, not the concept's.  See docs/concepts/framing.md.
+    # The frame, from `Framing`: which items the canvas shows.  Two kinds —
+    # what followed from one assertion, and one requirement — and the
+    # membership test is this read's, not the concept's.  See
+    # docs/concepts/framing.md and docs/syncs/gestures.md, "The canvas is
+    # narrowed to one requirement".
     frame = engine.state("Framing")["framed"].get(WORKSPACE)
     framed_on = (
         frame.get("variable")
         if isinstance(frame, dict) and frame.get("by") == "assertion"
         else None
     )
+    framed_clause = (
+        frame.get("clause")
+        if isinstance(frame, dict) and frame.get("by") == "clause"
+        else None
+    )
+    # The variables whose asserted value answers the framed clause, read
+    # from the ledger below once it exists; filled before `variables` is built.
+    answering_clause: set[str] = set()
 
     def in_frame(name: str, offered: list[str], allowed: set[str]) -> bool:
+        if framed_clause is not None:
+            # Its answers, what they forced, and anything still open.
+            if name in answering_clause:
+                return True
+            if name not in asserted and name in settled:
+                return bool(answering_clause & set(following.get(name, [])))
+            return name not in asserted and name not in settled
         if framed_on is None:
             return True
         if name == framed_on or framed_on in following.get(name, []):
@@ -176,8 +391,39 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 if option not in allowed
             )
         return False
-    how = _provenance(engine, spec)
+    trace = _trace(engine, spec)
+    how = trace["how"]
     clauses = ledger(engine, spec)
+    # Where each clause came from, and what displaced its answer — both off
+    # the trace, neither held by a concept.  See docs/syncs/reading.md.
+    for clause in clauses:
+        origin = trace["origin"].get(clause["clause"])
+        clause["source"] = (
+            {
+                "item": origin["item"],
+                "kind": "file" if origin["source"].get("file") else "utterance",
+                "id": origin["source"].get("file") or origin["source"].get("utterance"),
+                "name": _source_name(engine, origin["source"]),
+                "words": origin["words"],
+                # The model's claim that nothing in the catalogue answers it:
+                # an empty answer on the item, read as such and not judged.
+                "unanswerable": not engine.state("Reading")["answer"].get(origin["item"]),
+            }
+            if origin
+            else None
+        )
+        gone = trace["displaced"].get(clause["clause"])
+        clause["displaced"] = (
+            {
+                "value": gone["value"],
+                "label": catalogue["label"].get(gone["value"], gone["value"]),
+                "by": gone["option"],
+                "byLabel": catalogue["label"].get(gone["option"], gone["option"]),
+                "how": _how(engine, gone),
+            }
+            if gone and not clause["answers"]
+            else None
+        )
     # Which clauses each asserted option answers — the same choices, indexed
     # from the value's side, so a card can say what its value is for.
     answering: dict[str, list[dict[str, str]]] = {}
@@ -186,6 +432,12 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             answering.setdefault(choice["value"], []).append(
                 {"clause": clause["clause"], "text": clause["text"]}
             )
+            if clause["clause"] == framed_clause and choice["variable"]:
+                answering_clause.add(choice["variable"])
+    if framed_clause is not None and not any(c["clause"] == framed_clause for c in clauses):
+        # A frame on a clause the ledger no longer has: read as no frame,
+        # until the rule that takes it away has run.
+        framed_clause = None
 
     # What the assistant proposed for each variable still open, from the
     # `Deciding` requests that name a variable.  Each is a question of its own
@@ -235,7 +487,11 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "standing": standing,
                 "asked": asked,
                 "softly": softly,
-                "how": _how(*how[name]) if asked and name in how else None,
+                "how": (
+                    _how(engine, how[name], cited=bool(answering.get(asked)))
+                    if asked and name in how
+                    else None
+                ),
                 "answers": answering.get(asked, []) if asked else [],
                 "value": value,
                 "owing": [
@@ -411,10 +667,22 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "asked": asserted.get(framed_on),
             }
             if framed_on is not None
+            else {
+                "by": "clause",
+                "clause": framed_clause,
+                "text": next(c["text"] for c in clauses if c["clause"] == framed_clause),
+            }
+            if framed_clause is not None
             else None
         ),
         "variables": variables,
         "clauses": clauses,
+        # What was brought and said, with what was read from each.
+        "sources": _sources(engine, clauses, trace["origin"]),
+        # What the last turn changed while the person was not looking at the
+        # canvas, for it to mark.  Null when the person's own gesture was the
+        # last thing to move the specification.
+        "touched": _touched(engine, spec),
         "price": pricing.total(chosen, BASIS),
         "footprint": footprinting.footprint(chosen, grid, BASIS),
         "questions": questions,
@@ -440,6 +708,9 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             "unbound": sum(
                 1 for v in variables if v["asked"] and not v["answers"]
             ),
+            # The plan's number for slice 2: clauses the model read.  Those
+            # the person struck are in `sources`, item by item.
+            "read": sum(1 for c in clauses if c["source"]),
         },
         # Behaviour only: the catalogue's arrival is a thousand records of
         # Cataloguing and Pricing, and nobody wants to read it back.
@@ -660,18 +931,38 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
         return f"{variable['heading']}: {label.get(value, value)}" if value else ""
 
     return {
-        # What the person requires, in their own words, with what answers
-        # each.  The model reads these; no tool lets it write one.
+        # What is required, in the source's own words, with what answers
+        # each: the person's clauses, and the ones the model read from their
+        # words or a document, marked as such.  `read` is the one tool that
+        # adds to this list.
         "required": [
             {
                 "clause": c["clause"],
                 "text": plain(c["text"]),
                 "negotiability": c["negotiability"],
+                "stated_by": c["statedBy"],
+                "read_from": (
+                    c["source"]["name"] or "the person's message"
+                    if c["source"]
+                    else None
+                ),
                 "answered_by": [
                     f"{a['heading']}: {a['label']}" for a in c["answers"]
                 ],
+                "displaced_by": (
+                    f"{c['displaced']['byLabel']} ({c['displaced']['how']})"
+                    if c.get("displaced")
+                    else None
+                ),
             }
             for c in view["clauses"]
+        ],
+        # The documents the person attached, to read with `open_file` and
+        # cite in `read`.
+        "files": [
+            {"file": s["id"], "name": s["name"], "read": len(s["items"])}
+            for s in view["sources"]
+            if s["kind"] == "file"
         ],
         "asked": [
             say(v)

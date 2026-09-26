@@ -1,6 +1,6 @@
 """The model's tools.
 
-Ten verbs and one reading.  Each is a root action of the bootstrap concept
+A verb per thing the model may do, and two readings.  Each verb is a root action of the bootstrap concept
 and nothing more: the tool records that the model called it, and the rules in
 `syncs/conduct.py` decide what follows.  Each is performed in the flow the
 person's message opened (`hearing.turn()`), so the log joins the words to the
@@ -10,8 +10,16 @@ directly would make the model a second initiator, which is the thing WYSIWID
 replaces did in every frontend tool it defined.
 
 The names are ours, and so is the granularity: `assert_value`, `withdraw`,
-`propose`, `introduce`, `entitle`, `quote`, `show`, `hide`, `frame`,
-`unframe`.  A log of those says what happened.  A single `configure(spec)`
+`read`, `propose`, `introduce`, `entitle`, `quote`, `show`, `hide`, `frame`,
+`unframe`.  A log of those says what happened.
+
+`read` is the one that carries a source.  A requirement the model perceives
+in the person's words or in a document they attached is recorded with the
+words it was read from and the options the model took to answer it, and the
+rules in `syncs/reading.py` state it as a clause and assert the answer.  The
+utterance it names is the turn's own, handed over by `hearing.py` as the
+flow token is; a document is named by its id, and `open_file` returns its
+text from the log, so what the model read is what is on record.  A single `configure(spec)`
 taking the whole assignment — the shape this repository used to have — says
 only that something did.
 
@@ -38,9 +46,9 @@ from typing import Any, Literal
 from langchain.tools import tool
 
 from engine import Record
-from hearing import turn
+from hearing import heard, turn
 from instance import SPEC, engine
-from views import digest
+from views import digest, filed
 
 
 def _outcome(completion: Record) -> dict[str, Any]:
@@ -94,6 +102,60 @@ def withdraw(variable: str) -> dict[str, Any]:
         spec=SPEC, variable=variable,
     )
     return _outcome(completion)
+
+
+@tool
+def read(
+    words: str, answer: list[str] | None = None, file: str | None = None
+) -> dict[str, Any]:
+    """Record a requirement you read, with the words it was read from and the
+    catalogue options you take to answer it.
+
+    Call this once per requirement, for anything the person or their document
+    requires of the lift: a load, a speed, a finish, a service term, a
+    condition. `words` is the requirement in the source's own words, cut
+    short but not paraphrased. `answer` is the option ids that answer it,
+    exactly as `review` lists them under `open`, such as `rated_load:kg1250`,
+    never a label; several when one sentence settles several variables, only
+    what the words themselves settle, and empty when nothing in the catalogue
+    answers it. An empty answer is still worth recording: the clause is kept
+    with its source, and the person can answer it or take it further.
+    `file` is the id of the document the words are from, as `review` lists
+    it under `files`; leave it out when they are from the person's message.
+
+    The clause is stated on the canvas as your reading, cited to its source,
+    and each option in `answer` is asserted as answering it. An id the
+    catalogue does not offer answers nothing and comes back under
+    `not_offered`; call `read` again with the right ids rather than leaving
+    the clause unanswered. A value that cannot be met is still recorded and
+    comes back with the rules that refuse it. Use `assert_value` for context
+    that is not a requirement, such as the region a city implies.
+    """
+    completion = engine.root(
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
+        spec=SPEC, words=words, answer=list(answer or []), file=file,
+        utterance=None if file else heard(),
+    )
+    offered = {
+        option
+        for options in engine.state("Cataloguing")["offers"].values()
+        for option in options
+    }
+    return {
+        **_outcome(completion),
+        "not_offered": [o for o in (answer or []) if o not in offered],
+    }
+
+
+@tool
+def open_file(file: str) -> dict[str, Any]:
+    """Read a document the person attached, as it is on record.
+
+    `file` is an id from the `files` list `review` returns. Returns the
+    document's name and its text, which is what you read requirements from
+    with `read`. A projection, like `review`; it changes nothing.
+    """
+    return filed(engine, file)
 
 
 @tool
@@ -196,22 +258,33 @@ def hide(facet: str) -> dict[str, Any]:
 
 
 @tool
-def frame(variable: str) -> dict[str, Any]:
-    """Narrow the canvas to what followed from one assertion.
+def frame(variable: str | None = None, clause: str | None = None) -> dict[str, Any]:
+    """Narrow the canvas to one assertion or to one requirement.
 
-    `variable` is an asserted variable's name, from the `asked` list `review`
-    returns. The canvas then shows that assertion, every value that follows
-    from it and the rule, every open variable whose options it ruled out, and
-    any assertion it made unmet — with the three sections kept. Use it when
-    the person asks what one choice cost them or what it changed, rather than
-    listing the consequences in the chat. `review` reports the frame under
-    `frame` and the items in it under `framed`. The canvas narrows only when
-    this is called; saying it has been narrowed without calling it would be
-    false.
+    With `variable`, an asserted variable's name from the `asked` list
+    `review` returns: the canvas shows that assertion, every value that
+    follows from it and the rule, every open variable whose options it ruled
+    out, and any assertion it made unmet — with the three sections kept. Use
+    it when the person asks what one choice cost them or what it changed,
+    rather than listing the consequences in the chat.
+
+    With `clause`, a clause's id from the `required` list: the canvas shows
+    the values answering that requirement, what those forced, and everything
+    still open that could answer it. Use it when the conversation is about
+    one requirement. You cannot answer the clause; the person picks.
+
+    One or the other. `review` reports the frame under `frame` and the items
+    in it under `framed`. The canvas narrows only when this is called; saying
+    it has been narrowed without calling it would be false.
     """
+    if clause and not variable:
+        value: dict[str, Any] = {"by": "clause", "clause": clause}
+    elif variable and not clause:
+        value = {"by": "assertion", "variable": variable}
+    else:
+        return {"did": [{"action": "frame", "refused": "give a variable or a clause, not both or neither"}]}
     completion = engine.root(
-        "Copiloting", "invoke", actor="model", flow=turn(), tool="frame",
-        frame={"by": "assertion", "variable": variable},
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="frame", frame=value,
     )
     return _outcome(completion)
 
@@ -242,6 +315,6 @@ def review() -> dict[str, Any]:
 
 
 configurator_tools = [
-    assert_value, withdraw, propose, introduce, entitle, quote,
-    show, hide, frame, unframe, review,
+    assert_value, withdraw, read, propose, introduce, entitle, quote,
+    show, hide, frame, unframe, review, open_file,
 ]

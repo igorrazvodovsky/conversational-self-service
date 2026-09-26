@@ -33,10 +33,11 @@ import {
 /** `yielded`: asked for softly, and the rules could not honour it. Still
  * asserted, still answering its clause; the solver's answer is what moved. */
 export type Standing = "asked" | "yielded" | "unmet" | "follows" | "open";
-/** The surfaces `Moding` offers: the specification and the offer. The chat
- * is not one — where it sits is the person's view state
- * (`example-layout/chat-surface.tsx`), which no rule reaches. */
-export type Surface = "canvas" | "quote";
+/** The surfaces `Moding` offers: the configuration (`canvas`), the
+ * requirements, and the offer. The chat is not one — where it sits is the
+ * person's view state (`example-layout/chat-surface.tsx`), which no rule
+ * reaches. */
+export type Surface = "requirements" | "canvas" | "quote";
 export type Grid = "today" | "decarbonising";
 
 export interface Option {
@@ -95,15 +96,14 @@ export interface Variable {
 }
 
 /**
- * The canvas narrowed to what followed from one assertion, from `Framing`.
- * The membership test is the read side's; each variable carries `framed`.
+ * The canvas narrowed to what followed from one assertion, or to one
+ * requirement, from `Framing`. The membership test is the read side's; each
+ * variable carries `framed`. A clause frame is also the answering mode: a
+ * pick made while it is on answers the clause.
  */
-export interface Frame {
-  by: "assertion";
-  variable: string;
-  heading: string;
-  asked: string | null;
-}
+export type Frame =
+  | { by: "assertion"; variable: string; heading: string; asked: string | null }
+  | { by: "clause"; clause: string; text: string };
 
 export type Negotiability = "fixed" | "negotiable" | "open";
 
@@ -132,6 +132,53 @@ export interface Clause {
   statedBy: string;
   formerly: string[];
   answers: Answer[];
+  /** Where the model read the clause from, when it did: the reading's item,
+   * the source, and the words. Off the trace, held by no concept. Null for a
+   * clause the person typed. */
+  source: {
+    item: string;
+    kind: "file" | "utterance";
+    id: string;
+    /** The file's name; null for the person's own words. */
+    name: string | null;
+    words: string;
+    /** The model recorded no option as answering the words: its claim that
+     * nothing in the catalogue does, shown as such and not judged. */
+    unanswerable: boolean;
+  } | null;
+  /** The answer this clause had, and the later assertion for the same
+   * variable that displaced it. Only while the clause is unanswered. */
+  displaced: {
+    value: string;
+    label: string;
+    by: string;
+    byLabel: string;
+    how: string;
+  } | null;
+}
+
+/** One item the model read from a source, and what became of it. */
+export interface ReadItem {
+  item: string;
+  words: string;
+  answer: { option: string; label: string }[];
+  clause: string | null;
+  became: "answered" | "unanswered" | "struck" | null;
+}
+
+/**
+ * A source, from `Filing` or `Conversing`, with what was read from it: a
+ * document the person attached, or something they said that the model read
+ * a requirement from. Checking a reading against its source whole is what
+ * this is for.
+ */
+export interface Source {
+  kind: "file" | "utterance";
+  id: string;
+  name: string | null;
+  broughtBy: string;
+  text: string;
+  items: ReadItem[];
 }
 
 /** A conflict, a whole completion, or one proposed value; the last names its
@@ -254,6 +301,7 @@ export interface View {
   frame: Frame | null;
   variables: Variable[];
   clauses: Clause[];
+  sources: Source[];
   price: {
     capital: number;
     recurring: number;
@@ -284,7 +332,17 @@ export interface View {
   customer: Party;
   seller: Party;
   project: { title: string; site: string };
-  counts: Record<Standing, number> & { unanswered: number; unbound: number };
+  /** What the last turn changed while the person was not looking at the
+   * canvas, read off the log: who moved it, and which variables and clauses.
+   * Null when the person's own gesture was the last thing to move the
+   * specification. */
+  touched: { by: string; variables: string[]; clauses: string[] } | null;
+  counts: Record<Standing, number> & {
+    unanswered: number;
+    unbound: number;
+    /** Clauses the model read, from a document or the person's words. */
+    read: number;
+  };
   log: LogRecord[];
 }
 

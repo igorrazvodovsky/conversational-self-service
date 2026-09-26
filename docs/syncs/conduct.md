@@ -54,7 +54,7 @@ then  { Framing/unframe: [ lens: workspace ] }
 
 sync TheCanvasIsShownBeforeItChanges
 when  { Copiloting/invoke: [ tool: ?t ] => [] }
-where { ?t is one of assert, withdraw, propose, quote, show, hide, frame, unframe }
+where { ?t is one of assert, withdraw, read, propose, quote, show, hide, frame, unframe }
 then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
 ```
 
@@ -122,7 +122,12 @@ same grant to which *items* the canvas shows
 me?* is answered by narrowing the canvas to what followed from that
 assertion, with the sections kept, and saying so in a sentence — rather
 than by a list of values in a chat bubble. The tool passes the same frame value
-a person's click passes, and the rule carries it without looking inside.
+a person's click passes, and the rule carries it without looking inside. The
+other frame value, `[ by: "clause" ; clause: ?c ]`, narrows the canvas to one
+requirement — what answers it, what those answers forced, and what is still
+open to answer it — for when the conversation is about that requirement; the
+model may frame a clause and may not answer one, as
+[Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement) says.
 
 ## Proposing, and not adopting
 
@@ -429,15 +434,16 @@ rules doing their work together.
 
 These absences carry more weight than any of the rules above.
 
-_No rule lets the model state a requirement, or say what a value is for._ No
-`when { Copiloting/invoke: … }` has [Specifying](../concepts/specifying.md) or
-[Binding](../concepts/binding.md) in its `then`. A clause is in the person's
-words and only the person writes one; which value answers it is the person's
-mapping, and only the person's pick reaches `Binding/propose`. The model may
-assert a value with no clause behind it, and the canvas says so beside the
-value. When the case's `Reading` arrives a model's
-reading of an utterance will enter `Specifying` through a gate the person
-holds; until then the absence is the gate.
+_No rule lets the model state a requirement in its own words, or strike,
+reword or relax one._ No `when { Copiloting/invoke: … }` has
+[Specifying](../concepts/specifying.md) or [Binding](../concepts/binding.md)
+in its `then`. What the model may do is *read*: `TheModelMayReadARequirement`
+([Reading](reading.md)) records a requirement with the words it was read from
+and the options it took to answer them, and the rules there state the words
+as a clause and propose the answer. A clause so stated carries the model as
+its stater and its source beside it, and only the person's gestures change
+or remove it. The model may still assert a value with no clause behind it,
+and the canvas says so beside the value.
 
 _No rule adopts a completion._ `Constraining/complete` changes nothing — it
 returns an assignment. The only path from an assignment into
@@ -521,7 +527,7 @@ changes a fact or the canvas.
 
 ## The tool names are ours
 
-`assert`, `withdraw`, `propose`, `introduce`, `entitle`, `quote`, `show`,
+`assert`, `withdraw`, `read`, `propose`, `introduce`, `entitle`, `quote`, `show`,
 `hide`, `frame`, `unframe`: a verb per thing the model may do, against the
 CopilotKit starter's single `manage_todos`, and the difference is the one
 [Action](../method/action.md) draws: a log of these says what happened, and a

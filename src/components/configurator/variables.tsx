@@ -16,8 +16,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ClauseText, useAnswering } from "./clauses";
+import { address, addressable, Moved, targeted as targetedRing, To, useTargeted } from "./address";
+import { ClauseText, plain, useAnswering } from "./clauses";
 import { Consequences } from "./question";
 import { adds, kilos } from "./format";
 import { useConfigurator, type Option, type Variable } from "./provider";
@@ -167,11 +169,18 @@ export function AskedCard({ variable }: { variable: Variable }) {
   const shown = useShown();
   const unmet = variable.standing === "unmet";
   const yielded = variable.standing === "yielded";
-  const framedOnThis = view?.frame?.variable === variable.name;
+  const framedOnThis = view?.frame?.by === "assertion" && view.frame.variable === variable.name;
+  const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
+  const isTarget = useTargeted(address.variable(variable.name));
   return (
-    <Card size="sm" className={cn(unmet && "ring-destructive/60")}>
+    <Card
+      id={address.variable(variable.name)}
+      size="sm"
+      className={cn(addressable, isTarget && targetedRing, unmet && "ring-destructive/60")}
+    >
       <CardHeader>
         <CardDescription className="uppercase tracking-wide">
+          {moved ? <Moved by={moved} /> : null}
           {variable.heading}
           {/* Held softly: the value answers only negotiable clauses, and
               reached the rules as a preference rather than a requirement. */}
@@ -213,8 +222,12 @@ export function AskedCard({ variable }: { variable: Variable }) {
           variable.answers.length ? (
             <ul className="space-y-0.5 text-xs">
               {variable.answers.map((answer) => (
-                <li key={answer.clause}>
-                  <span className="text-muted-foreground">for:</span> <ClauseText text={answer.text} />
+                <li key={answer.clause} className="line-clamp-1" title={plain(answer.text)}>
+                  {/* One line: the clause is a link, and the ledger has the words. */}
+                  <span className="text-muted-foreground">for:</span>{" "}
+                  <To id={address.clause(answer.clause)} title="The clause, in the requirement ledger">
+                    <ClauseText text={answer.text} />
+                  </To>
                 </li>
               ))}
             </ul>
@@ -300,16 +313,30 @@ export function AskedCard({ variable }: { variable: Variable }) {
 
 /** A variable nobody chose, whose value the rules leave no room to argue with. */
 export function FollowsRow({ variable }: { variable: Variable }) {
-  const { label } = useConfigurator();
+  const { label, view } = useConfigurator();
   const shown = useShown();
+  // Moved with an assertion the last turn made: the value rests on it.
+  const touched = view?.touched;
+  const moved =
+    touched && variable.following.some((f) => touched.variables.includes(f.variable))
+      ? touched.by
+      : null;
+  const isTarget = useTargeted(address.variable(variable.name));
   return (
-    <Item size="xs" variant="muted" role="listitem" className="items-start">
+    <Item
+      id={address.variable(variable.name)}
+      size="xs"
+      variant="muted"
+      role="listitem"
+      className={cn("items-start", addressable, isTarget && targetedRing)}
+    >
       <ItemContent className="gap-1">
         {/* Not `ItemTitle`: it clamps to one line, and undoing the clamp
             with `line-clamp-none` sets `display: block`, which drops the gap
             between heading and value. A value has to be free to wrap. */}
         <div className="flex flex-wrap items-baseline gap-x-2 text-xs font-medium">
           <span className="font-normal uppercase tracking-wide text-muted-foreground">
+            {moved ? <Moved by={moved} /> : null}
             {variable.heading}
           </span>
           <span className="text-sm">{label(variable.value)}</span>
@@ -321,7 +348,12 @@ export function FollowsRow({ variable }: { variable: Variable }) {
             {variable.following.length ? (
               <p className="text-xs text-muted-foreground">
                 from{" "}
-                {variable.following.map((f) => f.heading).join(", ")}
+                {variable.following.map((f, i) => (
+                  <span key={f.variable}>
+                    {i ? ", " : ""}
+                    <To id={address.variable(f.variable)}>{f.heading}</To>
+                  </span>
+                ))}
               </p>
             ) : null}
           </>
@@ -338,19 +370,36 @@ export function FollowsRow({ variable }: { variable: Variable }) {
  * the rest. Neither is a pick from the options, which would be the person's
  * own value and read that way. */
 export function OpenRow({ variable }: { variable: Variable }) {
-  const { gesture, busy } = useConfigurator();
+  const { gesture, busy, view } = useConfigurator();
   const live = variable.options.filter((option) => option.possible);
   const gone = variable.options.length - live.length;
   const proposed = variable.proposed;
+  const id = address.variable(variable.name);
+  // Addressed from elsewhere — a clause's answer line, a link in the chat —
+  // the row opens, since what was wanted is the choice, not the heading.
+  const targeted = useTargeted(id);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (targeted) setOpen(true);
+  }, [targeted]);
+  const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
 
   return (
-    <Collapsible className="border-b last:border-b-0">
+    <Collapsible
+      id={id}
+      open={open}
+      onOpenChange={setOpen}
+      className={cn("border-b last:border-b-0", addressable, targeted && targetedRing)}
+    >
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
           className="h-auto w-full justify-between gap-2 px-3 py-2 text-left text-sm font-normal"
         >
-          <span>{variable.heading}</span>
+          <span>
+            {moved ? <Moved by={moved} /> : null}
+            {variable.heading}
+          </span>
           <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
             {live.length} left{gone ? ` · ${gone} ruled out` : ""}
             <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />

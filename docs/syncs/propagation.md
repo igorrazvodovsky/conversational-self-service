@@ -486,6 +486,20 @@ it lives here rather than in [Conduct](conduct.md) because its `when` is a
 concept's completion and not a tool call: it fires the same way for a click
 and for the model.
 
+```
+sync AFramedRequirementShowsTheConfiguration
+when  { Framing/frame: [ lens: workspace ; frame: [ by: "clause" ; clause: ?c ] ]
+          => [ lens: workspace ; frame: ?f ] }
+then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
+```
+
+The requirements are a surface of their own too, and a clause is framed from
+there. What the frame selects — the clause's answers, what they forced, what
+could still answer it — is on the configuration, and so is the pick that
+answers it ([Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement)),
+so framing a requirement brings the configuration forward, whichever party
+did it. The frame strip there links back to the clause.
+
 ## A frame goes with what it framed
 
 <a id="a-frame-goes-with-what-it-framed"></a>
@@ -496,6 +510,11 @@ when  { Asserting/withdraw: [ spec: ?s ; variable: ?v ]
 where { Framing: { workspace framed: [ by: "assertion" ; variable: ?v ] } }
 then  { Framing/unframe: [ lens: workspace ] }
 
+sync AStruckClauseUnframesTheCanvas
+when  { Specifying/strike: [ clause: ?c ] => [ clause: ?c ] }
+where { Framing: { workspace framed: [ by: "clause" ; clause: ?c ] } }
+then  { Framing/unframe: [ lens: workspace ] }
+
 sync ADiscardedSpecificationUnframesTheCanvas
 when  { Asserting/discard: [ spec: ?s ] => [ spec: ?s ] }
 where { Framing: { workspace framed: ?f } }
@@ -504,9 +523,10 @@ then  { Framing/unframe: [ lens: workspace ] }
 
 A canvas narrowed to what followed from an assertion that no longer exists
 would show the assertion's consequences with nothing for them to be
-consequences of. The first rule's `where` is what keeps a frame on some
-*other* assertion in place; the second needs none beyond there being a
-frame at all. [Framing](../concepts/framing.md) cannot see either event for
+consequences of, and one narrowed to a requirement that was struck would be
+answering nothing. The first two rules' `where` is what keeps a frame on
+some *other* assertion or clause in place; the third needs none beyond
+there being a frame at all. [Framing](../concepts/framing.md) cannot see either event for
 itself — it does not know what an assertion is — so when a frame stops
 meaning anything is a question for a rule, as when a question stops needing
 an answer is above.

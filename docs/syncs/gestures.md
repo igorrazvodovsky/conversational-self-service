@@ -17,6 +17,10 @@ sync APersonSays
 when  { Copiloting/gesture: [ act: "say" ; text: ?t ] => [] }
 then  { Conversing/say: [ party: person ; text: ?t ] }
 
+sync APersonFilesADocument
+when  { Copiloting/gesture: [ act: "file" ; name: ?n ; text: ?t ] => [] }
+then  { Filing/file: [ party: person ; name: ?n ; text: ?t ] }
+
 sync APersonAssertsAValue
 when  { Copiloting/gesture: [ act: "assert" ;
           spec: ?s ; variable: ?v ; option: ?o ] => [] }
@@ -141,6 +145,12 @@ Only a person says anything. `Conversing/say` takes a party and no rule invokes
 it with the machine, so the assistant's replies stay in CopilotKit's thread and
 out of the log. That is an absence in this file, not a property of the concept.
 
+A document attached to the message enters beside it. `APersonFilesADocument`
+carries it into [Filing](../concepts/filing.md), performed by the same module
+in the same flow, after the words and before the model runs, so that a
+reading of the document can cite it and the trace joins the two. What the
+model reads from either is [Reading](reading.md).
+
 ### The turn is one flow
 
 <a id="the-turn-is-one-flow"></a>
@@ -154,6 +164,9 @@ than a sentence in its reply: *the person said "hospital, six storeys"* and
 canvas reads the utterance off the assertion's flow (`agent/views.py`) and
 shows it beside the value under the `how` facet — *the assistant read
 "hospital, six storeys" as this* — in place of *the assistant asked for this*.
+When the value answers a clause the model stated from those same words, the
+clause beside it already carries them, and the sentence says only who read it
+and where; the words come back the moment the value stops answering the clause.
 No field records the link and no rule writes one; the trace holds it, which is
 where the case's catalogue booked the record when it declined a concept for
 the model call.
@@ -263,11 +276,33 @@ terms, which makes them permissions both actors hold alike.
 `APersonFramesTheCanvas` and `APersonUnframesTheCanvas` are the same shape
 one concept over, into [Framing](../concepts/framing.md): which *items* the
 canvas shows rather than which facts about each. The frame is a value the
-click passes and the read side interprets — today
-`[ by: "assertion" ; variable: ?v ]`, from a control on an asserted card —
-and the rule carries it without looking inside. Rules in
+click passes and the read side interprets, and the rule carries it without
+looking inside. Two values are read: `[ by: "assertion" ; variable: ?v ]`,
+from a control on an asserted card, and `[ by: "clause" ; clause: ?c ]`,
+from a control on a clause. Rules in
 [Propagation](propagation.md#a-frame-goes-with-what-it-framed) take a frame
 away when what it framed goes.
+
+<a id="the-canvas-is-narrowed-to-one-requirement"></a>
+### The canvas is narrowed to one requirement
+
+A frame on a clause selects the variables whose asserted value answers it,
+the values that follow from those, and every variable still open, since any
+of them could answer it next. The read is `agent/views.py`'s, as the
+assertion frame's is, and the sections are kept: the requirement's answers
+under *asserted*, what they forced under *follows from that*, what could
+still answer it under *still open*.
+
+The same frame is the answering mode. While a clause frames the canvas, a
+pick on an open variable is `APersonAnswersAClause` with that clause, and a
+pick that changes a value already answering it is `APersonSubstitutesAnAnswer`;
+with no clause framed, a pick is the bare `assert`. Which gesture the click
+sends is decided on the surface from the frame it can see — the mode is a
+fact of `Framing`, recorded, survives a reload, and reads the same whoever
+put it there. The model may frame a clause
+([Conduct](conduct.md#what-the-canvas-shows)) to bring one requirement in
+front of the person; it cannot answer one, because no rule carries its
+`invoke` into `Binding`, and framing does not change that.
 
 ## A clause is stated in the person's words
 
@@ -312,7 +347,7 @@ it fires is a fact of that concept's state. It is the slice 1 counterpart of
 
 `Copiloting/gesture` takes whatever the browser sends and returns it; it holds
 no state and decides nothing. So the `act` values above — `start`, `say`,
-`assert`, `withdraw`, `discard`, `choose`, `decline`, `focus`, `introduce`,
+`file`, `assert`, `withdraw`, `discard`, `choose`, `decline`, `focus`, `introduce`,
 `entitle`, `quote`, `commit`, `revoke`, `require`, `settle`, `relax`, `strike`,
 `reword`, `move`, `show`, `hide`, `frame`, `unframe`, and
 `answer` in [Binding](binding.md) — are not defined in the bootstrap

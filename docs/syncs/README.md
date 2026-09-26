@@ -64,6 +64,10 @@ it.
 | `AWithdrawnValueRetractsItsChoices` | [Binding](binding.md) |
 | `AnOverwrittenValueRetractsItsChoices` | [Binding](binding.md) |
 | `AStruckClauseReleasesItsChoices` | [Binding](binding.md) |
+| `APersonFilesADocument` | [Reading](reading.md) |
+| `TheModelMayReadARequirement` | [Reading](reading.md) |
+| `AReadItemBecomesAClause` | [Reading](reading.md) |
+| `AReadAnswerIsProposed` | [Reading](reading.md) |
 | `ANewSpecificationIsGivenToTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationLeavesTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationsQuestionsAreWithdrawn` | [Propagation](propagation.md) |
@@ -78,7 +82,9 @@ it.
 | `TheConcededAssertionIsWithdrawn` | [Propagation](propagation.md) |
 | `AResolvedConflictWithdrawsItsQuestion` | [Propagation](propagation.md) |
 | `AnIssuedQuoteIsShown` | [Propagation](propagation.md) |
+| `AFramedRequirementShowsTheConfiguration` | [Propagation](propagation.md) |
 | `AWithdrawnAssertionUnframesTheCanvas` | [Propagation](propagation.md) |
+| `AStruckClauseUnframesTheCanvas` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationUnframesTheCanvas` | [Propagation](propagation.md) |
 | `TheModelMayAssertAValue` | [Conduct](conduct.md) |
 | `TheModelMayWithdrawAnAssertion` | [Conduct](conduct.md) |
@@ -128,6 +134,20 @@ and more retract a choice whose value was withdrawn, overwritten or whose
 clause was struck. Nothing carries a choice out of `Binding` except by way of
 an assertion changing. See [Binding](binding.md).
 
+## A source is read
+
+A document the person attaches lives in [Filing](../concepts/filing.md), as
+their words live in [Conversing](../concepts/conversing.md), and what the
+model read from either lives in [Reading](../concepts/reading.md): the words,
+their source, and the options it took to answer them. One rule lets the model
+record a reading; one states the reading as a clause, with the model as its
+stater; one proposes its answer, from where the binding rules assert it. The
+reading lands at once and the person corrects it with the gestures they
+already have, which is the gate in this composition; the gated form is the
+same rules with one trigger moved. Whether a reading was wrong is not a fact
+any rule establishes, and the note says what is read instead. See
+[Reading](reading.md).
+
 ## An offer is held still
 
 A quote is another kind of fact beside the asserted and the entailed: a
@@ -166,9 +186,10 @@ rule that struck one through, the requirement a value answers — lives in
 [Showing](../concepts/showing.md), and both actors may change it on the same
 terms: gestures, tool permissions, and no fact of the specification
 touched by any of them. Which items it shows — narrowed to what followed
-from one assertion, or everything — is [Framing](../concepts/framing.md),
-reached the same way, plus rules that take a frame away when the
-assertion it framed is withdrawn or the specification discarded. See
+from one assertion, to one requirement, or everything — is
+[Framing](../concepts/framing.md), reached the same way, plus rules that
+take a frame away when the assertion it framed is withdrawn, the clause it
+framed struck, or the specification discarded. See
 [Gestures](gestures.md#what-the-canvas-shows-is-chosen),
 [Conduct](conduct.md#what-the-canvas-shows) and
 [Propagation](propagation.md#a-frame-goes-with-what-it-framed).

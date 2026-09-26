@@ -55,3 +55,5 @@ agent/.journal/
 # Tools
 .claude
 .scratch/
+.agents
+skills-lock.json

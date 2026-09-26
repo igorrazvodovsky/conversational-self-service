@@ -195,17 +195,28 @@ export function BrowserAgentTools() {
     {
       name: "frame",
       description:
-        "Narrow the canvas to what followed from one assertion. `variable` is " +
-        "an asserted variable's name, from the `asked` list `review` returns. " +
-        "The canvas then shows that assertion, every value that follows from " +
+        "Narrow the canvas to one assertion or to one requirement. With " +
+        "`variable`, an asserted variable's name from the `asked` list `review` " +
+        "returns: the canvas shows that assertion, every value that follows from " +
         "it and the rule, every open variable whose options it ruled out, and " +
-        "any assertion it made unmet. The canvas narrows only when this is " +
-        "called; saying it has been narrowed without calling it would be false.",
+        "any assertion it made unmet. With `clause`, a clause's id from the " +
+        "`required` list: the values answering it, what those forced, and " +
+        "everything still open that could answer it; you cannot answer it. One " +
+        "or the other. The canvas narrows only when this is called; saying it " +
+        "has been narrowed without calling it would be false.",
       parameters: z.object({
-        variable: z.string().describe("An asserted variable's name"),
+        variable: z.string().optional().describe("An asserted variable's name"),
+        clause: z.string().optional().describe("A clause's id"),
       }),
-      handler: ({ variable }) =>
-        invoke("frame", { frame: { by: "assertion", variable } }),
+      handler: ({ variable, clause }) =>
+        clause && !variable
+          ? invoke("frame", { frame: { by: "clause", clause } })
+          : variable && !clause
+            ? invoke("frame", { frame: { by: "assertion", variable } })
+            : Promise.resolve({
+                did: [{ action: "frame", refused: "give a variable or a clause, not both or neither" }],
+                state: null,
+              }),
       agentId: BROWSER,
       webmcp: true,
     },

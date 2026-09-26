@@ -52,19 +52,26 @@ same function, so app code and primitives merge classes with one engine.
 | Surface | Primitives |
 |---|---|
 | Canvas sections, empty and loading states | `Empty`, `Spinner` |
-| Asserted value | `Card` with a ghost `Button` to withdraw; unmet is a destructive ring |
-| A value that follows | `Item` (muted) in an `ItemGroup` |
-| An open variable | `Collapsible` whose trigger is a ghost `Button`; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
+| The artifact panel | One of `Moding`'s three surfaces at a time — the requirements, the configuration, the quote — switched from the `ToggleGroup` in the panel's header, or by following a link to an item on another surface |
+| The requirements surface | The ledger with the sources beneath it, at reading width; a sticky strip with the product's name, a link to the configuration with its counts, and the clause frame if one is on, linking to the clause and to the configuration |
+| The way around the configuration | A sticky strip at the top: a `nav` of plain anchors to each section with its count (the ledger's link brings the requirements forward), the `Showing` menu, and under them the frame strip, so a frame begun anywhere is visible and its way out reachable from anywhere |
+| An address | Every variable, clause, source and section carries an `id` (`variable:<name>`, `clause:<id>`, `source:<kind>:<id>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row addressed from elsewhere opens. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
+| What the last turn moved | A small square before the heading of each variable and clause the assistant's or a browser agent's last flow reached, and the assertions a settled value rests on; the strip at the top counts them. Read off the log (`touched` in `agent/views.py`), gone once the person next changes the specification |
+| Asserted value | `Card` with a ghost `Button` to withdraw; unmet is a destructive ring; the *for* line is one line, linking to the clause |
+| A value that follows | `Item` (muted) in an `ItemGroup`; *from* names the assertions it rests on, each a link |
+| An open variable | `Collapsible` whose trigger is a ghost `Button`, under a heading row per catalogue family; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
 | Which facts are shown (`Showing`) | `DropdownMenu` of checkbox items, from a ghost `Button` |
-| The requirement document (`Specifying`) | A Tiptap editor in a `Card`; each clause a node view with `Button`s for answer, relax, move and strike and a `DropdownMenu` of radio items for how firmly it is meant; the empty-clause hint from Tiptap's `Placeholder`, placed by the node view |
+| The requirement document (`Specifying`) | A Tiptap editor in a `Card`; each clause a node view with `Button`s to frame the canvas on it (answer), relax, move and strike and a `DropdownMenu` of radio items for how firmly it is meant; the empty-clause hint from Tiptap's `Placeholder`, placed by the node view |
 | A reference in a clause | `Badge` (`outline` for an individual, `secondary` for a value, `default` once the value answers the clause); the `@` list is `Command` with grouped `CommandItem`s |
 | The offers issued | `Table`, one row per quote, the selected row `data-state=selected`; a ghost `Button` per row to compare |
 | Two quotes compared | `Table` of the rows that differ, with the sums |
-| The frame (`Framing`) | A bordered strip with the counts of the slice and a ghost `Button` to show everything; the way in is a ghost `Button` on an asserted card |
+| The frame (`Framing`) | A bordered strip in the sticky nav with the counts of the slice and a ghost `Button` to show everything; the way in is a ghost `Button` on an asserted card, or the `Button` on a clause |
+| The answering mode | The frame on a clause: the strip names the clause and says that a value picked now answers it; the clause's `Button` reads *Answering…* and takes the frame off |
+| The sources (`Filing`, `Conversing`) | A `Collapsible` under the ledger, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
 | Price and carbon totals | `Card`; the grid choice is a `ToggleGroup` |
 | An open question | `Alert` (destructive for a conflict) with `Button`s |
 | The action log | `Collapsible`, `Card`, `Badge` for the actor and for a refusal |
-| Configurator / Quote switch | `ToggleGroup` |
+| Requirements / Configuration / Quote switch | `ToggleGroup` |
 | Artifact panel and chat split | `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle` |
 | Conversation list and new-conversation control | `DropdownMenu` of radio items grouped under `DropdownMenuLabel` days, `Button` |
 | Chat layout menu and hide control | `DropdownMenu` of radio items, `Button` |

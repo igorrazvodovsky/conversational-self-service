@@ -49,6 +49,7 @@ Everything else in the design follows from taking that seriously:
 - [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the canvas has a *required* section above the three, and the proposal's basis of design renders from it. The person does the mapping by picking an option while answering a clause; the model cannot write or answer one.
 - [`Asserting`](docs/concepts/asserting.md) records assertions a party made, in the model's vocabulary — the case's name for it. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
 - [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. The log's first entry for a turn is the person's words rather than the model's tool call, and the model's calls in reply run in the flow those words opened, so the canvas can say *the assistant read "hospital, six storeys" as this* from the flow token alone. No rule reads the concept; the view does.
+- [`Filing`](docs/concepts/filing.md) keeps a document the person attached, as text, so a passage can be cited; [`Reading`](docs/concepts/reading.md) holds what the model read from it or from the person's words, with the options it took to answer each item. A reading becomes a clause stated by the model and an answer asserted by it ([Reading](docs/syncs/reading.md)), at once and visibly, and the person corrects it by striking, re-answering or withdrawing. A reading with no answer is the model's claim that the catalogue holds nothing for it, shown as such. A later requirement on the same variable displaces the earlier answer, and the canvas says what displaced it.
 - [`Constraining`](docs/concepts/constraining.md) holds the rules and answers what they still allow. z3 lives here.
 - An assertion that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
 - [`Quoting`](docs/concepts/quoting.md) holds the end of a configuration: an offer, frozen as issued, that the specification can move away from without changing. It is another kind of fact on the canvas, and the person accepts it or nobody does. The offer is rendered as a commercial proposal on the seller's terms ([`Stipulating`](docs/concepts/stipulating.md), seeded), addressed to a party ([`Profiling`](docs/concepts/profiling.md)) for a named job at a site ([`Naming`](docs/concepts/naming.md)).
@@ -72,17 +73,20 @@ layer beside the agent.
 │   │   ├── chat/                         # CopilotChat, composed from them through slots
 │   │   ├── configurator/                 # the canvas
 │   │   │   ├── provider.tsx              # reads /view, performs gestures
-│   │   │   ├── index.tsx                 # the three sections
+│   │   │   ├── index.tsx                 # the configuration surface: the three sections
+│   │   │   ├── requirements.tsx          # the requirements surface: the ledger and its sources
 │   │   │   ├── totals.tsx                # price and carbon
 │   │   │   ├── specification.tsx         # the requirement ledger as a Tiptap document; edits become gestures
-│   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode
+│   │   │   ├── sources.tsx               # the documents and words the model read from, item by item, under the ledger
+│   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode (the clause frame)
 │   │   │   ├── question.tsx              # the open Deciding questions
 │   │   │   ├── quotes.tsx                # the quote surface: every offer issued, two compared, the addressee, one proposal at a time
 │   │   │   ├── document.tsx              # a quote laid out as a commercial proposal
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
+│   │   │   ├── address.tsx               # every item's address, and links between them
 │   │   │   ├── webmcp.tsx                # the model's tools, registered for a browser agent (WebMCP)
 │   │   │   └── variables.tsx             # asked / follows / open rows
-│   │   ├── example-layout/               # the artifact panel (canvas or quote, from Moding) and the chat's geometry (view state)
+│   │   ├── example-layout/               # the artifact panel (requirements, configuration or quote, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features
 │   └── hooks/
 ├── agent/
@@ -94,7 +98,7 @@ layer beside the agent.
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
 │   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest — mounted by langgraph.json
 │   ├── tools.py           # the model's tools
-│   ├── hearing.py         # the chat message, as a person's `say` gesture
+│   ├── hearing.py         # the chat message and its attachments, as a person's `say` and `file` gestures
 │   ├── instance.py        # the one engine every actor shares
 │   ├── journal.py         # the log, kept: appended as written, replayed at boot
 │   └── main.py            # the graph
@@ -137,6 +141,8 @@ actor, and the same conduct rules decide what follows.
 |  | person | model | browser agent |
 |---|---|---|---|
 | state, relax or strike a requirement, in their own words | yes | no | no |
+| read a requirement from a document or the person's words, cited to its source | — | yes | no |
+| attach a document | yes | no | no |
 | say which requirement a value answers | yes | no | no |
 | assert or withdraw a value | yes | yes | yes |
 | propose a completion | — | yes | yes |

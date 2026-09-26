@@ -34,6 +34,22 @@ def _an_issued_quote_is_shown(c: Completion, _: States) -> list[Invocation]:
     return [Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "quote"})]
 
 
+def _a_framed_requirement_shows_the_configuration(
+    c: Completion, _: States
+) -> list[Invocation]:
+    """What a clause frame selects is on the configuration, and so is the
+    pick that answers the clause; framing one brings that surface forward,
+    whichever party did it."""
+    if c.failed:
+        return []
+    frame = c.output.get("frame")
+    if not isinstance(frame, dict) or frame.get("by") != "clause":
+        return []
+    return [
+        Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
+    ]
+
+
 def _a_withdrawn_assertion_unframes_the_canvas(
     c: Completion, states: States
 ) -> list[Invocation]:
@@ -49,6 +65,24 @@ def _a_withdrawn_assertion_unframes_the_canvas(
     if not isinstance(frame, dict) or frame.get("by") != "assertion":
         return []
     if frame.get("variable") != c.output.get("variable"):
+        return []
+    return [Invocation("Framing", "unframe", {"lens": WORKSPACE})]
+
+
+def _a_struck_clause_unframes_the_canvas(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """A frame on a requirement lasts as long as the requirement.
+
+    The `where`: the workspace's frame is by clause, on the clause just
+    struck.  Otherwise the rule declines.
+    """
+    if c.failed:
+        return []
+    frame = states["Framing"].state()["framed"].get(WORKSPACE)
+    if not isinstance(frame, dict) or frame.get("by") != "clause":
+        return []
+    if frame.get("clause") != c.output.get("clause"):
         return []
     return [Invocation("Framing", "unframe", {"lens": WORKSPACE})]
 
@@ -513,9 +547,19 @@ rules = [
     ),
     Sync("AnIssuedQuoteIsShown", ("Quoting", "quote"), _an_issued_quote_is_shown),
     Sync(
+        "AFramedRequirementShowsTheConfiguration",
+        ("Framing", "frame"),
+        _a_framed_requirement_shows_the_configuration,
+    ),
+    Sync(
         "AWithdrawnAssertionUnframesTheCanvas",
         ("Asserting", "withdraw"),
         _a_withdrawn_assertion_unframes_the_canvas,
+    ),
+    Sync(
+        "AStruckClauseUnframesTheCanvas",
+        ("Specifying", "strike"),
+        _a_struck_clause_unframes_the_canvas,
     ),
     Sync(
         "ADiscardedSpecificationUnframesTheCanvas",

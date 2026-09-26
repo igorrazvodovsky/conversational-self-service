@@ -2,6 +2,8 @@
 
 import { ExampleLayout } from "@/components/example-layout";
 import { ConfiguratorCanvas } from "@/components/configurator";
+import { AnsweringProvider } from "@/components/configurator/clauses";
+import { RequirementsSurface } from "@/components/configurator/requirements";
 import { ConfiguratorProvider } from "@/components/configurator/provider";
 import { QuoteSurface } from "@/components/configurator/quotes";
 import { BrowserAgentTools } from "@/components/configurator/webmcp";
@@ -41,12 +43,16 @@ export function HomeRoot({ canvasPercent }: { canvasPercent: number }) {
           it, so the canvas renders the outcome as it does for a click.
         */}
         <BrowserAgentTools />
-        <ExampleLayout
-          canvasPercent={canvasPercent}
-          chatContent={<ConfiguratorChat />}
-          appContent={<ConfiguratorCanvas />}
-          quoteContent={<QuoteSurface />}
-        />
+        {/* The answering mode is the clause frame, read on both surfaces. */}
+        <AnsweringProvider>
+          <ExampleLayout
+            canvasPercent={canvasPercent}
+            chatContent={<ConfiguratorChat />}
+            requirementsContent={<RequirementsSurface />}
+            appContent={<ConfiguratorCanvas />}
+            quoteContent={<QuoteSurface />}
+          />
+        </AnsweringProvider>
       </ConfiguratorProvider>
     </CopilotChatConfigurationProvider>
   );

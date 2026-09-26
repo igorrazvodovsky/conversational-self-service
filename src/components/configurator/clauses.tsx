@@ -6,22 +6,16 @@
  * The requirement ledger itself is a document, in `specification.tsx`. What
  * lives here is what both the document and the value cards need: the
  * references a clause's words may carry, the negotiabilities as words, and
- * the mode in which a pick on the canvas is bound to a clause. The mode is view state and nothing else —
- * it is not recorded, and clearing it records nothing.
+ * the mode in which a pick on the canvas is bound to a clause. The mode is
+ * the clause frame from `Framing`: while a clause frames the canvas, a pick
+ * answers it. It is recorded, survives a reload, and the model can put it
+ * there too (docs/syncs/gestures.md, "The canvas is narrowed to one
+ * requirement").
  */
 
-import { CheckIcon, PencilLineIcon } from "lucide-react";
-import {
-  createContext,
-  Fragment,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckIcon } from "lucide-react";
+import { createContext, Fragment, useContext, useMemo, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useConfigurator, type Clause, type Negotiability } from "./provider";
 
 // -- references: the catalogue named inside a clause's words ------------------
@@ -129,8 +123,9 @@ export const NEGOTIABILITY: Record<Negotiability, string> = {
 };
 
 interface Answering {
-  /** The clause the next picked option will answer, if any. */
+  /** The clause the next picked option will answer: the one framing the canvas, if any. */
   answering: Clause | null;
+  /** Frame the canvas on a clause, or show everything again. Both are gestures. */
   setAnswering: (clause: Clause | null) => void;
 }
 
@@ -144,46 +139,26 @@ export function useAnswering(): Answering {
 }
 
 export function AnsweringProvider({ children }: { children: ReactNode }) {
-  const { view } = useConfigurator();
-  const [id, setId] = useState<string | null>(null);
-  // Held by identity so a struck clause drops out of the mode on its own.
+  const { view, gesture } = useConfigurator();
+  const framed = view?.frame?.by === "clause" ? view.frame.clause : null;
   const answering = useMemo(
-    () => view?.clauses.find((c) => c.clause === id) ?? null,
-    [view, id],
+    () => view?.clauses.find((c) => c.clause === framed) ?? null,
+    [view, framed],
   );
   const value = useMemo(
     () => ({
       answering,
-      setAnswering: (clause: Clause | null) => setId(clause?.clause ?? null),
+      setAnswering: (clause: Clause | null) =>
+        void gesture(
+          clause
+            ? { act: "frame", frame: { by: "clause", clause: clause.clause } }
+            : { act: "unframe" },
+        ),
     }),
-    [answering],
+    [answering, gesture],
   );
   return (
     <AnsweringContext.Provider value={value}>{children}</AnsweringContext.Provider>
   );
 }
 
-/** The banner that says which clause the next pick will answer. */
-export function AnsweringBanner() {
-  const { answering, setAnswering } = useAnswering();
-  if (!answering) return null;
-  return (
-    <Alert className="sticky top-0 z-10">
-      <PencilLineIcon />
-      <AlertTitle className="text-sm">
-        Answering: “<ClauseText text={answering.text} />”
-      </AlertTitle>
-      <AlertDescription>
-        <p>
-          Pick a value below and it will be recorded as answering this clause.
-          Pick several if it takes several.
-        </p>
-        <div className="mt-2 text-foreground">
-          <Button size="sm" variant="outline" onClick={() => setAnswering(null)}>
-            <CheckIcon /> Done
-          </Button>
-        </div>
-      </AlertDescription>
-    </Alert>
-  );
-}

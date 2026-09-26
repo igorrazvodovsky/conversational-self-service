@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { address, addressable, Moved, targeted as targetedRing, To, useTargeted } from "./address";
 import {
   NEGOTIABILITY,
   segments,
@@ -224,7 +225,13 @@ function OneAnswer({ answer }: { answer: Answer }) {
   return (
     <li className="flex flex-wrap items-baseline gap-x-2 text-xs">
       <span className="uppercase tracking-wide text-muted-foreground">
-        {answer.heading ?? "no variable offers this"}
+        {answer.variable ? (
+          <To id={address.variable(answer.variable)} title="The value, where the canvas holds it">
+            {answer.heading}
+          </To>
+        ) : (
+          "no variable offers this"
+        )}
       </span>
       <span
         className={cn(
@@ -292,6 +299,8 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const active = !!clause && answering?.clause === clause.clause;
   const hint = hintOf(decorations);
   const open = clause?.negotiability === "open";
+  const moved = clause && view?.touched?.clauses.includes(clause.clause) ? view.touched.by : null;
+  const isTarget = useTargeted(clause ? address.clause(clause.clause) : "");
 
   // Where this clause sits, for `move`.
   const order = view?.clauses.map((c) => c.clause) ?? [];
@@ -305,12 +314,20 @@ function ClauseView({ node, decorations }: NodeViewProps) {
 
   return (
     <NodeViewWrapper
+      id={clause ? address.clause(clause.clause) : undefined}
       className={cn(
         "group/clause relative border-b py-2 last:border-b-0",
-        active && "ring-1 ring-ring",
+        clause && addressable,
+        "scroll-mt-4",
+        (active || isTarget) && "ring-1 ring-ring",
       )}
     >
       <div className="flex items-start gap-3">
+        {moved ? (
+          <div contentEditable={false} className="pt-1.5 select-none">
+            <Moved by={moved} />
+          </div>
+        ) : null}
         <div className="min-w-0 flex-1 space-y-1.5">
           {relaxing && clause ? (
             <div contentEditable={false}>
@@ -340,6 +357,25 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
             </p>
           ) : null}
+          {/* Where the clause came from, when the model read it: the source
+              beside the words, so the reading is checked where it stands.
+              A clause the person typed says nothing here. */}
+          {clause?.source ? (
+            <p
+              contentEditable={false}
+              className="text-xs text-muted-foreground select-none"
+              title={clause.source.words}
+            >
+              read by the assistant from{" "}
+              <To
+                id={address.source(clause.source.kind, clause.source.id)}
+                title="The source, with everything read from it"
+                className={clause.source.kind === "file" ? "text-foreground" : undefined}
+              >
+                {clause.source.kind === "file" ? clause.source.name : "what you said"}
+              </To>
+            </p>
+          ) : null}
           {clause ? (
             <div contentEditable={false} className="select-none">
               {clause.answers.length ? (
@@ -348,11 +384,20 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                     <OneAnswer key={answer.choice} answer={answer} />
                   ))}
                 </ul>
+              ) : clause.displaced ? (
+                <p className="text-xs text-muted-foreground">
+                  <s>{clause.displaced.label}</s> displaced by{" "}
+                  <span className="text-foreground">{clause.displaced.byLabel}</span>
+                  {": "}
+                  {clause.displaced.how}
+                </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
                   {open
                     ? "Left open on purpose: nothing needs to answer this."
-                    : "Not yet answered."}
+                    : clause.source?.unanswerable
+                      ? "The assistant found nothing in the catalogue for this."
+                      : "Not yet answered."}
                 </p>
               )}
             </div>
@@ -363,16 +408,22 @@ function ClauseView({ node, decorations }: NodeViewProps) {
             contentEditable={false}
             className="flex shrink-0 flex-col items-end gap-1 select-none"
           >
-            {!open ? (
-              <Button
-                size="xs"
-                variant={active ? "default" : "outline"}
-                disabled={busy}
-                onClick={() => setAnswering(active ? null : clause)}
-              >
-                {active ? "Answering…" : clause.answers.length ? "Change answer" : "Answer"}
-              </Button>
-            ) : null}
+            {/* Frame the canvas on this clause: its answers, what they
+                forced, what could still answer it — and while it is framed,
+                a pick answers it. Pressed again, the frame comes off. */}
+            <Button
+              size="xs"
+              variant={active ? "default" : "outline"}
+              disabled={busy}
+              title={
+                active
+                  ? "Show everything again"
+                  : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
+              }
+              onClick={() => setAnswering(active ? null : clause)}
+            >
+              {active ? "Answering…" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}
+            </Button>
             {clause.negotiability === "negotiable" && !relaxing ? (
               <Button size="xs" variant="ghost" disabled={busy} onClick={() => setRelaxing(true)}>
                 Relax
@@ -544,15 +595,19 @@ export function Required() {
   const { view } = useConfigurator();
   if (!view) return null;
   const unanswered = view.counts.unanswered;
+  const read = view.counts.read;
   return (
-    <section className="mt-6">
-      <header className="mb-2 flex items-baseline gap-2">
+    <section id="required" className="scroll-mt-4">
+      <header className="mb-2 flex flex-wrap items-baseline gap-x-2">
         <h2 className="text-sm font-semibold">Required</h2>
         <span className="text-xs text-muted-foreground">
           {view.clauses.length} · in your words
+          {read ? ` · ${read} read by the assistant` : ""}
           {unanswered ? ` · ${unanswered} not yet answered` : ""}
-          {" · "}Enter for another, Backspace on an empty line to strike, @ to
-          name the catalogue
+        </span>
+        <span className="basis-full text-xs text-muted-foreground">
+          Enter for another, Backspace on an empty line to strike, @ to name
+          the catalogue
         </span>
       </header>
       <Card className="gap-0 py-0">

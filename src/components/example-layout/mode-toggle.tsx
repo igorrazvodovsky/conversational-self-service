@@ -6,7 +6,8 @@ interface ModeToggleProps {
   onModeChange: (mode: Surface) => void;
 }
 
-/** The two artifacts `Moding` offers, in the order a configuration runs. */
+/** The three surfaces `Moding` offers, in the order a configuration runs:
+ * what is required, what is the case, and what is offered. */
 export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
   return (
     <ToggleGroup
@@ -21,8 +22,11 @@ export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
       aria-label="Surface"
       className="bg-background"
     >
+      <ToggleGroupItem value="requirements" className="px-3">
+        Requirements
+      </ToggleGroupItem>
       <ToggleGroupItem value="canvas" className="px-3">
-        Configurator
+        Configuration
       </ToggleGroupItem>
       <ToggleGroupItem value="quote" className="px-3">
         Quote

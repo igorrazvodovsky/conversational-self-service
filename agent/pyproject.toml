@@ -19,4 +19,5 @@ dependencies = [
   "pip>=26.0.1",
   "langchain-anthropic==1.7.4",
   "z3-solver>=5.1.0.0",
+  "pypdf>=6.19.0",
 ]

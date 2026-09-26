@@ -22,6 +22,8 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Binding](binding.md) | to keep every committed value bound to the requirement it answers, so that a value can later be substituted and explained rather than merely overwritten |
 | [Asserting](asserting.md) | to keep what each party has asserted of a specification on record, as asserted, until it is withdrawn |
 | [Conversing](conversing.md) | to keep a record of what each party said, in the order it was said |
+| [Filing](filing.md) | to keep a document a party brought, as it was brought, so that a passage of it can be cited |
+| [Reading](reading.md) | to hold what a source was read as, so that the reading can be checked against the source and corrected |
 | [Constraining](constraining.md) | to work out what a specification can still become under the rules that say what can be built, given what is asked of it firmly and what only as a preference |
 | [Cataloguing](cataloguing.md) | to say what may be ordered, in terms a person can recognise |
 | [Pricing](pricing.md) | to say what each choice adds to the cost of a specification |
@@ -86,6 +88,13 @@ completions appear in no `when`. It exists so that the log's first entry for a
 turn is the person's words, and the canvas reads an utterance back by its
 flow, beside each value the model asserted in reply.
 
+[Filing](filing.md) and [Reading](reading.md) are the case's slice 2: a
+document a person brought, and what the model read from it or from their
+words, held as a reading so that it can be checked against its source. A
+reading becomes a clause and an answer by the rules in
+[Reading](../syncs/reading.md), and the person corrects it with the gestures
+they already have.
+
 [Quoting](quoting.md) is where the configuration stops being the point: an
 offer, frozen as issued, that the specification can move away from without
 changing.
@@ -127,6 +136,14 @@ they do not exist. [Quoting](quoting.md) holds the snapshot the
 application cannot do without, and an offer is not a version;
 [Naming](naming.md) gives the specification a title and a site, which
 makes it findable and not comparable.
+
+_Mapping._ The case's concept for how a statement in one vocabulary
+corresponds to values in another. Here a value is a catalogue option, so the
+correspondence is [Binding](binding.md)'s `answers` and the option itself,
+and the model's version of it is the `answer` on a [Reading](reading.md)
+item; a concept holding it again would be `answers` under a second name. It
+becomes a concept the day a clause carries a quantity or a standard's class
+that has to be translated into an option.
 
 _Accounting._ Login, roles, price visibility. The case's catalogue puts
 `Account` and `Role` outside the case, and [Profiling](profiling.md) is

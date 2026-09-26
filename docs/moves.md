@@ -34,7 +34,9 @@ If deleting the transcript would lose something the person needs to *check*,
 that thing is a fact and belongs on the canvas. If it would lose something the
 person needs to *understand*, that is what the chat was for. Neither surface
 does the other's job: the chat does not restate the canvas, and the canvas
-does not carry reasoning about intent.
+does not carry reasoning about intent. The chat may point at the canvas,
+though: every item there has an address, and a reply that refers to one links
+the word rather than reciting the item.
 
 ## The person's moves
 
@@ -47,9 +49,11 @@ their request, and reads that way in the log.
 | Move | Where | What it reaches | What the chat carries |
 |---|---|---|---|
 | Describe the situation — "a hospital, six storeys, in Lyon" | chat | `Conversing/say`, then the model's `assert_value` calls through [`TheModelMayAssertAValue`](syncs/conduct.md), in [the flow the words opened](syncs/gestures.md#the-turn-is-one-flow); the canvas shows the words beside each value asserted in reply | the model's reading of it, so it can be corrected: *I took that as a hospital, six stops, and a European code regime* |
-| State, relax, reword or strike a requirement, in their own words | canvas | [`Specifying`](concepts/specifying.md) through the clause gestures | nothing; the model cannot write or answer a clause |
+| State a requirement in the chat — "a bed must fit, with a porter" — or attach a document that states them | chat | `Conversing/say` and `Filing/file`, then the model's `read` calls through [`TheModelMayReadARequirement`](syncs/reading.md): a clause stated by the model, cited to its source, and its answer asserted | what it read and what it found nothing for; a later requirement that displaces an earlier answer, said so, with the earlier clause left for the person |
+| State, relax, reword or strike a requirement, in their own words | canvas | [`Specifying`](concepts/specifying.md) through the clause gestures | nothing; the model cannot strike, reword or answer a clause, and states one only by reading it from a source |
 | Say how firmly a requirement is meant — fixed, negotiable, or left open | canvas | `Specifying/settle`; a value answering only negotiable clauses reaches the solver softly ([Propagation](syncs/propagation.md#which-of-the-first-two-fires-is-a-fact-of-the-state)) and reads as *yielded* where the rules could not honour it | what gave way and why; the model cannot change how firmly a clause is meant, and does not withdraw a yielded value |
-| Say which value answers a clause | canvas | [`Binding`](concepts/binding.md), then `Asserting` | nothing |
+| Look at one requirement — what answers it, what that forced, what could still answer it | canvas, or chat | [`Framing`](concepts/framing.md), with a clause as the frame ([Gestures](syncs/gestures.md#the-canvas-is-narrowed-to-one-requirement)); the configuration comes forward ([Propagation](syncs/propagation.md)) | one sentence saying the canvas is narrowed to it; the model may frame a clause and cannot answer one |
+| Say which value answers a clause | canvas | a pick made while a clause frames the canvas is [`Binding`](concepts/binding.md)'s `answer`, then `Asserting` | nothing |
 | Assert or withdraw a value | canvas, or chat | `Asserting/assert` or `withdraw`, by gesture or by the model's tool | on the canvas, nothing — the model is not run; in the chat, what followed and why |
 | Ask why — "why can't I have 630 kg?" | chat | nothing; `review` reads state | the rule's own sentence, and the argument if the person pushes back. This lives in the chat and only there |
 | Ask what a choice cost | chat, or canvas | [`Framing`](concepts/framing.md) | one sentence saying what the narrowed canvas now shows |
