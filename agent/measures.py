@@ -3,9 +3,9 @@
 What the case's plan counts to judge its first two slices: whether a value
 answers a requirement the person stated, and what became of each reading the
 model landed unasked.  A read, like `views.py`: it invokes nothing and writes
-nothing, and it is served at `GET /configurator/measures` and nowhere else.
-Neither the canvas, nor the digest, nor any tool carries it, since a party
-shown the count would change what is counted.
+nothing, and it is served at `GET /configurator/measures`.  Nothing on the
+page, in the digest or among the tools reads it, since a party shown the
+count would change what is counted.
 
 Records are linked by `after`, the completion a rule reacted to.  Every rule
 named below is the one whose edge the note reads; a rule renamed in
@@ -155,26 +155,33 @@ def measures(engine: Engine) -> dict[str, Any]:
     out = []
     for s, m in specs.items():
         selections = [sel for sel, of in binding["for"].items() if of == s]
-        answering: dict[str, str] = {}  # option -> clause
+        # One option can answer several clauses: a later choice of the same
+        # option retracts nothing.  It is the person's if any clause is.
+        answering: dict[str, list[dict[str, Any]]] = {}  # option -> clauses
         for sel in selections:
             for ch in binding["choices"].get(sel, []):
-                answering[binding["value"][ch]] = binding["answers"][ch]
+                clause = stated.get(binding["answers"][ch])
+                if clause is not None:
+                    answering.setdefault(binding["value"][ch], []).append(clause)
         standing: Counter[str] = Counter()
         pairs = []
         for variable, option in asserting["asserted"].get(s, {}).items():
-            clause = stated.get(answering.get(option, ""))
-            if clause is None:
+            clauses = answering.get(option, [])
+            persons = [c for c in clauses if c["by"] == PERSON]
+            if persons:
+                standing["answers a clause stated by person"] += 1
+            elif clauses:
+                standing["answers a clause stated by model"] += 1
+            else:
                 standing["unbound"] += 1
-                continue
-            standing[f"answers a clause stated by {clause['by']}"] += 1
-            if clause["by"] == PERSON:
-                pairs.append(
-                    {
-                        "clause": clause["words"][-1],
-                        "variable": variable,
-                        "value": label.get(option, option),
-                    }
-                )
+            pairs += [
+                {
+                    "clause": c["words"][-1],
+                    "variable": variable,
+                    "value": label.get(option, option),
+                }
+                for c in persons
+            ]
         current = sum(standing.values())
         out.append(
             {

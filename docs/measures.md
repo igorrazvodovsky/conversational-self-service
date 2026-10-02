@@ -1,6 +1,6 @@
 # The measures
 
-What the case's plan counts to judge its first two slices, as reads over the
+What the case's plan counts to judge slices 1 and 2, as reads over the
 log. Each rung of the plan is a test as well as a build, and a rung whose test
 cannot be counted cannot be failed. Slice 1 asks whether a person, offered a
 place to say what a value is for, uses it; slice 2 asks how often a reading
@@ -9,7 +9,9 @@ in the log, as provenance edges, and this note says how to read them.
 
 This is a read note, like [the ledger](syncs/binding.md#the-ledger-is-a-read).
 It changes no concept, action or rule, and it is computed in
-`agent/measures.py` and served at `GET /configurator/measures`.
+`agent/measures.py` and served at `GET /configurator/measures`. The route is
+reachable through the frontend's proxy like any other read; nothing on the
+page, in the digest or among the tools reads it.
 
 ## Nobody being measured sees the measures
 
@@ -52,12 +54,20 @@ origin(a)   =  for each Asserting/assert a in s:
                            or TheModelMayAssertAValue
                  adopted   if a.via is AnAdoptedValueBecomesAnAssertion
 
-standing(s) =  for each variable v that Asserting asserts o for in s, now:
-                 answers, stated by stater(c)
-                           if a choice of Binding's selection for s holds o
-                           and answers c
-                 unbound   otherwise
+standing(s) =  for each variable v that Asserting asserts o for in s, now,
+               with C the clauses answered by choices of Binding's selection
+               for s that hold o:
+                 answers, stated by the person
+                           if some c in C has stater(c) the person
+                 answers, stated by the model
+                           if C is not empty, and none was stated by the person
+                 unbound   if C is empty
 ```
+
+One value can answer several clauses, since a later choice of the same
+option takes nothing away: the person's *a bed must fit* and the model's
+reading of a document can both be answered by 1250 kg. Such a value is the
+person's if any of its clauses is, whichever came first.
 
 `standing` is the headline and `origin` the history: a withdrawal erases a
 value from `standing` and leaves its assertion in `origin`. Both are split by
@@ -70,8 +80,8 @@ control, has no clause to answer, and its share is nothing by construction.
 
 Whether a clause states a requirement or restates its value — *1000 kg* as
 the clause for 1000 kg — is a judgment, and nothing here makes it. The read
-lists each current value that answers a person's clause beside that clause's
-words, so whoever judges reads the pairs.
+lists each current value beside the words of every clause the person stated
+that it answers, so whoever judges reads the pairs.
 
 ## Slice 2 — what became of a reading
 
@@ -96,8 +106,8 @@ fates(i)    =  for clause(i) = c, each that applies:
                               by the person answers c
 ```
 
-An item can carry several fates, and each is counted where it falls. Three
-groups matter, because they argue for different things:
+An item can carry several fates, and each is counted where it falls. The
+fates group by what they argue for:
 
 - *Disowned at the clause*: struck, reworded or relaxed. The model read the
   words wrong, or read words that state no requirement. A high share argues

@@ -55,9 +55,9 @@ def review() -> dict[str, Any]:
 
 @app.get("/configurator/measures")
 def measured() -> dict[str, Any]:
-    """What the case's plan counts, read off the log.  Not proxied to the
-    canvas and not handed to any model: a party shown the count would
-    change what is counted."""
+    """What the case's plan counts, read off the log.  Reachable through the
+    frontend's proxy like any read, and read by nothing on the page, in the
+    digest or among the tools: a party shown the count would change it."""
     return measures(engine)
 
 
