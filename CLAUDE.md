@@ -21,6 +21,7 @@ _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 - [`docs/concepts/`](docs/concepts/README.md) — the concepts, specified
 - [`docs/syncs/`](docs/syncs/README.md) — the rules, the only way two concepts interact
 - [`docs/moves.md`](docs/moves.md) — what either party can do in a turn, and which surface carries it: the canvas holds what is the case, the chat is where the parties address each other
+- [`docs/measures.md`](docs/measures.md) — what the case's plan counts to judge slices 1 and 2, as reads over the log
 
 **The notes are the source, and the code is generated from them.** WYSIWID
 §7.3: the prompt for the implementation is exactly the concept design spec. If
@@ -96,7 +97,8 @@ layer beside the agent.
 │   ├── catalogue/         # elevator.json
 │   ├── wiring.py          # discovers concepts, wires rules, boots with the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
-│   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest — mounted by langgraph.json
+│   ├── measures.py        # what the case's plan counts, read off the log — shown to neither party
+│   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest, GET /measures — mounted by langgraph.json
 │   ├── tools.py           # the model's tools
 │   ├── hearing.py         # the chat message and its attachments, as a person's `say` and `file` gestures
 │   ├── instance.py        # the one engine every actor shares

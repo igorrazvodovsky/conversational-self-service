@@ -7,7 +7,8 @@ Two kinds of route and no more, because there are only two things to do:
 perform a root action, or read.  This is WYSIWID §6.4's split at the level of
 the wire — `POST /gesture` and `POST /invoke` are the action API, `GET /view`
 and `GET /digest` are the querying capability, and nothing writes through a
-read.
+read.  `GET /measures` is a read too, for whoever studies the sessions rather
+than either party in them (`docs/measures.md`).
 
 `/invoke` is how a browser agent reaches the engine: the page registers the
 model's tools on `document.modelContext` (`src/components/configurator/
@@ -34,6 +35,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fastapi import Body, FastAPI  # noqa: E402
 
 from instance import SPEC, engine  # noqa: E402
+from measures import measures  # noqa: E402
 from views import canvas, digest  # noqa: E402
 
 app = FastAPI()
@@ -49,6 +51,14 @@ def review() -> dict[str, Any]:
     """The reading a model gets: the same projection `tools.py`'s `review`
     returns to the in-app model, handed to a browser agent."""
     return digest(engine, SPEC)
+
+
+@app.get("/configurator/measures")
+def measured() -> dict[str, Any]:
+    """What the case's plan counts, read off the log.  Not proxied to the
+    canvas and not handed to any model: a party shown the count would
+    change what is counted."""
+    return measures(engine)
 
 
 # The one root action a model performs.  Whether that model is the graph in

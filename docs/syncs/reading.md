@@ -107,8 +107,9 @@ would fire on `Deciding/choose` of a request naming the item, with a request
 per item and one for the whole reading, exactly as a proposed completion is
 put to the person in [Conduct](conduct.md#proposing-and-not-adopting). The
 case's plan asks for the ungated form first, so that how often a read clause
-is disowned can be counted before a gate is paid for, and that count is a
-read over the log: readings whose clause was struck.
+is disowned can be counted before a gate is paid for. That count is a read
+over the log, in [the measures](../measures.md#slice-2--what-became-of-a-reading):
+disowned at the clause or at the answer, which argue for different gates.
 
 ## What the reading cannot say, and what is read instead
 

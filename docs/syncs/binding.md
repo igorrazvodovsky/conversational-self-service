@@ -172,7 +172,9 @@ unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
 
 `unbound` is the plan's control number. A variable asserted with no clause
 behind it is a value in the model's vocabulary that answers nothing — which
-is every value in slice 0. The canvas shows the clause beside the value where
+is every value in slice 0. [The measures](../measures.md#slice-1--whether-a-value-answers-a-requirement)
+count it, split by who stated the clause, and keep the history a withdrawal
+erases. The canvas shows the clause beside the value where
 there is one, and shows *answers nothing* where there is not, so the share is
 something a person can see rather than something a script has to count.
 
