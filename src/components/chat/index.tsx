@@ -33,6 +33,8 @@ import {
 } from "@copilotkit/react-core/v2";
 
 import { goTo } from "@/components/configurator/address";
+import { useConfigurator } from "@/components/configurator/provider";
+import { useStateSuggestions } from "./suggestions";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import {
@@ -202,7 +204,7 @@ const composer = {
 
 // ─── Suggestions ────────────────────────────────────────────────────
 
-/** `data-slot` is what the showcase highlight rules in globals.css key on. */
+/** The pills themselves are read from the state in `suggestions.tsx`. */
 const SuggestionStrip = forwardRef<HTMLDivElement, ComponentProps<"div">>(
   function SuggestionStrip({ className, ...props }, ref) {
     return (
@@ -302,6 +304,11 @@ const UserMessage = Object.assign(
   CopilotChatUserMessage,
 );
 
+/**
+ * An empty thread is not an empty specification: the canvas survives a new
+ * conversation and a reload, so the welcome reads the state before it says
+ * what to do.
+ */
 function WelcomeScreen({
   input,
   suggestionView,
@@ -309,6 +316,11 @@ function WelcomeScreen({
   input: React.ReactElement;
   suggestionView?: React.ReactNode;
 }) {
+  const { view } = useConfigurator();
+  const underway =
+    !!view &&
+    (view.counts.asked + view.counts.unmet + view.counts.yielded > 0 ||
+      view.clauses.length > 0);
   return (
     <div className="flex h-full flex-col">
       <Empty className="flex-1">
@@ -316,10 +328,13 @@ function WelcomeScreen({
           <EmptyMedia variant="icon">
             <Building2Icon />
           </EmptyMedia>
-          <EmptyTitle>Say what the building needs</EmptyTitle>
+          <EmptyTitle>
+            {underway ? "Pick up the specification" : "Say what the building needs"}
+          </EmptyTitle>
           <EmptyDescription className="text-sm">
-            Describe the lift and what it has to carry, or start from a
-            suggestion.
+            {underway
+              ? "It stands as the canvas shows. Ask about it, or add to it."
+              : "Describe the lift and what it has to carry, or start from a suggestion."}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -352,6 +367,7 @@ export function ConfiguratorChat() {
 }
 
 function Chat() {
+  useStateSuggestions();
   return (
     <CopilotChat
       attachments={{ enabled: true }}

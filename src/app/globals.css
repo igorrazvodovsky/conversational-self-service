@@ -55,10 +55,6 @@
   --font-body: "Plus Jakarta Sans", "DM Sans", "Segoe UI", sans-serif;
   --font-code:
     "Spline Sans Mono", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
-
-  /* The only brand accents still referenced — by the showcase pill rules below */
-  --cpk-mint-400: #85ecce;
-  --cpk-lilac-400: #bec2ff;
 }
 
 :root.dark,
@@ -191,24 +187,6 @@ html {
 input[data-slot="input"]:focus-visible,
 textarea[data-slot="textarea"]:focus-visible {
   border-color: var(--input);
-}
-
-/*
- * Showcase highlight for suggestion pills.
- * Applied via className in use-example-suggestions.tsx when showcase.json
- * is set to a non-default mode (e.g. "a2ui", "opengenui").
- * Add new showcase variants here following the same pattern.
- */
-[data-copilotkit] button[data-slot="suggestion-pill"].a2ui-highlight,
-[data-slot="suggestion-strip"] button.a2ui-highlight {
-  border-color: var(--cpk-lilac-400);
-  background: color-mix(in srgb, var(--cpk-lilac-400) 15%, var(--background));
-}
-
-[data-copilotkit] button[data-slot="suggestion-pill"].opengenui-highlight,
-[data-slot="suggestion-strip"] button.opengenui-highlight {
-  border-color: var(--cpk-mint-400);
-  background: color-mix(in srgb, var(--cpk-mint-400) 15%, var(--background));
 }
 
 /*

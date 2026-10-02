@@ -8,14 +8,13 @@ import { ConfiguratorProvider } from "@/components/configurator/provider";
 import { QuoteSurface } from "@/components/configurator/quotes";
 import { BrowserAgentTools } from "@/components/configurator/webmcp";
 import { ConfiguratorChat } from "@/components/chat";
-import { useGenerativeUIExamples, useExampleSuggestions } from "@/hooks";
+import { useGenerativeUIExamples } from "@/hooks";
 
 import { CopilotChatConfigurationProvider } from "@copilotkit/react-core/v2";
 
 /** The page's client half. `page.tsx` reads the split cookie and renders this. */
 export function HomeRoot({ canvasPercent }: { canvasPercent: number }) {
   useGenerativeUIExamples();
-  useExampleSuggestions();
 
   return (
     /*

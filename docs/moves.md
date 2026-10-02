@@ -115,6 +115,29 @@ turn standing in for a fact, and the first is the model reporting a state it
 never checked. The prompt's rule is against withdrawing *unasked*;
 withdrawing at the person's word is the person's answer, carried out.
 
+## The suggestions
+
+The strip under the composer offers moves. Each pill is a message ready to
+send, so a pill is an affordance on `Conversing/say` and nothing more
+([Concept](method/concept.md#what-is-deliberately-not-a-concept)); pressing
+one is the person saying that, and the model's reply is the turn it would be
+had they typed it.
+
+Which pills are offered is a read over the same view the canvas renders
+(`src/components/chat/suggestions.tsx`). Nothing is asked of the model to
+produce them, for two reasons. A read is the same on every reload and costs no
+turn. And a pill written by the model could offer a move the chat does not
+carry — *adopt the proposal*, *accept the quote* — which the model would then
+have to decline; a read draws only from the rows of the table above where the
+chat is a surface. So a conflict offers *why can't these hold together* and
+*give up this one*; a proposal offers *what did it assume*, never *take it*;
+a displaced or unanswered requirement offers to look at it; a settled value
+offers its argument; an incomplete specification offers a completion; a
+complete one offers a quote, and an issued one asks what has moved since. The
+openers appear only while nothing has been asserted or required, and the
+welcome screen reads the same fact: an empty thread over a specification
+already under way says so.
+
 ## What is not yet in place
 
 - *The model's reply is specified only in the prompt.* The table above is the

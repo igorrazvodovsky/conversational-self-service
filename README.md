@@ -185,7 +185,6 @@ Both patterns use the same catalog on the frontend — the difference is where t
 | Fixed-schema agent tool              | `agent/src/a2ui_fixed_schema.py`                   |
 | Dynamic-schema agent tool            | `agent/src/a2ui_dynamic_schema.py`                 |
 | Flight schema JSON                   | `agent/src/a2ui/schemas/flight_schema.json`        |
-| Showcase config                      | `showcase.json`                                    |
 
 ### Adding a custom component
 
@@ -214,10 +213,6 @@ Both patterns use the same catalog on the frontend — the difference is where t
 
 1. Create a JSON schema file in `agent/src/a2ui/schemas/` describing the component tree.
 2. Create a Python tool that loads the schema with `a2ui.load_schema()` and returns `a2ui.render(operations=[...])` with your data. See `a2ui_fixed_schema.py` for the pattern.
-
-### Showcase mode
-
-`showcase.json` controls which suggestion pills are visually highlighted. Set `"showcase": "a2ui"` to highlight the A2UI demos, or `"showcase": "default"` for no highlights. This is configured automatically when scaffolding via `npx copilotkit create --framework a2ui`.
 
 ### Further reading
 

@@ -31,8 +31,8 @@ drop things it knows nothing about. Some of them fail silently:
   `rounded-md` can't bring a corner back. Literal classes such as `rounded-full`
   bypass the ramp and have to be left out at the call site.
 
-The stylesheet also carries the CopilotKit font override, the showcase pill
-highlights, the inspector's position, a `dark` variant broad enough to match the
+The stylesheet also carries the CopilotKit font override, the inspector's
+position, a `dark` variant broad enough to match the
 `<html>` element `ThemeProvider` stamps, and one app-wide `:focus-visible`
 outline that replaces the primitives' own focus rings.
 
