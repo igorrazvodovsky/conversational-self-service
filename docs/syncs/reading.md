@@ -32,6 +32,13 @@ The model reads a filed document from the log and not from the transport.
 `review` returns the digest, so what the model was given when it read is on
 record and can be checked against what it read.
 
+The attachment itself never reaches the model. Before every model call,
+`agent/hearing.py` puts a line naming the document in place of the file in
+the message, and the model opens the text from the log. So the words it
+quotes are `Filing`'s, which are the words `TheModelMayReadARequirement`
+checks them against, and a format the model's provider would refuse cannot
+fail the turn once the document is filed.
+
 ## The model reads
 
 ```

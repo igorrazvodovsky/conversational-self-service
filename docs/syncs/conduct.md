@@ -422,6 +422,23 @@ function and never learns that money exists; `Pricing` is never asked to solve
 anything; and the judgement call about how to flatten a non-linear objective
 sits in the one place that is allowed to know about both.
 
+_Ties._ Some variables cost nothing whichever option is taken: the shaft, the
+pit and the headroom are built by others to the supplier's dimensions, and
+the stops and the travel are priced through what they force. Weighed by cost
+alone, every option of such a variable is as good as every other, and the
+solver returns whichever it meets first, which in practice has been the
+largest shaft and the deepest pit. So the cost objective carries a second,
+smaller one: each option's carbon weight, scaled so that the whole of it,
+over every variable at its heaviest option, comes to less than half a cent.
+Two completions that differ in cost differ by at least a cent, since every
+cost weight is a whole number of cents, so the carbon term never reorders
+them; it only decides between completions that cost the same, and it
+decides for the lighter one, which for a dimension is the smaller. If a
+weight is ever not a whole number of cents, the bound does not hold and the
+rule leaves the tie-break out rather than risk reordering what the person
+asked to minimise. The completion's `cost` output then includes the
+tie-break's fraction of a cent, and nothing shows that figure.
+
 ### Reading across concepts
 
 `TheModelMayProposeACompletion` reads other concepts' state in its `where`

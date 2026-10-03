@@ -63,7 +63,7 @@ def _the_model_may_propose_a_completion(
     if measure == "carbon":
         cost = _carbon_weights(states, spec)
     else:
-        cost = _lifetime_weights(states, spec)
+        cost = _with_ties_broken(_lifetime_weights(states, spec), _carbon_weights(states, spec))
     return [
         Invocation(
             "Constraining", "complete", {"spec": c.output["spec"], "cost": cost}
@@ -93,6 +93,34 @@ def _lifetime_weights(states: States, spec: str) -> dict[str, float]:
     for option, amount in pricing["monthly"].items():
         weights[option] = weights.get(option, 0.0) + amount * months
     return weights
+
+
+def _with_ties_broken(
+    cost: dict[str, float], carbon: dict[str, float]
+) -> dict[str, float]:
+    """The cost weights, with ties between equal-cost completions broken
+    towards the lighter one.
+
+    The carbon term is scaled so that all of it, every variable at its
+    heaviest option, stays under half a cent.  Every cost weight is a whole
+    number of cents, so two completions that differ in cost differ by at
+    least a cent and the term cannot reorder them.  If a weight is not a whole
+    number of cents the bound fails, and the cost is handed on unbroken.
+    """
+    if any(abs(w * 100 - round(w * 100)) > 1e-6 for w in cost.values()):
+        return cost
+    heaviest: dict[str, float] = {}
+    for option, weight in carbon.items():
+        variable = option.split(":", 1)[0]
+        heaviest[variable] = max(heaviest.get(variable, 0.0), weight)
+    total = sum(heaviest.values())
+    if total <= 0:
+        return cost
+    scale = 0.004 / total
+    broken = dict(cost)
+    for option, weight in carbon.items():
+        broken[option] = broken.get(option, 0.0) + max(weight, 0.0) * scale
+    return broken
 
 
 def _carbon_weights(states: States, spec: str) -> dict[str, float]:

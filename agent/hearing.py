@@ -30,7 +30,9 @@ Why a document is read into text here.  `Filing` keeps words, so that a
 passage can be cited and the model can read the document back from the log
 rather than from the transport (`docs/syncs/reading.md`).  The bytes are the
 transport's; the text is the record.  A file nothing can be read from is
-refused by the concept, and the refusal is in the log.
+refused by the concept, and the refusal is in the log.  For the same reason
+the model is never handed the bytes: `unattaching` puts a line naming the
+document in place of the file on every model call.
 
 Why the guard is what it is.  `before_model` runs before *every* model call,
 not once per turn: after a tool call the last message is a `ToolMessage` and
@@ -54,7 +56,7 @@ import io
 import sys
 from typing import Any
 
-from langchain.agents.middleware import before_model
+from langchain.agents.middleware import before_model, wrap_model_call
 from langchain_core.messages import HumanMessage
 from langgraph.config import get_config
 
@@ -114,16 +116,20 @@ def _files(message: HumanMessage) -> list[tuple[str, str]]:
     for part in content:
         if not isinstance(part, dict) or part.get("type") != "file":
             continue
-        name = (
-            part.get("filename")
-            or (part.get("metadata") or {}).get("filename")
-            or "attachment"
-        )
+        name = _name(part)
         raw = _bytes(part)
         if raw is None:
             continue
         out.append((name, _read(raw, part.get("mime_type") or "", name)))
     return out
+
+
+def _name(part: dict[str, Any]) -> str:
+    return (
+        part.get("filename")
+        or (part.get("metadata") or {}).get("filename")
+        or "attachment"
+    )
 
 
 def _bytes(part: dict[str, Any]) -> bytes | None:
@@ -219,3 +225,39 @@ def _hear(said: HumanMessage, thread: str | None) -> None:
         flow = flow or record.flow
     if thread is not None and flow is not None:
         _turn[thread] = flow
+
+
+def _unattached(message: Any) -> Any:
+    """The message with each attached file replaced by a line naming it."""
+    if not isinstance(message, HumanMessage) or isinstance(message.content, str):
+        return message
+    if not any(
+        isinstance(part, dict) and part.get("type") == "file" for part in message.content
+    ):
+        return message
+    content = [
+        {
+            "type": "text",
+            "text": f"[attached: {_name(part)}. Filed; `review` lists it under "
+            "`files`, and `open_file` returns its text.]",
+        }
+        if isinstance(part, dict) and part.get("type") == "file"
+        else part
+        for part in message.content
+    ]
+    return message.model_copy(update={"content": content})
+
+
+@wrap_model_call
+async def unattaching(request: Any, handler: Any) -> Any:
+    """The model reads a filed document from the log, never from the transport.
+
+    Each attachment is in `Filing` by the time the model is called, as text,
+    and `open_file` returns that text, so the words the model quotes are the
+    words `TheModelMayReadARequirement` checks.  The file part is replaced
+    for the call and left in the thread, and a format the model's provider
+    would refuse cannot fail the turn.  See `docs/syncs/reading.md`.
+    """
+    return await handler(
+        request.override(messages=[_unattached(m) for m in request.messages])
+    )

@@ -13,7 +13,7 @@ from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 # The configurator
-from hearing import hearing
+from hearing import hearing, unattaching
 from tools import configurator_tools
 
 # Other showcase features, unchanged
@@ -133,7 +133,9 @@ agent = create_agent(
     tools=[*configurator_tools, query_data, generate_a2ui, search_flights],
     # `hearing` first: the person's words reach the log before the model is
     # asked what to do about them.  See `docs/syncs/gestures.md`.
-    middleware=[hearing, CopilotKitMiddleware()],
+    # `unattaching` hands the model each document as a line naming it; the
+    # text is read from the log.  See `docs/syncs/reading.md`.
+    middleware=[hearing, unattaching, CopilotKitMiddleware()],
     system_prompt=SYSTEM_PROMPT,
 )
 
