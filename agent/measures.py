@@ -25,6 +25,7 @@ PERSON = "person"
 ANSWERED = {"AChoiceReachesTheAssertions", "ASubstituteReachesTheAssertions"}
 ASKED = {"APersonAssertsAValue", "TheModelMayAssertAValue"}
 ADOPTED = "AnAdoptedValueBecomesAnAssertion"
+CONCEDED = "TheConcededAssertionIsWithdrawn"
 
 CLAUSE_LEVEL = {"struck", "reworded", "relaxed"}
 ANSWER_LEVEL = {"re-answered", "withdrawn"}
@@ -108,11 +109,16 @@ def measures(engine: Engine) -> dict[str, Any]:
                 if r.via == "AnOverwrittenValueRetractsItsChoices":
                     fates.setdefault(clause, set()).add("displaced")
                 elif r.via == "AWithdrawnValueRetractsItsChoices":
+                    # The rule before the actor: a concession is the
+                    # person's choice, and still not a disown.
                     withdraw = by_id.get(r.after)
-                    who = withdraw.actor if withdraw else None
-                    fates.setdefault(clause, set()).add(
-                        "withdrawn" if who == PERSON else "withdrawn by the model"
-                    )
+                    if withdraw is not None and withdraw.via == CONCEDED:
+                        fate = "conceded"
+                    elif withdraw is not None and withdraw.actor == PERSON:
+                        fate = "withdrawn"
+                    else:
+                        fate = "withdrawn by the model"
+                    fates.setdefault(clause, set()).add(fate)
         if (
             r.action == "propose"
             and r.input.get("party") == PERSON

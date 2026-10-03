@@ -100,6 +100,9 @@ fates(i)    =  for clause(i) = c, each that applies:
                  withdrawn by the model
                               as withdrawn, after a withdraw by the model
                               or a browser agent
+                 conceded     as withdrawn, after a withdraw with via
+                              TheConcededAssertionIsWithdrawn, whoever
+                              chose the concession
                  found nothing
                               choices(i) is empty
                  missed       choices(i) is empty, and a Binding/propose
@@ -115,16 +118,35 @@ fates group by what they argue for:
 - *Disowned at the answer*: re-answered or withdrawn. The words were right
   and the option was not. A high share argues for a gate on the answer only,
   which is a cheaper gate.
-- *Not disowned*: displaced, and withdrawn by the model. Displacement is a
-  later requirement winning on the same variable, which the person may have
-  meant. A withdrawal by the model runs in a flow the person's words opened
-  whether or not they asked for it, so the log cannot tell *at the person's
-  word* from *unasked*; it is reported apart and in neither share.
+- *Not disowned*: displaced, withdrawn by the model, and conceded.
+  Displacement is a later requirement winning on the same variable, which the
+  person may have meant. A withdrawal by the model runs in a flow the
+  person's words opened whether or not they asked for it, so the log cannot
+  tell *at the person's word* from *unasked*. A concession is the person
+  giving the value up to end a conflict: the reading may have been wrong, or
+  right to its source and unbuildable beside the rest, as a bed car at a load
+  the catalogue cannot build is. The log cannot tell those apart either. Each
+  is reported apart and in neither share.
+
+A conceded value withdrawn under `withdrawn` would count an unbuildable
+requirement as a misreading, so the fates are tested in that order: the rule
+that withdrew the value first, its actor after.
 
 The disown rate is the share of items stated as clauses that are disowned at
 either level, split by whether the source was a file or the person's words.
 `missed` is the share of items that found nothing whose clause the person
 then answered: the model's claim that the catalogue holds nothing, refuted.
+
+## What the log cannot see
+
+Every fate is something a party did to a clause or its answer. Two outcomes
+leave nothing to read. A requirement the source states and the model never
+read has no item, so it is in no denominator. A reading that is wrong and
+that nobody touched stands with no fate, and counts as not disowned. A
+wrong value asserted beside a right one, from the same words, is the second
+kind. Both are found only by reading the sources against the ledger, which
+the canvas lays side by side for exactly that; the disown rate is a floor on
+how often a reading is wrong, not an estimate of it.
 
 ## Per specification
 
