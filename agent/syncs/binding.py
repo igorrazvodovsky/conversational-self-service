@@ -84,7 +84,11 @@ def _a_discarded_specification_is_closed(
 
 
 def _a_person_answers_a_clause(c: Completion, states: States) -> list[Invocation]:
-    """A clause nobody has answered gets a `propose`."""
+    """A clause with no answer on the option's variable gets a `propose`.
+
+    Beside whatever answers it on other variables: one clause can settle
+    several, and the question is per variable.
+    """
     if c.output.get("act") != "answer":
         return []
     clause, option = c.output["clause"], c.output["option"]
@@ -95,7 +99,13 @@ def _a_person_answers_a_clause(c: Completion, states: States) -> list[Invocation
     selection = _selection_for(states, c.output["spec"])
     if selection is None:
         return []
-    if any(ch["answers"] == clause for ch in _choices_of(states, selection)):
+    variable = _variable_offering(states, option)
+    if variable is None:
+        return []
+    if any(
+        ch["answers"] == clause and _variable_offering(states, ch["value"]) == variable
+        for ch in _choices_of(states, selection)
+    ):
         return []
     return [
         Invocation(
@@ -112,7 +122,8 @@ def _a_person_answers_a_clause(c: Completion, states: States) -> list[Invocation
 
 
 def _a_person_substitutes_an_answer(c: Completion, states: States) -> list[Invocation]:
-    """A clause already answered gets a `substitute`, with a reason.
+    """A clause answered on the option's variable gets a `substitute` of that
+    choice alone, with a reason; its answers on other variables stand.
 
     Answering a clause with the value it already has fires neither rule, which
     is the ordinary meaning of a `where` that does not bind.
@@ -123,6 +134,9 @@ def _a_person_substitutes_an_answer(c: Completion, states: States) -> list[Invoc
     if selection is None:
         return []
     clause, option = c.output["clause"], c.output["option"]
+    variable = _variable_offering(states, option)
+    if variable is None:
+        return []
     return [
         Invocation(
             "Binding",
@@ -135,7 +149,9 @@ def _a_person_substitutes_an_answer(c: Completion, states: States) -> list[Invoc
             },
         )
         for ch in _choices_of(states, selection)
-        if ch["answers"] == clause and ch["value"] != option
+        if ch["answers"] == clause
+        and ch["value"] != option
+        and _variable_offering(states, ch["value"]) == variable
     ]
 
 

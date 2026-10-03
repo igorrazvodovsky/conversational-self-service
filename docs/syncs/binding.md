@@ -39,7 +39,8 @@ when  { Copiloting/gesture: [ act: "answer" ; spec: ?s ;
           clause: ?c ; option: ?o ] => [] }
 where { Specifying: { ?s clauses: ?c }
         Binding: { ?sel for: ?s }
-        no choice of ?sel answers ?c }
+        Cataloguing: { ?v offers: ?o }
+        no choice of ?sel answers ?c with a value ?v offers }
 then  { Binding/propose: [ party: person ; selection: ?sel ;
           requirement: ?c ; value: ?o ] }
 
@@ -47,17 +48,25 @@ sync APersonSubstitutesAnAnswer
 when  { Copiloting/gesture: [ act: "answer" ; spec: ?s ;
           clause: ?c ; option: ?o ; reason: ?why ] => [] }
 where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ;
-                   ?ch answers: ?c ; ?ch value: ?v }
-        ?v is not ?o }
+                   ?ch answers: ?c ; ?ch value: ?o' }
+        Cataloguing: { ?v offers: ?o ; ?v offers: ?o' }
+        ?o' is not ?o }
 then  { Binding/substitute: [ party: person ; choice: ?ch ;
           value: ?o ; reason: ?why ] }
 ```
 
-One gesture, a rule for each case, and which fires is a fact of the state: a clause
-nobody has answered gets a `propose`, a clause already answered gets a
-`substitute` with `replaces` and a reason. Answering a clause with the value
-it already has fires neither, which is the ordinary meaning of a `where` that
-does not bind.
+One gesture, a rule for each case, and which fires is a fact of the state,
+read per variable. A clause can be answered on several variables at once, as
+"a bed must fit, with a porter" settles both the car and the load, so the
+question is not whether the clause has an answer but whether it has one on
+the variable that offers the picked option. A clause with no answer on that
+variable gets a `propose`, beside whatever answers it on others. A clause
+answered on that variable gets a `substitute` of that choice alone, with
+`replaces` and a reason; its answers on other variables stand. The `reason`
+is optional, as an introduction's fields are: a pick on the canvas carries
+none, and the substitute records an empty one. Answering a clause with the
+value it already has fires neither, which is the ordinary meaning of a
+`where` that does not bind.
 
 ## The person maps
 
