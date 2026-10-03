@@ -130,8 +130,10 @@ def read(
     and each option in `answer` is asserted as answering it. An id the
     catalogue does not offer answers nothing and comes back under
     `not_offered`; call `read` again with the right ids rather than leaving
-    the clause unanswered. A value that cannot be met is still recorded and
-    comes back with the rules that refuse it. Use `assert_value` for context
+    the clause unanswered. A count is answered by the option whose range
+    contains it: six stops is `stops:s2_6`. A value that cannot be met is
+    still recorded and comes back with the rules that refuse it; keep reading
+    the rest of the source before raising it. Use `assert_value` for context
     that is not a requirement, such as the region a city implies.
     """
     completion = engine.root(
