@@ -113,8 +113,9 @@ def read(
 
     Call this once per requirement, for anything the person or their document
     requires of the lift: a load, a speed, a finish, a service term, a
-    condition. `words` is the requirement in the source's own words, cut
-    short but not paraphrased. `answer` is the option ids that answer it,
+    condition. `words` is the requirement copied from the source as one
+    unbroken passage: trim either end, never cut the middle, never
+    paraphrase. `answer` is the option ids that answer it,
     exactly as `review` lists them under `open`, such as `rated_load:kg1250`,
     never a label; several when one sentence settles several variables, only
     what the words themselves settle, and empty when nothing in the catalogue
@@ -122,6 +123,8 @@ def read(
     with its source, and the person can answer it or take it further.
     `file` is the id of the document the words are from, as `review` lists
     it under `files`; leave it out when they are from the person's message.
+    Words the cited source does not contain read nothing, and come back
+    under `refused`.
 
     The clause is stated on the canvas as your reading, cited to its source,
     and each option in `answer` is asserted as answering it. An id the
@@ -141,8 +144,15 @@ def read(
         for options in engine.state("Cataloguing")["offers"].values()
         for option in options
     }
+    outcome = _outcome(completion)
+    if not any(entry["action"] == "Reading/read" for entry in outcome["did"]):
+        # The rule declined: the words are not in the cited source.
+        outcome["refused"] = (
+            "nothing was read: the words are not in the cited source; "
+            "copy them as one passage, and pass `file` if they are from the document"
+        )
     return {
-        **_outcome(completion),
+        **outcome,
         "not_offered": [o for o in (answer or []) if o not in offered],
     }
 

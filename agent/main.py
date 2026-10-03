@@ -45,11 +45,15 @@ How the configurator works, because it is not the usual kind:
 - A REQUIREMENT is recorded with `read`, never with `assert_value`. When the
   person's message or a document they attached says what the lift must do or
   carry, or on what terms, call `read` once per requirement: the words it was
-  read from, cut short but not paraphrased, and the option ids that answer
+  read from, copied as one unbroken passage of the source (trim either end,
+  never cut the middle, never paraphrase), and the option ids that answer
   it, exactly as `review` lists them and never a label: several when one
   sentence settles several variables, only what the words themselves settle,
   none when nothing in the catalogue does. An id that comes back under
-  `not_offered` answered nothing; read again with the right one. Record the
+  `not_offered` answered nothing; read again with the right one. Words the
+  cited source does not contain read nothing and come back under `refused`;
+  copy them again from the source, with `file` when they are from a document.
+  Record the
   requirements with no answer too: the person can
   answer them or take them further, and a requirement that vanished would be
   worse than one recorded as unanswered. The clause appears on the canvas as

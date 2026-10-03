@@ -439,7 +439,8 @@ reword or relax one._ No `when { Copiloting/invoke: … }` has
 [Specifying](../concepts/specifying.md) or [Binding](../concepts/binding.md)
 in its `then`. What the model may do is *read*: `TheModelMayReadARequirement`
 ([Reading](reading.md)) records a requirement with the words it was read from
-and the options it took to answer them, and the rules there state the words
+and the options it took to answer them, and only when those words are a
+passage of the source it cites. The rules there state the words
 as a clause and propose the answer. A clause so stated carries the model as
 its stater and its source beside it, and only the person's gestures change
 or remove it. The model may still assert a value with no clause behind it,

@@ -38,11 +38,15 @@ record and can be checked against what it read.
 sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; file: ?f ;
           words: ?w ; answer: ?a ] => [] }
+where { Filing: { ?f text: ?t }
+        ?w occurs in ?t }
 then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ] }
 
 sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; utterance: ?u ;
           words: ?w ; answer: ?a ] => [] }
+where { Conversing: { ?u text: ?t }
+        ?w occurs in ?t }
 then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ] }
 ```
 
@@ -51,6 +55,24 @@ one that opened the turn, handed to the tool by `agent/hearing.py` as the
 flow token is, so a reading of the person's words names the words it read.
 A call with no file and no utterance, a browser agent's, reads nothing:
 there is no source to check it against.
+
+The `where` is that check. A reading cites its source, and a citation the
+source does not bear out is not one: words from a document cited to the
+person's message, or a paraphrase passed off as the source's own words, read
+nothing. `occurs in` is a calculation, not a judgment. The words occur in a
+text when, with both normalised, they are one unbroken passage of it. The
+normalisation forgives what extraction and typing do to text and nothing
+else: compatibility forms are folded (a PDF's ligatures, full-width
+characters), curly quotes and dashes are made plain, a hyphen at a line
+break is read both ways, as a word broken and as a word hyphenated, every
+run of whitespace becomes one space, and case is ignored. The words may be cut short at either end; they may not be cut in
+the middle, since a passage with a gap in it says something the source does
+not.
+
+A call the rule declines records only the `invoke`, and the tool says so to
+the model, from the absence of a `Reading/read` after it: nothing was read,
+because the words are not in the cited source. The check stays in the rule;
+the tool reports what the rules did, as it does for every call.
 
 `answer` is the set of catalogue options the model took to answer the words,
 and it may be empty. That is the model's claim, recorded as such in
