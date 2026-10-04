@@ -101,8 +101,8 @@ it.
 | `AnAdoptedCompletionIsTakenValueByValue` | [Conduct](conduct.md) |
 | `AnAdoptedValueBecomesAnAssertion` | [Conduct](conduct.md) |
 | `ADeclinedCompletionIsDeclinedValueByValue` | [Conduct](conduct.md) |
-| `AChangedSpecificationWithdrawsItsProposal` | [Conduct](conduct.md) |
-| `ASettledVariableRetiresItsProposedValue` | [Conduct](conduct.md) |
+| `AnOvertakenProposedValueIsRetired` | [Conduct](conduct.md) |
+| `AnEmptiedProposalIsWithdrawn` | [Conduct](conduct.md) |
 | `TheCanvasIsShownBeforeItChanges` | [Conduct](conduct.md) |
 
 ## Seeding

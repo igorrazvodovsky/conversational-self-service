@@ -194,40 +194,55 @@ of that, as a `where` would (WYSIWID §6.4). `agent/syncs/readings.py` holds the
 one implementation the rules and the canvas share.
 
 ```
-sync AChangedSpecificationWithdrawsItsProposal
-when  { Asserting/assert: [ spec: ?s ; variable: ?v ; option: ?o ] => [ spec: ?s ] }
-where { Deciding: { [ spec: ?s ; about: "completion" ] offered: { ?a } }
-        ?a does not map ?v to ?o
-        ?r is that request, and every [ spec: ?s ; about: "completion" ; variable: _ ]
-          Deciding holds }
-then  { Deciding/withdraw: [ request: ?r ] }
-
-sync AChangedSpecificationWithdrawsItsProposal
-when  { Asserting/withdraw: [ spec: ?s ] => [ spec: ?s ] }
-where { Deciding: { [ spec: ?s ; about: "completion" ] offered: _ }
-        ?r is that request, and every [ spec: ?s ; about: "completion" ; variable: _ ]
-          Deciding holds }
-then  { Deciding/withdraw: [ request: ?r ] }
-
-sync ASettledVariableRetiresItsProposedValue
+sync AnOvertakenProposedValueIsRetired
 when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ; settled: ?q ] }
-where { *the proposed value is retired* }
+where { *the proposed value is overtaken* }
 then  { Deciding/withdraw: [ request: ?p ] }
 
-sync ASettledVariableRetiresItsProposedValue
+sync AnOvertakenProposedValueIsRetired
 when  { Constraining/incline: [ spec: ?s ] => [ spec: ?s ; settled: ?q ] }
-where { *the proposed value is retired* }
+where { *the proposed value is overtaken* }
 then  { Deciding/withdraw: [ request: ?p ] }
+
+sync AnOvertakenProposedValueIsRetired
+when  { Constraining/assume: [ spec: ?s ] => [ error: _ ] }
+where { ?q is empty
+        *the proposed value is overtaken* }
+then  { Deciding/withdraw: [ request: ?p ] }
+
+sync AnEmptiedProposalIsWithdrawn
+when  { Deciding/withdraw: [ request: ?p ] => [ request: ?p ] }
+where { *the proposal is emptied* }
+then  { Deciding/withdraw: [ request: ?r ] }
+
+sync AnEmptiedProposalIsWithdrawn
+when  { Deciding/choose: [ request: ?p ] => [ request: ?p ] }
+where { *the proposal is emptied* }
+then  { Deciding/withdraw: [ request: ?r ] }
+
+sync AnEmptiedProposalIsWithdrawn
+when  { Deciding/decline: [ request: ?p ] => [ request: ?p ] }
+where { *the proposal is emptied* }
+then  { Deciding/withdraw: [ request: ?r ] }
 ```
 
-where *the proposed value is retired* is the `where` both triggers share:
+where each name stands for the `where` its triggers share:
 
 ```
-the proposed value is retired
+the proposed value is overtaken
   iff  ?p is [ spec: ?s ; about: "completion" ; variable: ?v ]
-  and  ?p is pending
-  and  ?v is asserted of ?s, or ?q maps ?v
+  and  ?p is pending, and Deciding: { ?p offered: { [ variable: ?v ; option: ?o ] } }
+  and  ?v is asserted of ?s, or ?q maps ?v,
+       or ?o does not fit: taking the pending proposed values in the order
+          the proposal was asked, each fits if Constraining's foreseeing,
+          given the specification's assumptions and inclinations and every
+          value that fit before it, and ?o itself, is buildable
   and  Deciding: { [ spec: ?s ; about: "completion" ] chosen: _ } does not bind
+
+the proposal is emptied
+  iff  ?p is [ spec: ?s ; about: "completion" ; variable: _ ]
+  and  ?r is [ spec: ?s ; about: "completion" ], and ?r is pending
+  and  no [ spec: ?s ; about: "completion" ; variable: _ ] is pending
 ```
 
 Each of these is one rule with more than one trigger, written as one block per
@@ -257,13 +272,27 @@ choice once part of it is assumed, and every choice the new assumption
 excludes was available before and cost no less. The remaining values are
 still the cheapest way to finish the specification that was proposed. That
 is why a proposal survives its own adoption one value at a time, and why
-`AChangedSpecificationWithdrawsItsProposal` leaves it in place when an
-assertion is one the proposal already holds, whoever made it. What the
-person cannot do is take a value the proposal did not offer and keep the
-proposal: an assertion that differs from it, or a withdrawal, moves the
-state the completion was computed against, and then the proposal is about
-nothing. Ask again and there is one for the state you are in, which is the
-counter-proposal: the person's own assertion, and the model's answer to it.
+the person asserting a value it proposed by hand leaves it in place.
+
+An assertion that differs from the proposal moves the state the completion
+was computed against, and the proposal does not survive that whole. It
+survives in part. The proposed value for the variable just asserted is
+answered by the assertion, and goes. A proposed value the new state rules
+out goes too, since adopting it would raise a conflict nobody asked for. The
+check is joint and not one value at a time: two values each allowed beside
+the new assertion may not be allowed together, and adopting the whole would
+then raise the conflict anyway. So the values are taken in the order the
+proposal was asked, and each stays only if `Constraining`'s `foreseeing`
+finds it buildable beside the specification and the values kept before it.
+What stays can be adopted whole without a conflict. Every value that stays
+is one the person can still take. What it no longer is, is the
+cheapest: the completion was cheapest for the state it was computed
+against, and a value the person put in its place can make another way of
+finishing cheaper. Ask again and there is a proposal for the state you are
+in. A withdrawal rules nothing out, so it retires nothing; the values stay,
+as a way of finishing that still holds. When the last proposed value is
+gone, by whatever answer, the proposal as a whole is withdrawn, since there
+is nothing left for it to adopt.
 
 The alternative is a single act on a single bundle, a whole completion taken
 or left at once, and the literature on proposal surfaces is against it. Li, Zhang, Wang and Lu's study of
@@ -330,27 +359,32 @@ solver survey. So the figures are a facet of [Showing](../concepts/showing.md),
 ruled-out option is. The person or the model turns it on when it is wanted,
 and an idle canvas asks the solver nothing.
 
-### A proposal lasts as long as the state it assumed
+### A proposed value lasts as long as the rules allow it
 
 A completion is computed against the assumptions holding when `propose` ran.
-Let the specification move underneath it and adopting it restates values chosen
-for a state that has gone — including, in the worst case, the very assertion
-the person just gave up to resolve a conflict. The proposal is not wrong so
-much as no longer about anything, and a stale proposal is worse than none: it
-carries the authority of *the assistant worked this out* and the content of a
-state nobody is in.
+Let the specification move underneath it and some of its values may no longer
+be possible: adopting one would raise a conflict nobody asked for, and in the
+worst case restate the very assertion the person just gave up to resolve
+one. A proposed value the rules now rule out carries the authority of *the
+assistant worked this out* and the content of a state nobody is in.
 
-So `AChangedSpecificationWithdrawsItsProposal` takes the completion and every
-proposed value off the record on any change the proposal did not already hold.
-The case arises because a conflict and a completion can be open together,
-because a request is `[ spec ; about ]` and the two questions are distinct
-requests.
+So `AnOvertakenProposedValueIsRetired` withdraws a proposed value when its
+variable is asserted, when the rules settle it, or when the rules no longer
+allow the value proposed, and leaves every other one standing. An assertion
+the rules refuse is still an assertion, and its variable's proposed value
+goes with it, which is why a refused `assume` is a trigger too. A person who
+puts their own value in one place keeps the rest of the proposal, which is
+the grain the proposal was asked at. What the rest gives up is being the
+cheapest way to finish, which only holds for the state the completion was
+computed against, so ask again for the cheapest now. `AnEmptiedProposalIsWithdrawn` takes the whole
+off the record once no proposed value is left in it. A conflict and a
+completion can be open together, because a request is `[ spec ; about ]` and
+the two questions are distinct requests.
 
-A proposed value can also stop being a question without the proposal going
-stale. Assert one value from it and the rules may settle another the
-proposal had left open, to the value it proposed; the request for that
-variable now asks about a choice nobody has. `ASettledVariableRetiresItsProposedValue`
-withdraws it, as
+A settled variable is the common case. Assert one value from the proposal
+and the rules may settle another the proposal had left open, to the value it
+proposed; the request for that variable now asks about a choice nobody has,
+and the rule withdraws it, as
 [`AResolvedConflictWithdrawsItsQuestion`](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)
 withdraws a conflict question once the condition it asked about no longer
 holds. Its last condition is the one that reads oddly: it leaves such a

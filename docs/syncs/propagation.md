@@ -395,11 +395,9 @@ that `assume`'s completion the rule then matches. Softening the refused
 assertion inclines it, and it is that `incline`'s completion the rule
 matches. Either way the question goes when the conflict does, and not before.
 
-It is narrower than [`AChangedSpecificationWithdrawsItsProposal`](conduct.md),
-which withdraws a completion on any change it did not already hold. A
-completion is computed against a state and is stale the moment that state
-moves; a conflict question is about a condition, and holds as long as the
-condition does.
+It is the same shape as [`AnOvertakenProposedValueIsRetired`](conduct.md),
+which withdraws a proposed value once the rules no longer allow it: each
+question is about a condition, and holds as long as the condition does.
 
 A chosen request is not pending, so a question answered on the canvas is left
 alone: the answer is the record of what was chosen, and this rule only takes

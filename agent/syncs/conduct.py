@@ -344,63 +344,28 @@ def _a_declined_completion_is_declined_value_by_value(
     ]
 
 
-def _a_changed_specification_withdraws_its_proposal(
+def _an_overtaken_proposed_value_is_retired(
     c: Completion, states: States
 ) -> list[Invocation]:
-    """A proposal lasts exactly as long as the state it assumed.
+    """A proposed value goes when the specification overtakes it, and only then.
 
-    `complete` is computed against the assumptions holding when `propose` ran.
-    Let the specification move underneath it and adopting it restates values
-    chosen for a state that has gone — in the worst case the very assertion
-    the person just gave up to resolve a conflict.
+    Its variable is asserted or settled, so it asks about a choice nobody
+    has; or the rules no longer allow it beside the specification and the
+    proposed values kept before it, so adopting it would raise a conflict
+    nobody asked for.  The check is joint, in the order the proposal was
+    asked, so what is kept can be adopted whole.  Every other value stands:
+    a person who puts their own value in one place keeps the rest.
 
-    An assertion the proposal already holds does not move that state: every
-    rule was satisfied by the whole assignment, so it still is once part of
-    it is assumed, and what remains is still the cheapest way to finish.  So
-    the proposal survives its own adoption one value at a time, and survives
-    the person asserting a value it proposed by hand.  Anything else — a
-    different value, or a withdrawal — takes the completion and every
-    proposed value off the record.
+    Nothing is retired while the completion itself is chosen.  A chosen
+    completion is the record that the person is taking every value, and
+    `AnAdoptedCompletionIsTakenValueByValue` is at that moment choosing them
+    in turn; a value settled by an earlier sibling is answered by the
+    adoption already under way, and withdrawing it would make that answer
+    fail.
     """
-    if c.failed:
-        return []
-    spec = c.output["spec"]
-    deciding = states["Deciding"].state()
-    completion = next(
-        (
-            key
-            for key, request in deciding["request"].items()
-            if _is_completion(request, spec) and key in deciding["offered"]
-        ),
-        None,
-    )
-    if completion is None:
-        return []
-    if c.action == "assert":
-        assignment = deciding["offered"][completion][0]
-        if assignment.get(c.output["variable"]) == c.output["option"]:
-            return []
-    return [
-        Invocation("Deciding", "withdraw", {"request": request})
-        for request in deciding["request"].values()
-        if (_is_completion(request, spec) or _is_proposed(request, spec))
-    ]
-
-
-def _a_settled_variable_retires_its_proposed_value(
-    c: Completion, states: States
-) -> list[Invocation]:
-    """A proposed value for a variable the specification has since settled
-    asks about a choice nobody has, so it goes — unless the completion itself
-    is chosen.  A chosen completion is the record that the person is taking
-    every value, and `AnAdoptedCompletionIsTakenValueByValue` is at that
-    moment choosing them in turn; a value settled by an earlier sibling is
-    answered by the adoption already under way, and withdrawing it would make
-    that answer fail.
-    """
-    if c.failed:
-        return []
-    spec = c.output["spec"]
+    # A refused `assume` is still an assertion, and its variable's proposed
+    # value goes with it; it settles nothing.
+    spec = c.input["spec"] if c.failed else c.output["spec"]
     deciding = states["Deciding"].state()
     if any(
         _is_completion(deciding["request"].get(key), spec)
@@ -408,11 +373,47 @@ def _a_settled_variable_retires_its_proposed_value(
     ):
         return []
     asserted = states["Asserting"].state()["asserted"].get(spec, {})
-    settled = c.output.get("settled", {})
+    settled = {} if c.failed else c.output.get("settled", {})
+    constraining = states["Constraining"]
+    held = constraining.state()
+    assumptions = dict(held["assumed"].get(spec, {}))
+    inclinations = dict(held["inclined"].get(spec, {}))
+    # The specification as it stands must be buildable for a value to be
+    # judged against it; if it is not, the conflict is the question, and no
+    # proposed value is to blame for it.
+    judged = constraining.foreseeing(spec, assumptions, inclinations)["buildable"]
+    retired = []
+    for q in _pending_proposed(states, spec):
+        variable = q["request"]["variable"]
+        option = q["options"][0]["option"] if q["options"] else None
+        if variable in asserted or variable in settled:
+            retired.append(q["request"])
+            continue
+        if not judged or option is None:
+            continue
+        trial = {**assumptions, variable: option}
+        if constraining.foreseeing(spec, trial, inclinations)["buildable"]:
+            assumptions = trial
+        else:
+            retired.append(q["request"])
+    return [Invocation("Deciding", "withdraw", {"request": r}) for r in retired]
+
+
+def _an_emptied_proposal_is_withdrawn(c: Completion, states: States) -> list[Invocation]:
+    """The proposal as a whole goes once no proposed value is left in it:
+    there is nothing for it to adopt."""
+    if c.failed:
+        return []
+    request = c.output.get("request")
+    if not isinstance(request, dict) or "spec" not in request:
+        return []
+    spec = request["spec"]
+    if not _is_proposed(request, spec) or _pending_proposed(states, spec):
+        return []
     return [
         Invocation("Deciding", "withdraw", {"request": q["request"]})
-        for q in _pending_proposed(states, spec)
-        if q["request"]["variable"] in asserted or q["request"]["variable"] in settled
+        for q in readings.pending(states["Deciding"].state())
+        if _is_completion(q["request"], spec)
     ]
 
 
@@ -521,24 +522,18 @@ rules = [
         _a_declined_completion_is_declined_value_by_value,
     ),
     Sync(
-        "AChangedSpecificationWithdrawsItsProposal",
-        ("Asserting", "assert"),
-        _a_changed_specification_withdraws_its_proposal,
-    ),
-    Sync(
-        "AChangedSpecificationWithdrawsItsProposal",
-        ("Asserting", "withdraw"),
-        _a_changed_specification_withdraws_its_proposal,
-    ),
-    Sync(
-        "ASettledVariableRetiresItsProposedValue",
+        "AnOvertakenProposedValueIsRetired",
         ("Constraining", "assume"),
-        _a_settled_variable_retires_its_proposed_value,
+        _an_overtaken_proposed_value_is_retired,
     ),
     Sync(
-        "ASettledVariableRetiresItsProposedValue",
+        "AnOvertakenProposedValueIsRetired",
         ("Constraining", "incline"),
-        _a_settled_variable_retires_its_proposed_value,
+        _an_overtaken_proposed_value_is_retired,
+    ),
+    *(
+        Sync("AnEmptiedProposalIsWithdrawn", ("Deciding", action), _an_emptied_proposal_is_withdrawn)
+        for action in ("withdraw", "choose", "decline")
     ),
     Sync(
         "TheModelMayIntroduceThePerson",
