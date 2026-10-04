@@ -351,8 +351,7 @@ no state and decides nothing. So the `act` values above — `start`, `say`,
 `file`, `assert`, `withdraw`, `discard`, `choose`, `decline`, `focus`, `introduce`,
 `entitle`, `quote`, `commit`, `revoke`, `require`, `settle`, `relax`, `strike`,
 `reword`, `move`, `show`, `hide`, `frame`, `unframe`, `answer` in
-[Binding](binding.md), and `entrust`, `keep` and `rewind` in
-[Delegation](delegation.md) — are not defined in the bootstrap
+[Binding](binding.md), and `keep` in [Reading](reading.md) — are not defined in the bootstrap
 concept, and there is nowhere else they could be defined either. This file is
 their definition.
 

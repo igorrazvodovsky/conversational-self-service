@@ -9,8 +9,12 @@ the catalogue option the model took to answer it, from where the chain in
 Nothing here waits for the person.  The gate the case's `Suggesting`
 supplies is, in this composition, visibility and reversibility: every clause
 the model reads is stated by it and cited to its source, and the person
-strikes, re-answers or withdraws.  The gated form is the same rules with one
-trigger moved, and the note says where.
+strikes, re-answers, withdraws or keeps it.  The gated form is the same rules
+with one trigger moved, and the note says where.
+
+A reading stated as a requirement is one individual in two concepts: the
+clause's identity is the item's (`docs/syncs/reading.md`, "A reading becomes
+a clause").
 """
 
 from __future__ import annotations
@@ -21,10 +25,22 @@ from typing import Any
 
 from engine import Completion, Invocation, States, Sync
 
+from . import readings
 from .binding import _selection_for, _variable_offering
 from .gestures import PERSON
 
 MODEL = "model"
+
+
+def _held(states: States, spec: str, variable: str) -> bool:
+    """`?v is held for a reason in ?s`."""
+    return readings.held_for_reason(
+        states["Asserting"].state(),
+        states["Binding"].state(),
+        states["Specifying"].state(),
+        spec,
+        variable,
+    )
 
 
 def _a_person_files_a_document(c: Completion, _: States) -> list[Invocation]:
@@ -102,60 +118,81 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
                 "source": source,
                 "words": words,
                 "answer": list(c.output.get("answer") or []),
+                "item": readings.fresh("r"),
             },
         )
     ]
 
 
 def _a_read_item_becomes_a_clause(c: Completion, states: States) -> list[Invocation]:
-    """`Specifying: { ?s in open }` — the one open specification."""
+    """`Specifying: { ?s in open }` — the one open specification.  The clause
+    is the item."""
     if c.failed:
         return []
     return [
         Invocation(
             "Specifying",
             "require",
-            {"spec": spec, "party": MODEL, "text": c.output["words"]},
+            {
+                "spec": spec,
+                "party": MODEL,
+                "text": c.output["words"],
+                "clause": c.output["item"],
+            },
         )
         for spec in states["Specifying"].state()["open"]
     ]
 
 
 def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation]:
-    """The item most recently heard whose words are the clause's text.
-
-    The `require` was invoked by the rule on the `read`, inside one atomic
-    root action, so that item is at this moment the one — the note says why
-    this stands in for a conjunction of the two completions.  An option the
-    catalogue does not offer binds no variable and is not proposed.
+    """`Reading: { ?c answer: ?a* }` — the clause is the item, so its answer is
+    read under its own identity.  An option the catalogue does not offer binds
+    no variable and is not proposed; nor is one whose variable is held for a
+    reason, which leaves the clause unanswered for the person.
     """
     if c.failed or c.input.get("party") != MODEL:
         return []
-    spec, clause, text = c.output["spec"], c.output["clause"], c.input.get("text", "")
+    spec, clause = c.output["spec"], c.output["clause"]
     selection = _selection_for(states, spec)
     if selection is None:
         return []
-    reading = states["Reading"].state()
-    item = next(
-        (i for i in reversed(list(reading["words"])) if reading["words"][i] == text),
-        None,
-    )
-    if item is None:
-        return []
-    return [
-        Invocation(
-            "Binding",
-            "propose",
-            {
-                "party": MODEL,
-                "selection": selection,
-                "requirement": clause,
-                "value": option,
-            },
+    answer = states["Reading"].state()["answer"].get(clause, [])
+    out = []
+    for option in answer:
+        variable = _variable_offering(states, option)
+        if variable is None or _held(states, spec, variable):
+            continue
+        out.append(
+            Invocation(
+                "Binding",
+                "propose",
+                {
+                    "party": MODEL,
+                    "selection": selection,
+                    "requirement": clause,
+                    "value": option,
+                    "choice": readings.fresh("ch"),
+                },
+            )
         )
-        for option in reading["answer"].get(item, [])
-        if _variable_offering(states, option) is not None
-    ]
+    return out
+
+
+def _a_person_keeps_a_reading(c: Completion, _: States) -> list[Invocation]:
+    if c.output.get("act") != "keep":
+        return []
+    return [Invocation("Specifying", "adopt", {"clause": c.output.get("clause"), "party": PERSON})]
+
+
+def _a_reworded_reading_is_kept(c: Completion, states: States) -> list[Invocation]:
+    """`Specifying: { ?c statedBy: model }`.  Only the person rewords, so no
+    actor is needed in the `when`."""
+    if c.failed:
+        return []
+    clause = c.output["clause"]
+    if states["Specifying"].state()["statedBy"].get(clause) != MODEL:
+        return []
+    return [Invocation("Specifying", "adopt", {"clause": clause, "party": PERSON})]
 
 
 rules = [
@@ -167,4 +204,6 @@ rules = [
     ),
     Sync("AReadItemBecomesAClause", ("Reading", "read"), _a_read_item_becomes_a_clause),
     Sync("AReadAnswerIsProposed", ("Specifying", "require"), _a_read_answer_is_proposed),
+    Sync("APersonKeepsAReading", ("Copiloting", "gesture"), _a_person_keeps_a_reading),
+    Sync("ARewordedReadingIsKept", ("Specifying", "reword"), _a_reworded_reading_is_kept),
 ]

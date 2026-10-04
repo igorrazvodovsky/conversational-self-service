@@ -11,7 +11,7 @@ workspace with its surfaces and facets, and the specification to open.
 
 ```
 Copiloting/boot: [ catalogue ; basis ; grids ; workspace ;
-                   surfaces ; facets ; latitude ; spec ] => [ … the same … ]
+                   surfaces ; facets ; spec ] => [ … the same … ]
 ```
 
 `agent/wiring.py` performs it once, and invokes no concept action itself.
@@ -121,10 +121,6 @@ The rules fire in the order written, each with the consequences of the ones
 before it already in place. `ASpecificationIsStartedAtBoot` comes last, so the
 solver holds its rules before a specification is given to it
 ([Propagation](propagation.md#a-specification-is-given-to-the-solver)).
-
-The assistant's usual latitude arrives on the same stimulus and is set by
-`TheAssistantsLatitudeIsSet`, which lives with the rules that read it in
-[Delegation](delegation.md#setting-it).
 
 ## Which rule hangs off what
 

@@ -46,7 +46,8 @@ export function BrowserAgentTools() {
         "full option id such as `building_type:hospital`. Read them from the " +
         "`open` list that `review` and every tool return. An assertion that " +
         "cannot be met is still recorded, and comes back with the rules that " +
-        "refuse it.",
+        "refuse it. A value that answers a requirement the person stated is " +
+        "theirs: the call does nothing, and `review` marks such values.",
       parameters: z.object({
         variable: z.string().describe("A variable name, such as `building_type`"),
         option: z
@@ -66,7 +67,8 @@ export function BrowserAgentTools() {
       description:
         "Take back whatever was asserted of this variable. What follows from " +
         "the remaining assertions is recomputed; a value that was only ever an " +
-        "entailment reverts to being open.",
+        "entailment reverts to being open. A value that answers a requirement " +
+        "the person stated is theirs, and the call does nothing.",
       parameters: z.object({
         variable: z.string().describe("An asserted variable's name"),
       }),

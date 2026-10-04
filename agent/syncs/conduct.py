@@ -5,7 +5,8 @@ What the model may do, stated positively.  MSM §5.3.
 The enforcement is in what is absent.  No rule below carries a tool call to
 `Deciding/choose`, `Quoting/commit`, `Pricing`, `Footprinting` or
 `Cataloguing`, so the model cannot adopt a completion, accept a quote, set a
-price or change the catalogue.  Not because it is told not to — because an action reaches the log
+price or change the catalogue.  Nor does any carry it to a value held for a
+reason: one a requirement the person stated rests on.  Not because it is told not to — because an action reaches the log
 only by way of some synchronization, and there is no rule that would carry the
 invocation through.
 
@@ -44,6 +45,29 @@ def _tool(name: str, concept: str, action: str, *arguments: str, **fixed: Any):
         return [Invocation(concept, action, input)]
 
     return then
+
+
+def _held(states: States, spec: str, variable: str) -> bool:
+    """`?v is held for a reason in ?s`."""
+    return readings.held_for_reason(
+        states["Asserting"].state(),
+        states["Binding"].state(),
+        states["Specifying"].state(),
+        spec,
+        variable,
+    )
+
+
+def _unless_held(then: Callable[[Completion, States], list[Invocation]]):
+    """`where { ?v is not held for a reason in ?s }`: a value the person chose
+    for a requirement they stated is not the model's to change."""
+
+    def where(c: Completion, states: States) -> list[Invocation]:
+        if _held(states, c.output.get("spec"), c.output.get("variable")):
+            return []
+        return then(c, states)
+
+    return where
 
 
 def _the_model_may_propose_a_completion(
@@ -476,20 +500,22 @@ rules = [
     Sync(
         "TheModelMayAssertAValue",
         ("Copiloting", "invoke"),
-        _tool(
-            "assert",
-            "Asserting",
-            "assert",
-            "spec",
-            "variable",
-            "option",
-            party=MODEL,
+        _unless_held(
+            _tool(
+                "assert",
+                "Asserting",
+                "assert",
+                "spec",
+                "variable",
+                "option",
+                party=MODEL,
+            )
         ),
     ),
     Sync(
         "TheModelMayWithdrawAnAssertion",
         ("Copiloting", "invoke"),
-        _tool("withdraw", "Asserting", "withdraw", "spec", "variable"),
+        _unless_held(_tool("withdraw", "Asserting", "withdraw", "spec", "variable")),
     ),
     Sync(
         "TheModelMayProposeACompletion",

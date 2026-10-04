@@ -11,10 +11,8 @@ person's pick names the option, and the chain is shorter.
 
 `Binding/propose` keeps the case catalogue's name. There an interpreter
 proposes a choice and a person confirms it; here a person's pick reaches it,
-and so does the answer to a requirement the model read, as far as the person
-has let the assistant go ([Reading](reading.md), [Delegation](delegation.md)).
-The choice's party says which, and a model's choice goes with the reading when
-the reply that made it is rewound. It is not the model's
+and so does the answer to a requirement the model read ([Reading](reading.md)).
+The choice's party says which. It is not the model's
 `propose` tool, which reaches `Constraining/complete` and commits nothing
 ([Conduct](conduct.md#proposing-and-not-adopting)).
 
@@ -148,10 +146,10 @@ answered would be lying. The provenance edge on the `retract` says which
 assertion did it.
 
 Who may cause that is narrower than who may assert. A person may, by picking
-another value or taking a suggestion. The model may not, at any latitude,
-where the clause is one the person stated: its call on such a value becomes a
-suggestion instead ([Delegation](delegation.md#the-latitude)), because a value
-the person chose for a reason is not the model's to swap. That is the case's
+another value. The model may not where the clause is one the person stated:
+its call on such a value does nothing ([Conduct](conduct.md#the-permissions)),
+because a value the person chose for a reason is not the model's to swap, and
+it asks the person instead. That is the case's
 constraint 7 — every interpreter-made selection visible and reversible — met
 by a rule, and it keeps a person's answer out of reach of the one path that
 would have undone it without asking.
@@ -212,5 +210,5 @@ choice answers, and the party who stated it.
 - [Gestures](gestures.md) — the acts that reach `Specifying`, and the one that reaches `Binding`
 - [Propagation](propagation.md) — where an assertion goes from here
 - [Reading](reading.md) — the model's answer to a requirement it read
-- [Delegation](delegation.md) — how far the model may read and assert, and the rules that never let it make a reading the person's or substitute a person's answer
+- [Conduct](conduct.md) — the model's permissions, and the value held for a reason that none of them reaches
 - [Specifying](../concepts/specifying.md) · [Binding](../concepts/binding.md)

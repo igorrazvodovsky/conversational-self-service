@@ -184,6 +184,25 @@ def _a_person_commits_to_a_quote(c: Completion, _: States) -> list[Invocation]:
     ]
 
 
+def _a_person_states_a_clause(c: Completion, _: States) -> list[Invocation]:
+    """`bind a fresh identity as ?c`: the clause is an individual, and the
+    rule that states it names it."""
+    if c.output.get("act") != "require":
+        return []
+    return [
+        Invocation(
+            "Specifying",
+            "require",
+            {
+                "spec": c.output.get("spec"),
+                "party": PERSON,
+                "text": c.output.get("text", ""),
+                "clause": readings.fresh("c"),
+            },
+        )
+    ]
+
+
 rules = [
     Sync(
         "APersonStartsASpecification",
@@ -274,7 +293,7 @@ rules = [
     Sync(
         "APersonStatesAClause",
         ("Copiloting", "gesture"),
-        _carry("require", "Specifying", "require", "spec", "text", party=PERSON),
+        _a_person_states_a_clause,
     ),
     Sync(
         "APersonSettlesAClause",

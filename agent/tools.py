@@ -48,6 +48,7 @@ from langchain.tools import tool
 from engine import Record
 from hearing import heard, turn
 from instance import SPEC, engine
+from syncs import readings
 from views import digest, filed
 
 
@@ -74,6 +75,29 @@ def _outcome(completion: Record) -> dict[str, Any]:
     return {"did": did, "state": digest(engine, SPEC)}
 
 
+def _held(variable: str) -> list[str]:
+    """The requirements the person stated that rest on this variable's value:
+    `?v is held for a reason in ?s`, read from state as the rules read it, so
+    the tool can say why a call on it did nothing."""
+    specifying = engine.state("Specifying")
+    clauses = readings.reasons(
+        engine.state("Asserting"), engine.state("Binding"), specifying, SPEC
+    ).get(variable, [])
+    return [specifying["text"].get(c, c) for c in clauses]
+
+
+def _not_done(outcome: dict[str, Any], held: list[str]) -> dict[str, Any]:
+    """A call on a held value records nothing; say why, so the model neither
+    retries nor claims the change."""
+    if held and not any(e["action"].startswith("Asserting/") for e in outcome["did"]):
+        quoted = "; ".join(f"“{text}”" for text in held)
+        outcome["refused"] = (
+            f"not done: the value answers a requirement the person stated ({quoted}), "
+            "so it is theirs to change; ask them to change it on the canvas"
+        )
+    return outcome
+
+
 @tool
 def assert_value(variable: str, option: str) -> dict[str, Any]:
     """Assert this option for this variable, on the person's behalf.
@@ -81,13 +105,16 @@ def assert_value(variable: str, option: str) -> dict[str, Any]:
     `variable` is a variable name such as `building_type`; `option` is a full
     option id such as `building_type:hospital`. Read them from the `open` list
     that every tool returns. An assertion that cannot be met is still recorded,
-    and comes back with the rules that refuse it.
+    and comes back with the rules that refuse it. A value that answers a
+    requirement the person stated is theirs: the call does nothing, and comes
+    back under `refused` saying so.
     """
+    held = _held(variable)
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="assert",
         spec=SPEC, variable=variable, option=option,
     )
-    return _outcome(completion)
+    return _not_done(_outcome(completion), held)
 
 
 @tool
@@ -95,13 +122,15 @@ def withdraw(variable: str) -> dict[str, Any]:
     """Take back whatever was asserted of this variable.
 
     What follows from the remaining assertions is recomputed; a value that was
-    only ever an entailment reverts to being open.
+    only ever an entailment reverts to being open. A value that answers a
+    requirement the person stated is theirs, as for `assert_value`.
     """
+    held = _held(variable)
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="withdraw",
         spec=SPEC, variable=variable,
     )
-    return _outcome(completion)
+    return _not_done(_outcome(completion), held)
 
 
 @tool
@@ -130,12 +159,23 @@ def read(
     and each option in `answer` is asserted as answering it. An id the
     catalogue does not offer answers nothing and comes back under
     `not_offered`; call `read` again with the right ids rather than leaving
-    the clause unanswered. A count is answered by the option whose range
+    the clause unanswered. An option whose variable answers a requirement the
+    person stated is not asserted, and comes back under `not_asserted`: the
+    clause stays unanswered, and the choice between the two is the person's.
+    A count is answered by the option whose range
     contains it: six stops is `stops:s2_6`. A value that cannot be met is
     still recorded and comes back with the rules that refuse it; keep reading
     the rest of the source before raising it. Use `assert_value` for context
     that is not a requirement, such as the region a city implies.
     """
+    offers = engine.state("Cataloguing")["offers"]
+    variable_of = {o: v for v, options in offers.items() for o in options}
+    asserted = engine.state("Asserting")["asserted"].get(SPEC, {})
+    held = {
+        o: _held(variable_of[o])
+        for o in (answer or [])
+        if o in variable_of and asserted.get(variable_of[o]) != o
+    }
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
         spec=SPEC, words=words, answer=list(answer or []), file=file,
@@ -153,6 +193,15 @@ def read(
             "nothing was read: the words are not in the cited source; "
             "copy them as one passage, and pass `file` if they are from the document"
         )
+    else:
+        kept = {o: texts for o, texts in held.items() if texts}
+        if kept:
+            outcome["not_asserted"] = [
+                f"{o}: its variable answers "
+                + "; ".join(f"“{t}”" for t in texts)
+                + ", which the person stated; tell them, and leave the choice to them"
+                for o, texts in kept.items()
+            ]
     return {
         **outcome,
         "not_offered": [o for o in (answer or []) if o not in offered],
