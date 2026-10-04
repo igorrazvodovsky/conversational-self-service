@@ -86,15 +86,23 @@ def _held(variable: str) -> list[str]:
     return [specifying["text"].get(c, c) for c in clauses]
 
 
-def _not_done(outcome: dict[str, Any], held: list[str]) -> dict[str, Any]:
+def _not_done(
+    outcome: dict[str, Any], held: list[str], already: bool = False
+) -> dict[str, Any]:
     """A call on a held value records nothing; say why, so the model neither
-    retries nor claims the change."""
+    retries nor claims the change.  Asserting the value it already holds
+    changes nothing either, and there is nothing to ask the person."""
     if held and not any(e["action"].startswith("Asserting/") for e in outcome["did"]):
         quoted = "; ".join(f"“{text}”" for text in held)
-        outcome["refused"] = (
-            f"not done: the value answers a requirement the person stated ({quoted}), "
-            "so it is theirs to change; ask them to change it on the canvas"
-        )
+        if already:
+            outcome["unchanged"] = (
+                f"the value is already this, and answers a requirement the person stated ({quoted})"
+            )
+        else:
+            outcome["refused"] = (
+                f"not done: the value answers a requirement the person stated ({quoted}), "
+                "so it is theirs to change; ask them to change it on the canvas"
+            )
     return outcome
 
 
@@ -107,14 +115,16 @@ def assert_value(variable: str, option: str) -> dict[str, Any]:
     that every tool returns. An assertion that cannot be met is still recorded,
     and comes back with the rules that refuse it. A value that answers a
     requirement the person stated is theirs: the call does nothing, and comes
-    back under `refused` saying so.
+    back under `refused` saying so, or under `unchanged` when it already is
+    the option asked for.
     """
     held = _held(variable)
+    already = engine.state("Asserting")["asserted"].get(SPEC, {}).get(variable) == option
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="assert",
         spec=SPEC, variable=variable, option=option,
     )
-    return _not_done(_outcome(completion), held)
+    return _not_done(_outcome(completion), held, already)
 
 
 @tool
@@ -161,7 +171,8 @@ def read(
     `not_offered`; call `read` again with the right ids rather than leaving
     the clause unanswered. An option whose variable answers a requirement the
     person stated is not asserted, and comes back under `not_asserted`: the
-    clause stays unanswered, and the choice between the two is the person's.
+    clause stays unanswered, and answering it is the person's, even with the
+    value it already has.
     A count is answered by the option whose range
     contains it: six stops is `stops:s2_6`. A value that cannot be met is
     still recorded and comes back with the rules that refuse it; keep reading
@@ -171,11 +182,7 @@ def read(
     offers = engine.state("Cataloguing")["offers"]
     variable_of = {o: v for v, options in offers.items() for o in options}
     asserted = engine.state("Asserting")["asserted"].get(SPEC, {})
-    held = {
-        o: _held(variable_of[o])
-        for o in (answer or [])
-        if o in variable_of and asserted.get(variable_of[o]) != o
-    }
+    held = {o: _held(variable_of[o]) for o in (answer or []) if o in variable_of}
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
         spec=SPEC, words=words, answer=list(answer or []), file=file,
@@ -197,9 +204,16 @@ def read(
         kept = {o: texts for o, texts in held.items() if texts}
         if kept:
             outcome["not_asserted"] = [
-                f"{o}: its variable answers "
-                + "; ".join(f"“{t}”" for t in texts)
-                + ", which the person stated; tell them, and leave the choice to them"
+                (
+                    f"{o}: already the value, for "
+                    + "; ".join(f"“{t}”" for t in texts)
+                    + ", which the person stated; this clause stays unanswered "
+                    "until they answer it on the canvas"
+                    if asserted.get(variable_of[o]) == o
+                    else f"{o}: its variable answers "
+                    + "; ".join(f"“{t}”" for t in texts)
+                    + ", which the person stated; tell them, and leave the choice to them"
+                )
                 for o, texts in kept.items()
             ]
     return {
