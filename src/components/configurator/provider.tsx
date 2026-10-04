@@ -92,6 +92,9 @@ export interface Variable {
      * `consequences` facet is shown. */
     foreseen?: Foreseen;
   } | null;
+  /** The requirements the person stated that rest on this value. A value
+   * held for a reason is one the assistant cannot change. */
+  held: { clause: string; text: string }[];
   options: Option[];
 }
 
@@ -163,6 +166,9 @@ export interface ReadItem {
   words: string;
   answer: { option: string; label: string }[];
   clause: string | null;
+  /** Who the clause it became is stated by now: the assistant's reading
+   * until the person keeps or rewords it. */
+  statedBy: string | null;
   became: "answered" | "unanswered" | "struck" | null;
 }
 

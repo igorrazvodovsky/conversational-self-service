@@ -70,6 +70,8 @@ same function, so app code and primitives merge classes with one engine.
 | The sources (`Filing`, `Conversing`) | A `Collapsible` under the ledger, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
 | Price and carbon totals | `Card`; the grid choice is a `ToggleGroup` |
 | An open question | `Alert` (destructive for a conflict) with `Button`s |
+| A value held for a reason | A line on the asserted card naming the requirement it answers, and that the assistant cannot change it |
+| A reading still the assistant's | *Keep* beside its source line in the ledger |
 | The action log | `Collapsible`, `Card`, `Badge` for the actor and for a refusal |
 | Requirements / Configuration / Quote switch | `ToggleGroup` |
 | Artifact panel and chat split | `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle` |

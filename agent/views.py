@@ -77,9 +77,9 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
     gesture's flow and a browser agent's hold no utterance, and those
     assertions carry none.
 
-    `origin` — for each clause the model stated, the reading it came from:
-    the `require` carries the rule's name and the `read` in the same flow the
-    source and the words (`docs/syncs/reading.md`).
+    `stated` — every clause ever stated, struck ones included, so that a
+    reading can say it became a clause that is gone.  Which reading a clause
+    came from needs no trace: the clause is the item (`docs/syncs/reading.md`).
 
     `displaced` — for each clause whose answer was retracted because a
     different value was asserted for its variable, what displaced it: the
@@ -94,7 +94,7 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
     reads: dict[str, dict[str, Any]] = {}
     asserting: dict[str, dict[str, Any]] = {}
     how: dict[str, dict[str, Any]] = {}
-    origin: dict[str, dict[str, Any]] = {}
+    stated: set[str] = set()
     displaced: dict[str, dict[str, Any]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if record.kind != "completion":
@@ -112,8 +112,7 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
                 "words": output["words"],
             }
         elif record.concept == "Specifying" and record.action == "require":
-            if record.via == "AReadItemBecomesAClause" and record.flow in reads:
-                origin[output["clause"]] = dict(reads[record.flow])
+            stated.add(output["clause"])
         elif record.concept == "Specifying" and record.action == "strike":
             displaced.pop(output["clause"], None)
         elif record.concept == "Binding" and record.action in {"propose", "substitute"}:
@@ -142,7 +141,7 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
                 "option": output["option"],
                 **entry,
             }
-    return {"how": how, "origin": origin, "displaced": displaced}
+    return {"how": how, "stated": stated, "displaced": displaced}
 
 
 def _source_name(engine: Engine, source: Any) -> str | None:
@@ -232,27 +231,27 @@ def filed(engine: Engine, file: str) -> dict[str, Any]:
 
 
 def _sources(
-    engine: Engine, clauses: list[dict[str, Any]], origin: dict[str, dict[str, Any]]
+    engine: Engine, clauses: list[dict[str, Any]], stated: set[str]
 ) -> list[dict[str, Any]]:
     """Every source, with what was read from it and what became of each item.
 
     The files from `Filing` and the person's utterances from `Conversing`;
-    the items from `Reading`; the clause each item became from the trace;
-    and the clause's standing from the ledger.  A reading is checked against
-    its source whole, which is what this list is for.
+    the items from `Reading`; the clause each item became, which is the item
+    itself where it was ever stated; and the clause's standing from the
+    ledger.  A reading is checked against its source whole, which is what this
+    list is for.
     """
     reading = engine.state("Reading")
     filing = engine.state("Filing")
     conversing = engine.state("Conversing")
     catalogue = engine.state("Cataloguing")
-    became = {o["item"]: clause for clause, o in origin.items()}
     standing = {c["clause"]: c for c in clauses}
 
     def items(source: dict[str, Any]) -> list[dict[str, Any]]:
         key = json.dumps(source, sort_keys=True)
         out = []
         for item in reading["heard"].get(key, []):
-            clause = became.get(item)
+            clause = item if item in stated else None
             line = standing.get(clause) if clause else None
             out.append(
                 {
@@ -265,6 +264,7 @@ def _sources(
                     "clause": clause,
                     # What became of it: answered, unanswered, or struck by
                     # the person, which is the disowning the case counts.
+                    "statedBy": line["statedBy"] if line else None,
                     "became": (
                         "struck"
                         if clause and line is None
@@ -393,11 +393,20 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         return False
     trace = _trace(engine, spec)
     how = trace["how"]
+    reading = engine.state("Reading")
     clauses = ledger(engine, spec)
     # Where each clause came from, and what displaced its answer — both off
     # the trace, neither held by a concept.  See docs/syncs/reading.md.
     for clause in clauses:
-        origin = trace["origin"].get(clause["clause"])
+        origin = (
+            {
+                "item": clause["clause"],
+                "source": reading["source"][clause["clause"]],
+                "words": reading["words"][clause["clause"]],
+            }
+            if clause["clause"] in reading["words"]
+            else None
+        )
         clause["source"] = (
             {
                 "item": origin["item"],
@@ -458,6 +467,12 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         and "variable" in q["request"]
         and q["options"]
     }
+    # Held for a reason: the requirements the person stated that rest on each
+    # value, which the model cannot change (docs/syncs/conduct.md).
+    held = readings.reasons(
+        asserting, engine.state("Binding"), engine.state("Specifying"), spec
+    )
+    texts = {c["clause"]: c["text"] for c in clauses}
 
     variables = []
     for name, offered in catalogue["offers"].items():
@@ -506,6 +521,11 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 ],
                 "framed": in_frame(name, offered, allowed),
                 "proposed": proposed.get(name),
+                # Held for a reason: the requirements the person stated that
+                # rest on this value, which the model cannot change.
+                "held": [
+                    {"clause": c, "text": texts.get(c, "")} for c in held.get(name, [])
+                ],
                 "refused": [
                     {"rule": rule, "because": constraining["because"].get(rule, rule)}
                     for rule in refused.get(name, [])
@@ -678,7 +698,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         "variables": variables,
         "clauses": clauses,
         # What was brought and said, with what was read from each.
-        "sources": _sources(engine, clauses, trace["origin"]),
+        "sources": _sources(engine, clauses, trace["stated"]),
         # What the last turn changed while the person was not looking at the
         # canvas, for it to mark.  Null when the person's own gesture was the
         # last thing to move the specification.
@@ -971,6 +991,11 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
                 f" — answers: {'; '.join(plain(a['text']) for a in v['answers'])}"
                 if v["answers"]
                 else " — answers no stated requirement"
+            )
+            + (
+                " — the person's requirement rests on it: you cannot change it; ask them"
+                if v["held"]
+                else ""
             )
             for v in view["variables"]
             if v["standing"] == "asked"

@@ -16,6 +16,7 @@ from typing import Any
 
 from engine import Completion, Invocation, States, Sync
 
+from . import readings
 from .gestures import BASIS, PERSON
 
 
@@ -116,6 +117,7 @@ def _a_person_answers_a_clause(c: Completion, states: States) -> list[Invocation
                 "selection": selection,
                 "requirement": clause,
                 "value": option,
+                "choice": readings.fresh("ch"),
             },
         )
     ]

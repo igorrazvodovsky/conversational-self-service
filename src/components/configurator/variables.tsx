@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon, SparklesIcon, XIcon } from "lucide-react";
+import { ChevronDownIcon, LockIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -213,6 +213,16 @@ export function AskedCard({ variable }: { variable: Variable }) {
         {shown("how") && variable.how ? (
           <p className="line-clamp-2 text-xs text-muted-foreground" title={variable.how}>
             {variable.how}
+          </p>
+        ) : null}
+        {/* Held for a reason: a requirement the person stated rests on this
+            value, so the assistant cannot change it. A value with no
+            requirement behind it carries no mark, whoever set it. */}
+        {variable.held.length ? (
+          <p className="text-xs text-muted-foreground">
+            <LockIcon className="mr-1 inline size-3 align-[-2px]" />
+            yours, for {variable.held.map((h) => `“${plain(h.text)}”`).join(", ")}; the
+            assistant cannot change it
           </p>
         ) : null}
         {/* What the value is for, from `Binding`. An assertion answering no

@@ -9,12 +9,14 @@ What the model may do, stated positively. See [the index](README.md) and
 sync TheModelMayAssertAValue
 when  { Copiloting/invoke: [ tool: "assert" ;
           spec: ?s ; variable: ?v ; option: ?o ] => [] }
+where { ?v is not held for a reason in ?s }
 then  { Asserting/assert: [ party: model ;
           spec: ?s ; variable: ?v ; option: ?o ] }
 
 sync TheModelMayWithdrawAnAssertion
 when  { Copiloting/invoke: [ tool: "withdraw" ;
           spec: ?s ; variable: ?v ] => [] }
+where { ?v is not held for a reason in ?s }
 then  { Asserting/withdraw: [ spec: ?s ; variable: ?v ] }
 
 sync TheModelMayIntroduceThePerson
@@ -70,6 +72,28 @@ assertion made in reply to their words shares a flow token with the
 utterance, and the canvas reads the words off it: *the assistant read
 "hospital, six storeys" as this*. That is a fact of the trace and not of any
 concept — see [The turn is one flow](gestures.md#the-turn-is-one-flow).
+
+A value is *held for a reason* when a clause the person stated rests on it:
+
+```
+?v is held for a reason in ?s
+  iff  Asserting: { ?s asserted: ?v -> ?x }
+  and  Binding: { ?sel for: ?s ; ?ch in choices of ?sel ;
+                  ?ch value: ?x ; ?ch answers: ?c }
+  and  Specifying: { ?c statedBy: person }
+```
+
+The first two rules do not fire on such a value. A value the person chose
+for a requirement they wrote is not the model's to swap or take back, so the
+model asks them in the chat and the person changes it on the canvas, where
+changing it retracts the answer it gave
+([Binding](binding.md#what-takes-a-choice-away)). A value with no requirement
+behind it, or one answering only a reading the person has not kept, the
+model may change as before. The canvas marks a held value with the
+requirement it answers, and the tool reads the same condition from state to
+tell the model why nothing happened, since an absence has no reason on
+record. The same condition keeps a reading's answer off a held value
+([Reading](reading.md#a-reading-becomes-a-clause-and-its-answer-a-choice)).
 
 There is no `TheModelMayPreferAnOption`. `Asserting` has no `prefer`: how
 firmly a value is meant is a clause's negotiability, the person's own tag,
@@ -492,10 +516,13 @@ in its `then`. What the model may do is *read*: `TheModelMayReadARequirement`
 ([Reading](reading.md)) records a requirement with the words it was read from
 and the options it took to answer them, and only when those words are a
 passage of the source it cites. The rules there state the words
-as a clause and propose the answer. A clause so stated carries the model as
-its stater and its source beside it, and only the person's gestures change
-or remove it. The model may still assert a value with no clause behind it,
-and the canvas says so beside the value.
+as a clause and propose the answer. A clause so stated carries the
+model as its stater and its source beside it, and only the person's gestures
+change, keep or remove it. No rule carries the model's call to `Specifying/adopt`,
+so only the person makes a reading theirs, and none to `Binding/substitute`,
+so a value the person chose for a reason is not the model's to swap. The
+model may still assert a value with no clause behind it, and the canvas says
+so beside the value.
 
 _No rule adopts a completion._ `Constraining/complete` changes nothing — it
 returns an assignment. The only path from an assignment into
@@ -547,10 +574,13 @@ engine at `POST /configurator/invoke` as the assistant's calls reach it from
 `agent/tools.py`. Every rule above matches on the tool and not on the actor,
 so the grant is the same grant: a browser agent may assert, withdraw,
 propose, introduce, entitle, quote, show, hide, frame and unframe, and the
-absences hold for it exactly as they hold for the assistant. No rule
-carries its invocation to `Deciding/choose`, `Quoting/commit`, `Specifying`
-or `Binding`. It can fill the specification in, and it cannot adopt a
-proposal, accept an offer or state what the person requires — which is what
+absences hold for it exactly as they hold for the assistant. It reads
+nothing, since it has no source to cite ([Reading](reading.md#the-model-reads)).
+No rule carries its invocation to `Deciding/choose`, `Quoting/commit`,
+`Specifying` or `Binding`, and a value held for a reason is out of its
+reach as it is out of the assistant's. It can fill the specification in, and
+it cannot adopt a proposal, accept an offer or state what the person
+requires — which is what
 makes the tools safe to hand to an agent nobody here wrote. The exposure
 adds no rule; it adds another actor to rules that already existed.
 

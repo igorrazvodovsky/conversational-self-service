@@ -10,7 +10,7 @@ state
 
 A source is a value the rules hand in — `[ file: f ]` or `[ utterance: u ]`
 — and this concept keys on it without looking inside.  An item is an
-individual and is minted here.  The answer is whatever the reader took to
+individual, handed in by the rule that reads it.  The answer is whatever the reader took to
 answer the words, which may be nothing; this concept records the claim and
 judges none of it.  What becomes of an item is the rules' business
 (`docs/syncs/reading.md`).
@@ -37,7 +37,6 @@ class Reading:
         self._source: dict[str, Any] = {}
         self._words: dict[str, str] = {}
         self._answer: dict[str, list[Any]] = {}
-        self._minted = 0
 
     def state(self) -> dict[str, Any]:
         return {
@@ -49,16 +48,18 @@ class Reading:
 
     # -- actions ------------------------------------------------------------
 
-    def read(self, source: Any, words: str, answer: list[Any] | None = None) -> dict[str, Any]:
+    def read(
+        self, source: Any, words: str, item: str, answer: list[Any] | None = None
+    ) -> dict[str, Any]:
         text = str(words or "").strip()
         if not text:
             return {"error": "nothing was read: the words are empty"}
+        if item in self._words:
+            return {"error": f"{item} was heard already"}
         values: list[Any] = []
         for value in answer or []:
             if value not in values:
                 values.append(value)
-        self._minted += 1
-        item = f"r{self._minted}"
         self._heard.setdefault(_key(source), []).append(item)
         self._source[item] = source
         self._words[item] = text

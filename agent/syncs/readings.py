@@ -6,7 +6,12 @@ and the canvas view, need the same reading.  None is a method of a concept:
 the concepts expose their state and nothing else, and a record assembled from
 their relations is the reader's business, not theirs.  The definitions are in
 the sync notes: *a party's profile* and *the terms on a basis* in
-`docs/syncs/gestures.md`, *the pending questions* in `docs/syncs/conduct.md`.
+`docs/syncs/gestures.md`, and *the pending questions* and *held for a reason*
+in `docs/syncs/conduct.md`.
+
+`fresh` is the one thing here that is not a reading: it is what *bind a fresh
+identity* means in a `where`.  Replay applies each recorded input again and
+fires no rule, so an identity drawn at random is drawn once.
 
 Each takes the concept's exposed state, as `States[...].state()` or
 `Engine.state(...)` returns it, and reads nothing else.
@@ -14,6 +19,7 @@ Each takes the concept's exposed state, as `States[...].state()` or
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 
@@ -59,3 +65,57 @@ def pending(deciding: dict[str, Any]) -> list[dict[str, Any]]:
         for key, options in deciding["offered"].items()
         if key not in deciding["chosen"] and key not in declined
     ]
+
+
+def fresh(prefix: str) -> str:
+    """A fresh identity: `bind a fresh identity as ?x`."""
+    return f"{prefix}{uuid.uuid4().hex[:8]}"
+
+
+def held_for_reason(
+    asserting: dict[str, Any],
+    binding: dict[str, Any],
+    specifying: dict[str, Any],
+    spec: str,
+    variable: str,
+) -> bool:
+    """`?v is held for a reason in ?s`: a clause the person stated rests on the
+    value asserted of it.
+
+    `Asserting: { ?s asserted: ?v -> ?x }`, a current choice of the spec's
+    selection whose value is `?x` and which answers `?c`, and
+    `Specifying: { ?c statedBy: person }`.
+    """
+    value = asserting["asserted"].get(spec, {}).get(variable)
+    if value is None:
+        return False
+    selection = next((s for s, of in binding["for"].items() if of == spec), None)
+    if selection is None:
+        return False
+    return any(
+        binding["value"][choice] == value
+        and specifying["statedBy"].get(binding["answers"][choice]) == "person"
+        for choice in binding["choices"].get(selection, [])
+    )
+
+
+def reasons(
+    asserting: dict[str, Any],
+    binding: dict[str, Any],
+    specifying: dict[str, Any],
+    spec: str,
+) -> dict[str, list[str]]:
+    """For each variable held for a reason, the clauses the person stated that
+    rest on its value, for the canvas to mark it with."""
+    asserted = asserting["asserted"].get(spec, {})
+    selection = next((s for s, of in binding["for"].items() if of == spec), None)
+    if selection is None:
+        return {}
+    by_value = {value: variable for variable, value in asserted.items()}
+    out: dict[str, list[str]] = {}
+    for choice in binding["choices"].get(selection, []):
+        clause = binding["answers"][choice]
+        variable = by_value.get(binding["value"][choice])
+        if variable is not None and specifying["statedBy"].get(clause) == "person":
+            out.setdefault(variable, []).append(clause)
+    return out

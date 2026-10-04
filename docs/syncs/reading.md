@@ -46,15 +46,17 @@ sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; file: ?f ;
           words: ?w ; answer: ?a ] => [] }
 where { Filing: { ?f text: ?t }
-        ?w occurs in ?t }
-then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ] }
+        ?w occurs in ?t
+        bind a fresh identity as ?i }
+then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ; item: ?i ] }
 
 sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; utterance: ?u ;
           words: ?w ; answer: ?a ] => [] }
 where { Conversing: { ?u text: ?t }
-        ?w occurs in ?t }
-then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ] }
+        ?w occurs in ?t
+        bind a fresh identity as ?i }
+then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ; item: ?i ] }
 ```
 
 One rule with two triggers, on the shape of the source. The utterance is the
@@ -92,17 +94,18 @@ note reads.
 sync AReadItemBecomesAClause
 when  { Reading/read: [] => [ item: ?i ; words: ?w ] }
 where { Specifying: { ?s in open } }
-then  { Specifying/require: [ spec: ?s ; party: model ; text: ?w ] }
+then  { Specifying/require: [ spec: ?s ; party: model ; text: ?w ; clause: ?i ] }
 
 sync AReadAnswerIsProposed
 when  { Specifying/require: [ party: model ] => [ clause: ?c ; spec: ?s ] }
 where { Binding: { ?sel for: ?s }
-        Reading: { ?i words: ?w ; ?i answer: ?a* }
-          for the item most recently heard whose words are the clause's text
+        Reading: { ?c answer: ?a* }
         ?o in ?a*
-        Cataloguing: { ?v offers: ?o } }
+        Cataloguing: { ?v offers: ?o }
+        ?v is not held for a reason in ?s
+        bind a fresh identity as ?ch }
 then  { Binding/propose: [ party: model ; selection: ?sel ;
-          requirement: ?c ; value: ?o ] }
+          requirement: ?c ; value: ?o ; choice: ?ch ] }
 ```
 
 From `Binding/propose` on, nothing is new: `AChoiceReachesTheAssertions`
@@ -114,12 +117,42 @@ with the standing the ledger already computes. What tells them apart is
 `statedBy` and the provenance edge, and the canvas reads both: *the assistant
 read RFQ 2026-04.pdf, "a bed must fit, with a porter", as 1250 kg*.
 
-The second rule's `where` binds the item by its words rather than by a
-conjunction of the two completions, which the engine does not offer. The two
-are one occasion all the same: a root action is atomic, the `require` is
-invoked by the rule on the `read`, and the item most recently heard with
-those words is, at that moment, the one. An option the catalogue does not
-offer binds no variable and is not proposed.
+The clause is the item. A reading stated as a requirement is one
+individual in two concepts, as a specification is one identity in
+`Asserting`, `Specifying` and `Binding`: `Reading` holds what it was read as
+and from where, `Specifying` holds it as a clause in the ledger, and neither
+knows the other holds it. So the second rule finds the item's answer under
+the clause's own identity, and a rule that asks which clause an item became
+asks nothing, since it is the same one. An option the catalogue does not
+offer binds no variable and is not proposed. An option whose variable holds a
+value held for a reason is not proposed either
+([Conduct](conduct.md#the-permissions)): the person chose it for a
+requirement they stated, and a reading is not the model's way round that. The
+clause is stated and stays unanswered, its answer on record in `Reading`
+beside it, and the tool tells the model which option it did not assert, so
+it can say so and leave the choice to the person.
+
+## The person keeps a reading
+
+```
+sync APersonKeepsAReading
+when  { Copiloting/gesture: [ act: "keep" ; clause: ?c ] => [] }
+then  { Specifying/adopt: [ clause: ?c ; party: person ] }
+
+sync ARewordedReadingIsKept
+when  { Specifying/reword: [ clause: ?c ] => [ clause: ?c ] }
+where { Specifying: { ?c statedBy: model } }
+then  { Specifying/adopt: [ clause: ?c ; party: person ] }
+```
+
+A clause the model read reads as the assistant's reading until the person
+keeps it, rewords it or strikes it. Keeping makes them the party who stated
+it, and so does rewording: a clause in the person's own words is theirs,
+whoever first read it. Only the person rewords
+([`APersonRewordsAClause`](gestures.md)), so the second rule needs no actor
+in its `when`, and no rule carries the model's call to `Specifying/adopt`.
+Once a reading is the person's, the value answering it is held for a reason,
+and the model can no longer change it.
 
 ## The gate is a rule, and it is not written
 
@@ -131,14 +164,14 @@ attributed to it and cited to its source, and a value the reading asserted
 that cannot be met is a question the person answers, so the gate that the
 case's `Suggesting` supplies is here supplied by visibility and reversibility.
 
-The gated form is the same two rules with one trigger moved. `AReadItemBecomesAClause`
-would fire on `Deciding/choose` of a request naming the item, with a request
-per item and one for the whole reading, exactly as a proposed completion is
-put to the person in [Conduct](conduct.md#proposing-and-not-adopting). The
-case's plan asks for the ungated form first, so that how often a read clause
-is disowned can be counted before a gate is paid for. That count is a read
-over the log, in [the measures](../measures.md#slice-2--what-became-of-a-reading):
-disowned at the clause or at the answer, which argue for different gates.
+The gated form is the same rules with one trigger moved. `AReadItemBecomesAClause`
+would fire on `Deciding/choose` of a request naming the item, exactly as a
+proposed completion is put to the person in
+[Conduct](conduct.md#proposing-and-not-adopting). The case's plan asks for
+the ungated form first, so that how often a read clause is disowned can be
+counted before a gate is paid for. That count is a read over the log, in
+[the measures](../measures.md#slice-2--what-became-of-a-reading): disowned at
+the clause or at the answer, which argue for different gates.
 
 ## What the reading cannot say, and what is read instead
 
@@ -164,7 +197,11 @@ No rule here. Two clauses answered on the same variable, one read from the
 document and one from what the person said after, meet in `Asserting`, which
 holds one value per variable; the later assertion replaces the earlier, and
 `AnOverwrittenValueRetractsItsChoices` ([Binding](binding.md#what-takes-a-choice-away))
-takes the earlier clause's choice away. The earlier clause reads as no longer
+takes the earlier clause's choice away. That holds while the earlier clause
+is a reading. Once the person has stated or kept it, the value answering it is
+held for a reason, and the later reading's answer on that variable is not
+asserted: the later clause is stated unanswered, and the person decides
+between them. Where the earlier answer is displaced, the earlier clause reads as no longer
 answered, and the canvas says what displaced it, from the provenance edge on
 the retraction and the reading in that flow: *displaced when the assistant
 read "make it faster" as 1.6 m/s*. Striking or relaxing the earlier clause
@@ -173,9 +210,9 @@ stays the person's gesture, since no rule carries a tool call to
 
 ## What the canvas reads
 
-The source of a clause is a read over the log, as the words behind an
-assertion are: the `require` that stated it carries the rule's name, and the
-`read` in the same flow carries the source and the words. The sources
+The source of a clause is a read over `Reading`: a clause the model read is
+an item there, with its source and its words. The words behind an assertion
+are a read over the log. The sources
 themselves are `Filing` and `Conversing`, and beside each the canvas lists
 what was read from it and what became of each item, so a reading can be
 checked against its source whole.

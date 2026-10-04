@@ -22,8 +22,9 @@ about it is asked at entry.  What answers it is
 that this one never makes.
 
 A clause is an individual, so two clauses with the same text are two clauses.
-The identity is minted here, in sequence, which is also what lets the canvas
-call them by a short handle.
+Its identity is handed in by the rule that states it, which binds a fresh one
+or, for a reading, the item's own: one individual held by two concepts, as a
+specification is (`docs/syncs/reading.md`).
 """
 
 from __future__ import annotations
@@ -43,7 +44,6 @@ class Specifying:
         self._stated_by: dict[str, str] = {}
         self._negotiability: dict[str, str] = {}
         self._formerly: dict[str, list[str]] = {}
-        self._minted = 0
 
     def state(self) -> dict[str, Any]:
         return {
@@ -68,7 +68,7 @@ class Specifying:
         self._clauses[spec] = []
         return {"spec": spec}
 
-    def require(self, spec: str, party: str, text: str) -> dict[str, Any]:
+    def require(self, spec: str, party: str, text: str, clause: str) -> dict[str, Any]:
         """Not `state`, the catalogue's name: that is the method every concept
         exposes its relations through, and the engine reads it for every view."""
         if spec not in self._open:
@@ -76,14 +76,24 @@ class Specifying:
         wording = str(text).strip()
         if not wording:
             return {"error": "a clause needs some words"}
-        self._minted += 1
-        clause = f"c{self._minted}"
+        if self._spec_of(clause) is not None:
+            return {"error": f"{clause} is already a clause"}
         self._clauses[spec].append(clause)
         self._text[clause] = wording
         self._stated_by[clause] = party
         self._negotiability[clause] = "fixed"
         self._formerly[clause] = []
-        return {"clause": clause, "spec": spec}
+        return {"clause": clause, "spec": spec, "party": party}
+
+    def adopt(self, clause: str, party: str) -> dict[str, Any]:
+        spec = self._spec_of(clause)
+        if spec is None:
+            return {"error": f"there is no clause {clause}"}
+        formerly = self._stated_by[clause]
+        if formerly == party:
+            return {"error": f"{clause} was stated by {party} already"}
+        self._stated_by[clause] = party
+        return {"clause": clause, "spec": spec, "party": party, "formerly": formerly}
 
     def settle(self, clause: str, negotiability: str) -> dict[str, Any]:
         spec = self._spec_of(clause)

@@ -64,16 +64,13 @@ class Binding:
                 return selection
         return None
 
-    def _mint(
-        self, selection: str, party: str, requirement: str, value: Any
-    ) -> str:
-        self._minted_choices += 1
-        choice = f"ch{self._minted_choices}"
+    def _hold(
+        self, choice: str, selection: str, party: str, requirement: str, value: Any
+    ) -> None:
         self._choices[selection].append(choice)
         self._value[choice] = value
         self._answers[choice] = requirement
         self._decided_by[choice] = party
-        return choice
 
     # -- actions ------------------------------------------------------------
 
@@ -87,11 +84,13 @@ class Binding:
         return {"selection": selection, "spec": spec}
 
     def propose(
-        self, party: str, selection: str, requirement: str, value: Any
+        self, party: str, selection: str, requirement: str, value: Any, choice: str
     ) -> dict[str, Any]:
         if selection not in self._selections:
             return {"error": f"there is no selection {selection}"}
-        choice = self._mint(selection, party, requirement, value)
+        if choice in self._value:
+            return {"error": f"{choice} is already a choice"}
+        self._hold(choice, selection, party, requirement, value)
         return {
             "choice": choice,
             "selection": selection,
@@ -108,7 +107,12 @@ class Binding:
             return {"error": f"there is no choice {choice} in any selection"}
         requirement = self._answers[choice]
         self._choices[selection].remove(choice)
-        new = self._mint(selection, party, requirement, value)
+        self._minted_choices += 1
+        new = f"ch{self._minted_choices}"
+        while new in self._value:
+            self._minted_choices += 1
+            new = f"ch{self._minted_choices}"
+        self._hold(new, selection, party, requirement, value)
         self._replaces[new] = choice
         self._reason[new] = str(reason or "").strip()
         return {

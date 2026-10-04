@@ -364,7 +364,9 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               className="text-xs text-muted-foreground select-none"
               title={clause.source.words}
             >
-              read by the assistant from{" "}
+              {/* The assistant's reading until the person keeps or rewords
+                  it; keeping makes them the party who stated it. */}
+              {clause.statedBy === "model" ? "the assistant's reading of " : "read from "}
               <To
                 id={address.source(clause.source.kind, clause.source.id)}
                 title="The source, with everything read from it"
@@ -372,6 +374,18 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               >
                 {clause.source.kind === "file" ? clause.source.name : "what you said"}
               </To>
+              {clause.statedBy === "model" ? (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  disabled={busy}
+                  className="ml-1 h-5"
+                  title="Make this requirement yours, as the assistant read it"
+                  onClick={() => void gesture({ act: "keep", clause: clause.clause })}
+                >
+                  Keep
+                </Button>
+              ) : null}
             </p>
           ) : null}
           {clause ? (

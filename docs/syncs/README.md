@@ -68,6 +68,8 @@ it.
 | `TheModelMayReadARequirement` | [Reading](reading.md) |
 | `AReadItemBecomesAClause` | [Reading](reading.md) |
 | `AReadAnswerIsProposed` | [Reading](reading.md) |
+| `APersonKeepsAReading` | [Reading](reading.md) |
+| `ARewordedReadingIsKept` | [Reading](reading.md) |
 | `ANewSpecificationIsGivenToTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationLeavesTheSolver` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationsQuestionsAreWithdrawn` | [Propagation](propagation.md) |
@@ -144,7 +146,8 @@ record a reading; one states the reading as a clause, with the model as its
 stater; one proposes its answer, from where the binding rules assert it. The
 reading lands at once and the person corrects it with the gestures they
 already have, which is the gate in this composition; the gated form is the
-same rules with one trigger moved. Whether a reading was wrong is not a fact
+same rules with one trigger moved. A reading is the assistant's until the
+person keeps or rewords it, which makes it theirs. Whether a reading was wrong is not a fact
 any rule establishes, and the note says what is read instead. See
 [Reading](reading.md).
 
