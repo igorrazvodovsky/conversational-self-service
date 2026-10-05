@@ -35,6 +35,11 @@ import {
 import { goTo } from "@/components/configurator/address";
 import { useConfigurator } from "@/components/configurator/provider";
 import { useStateSuggestions } from "./suggestions";
+import {
+  ConfiguratorChatView,
+  useWaitingQuestion,
+  WaitingProvider,
+} from "./question";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import {
@@ -361,15 +366,19 @@ function followAddress(event: MouseEvent<HTMLDivElement>) {
 export function ConfiguratorChat() {
   return (
     <div className="contents" onClickCapture={followAddress}>
-      <Chat />
+      <WaitingProvider>
+        <Chat />
+      </WaitingProvider>
     </div>
   );
 }
 
 function Chat() {
   useStateSuggestions();
+  useWaitingQuestion();
   return (
     <CopilotChat
+      chatView={ConfiguratorChatView}
       attachments={{ enabled: true }}
       input={composer}
       suggestionView={{ container: SuggestionStrip, suggestion: SuggestionPill }}

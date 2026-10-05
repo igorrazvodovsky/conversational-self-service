@@ -505,6 +505,119 @@ concept action may not do. That the coupling is possible at all without
 either concept knowing the other is WYSIWID §7.2's first and third design
 rules doing their work together.
 
+## Asking, and waiting for the answer
+
+```
+sync TheModelMayAskThePerson
+when  { Copiloting/invoke: [ tool: "ask" ; request: ?r ; text: ?t ] => [] }
+where { ?r is pending
+        Deciding: { ?r offered: ?options } }
+then  { Conversing/say: [ party: model ; text: ?t ; to: person ;
+          about: [ request: ?r ; offered: ?options ] ] }
+
+sync APersonRepliesToAQuestion
+when  { Copiloting/gesture: [ act: "reply" ; about: ?q ; text: ?t ] => [] }
+then  { Conversing/say: [ party: person ; text: ?t ; to: model ; about: ?q ] }
+```
+
+A conflict is a fact on the canvas whoever caused it, and stays one
+([Propagation](propagation.md#when-assertions-cannot-hold-together)). What
+these rules add is the move a salesperson makes after writing the open
+point down: they stop, put it to the customer, and do not go on configuring
+around it until they have an answer or have been told to wait. The fact is
+`Deciding`'s, and the floor is the conversation's. When the model's own turn
+ran into the conflict, it asks, and its turn waits on the person.
+
+The question is about *the question as put*: the request with the options it
+was offered at the time. A request is a value, so a later conflict on the
+same specification is the same request with other options, and a question
+keyed to the request alone would be answered by a click on a question nobody
+asked. Keyed to the options as well, a re-ask that displaces them leaves the
+earlier question overtaken, and the model may ask the new one.
+
+A question *awaits an answer* while nothing has been said or done about it
+since it was put. That is a reading over `Conversing`, `Deciding` and the log, made by
+the canvas, the chat and the model's tool, never by a rule:
+
+```
+?u awaits an answer
+  iff  Conversing: { ?u by: model ; ?u to: person ;
+                     ?u about: [ request: ?r ; offered: ?options ] }
+  and  ?u is the last utterance by the model about ?r
+  and  ?r is pending, and Deciding: { ?r offered: ?options }
+  and  no Deciding/ask of ?r has completed since ?u
+  and  no utterance by the person follows ?u
+```
+
+The clause on the log is there because the same conflict can come back.
+Settle it, assert the refused value again, and the rules ask the same request
+with the same options; nothing in `Deciding`'s state tells that question
+from the one already answered, so the earlier question and its reply would
+stand for it. The ask is in the log, after the utterance, and the earlier
+question is overtaken by it.
+
+The last clause reads any utterance, not only a reply. A person who has the
+floor and talks about something else has moved on, and the question no longer
+waits on them — it is still on the canvas, unanswered. That is also what
+happens when they leave a question waiting and start a new conversation: the
+run that asked stays paused where it was, and nothing pretends it is still
+being answered.
+
+So the wait ends in one of these ways, each of them something that happened
+to the matter or something the person said:
+
+| What happened | Read as |
+|---|---|
+| an option was chosen — on the canvas, in the chat, or by the person's agent | `Deciding: { ?r chosen: _ }` |
+| the person left it for now | `?r` is in `declined` |
+| the conflict went another way, and its question with it | `?r` is not offered: [`AResolvedConflictWithdrawsItsQuestion`](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it) withdrew it |
+| a later conflict displaced the options, or asked the same again | `Deciding: { ?r offered: ?options }` no longer binds, or a `Deciding/ask` of `?r` follows the question |
+| the person replied in words | an utterance by the person about the question follows it |
+| the person talked about something else | another utterance by the person follows it |
+
+A reply in words is the answer that leaves the matter open, and it is
+the answer the person's own agent needs most. An agent handed a question it
+does not hold the decision for says so (*that one is for the client*), the
+question stays on the person's canvas with the reply beside it, and the
+assistant's turn goes on. The same act carries *keep the hospital*, typed in
+the composer while the question waits: the person's words, recorded against
+the question, which the model then carries out with the withdraw it is
+already permitted ([Propagation](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)).
+Declining is not that act. *Leave it for now* takes the question off the
+canvas; *I will ask facilities* leaves it there for the person who will.
+
+Nothing is answered by the model. No rule carries `Copiloting/invoke` to
+`Deciding/choose`, `Deciding/decline` or a reply, so the model can put the
+question and cannot settle it, any more than it could before it had a way to
+ask.
+
+### The floor is carried by an interrupt
+
+The model's `ask` tool records the question, then pauses the run with a
+LangGraph interrupt that CopilotKit receives as an AG-UI interrupt. The
+interrupt carries the question's words, the conflict's reason, and the
+question as put, options included. It has no `responseSchema`, because the
+resume is not where an answer goes: every answer is one of the gestures
+above and is in the log before the run resumes. An AG-UI client that read a
+schema there would resume with a payload nobody acts on. The chat renders the waiting question with its answers, watches the
+view, and resumes the run as soon as the question no longer awaits an answer,
+however that came about. When the tool resumes it reads what happened from
+state, not from the resume, and so does a run resumed by another process
+after a restart. Words typed in the composer of the conversation the question waits in are
+sent as a reply, because the transport refuses a new run while an interrupt
+is open.
+
+LangGraph runs a tool's body again from the top when it resumes, so the tool
+records the question only when the log holds no `ask` for its own tool call.
+The call's identity rides on the invocation (`call`), so the check reads
+the log and survives a restart. The words of a reply open a flow of their
+own, and whatever the model does next in that turn runs in it, so the canvas
+shows *the assistant read "keep the hospital" as this* as it would for a
+message ([The turn is one flow](gestures.md#the-turn-is-one-flow)).
+
+A gesture that ends the wait resumes a turn the person opened; it does not
+start one ([The moves](../moves.md#the-models-moves)).
+
 ## What is not here, and why that is the enforcement
 
 These absences carry more weight than any of the rules above.
@@ -581,7 +694,7 @@ send, and reaches the engine at `POST /configurator/gesture` with the actor
 is the person's grant and no rule is added for it: the person's agent may
 file a document, state, reword, relax, settle, move, strike or keep a
 clause, answer one, assert or withdraw a value, adopt a proposed value or
-the whole completion, answer or decline a conflict, introduce the person,
+the whole completion, answer, decline or reply to a conflict, introduce the person,
 entitle the job, request, accept or revoke a quote, and change what the
 canvas shows. What a person cannot do it cannot do either: no act reaches
 `Cataloguing`, `Pricing`, `Footprinting` or `Stipulating`

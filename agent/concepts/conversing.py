@@ -1,5 +1,5 @@
-"""Conversing — to keep a record of what each party said, in the order it was
-said.
+"""Conversing — to keep a record of what each party said, to whom and about
+what, in the order it was said.
 
 Generated from `docs/concepts/conversing.md`.
 
@@ -7,14 +7,18 @@ state
   utterances: seq Utterance
   by:         Utterance -> Party
   text:       Utterance -> Text
+  to:         Utterance -> Party
+  about:      Utterance -> Matter
 
 The concept promises nothing beyond the record.  What an utterance *does* is
-decided by the rules that read it, and exactly one rule writes here:
-`APersonSays` carries a person's chat message in, and nothing fires from the
-completion.  That is deliberate — the point of the concept is that the log's
+decided by the rules that read it, and three rules write here: `APersonSays`
+carries a person's chat message in, `TheModelMayAskThePerson` a question the
+model put, and `APersonRepliesToAQuestion` the person's reply to it.  Nothing
+fires from the completion.  That is deliberate — the point of the concept is that the log's
 first entry for a turn is what the person said, rather than what the model did
 with it.  The canvas reads the utterance back by its flow, beside each value
 the model asserted in reply (`views.py`); no rule and no other concept does.
+`Matter` is a type parameter: what a question is about is opaque here.
 
 An utterance is an individual and needs an identity that does not collide, so
 this concept mints one.  `Deciding` does not, because a request is a value; an
@@ -33,19 +37,29 @@ class Conversing:
         self._utterances: list[str] = []
         self._by: dict[str, str] = {}
         self._text: dict[str, str] = {}
+        self._to: dict[str, str] = {}
+        self._about: dict[str, Any] = {}
 
     def state(self) -> dict[str, Any]:
         return {
             "utterances": list(self._utterances),
             "by": dict(self._by),
             "text": dict(self._text),
+            "to": dict(self._to),
+            "about": dict(self._about),
         }
 
     # -- actions ------------------------------------------------------------
 
-    def say(self, party: str, text: str) -> dict[str, Any]:
+    def say(
+        self, party: str, text: str, to: str | None = None, about: Any = None
+    ) -> dict[str, Any]:
         utterance = f"u{len(self._utterances) + 1}"
         self._utterances.append(utterance)
         self._by[utterance] = party
         self._text[utterance] = text
+        if to is not None:
+            self._to[utterance] = to
+        if about is not None:
+            self._about[utterance] = about
         return {"utterance": utterance, "party": party, "text": text}

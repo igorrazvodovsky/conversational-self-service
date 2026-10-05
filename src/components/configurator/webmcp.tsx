@@ -75,7 +75,8 @@ export function BrowserAgentTools() {
       "record (`files`); what is asserted, what follows and the rule that " +
       "forces it, what cannot be met, and what is still open with the options " +
       "still possible and any proposed value (`asked`, `follows`, `unmet`, " +
-      "`open`); open conflicts (`questions`); price, carbon, the addressee, " +
+      "`open`); open conflicts (`questions`), with the assistant's question " +
+      "and any reply under `asked` when it put one to the person; price, carbon, the addressee, " +
       "the job, and every quote issued. A projection, accurate as of this " +
       "call: the person may act on the canvas between your calls.",
     {},
@@ -235,9 +236,28 @@ export function BrowserAgentTools() {
 
   useTool(
     "decline",
-    "Decline an open question, as the person, leaving things as they are.",
+    "Leave an open question for now, as the person: it goes from the " +
+      "canvas and things stay as they are. To hand a decision back to the " +
+      "person instead, use `reply`.",
     { request: z.record(z.unknown()).describe("The question's `request`, as given") },
     ({ request }) => as({ act: "decline", request }),
+  );
+
+  useTool(
+    "reply",
+    "Reply in words to a question the seller's assistant put, as the person " +
+      "(`asked` on a question in `review`). The reply settles nothing: the " +
+      "question stays on the person's canvas with your words beside it, and " +
+      "the assistant, if it is waiting on the answer, goes on. Use it to say " +
+      "which assertion gives way in your own words, or that the decision is " +
+      "the person's to make and you have left it with them.",
+    {
+      about: z
+        .record(z.unknown())
+        .describe("The question's `asked.about`, as given"),
+      text: z.string().describe("What you say to the assistant"),
+    },
+    ({ about, text }) => as({ act: "reply", about, text }),
   );
 
   // -- the offer ------------------------------------------------------------

@@ -95,6 +95,18 @@ def heard() -> str | None:
     return _said.get(thread) if thread is not None else None
 
 
+def follow(flow: str, utterance: str) -> None:
+    """A reply in words, made while the model's question waited, becomes the
+    turn's words: what the model does next in this turn runs in the flow the
+    reply opened, as a tool call in reply to a message runs in the message's.
+    See `docs/syncs/conduct.md`, "The floor is carried by an interrupt"."""
+    thread = _thread()
+    if thread is None:
+        return
+    _turn[thread] = flow
+    _said[thread] = utterance
+
+
 def _text(message: HumanMessage) -> str:
     content = message.content
     if isinstance(content, str):

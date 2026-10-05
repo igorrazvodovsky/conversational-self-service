@@ -223,6 +223,45 @@ def _touched(engine: Engine, spec: str) -> dict[str, Any] | None:
     return None
 
 
+def put_question(engine: Engine, request: Any) -> dict[str, Any] | None:
+    """The question the model last put about a request, and where it stands:
+    Conduct's *awaits an answer*, with the clause it reads from the log —
+    whether `Deciding` was asked the request again after the question was
+    put.  Shared by the canvas and the model's `ask` tool."""
+    conversing = engine.state("Conversing")
+    said_at: dict[str, int] = {}
+    last_ask = -1
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if record.kind != "completion":
+            continue
+        output = record.output or {}
+        if record.concept == "Conversing" and output.get("utterance"):
+            said_at[output["utterance"]] = record.seq
+        elif (
+            record.concept == "Deciding"
+            and record.action == "ask"
+            and output.get("request") == request
+        ):
+            last_ask = record.seq
+    again = {u for u, seq in said_at.items() if seq < last_ask}
+    return readings.asked(conversing, engine.state("Deciding"), request, again)
+
+
+def _speakers(engine: Engine, utterances: set[str]) -> dict[str, str]:
+    """The actor behind each utterance, read off the log."""
+    if not utterances:
+        return {}
+    out: dict[str, str] = {}
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if (
+            record.kind == "completion"
+            and record.concept == "Conversing"
+            and (record.output or {}).get("utterance") in utterances
+        ):
+            out[record.output["utterance"]] = record.actor
+    return out
+
+
 def filed(engine: Engine, file: str) -> dict[str, Any]:
     """A document as it is on record, for the model to read from."""
     filing = engine.state("Filing")
@@ -563,8 +602,24 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     # A proposed value is a question too, and rides beside its variable
     # above rather than here.
     questions = [q for q in pending if "variable" not in q["request"]]
+    # Who put each question to the person, in what words, and what they
+    # replied — `Conversing`, read beside `Deciding` as Conduct's *awaits an
+    # answer* reads it.  Whose reply it was is the log's: the person's own
+    # agent replies as the person, under its own actor.
     for q in questions:
         q["about"] = q["request"].get("about")
+        put = put_question(engine, q["request"])
+        # An overtaken question was about an earlier conflict; this one has
+        # not been put to anybody.
+        if put is not None and put["status"] == "overtaken":
+            put = None
+        if put is not None:
+            actors = _speakers(engine, {r["utterance"] for r in put["replies"]})
+            put["replies"] = [
+                {**r, "by": "your agent" if actors.get(r["utterance"]) == BROWSER else "you"}
+                for r in put["replies"]
+            ]
+        q["asked"] = put
 
     # What each answer to a conflict would cost — the ripple and both deltas,
     # per option, so the person chooses with the consequences in view rather

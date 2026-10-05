@@ -41,15 +41,17 @@ tool string the rules match on is `assert`, which is the vocabulary.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from langchain.tools import tool
+from langchain_core.tools import InjectedToolCallId
+from langgraph.types import interrupt
 
 from engine import Record
-from hearing import heard, turn
+from hearing import follow, heard, turn
 from instance import SPEC, engine
 from syncs import readings
-from views import digest, filed
+from views import digest, filed, put_question
 
 
 def _outcome(completion: Record) -> dict[str, Any]:
@@ -72,7 +74,36 @@ def _outcome(completion: Record) -> dict[str, Any]:
         if error:
             entry["refused"] = error
         did.append(entry)
-    return {"did": did, "state": digest(engine, SPEC)}
+    outcome: dict[str, Any] = {"did": did, "state": digest(engine, SPEC)}
+    if _unasked():
+        outcome["next"] = (
+            "a conflict is open and has not been put to the person: once nothing "
+            "else is left to do this turn, call `ask` with it instead of asking in "
+            "the reply"
+        )
+    return outcome
+
+
+def _unasked() -> bool:
+    """A conflict is pending and the model has not put it as it stands."""
+    if not any(
+        q["request"] == CONFLICT for q in readings.pending(engine.state("Deciding"))
+    ):
+        return False
+    put = _asked()
+    if put is None or put["status"] == "overtaken":
+        return True
+    if put["status"] not in {"replied", "passed"}:
+        return False
+    # Answered in words, or passed over: ask again only once the person has
+    # spoken since about something else — a new turn, not the one the reply
+    # resumed.
+    conversing = engine.state("Conversing")
+    last = next(
+        (u for u in reversed(conversing["utterances"]) if conversing["by"].get(u) == "person"),
+        None,
+    )
+    return last is not None and conversing["about"].get(last) != put["about"]
 
 
 def _held(variable: str) -> list[str]:
@@ -373,6 +404,139 @@ def unframe() -> dict[str, Any]:
     return _outcome(completion)
 
 
+# The one question `ask` may put so far: a conflict on the specification.
+CONFLICT = {"spec": SPEC, "about": "conflict"}
+
+
+def _asked() -> dict[str, Any] | None:
+    """The conflict question as the model last put it, and where it stands."""
+    return put_question(engine, CONFLICT)
+
+
+def _already_asked(call: str) -> bool:
+    """Whether this tool call has asked already.  LangGraph runs a tool's
+    body again from the top when its run resumes, so the question is
+    recorded only once per call; read from the log, so a run resumed after
+    a restart asks nothing twice either."""
+    return any(
+        record.kind == "completion"
+        and record.concept == "Copiloting"
+        and record.action == "invoke"
+        and (record.output or {}).get("tool") == "ask"
+        and (record.output or {}).get("call") == call
+        for record in engine.log.records(since=engine.settled_at, limit=1_000_000)
+    )
+
+
+def _reply(utterance: str) -> tuple[str, str] | None:
+    """The flow a reply opened and the actor who made it, from the log."""
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if (
+            record.kind == "completion"
+            and record.concept == "Conversing"
+            and (record.output or {}).get("utterance") == utterance
+        ):
+            return record.flow, record.actor
+    return None
+
+
+def _answered(put: dict[str, Any]) -> dict[str, Any]:
+    """What ended the wait, in words the model can act on."""
+    status = put["status"]
+    if status == "chosen":
+        given = put["chosen"] or {}
+        return {
+            "answered": f"the person gave up {given.get('variable')} = "
+            f"{given.get('option')}; say in one sentence what followed"
+        }
+    if status == "declined":
+        return {"answered": "the person left it for now; do not ask it again"}
+    if status == "withdrawn":
+        return {"answered": "the conflict went another way and its question with it"}
+    if status == "passed":
+        return {
+            "answered": "the person talked about something else; the question is "
+            "still on the canvas, unanswered — do not press it"
+        }
+    if status == "overtaken":
+        return {
+            "answered": "a later conflict changed the question; `review` shows it, "
+            "and you may ask that one"
+        }
+    reply = put["replies"][-1]
+    source = _reply(reply["utterance"])
+    by = "the person"
+    if source is not None:
+        flow, actor = source
+        follow(flow, reply["utterance"])
+        if actor == "browser":
+            by = "the person's own agent"
+    return {
+        "replied": reply["text"],
+        "by": by,
+        "answered": f"{by} replied in words and the question is still open. If the "
+        "reply says which assertion gives way, withdraw it; otherwise say you "
+        "leave it with them",
+    }
+
+
+@tool
+def ask(
+    question: str, tool_call_id: Annotated[str, InjectedToolCallId]
+) -> dict[str, Any]:
+    """Put the open conflict to the person, and wait for the answer.
+
+    `question` is what you ask, in one or two sentences: which rules refuse
+    what, and which assertion gives way. The chat shows it with the canvas's
+    answers and your turn waits until the person chooses one, leaves it, or
+    replies in words; then this returns what happened. Call it last in a
+    turn, once there is nothing else to do before the answer. You cannot
+    answer it yourself.
+    """
+    if not _already_asked(tool_call_id):
+        if not any(
+            q["request"] == CONFLICT
+            for q in readings.pending(engine.state("Deciding"))
+        ):
+            return {"refused": "there is no open conflict to ask about"}
+        before = _asked()
+        if before is not None and before["status"] == "awaiting":
+            return {"refused": "already asked, and still waiting on the person"}
+        engine.root(
+            "Copiloting", "invoke", actor="model", flow=turn(), tool="ask",
+            spec=SPEC, request=CONFLICT, text=question, call=tool_call_id,
+        )
+    put = _asked()
+    if put is None:
+        return {"refused": "not asked"}
+    if put["status"] == "awaiting":
+        # The floor passes to the person.  The run pauses here and the chat
+        # resumes it once the view shows the question no longer awaits an
+        # answer; the resume carries nothing, and what happened is read
+        # from state below.
+        deciding = engine.state("Deciding")
+        reason = next(
+            (q["reason"] for q in readings.pending(deciding) if q["request"] == CONFLICT),
+            "",
+        )
+        interrupt(
+            {
+                "reason": "conflict",
+                "message": put["text"],
+                "toolCallId": tool_call_id,
+                "because": reason,
+                "question": put["about"],
+            }
+        )
+        put = _asked() or put
+    return {
+        "status": put["status"],
+        "given": (put["chosen"] or {}).get("option"),
+        **_answered(put),
+        "state": digest(engine, SPEC),
+    }
+
+
 @tool
 def review() -> dict[str, Any]:
     """Read the specification: what the person requires in their own words,
@@ -386,10 +550,17 @@ def review() -> dict[str, Any]:
     A projection rather than the state itself. It is accurate as of this call
     and says nothing about what the person has done since.
     """
-    return digest(engine, SPEC)
+    state = digest(engine, SPEC)
+    if _unasked():
+        state["next"] = (
+            "a conflict is open and has not been put to the person: once you have "
+            "done what this turn needs, call `ask` with it instead of asking in "
+            "the reply"
+        )
+    return state
 
 
 configurator_tools = [
     assert_value, withdraw, read, propose, introduce, entitle, quote,
-    show, hide, frame, unframe, review, open_file,
+    show, hide, frame, unframe, review, open_file, ask,
 ]

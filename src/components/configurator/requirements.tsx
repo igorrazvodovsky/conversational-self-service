@@ -20,8 +20,8 @@ import { Sources } from "./sources";
 import { Required } from "./specification";
 
 /**
- * The strip at the top: what the ledger is, where the configuration is, and
- * the frame if a clause is framed — the same fact the configuration's strip
+ * The strip at the top: what the ledger is, what moved, and the frame if a
+ * clause is framed — the same fact the configuration's strip
  * shows, read from this side.
  */
 function Header() {
@@ -34,15 +34,6 @@ function Header() {
     <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-background/95 px-6 py-2 backdrop-blur">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h1 className="text-sm font-semibold">{view.product}</h1>
-        <nav aria-label="Surfaces" className="flex flex-wrap gap-x-3 text-xs">
-          <a href="#asserted" className="text-muted-foreground hover:text-foreground">
-            Configuration{" "}
-            <span className="tabular-nums text-foreground">
-              {view.counts.asked + view.counts.yielded + view.counts.unmet} asserted ·{" "}
-              {view.counts.open} open
-            </span>
-          </a>
-        </nav>
         {moved ? (
           <span className="text-xs text-muted-foreground">
             <span className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
@@ -81,7 +72,7 @@ export function RequirementsSurface() {
   if (!view) return null;
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto max-w-3xl px-6 pb-6">
+      <div className="px-6 pb-6">
         <Header />
         <div className="mt-4">
           <Required />

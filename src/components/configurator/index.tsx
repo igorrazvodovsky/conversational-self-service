@@ -10,11 +10,11 @@ import {
 import { ItemGroup } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { useConfigurator, type Variable } from "./provider";
+import { useConfigurator, type Variable, type View } from "./provider";
 import { Button } from "@/components/ui/button";
 import { address, To } from "./address";
 import { ClauseText } from "./clauses";
-import { PendingQuestions } from "./question";
+import { PendingQuestions, waiting } from "./question";
 import { ShowingMenu } from "./showing";
 import { Totals } from "./totals";
 import { Trace } from "./trace";
@@ -118,49 +118,20 @@ function FrameBanner() {
 }
 
 /**
- * The way around the configuration: one line, kept at the top of its
- * column's scroll, naming each section with its count and linking to it.
- * Under it, the frame the canvas is in, if any, so a mode begun anywhere is
- * visible, and its way out reachable, from anywhere.
+ * The strip kept at the top of the configuration's scroll: what moved since
+ * the person last acted, which facts the canvas shows, and under them the
+ * frame, if any, so a mode begun anywhere is visible, and its way out
+ * reachable, from anywhere. The way to each section is in the panel's own
+ * header (`example-layout/panel-nav.tsx`), one row with the other surfaces.
  */
-function Header({
-  asserted,
-  follows,
-  open,
-}: {
-  asserted: number;
-  follows: number;
-  open: number;
-}) {
+function Header() {
   const { view } = useConfigurator();
   if (!view) return null;
-  const places: { id: string; title: string; count: number }[] = [
-    // The ledger is the other surface; its link brings it forward.
-    { id: "required", title: "Required", count: view.clauses.length },
-    ...(view.questions.length
-      ? [{ id: "questions", title: "Asked of you", count: view.questions.length }]
-      : []),
-    { id: "asserted", title: "Asserted", count: asserted },
-    { id: "follows", title: "Follows", count: follows },
-    { id: "open", title: "Open", count: open },
-  ];
   const touched = view.touched;
   const moved = touched ? touched.variables.length + touched.clauses.length : 0;
   return (
     <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-background/95 px-6 py-2 backdrop-blur">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <nav aria-label="Sections" className="flex flex-wrap gap-x-3 text-xs">
-          {places.map((place) => (
-            <a
-              key={place.id}
-              href={`#${place.id}`}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {place.title}{" "}
-              <span className="tabular-nums text-foreground">{place.count}</span>
-            </a>
-          ))}
-        </nav>
         {moved ? (
           <span className="text-xs text-muted-foreground">
             <span className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
@@ -215,6 +186,29 @@ function QuoteCall() {
       </div>
     </section>
   );
+}
+
+/**
+ * The configuration's sections as the current state fills them. A frame
+ * narrows every section to the items that bear on one question and leaves
+ * the sections themselves alone — `Framing`; with no frame, `framed` is true
+ * of everything. A yielded or unmet value is asserted: it sits with what was
+ * asked for, not with what followed, because nothing about the person's
+ * requirement changed.
+ */
+export function sections(view: View) {
+  const framed = view.variables.filter((v) => v.framed);
+  return {
+    asserted: framed.filter(
+      (v) =>
+        v.standing === "asked" ||
+        v.standing === "yielded" ||
+        v.standing === "unmet",
+    ),
+    follows: framed.filter((v) => v.standing === "follows"),
+    open: framed.filter((v) => v.standing === "open"),
+    questions: waiting(view),
+  };
 }
 
 /** The open variables, by the catalogue's family, in the catalogue's order. */
@@ -274,35 +268,31 @@ export function ConfiguratorCanvas() {
     );
   }
 
-  // A frame narrows every section to the items that bear on one question
-  // and leaves the sections themselves alone — `Framing`. With no frame,
-  // `framed` is true of everything.
-  const framed = view.variables.filter((v) => v.framed);
-  // A yielded value is asserted: it sits with what was asked for, not with
-  // what followed, because nothing about the person's requirement changed.
-  const asked = framed.filter(
-    (v) =>
-      v.standing === "asked" ||
-      v.standing === "yielded" ||
-      v.standing === "unmet",
-  );
-  const follows = framed.filter((v) => v.standing === "follows");
-  const open = framed.filter((v) => v.standing === "open");
+  const { asserted: asked, follows, open, questions } = sections(view);
   const families = byFamily(open);
 
   return (
     <div className="@container h-full bg-background">
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-6 pb-6">
-          <Header asserted={asked.length} follows={follows.length} open={open.length} />
+        <div className="px-6 pb-6">
+          <Header />
 
           <div className="mt-4">
             <Totals />
           </div>
 
-          <div id="questions" className="mt-4 scroll-mt-28">
-            <PendingQuestions />
-          </div>
+          {/* Only while something waits on the person: an empty section
+              here would read as a question nobody asked. */}
+          {questions.length ? (
+            <Section
+              id="questions"
+              title="Asked of you"
+              hint="waiting on your answer"
+              count={questions.length}
+            >
+              <PendingQuestions />
+            </Section>
+          ) : null}
 
           <Section
             id="asserted"
@@ -312,7 +302,7 @@ export function ConfiguratorCanvas() {
             }`}
             count={asked.length}
           >
-            <div className="grid gap-2 @2xl:grid-cols-2">
+            <div className="grid gap-2 @2xl:grid-cols-2 @5xl:grid-cols-3 @7xl:grid-cols-4">
               {asked.map((variable) => (
                 <AskedCard key={variable.name} variable={variable} />
               ))}

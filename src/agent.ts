@@ -24,5 +24,12 @@ export function createDefaultAgent(): LangGraphAgent {
     // a turn five more, so 25 allows five tool calls — fewer than one turn
     // of stating the context and then reviewing it needs. 100 allows 23.
     assistantConfig: { recursion_limit: 100 },
+    // A question the model puts (`ask` in `agent/tools.py`) pauses the run
+    // on a LangGraph interrupt. The structured AG-UI outcome is what lets
+    // the chat resume it with `RunAgentInput.resume`; the legacy custom
+    // event's cancel dismisses without resuming and strands the thread.
+    // `docs/syncs/conduct.md`, "The floor is carried by an interrupt".
+    emitInterruptOutcome: true,
+    enableLegacyOnInterruptEvent: false,
   });
 }

@@ -21,7 +21,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Specifying](specifying.md) | to hold what a party requires, in their own words, as separate clauses each of which can be reworded, relaxed, struck, or deliberately left open |
 | [Binding](binding.md) | to keep every committed value bound to the requirement it answers, so that a value can later be substituted and explained rather than merely overwritten |
 | [Asserting](asserting.md) | to keep what each party has asserted of a specification on record, as asserted, until it is withdrawn |
-| [Conversing](conversing.md) | to keep a record of what each party said, in the order it was said |
+| [Conversing](conversing.md) | to keep a record of what each party said, to whom and about what, in the order it was said |
 | [Filing](filing.md) | to keep a document a party brought, as it was brought, so that a passage of it can be cited |
 | [Reading](reading.md) | to hold what a source was read as, so that the reading can be checked against the source and corrected |
 | [Constraining](constraining.md) | to work out what a specification can still become under the rules that say what can be built, given what is asked of it firmly and what only as a preference |
@@ -86,7 +86,10 @@ which is the shortest route to why concepts are not entities.
 [Conversing](conversing.md) is the only concept no rule reads from: its
 completions appear in no `when`. It exists so that the log's first entry for a
 turn is the person's words, and the canvas reads an utterance back by its
-flow, beside each value the model asserted in reply.
+flow, beside each value the model asserted in reply. A question the model put
+to the person, and the person's reply to it, are utterances about the
+question; whether it still awaits an answer is read by the canvas, the chat
+and the model's tool, and by no rule.
 
 [Filing](filing.md) and [Reading](reading.md) are the case's slice 2: a
 document a person brought, and what the model read from it or from their

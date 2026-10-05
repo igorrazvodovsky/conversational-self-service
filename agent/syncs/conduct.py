@@ -4,7 +4,8 @@ What the model may do, stated positively.  MSM §5.3.
 
 The enforcement is in what is absent.  No rule below carries a tool call to
 `Deciding/choose`, `Quoting/commit`, `Pricing`, `Footprinting` or
-`Cataloguing`, so the model cannot adopt a completion, accept a quote, set a
+`Cataloguing`, so the model cannot adopt a completion, answer the question it
+asked, accept a quote, set a
 price or change the catalogue.  Nor does any carry it to a value held for a
 reason: one a requirement the person stated rests on.  Not because it is told not to — because an action reaches the log
 only by way of some synchronization, and there is no rule that would carry the
@@ -487,6 +488,63 @@ def _the_canvas_is_shown_before_it_changes(
     ]
 
 
+def _the_model_may_ask_the_person(c: Completion, states: States) -> list[Invocation]:
+    """`where { ?r is pending ; Deciding: { ?r offered: ?options } }`: the
+    question is put as it stands, with the options it is offered now, so a
+    later conflict that displaces them leaves this one overtaken rather than
+    answered."""
+    if c.output.get("tool") != "ask":
+        return []
+    request = c.output.get("request")
+    text = c.output.get("text")
+    if request is None or not text:
+        return []
+    question = next(
+        (
+            q
+            for q in readings.pending(states["Deciding"].state())
+            if q["request"] == request
+        ),
+        None,
+    )
+    if question is None:
+        return []
+    return [
+        Invocation(
+            "Conversing",
+            "say",
+            {
+                "party": MODEL,
+                "text": text,
+                "to": PERSON,
+                "about": {"request": request, "offered": question["options"]},
+            },
+        )
+    ]
+
+
+def _a_person_replies_to_a_question(c: Completion, _: States) -> list[Invocation]:
+    """A reply in words, about the question as it was put.  It settles
+    nothing: the question stays pending until a choice, a decline or the
+    conflict going settles it."""
+    if c.output.get("act") != "reply" or not c.output.get("text"):
+        return []
+    if c.output.get("about") is None:
+        return []
+    return [
+        Invocation(
+            "Conversing",
+            "say",
+            {
+                "party": PERSON,
+                "text": c.output["text"],
+                "to": MODEL,
+                "about": c.output["about"],
+            },
+        )
+    ]
+
+
 rules = [
     # First, so that it fires before the rules below carry the call through:
     # a quote the model requests ends with the quote surface forward
@@ -602,5 +660,18 @@ rules = [
         "TheModelMayUnframeTheCanvas",
         ("Copiloting", "invoke"),
         _tool("unframe", "Framing", "unframe", lens=WORKSPACE),
+    ),
+    # The floor: the model may put a question the rules already asked, as it
+    # stands, and the person may reply to it in words.  Neither settles it;
+    # no rule here carries an invocation to `Deciding`.
+    Sync(
+        "TheModelMayAskThePerson",
+        ("Copiloting", "invoke"),
+        _the_model_may_ask_the_person,
+    ),
+    Sync(
+        "APersonRepliesToAQuestion",
+        ("Copiloting", "gesture"),
+        _a_person_replies_to_a_question,
     ),
 ]

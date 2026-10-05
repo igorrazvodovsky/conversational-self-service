@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ModeToggle } from "./mode-toggle";
+import { PanelNav } from "./panel-nav";
 import {
   ChatRestoreButton,
   ChatSurfaceHeader,
@@ -30,7 +30,7 @@ interface ExampleLayoutProps {
  * Which artifact is on the panel — the requirements, the configuration or
  * the offer — is a fact
  * of `Moding`, held behind the concept layer, and this component renders it
- * rather than owning it. Both the person's toggle and the model's tool call
+ * rather than owning it. Both the person's navigation and the model's tool call
  * reach it through `Moding/focus`, by a rule; the one that fires when the
  * assistant is about to change the canvas is `TheCanvasIsShownBeforeItChanges`,
  * which the starter wrote as a sentence in a system prompt.
@@ -49,10 +49,9 @@ export function ExampleLayout({
   quoteContent,
   canvasPercent,
 }: ExampleLayoutProps) {
-  const { view, gesture } = useConfigurator();
+  const { view } = useConfigurator();
   const mode: Surface =
     view?.mode === "quote" || view?.mode === "requirements" ? view.mode : "canvas";
-  const setMode = (surface: Surface) => void gesture({ act: "focus", surface });
   // An address names an item on one of the surfaces; following one brings
   // that surface forward and scrolls to the item (`configurator/address.tsx`).
   useFollowAddress();
@@ -68,9 +67,10 @@ export function ExampleLayout({
         canvasPercent={canvasPercent}
         artifact={
           <>
-            {/* The panel's own header: the wordmark and the artifact toggle. */}
-            <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b pr-2 pl-3">
-              <div className="flex items-center gap-1.5">
+            {/* The panel's own header: the wordmark and the way around the
+                panel, surfaces and sections in one row. */}
+            <div className="flex h-9 shrink-0 items-center gap-4 border-b pr-3 pl-3">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <span className="text-base font-extrabold">CopilotKit</span>
                 <img
                   src="/copilotkit-logo-mark.svg"
@@ -78,7 +78,7 @@ export function ExampleLayout({
                   className="h-5"
                 />
               </div>
-              <ModeToggle mode={mode} onModeChange={setMode} />
+              <PanelNav />
             </div>
             <div className="min-h-0 flex-1">
               {mode === "quote"

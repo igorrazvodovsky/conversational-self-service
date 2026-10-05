@@ -205,6 +205,27 @@ export interface Question {
   /** A conflict question only: what each answer would do, in the options'
    * order. The options are what `choose` takes back; this is beside them. */
   foreseen?: Foreseen[];
+  /** The question as the assistant put it to the person, if it did, and
+   * where it stands: `awaiting` while nothing has been said or done about
+   * it since (`docs/syncs/conduct.md`, "Asking, and waiting for the
+   * answer"). */
+  asked?: Asked | null;
+}
+
+export interface Asked {
+  utterance: string;
+  text: string;
+  /** The question as put: what a reply is about. */
+  about: { request: Request; offered: unknown[] };
+  replies: { utterance: string; text: string; by: "you" | "your agent" }[];
+  status:
+    | "awaiting"
+    | "replied"
+    | "passed"
+    | "chosen"
+    | "declined"
+    | "withdrawn"
+    | "overtaken";
 }
 
 export interface Foreseen {

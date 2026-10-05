@@ -415,7 +415,7 @@ export function QuoteSurface() {
 
   return (
     <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-6">
+      <div className="px-6 py-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">
             {quotes.length

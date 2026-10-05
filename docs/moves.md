@@ -59,6 +59,7 @@ their request, and reads that way in the log.
 | Ask why — "why can't I have 630 kg?" | chat | nothing; `review` reads state | the rule's own sentence, and the argument if the person pushes back. This lives in the chat and only there |
 | Ask what a choice cost | chat, or canvas | [`Framing`](concepts/framing.md) | one sentence saying what the narrowed canvas now shows |
 | Answer a conflict question | canvas, or chat | `Deciding/choose` or `decline` by gesture; in the chat, the model withdraws the conceded assertion at the person's word, under its own actor | the model saying what it withdrew and what came back |
+| Reply to a question the assistant asked, in words — "keep the hospital", or "that one is for facilities" | chat, or the person's agent | `Conversing/say` about the question as put, through [`APersonRepliesToAQuestion`](syncs/conduct.md#asking-and-waiting-for-the-answer); the question stays on the canvas until something settles it | the model carrying the answer out, or saying it will wait |
 | Take a proposed value, or the whole proposal | canvas only | `Deciding/choose`, then [`AnAdoptedValueBecomesAnAssertion`](syncs/conduct.md#proposing-and-not-adopting) | the model may say what it proposed and that it is waiting; it cannot adopt any of it |
 | Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote |
 | Request a quote | canvas, or chat | `Quoting/quote` when the specification is complete and addressed | what is missing, if anything, and where the proposal is |
@@ -77,15 +78,23 @@ what the chat exists for. The reply's moves:
 | Interpretation | after reading the person's words into assertions | what it took them to mean, in the model's vocabulary, inviting correction — the canvas holds the words beside each value asserted in reply, the chat explains the reading | present the reading as the person's choice; recite the words the canvas shows |
 | Consequence | after an assertion, when the rules forced something | what followed and the rule's sentence — the canvas shows the edge, the chat explains it | list every entailment; restate the canvas |
 | Argument | when asked why | the rule, in its own words, and what would have to give | compose a reason no rule states |
-| Asking | when a conflict is open, or a completion needs a choice the rules do not settle | the question, addressed to the person, with the answers open | answer it; treat its own turn as the person's answer |
+| Asking | when its own turn ran into a conflict | the question, put with `ask`, and nothing after it: the turn waits until the person answers, replies or leaves it ([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)) | answer it; treat its own turn as the person's answer; ask again what was already asked and not yet answered |
 | Proposing | when the specification is incomplete and the person seems done stating context | the offer to work out the rest, or what a proposal assumed | say the proposal was adopted |
 | Declining | when asked to do something no rule permits — adopt, accept, change a price | that it cannot, and who can | do it another way |
-| Silence | when the person acted on the canvas | nothing — the model is not run on a gesture | narrate a gesture after the fact |
+| Resuming | when the question it asked was answered, replied to or left, wherever that happened | one sentence on what followed, or carrying out a reply in words | narrate the click; ask the question again |
+| Silence | when the person acted on the canvas and no question of the model's was waiting | nothing — the model is not run on a gesture | narrate a gesture after the fact |
 
 The last row is by construction rather than by instruction: a gesture is
 performed against the engine directly (`agent/webapp.py`) and never enters the
 graph. Asking a model for an empty reply is an instruction it can fail to
 follow; here there is no turn to be silent in.
+
+Resuming is the exception, and it is not a turn started on a gesture. The
+person's message opened the turn, the model's question paused it, and the
+gesture that answers the question lets the same turn finish, as a
+salesperson who asked *which one gives?* says *then the car is 1,275 kg*
+once the customer has pointed. A gesture with no question waiting resumes
+nothing.
 
 ## The conflict, as the worked case
 
@@ -101,14 +110,26 @@ way whoever caused it — the person by a click, the model by a tool, a browser
 agent over WebMCP — which is why it cannot live in the chat: two of those three
 have no turn to attach it to.
 
-In the chat it is a question: the model says which rules refuse the value and
-asks which assertion gives way. The person may answer with a click, in which
-case the model was never involved, or in words, in which case the model
-withdraws the conceded assertion — a permitted move, made at the person's
-word, recorded under the model's actor — and
+In the chat it is a question, when the model's own turn ran into it: the
+model says which rules refuse the value, asks which assertion gives way, and
+waits. The question is recorded as the model's, addressed to the person, and
+the turn is paused on it ([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)).
+The chat shows the question with its answers; they are the canvas's answers,
+performed as the same gestures. The person may answer with a click there or
+on the canvas, or leave it for now, and the turn resumes with one sentence on
+what followed. Or they answer in words, typed while the question waits, and
+the words are a reply to the question rather than a new turn; the model
+withdraws the conceded assertion at their word — a permitted move, recorded
+under the model's actor — and
 [`AResolvedConflictWithdrawsItsQuestion`](syncs/propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)
 takes the question off the canvas once every assertion holds again. The chat
-poses; the canvas holds; either settles.
+poses and waits; the canvas holds; either settles.
+
+The person's own agent meets the same question in `review`, with who asked it
+and the words it was asked in, and answers it the person's way: it chooses,
+leaves it, or replies. A reply is how it hands a decision back without
+settling it — *that one is for the client* — and the question stays on the
+canvas with the reply beside it, for the person it was meant for.
 
 What the chat must not do: state that a rejected value was recorded, walk
 the options the canvas already lists, or decide for the person. Each is a
@@ -144,6 +165,14 @@ already under way says so.
 - *The model's reply is specified only in the prompt.* The table above is the
   first place the reply's moves are written down; `agent/main.py` carries them
   as instructions, and nothing measures whether they are followed.
+- *Only a conflict is asked.* A completion that needs a choice, and a quote
+  that needs a name and a site, are the same move: a question the turn cannot
+  go past. Neither is put with `ask` yet.
+- *The person's agent cannot talk to the assistant.* It reads the
+  assistant's question and replies to it, and that is the whole of the
+  exchange. The assistant's other words reach only the chat. Agent to agent,
+  the assistant would be an AG-UI agent the person's agent runs, and the
+  question would reach it as the interrupt the chat receives now.
 
 ## See also
 

@@ -4,7 +4,7 @@ import { SparklesIcon, TriangleAlertIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { money, tonnes } from "./format";
-import { useConfigurator, type Foreseen, type Question } from "./provider";
+import { useConfigurator, type Foreseen, type Question, type View } from "./provider";
 
 /**
  * The open questions, from `Deciding`.
@@ -33,9 +33,6 @@ function OneQuestion({ question }: { question: Question }) {
   const { gesture, busy, label, view } = useConfigurator();
   const isCompletion = question.about === "completion";
   const proposed = (view?.variables ?? []).filter((v) => v.proposed).length;
-  // A completion whose every value has been taken or declined has nothing
-  // left to adopt as a whole; it goes when the specification next moves.
-  if (isCompletion && proposed === 0) return null;
 
   return (
     <Alert variant={isCompletion ? "default" : "destructive"}>
@@ -51,6 +48,7 @@ function OneQuestion({ question }: { question: Question }) {
             ? "Each waits beside its variable under still open. Take them one at a time, or all at once; the assistant cannot."
             : question.reason}
         </p>
+        <Asked question={question} />
         {/* The destructive alert colours everything inside it; the choices
             are ordinary controls, not part of the warning. */}
         <div className="mt-2 flex flex-wrap gap-2 text-foreground">
@@ -104,10 +102,35 @@ function OneQuestion({ question }: { question: Question }) {
   );
 }
 
+/**
+ * Who put the question to the person and what was said back, from
+ * `Conversing`. A reply in words leaves the question here: it is how the
+ * person's own agent hands back a decision it does not hold, and the person
+ * it was meant for reads it beside the answers. `docs/syncs/conduct.md`,
+ * "Asking, and waiting for the answer".
+ */
+function Asked({ question }: { question: Question }) {
+  const asked = question.asked;
+  if (!asked || asked.status === "overtaken") return null;
+  return (
+    <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+      <p>
+        The assistant asked: “{asked.text}”
+        {asked.status === "awaiting" && " It is waiting on the answer."}
+      </p>
+      {asked.replies.map((reply) => (
+        <p key={reply.utterance}>
+          {reply.by === "you" ? "You replied" : "Your agent replied"}: “{reply.text}”
+        </p>
+      ))}
+    </div>
+  );
+}
+
 /** One answer to a conflict: the assertion to give up, and what giving it
  * up would do. Multi-line and left-aligned, so the shared Button has its
  * nowrap and centring relaxed. */
-function Answer({
+export function Answer({
   name,
   foreseen,
   disabled,
@@ -185,9 +208,19 @@ function signed(amount: number, format: (n: number) => string) {
   return `${amount > 0 ? "+" : "−"}${format(Math.abs(amount))}`;
 }
 
+/**
+ * The questions still waiting on the person. A completion whose every value
+ * has been taken or declined has nothing left to adopt as a whole; it goes
+ * when the specification next moves, and until then it is not counted.
+ */
+export function waiting(view: View): Question[] {
+  const proposed = view.variables.some((v) => v.proposed);
+  return view.questions.filter((q) => q.about !== "completion" || proposed);
+}
+
 export function PendingQuestions() {
   const { view } = useConfigurator();
-  const questions = view?.questions ?? [];
+  const questions = view ? waiting(view) : [];
   if (questions.length === 0) return null;
 
   return (
