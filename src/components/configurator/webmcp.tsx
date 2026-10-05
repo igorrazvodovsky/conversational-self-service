@@ -14,8 +14,10 @@
  * handler performs `Copiloting/gesture` with the same `act` the canvas
  * sends, landing at `POST /gesture` under the actor `browser`, and the rules
  * in `agent/syncs/gestures.py`, `binding.py` and `reading.py` decide what
- * follows. `review`, `propose` and `read`, which a person has no gesture
- * for, perform `Copiloting/invoke` under the same actor. How much the person
+ * follows. `propose` and `read`, which a person has no gesture for, perform
+ * `Copiloting/invoke` under the same actor. `review` and `open_quote` are the
+ * model's reads, of the specification and of an issued offer, and perform
+ * nothing. How much the person
  * delegates is set in their agent, not here. See `docs/syncs/conduct.md`,
  * "The person's own agent, acting as the person".
  *
@@ -38,9 +40,9 @@ const option = z
   .describe("A full option id, such as `rated_load:kg1000`, from `open` in `review`");
 
 /** One tool: a name, what it does, its arguments, and the act or call it
- * performs. Every tool here changes a fact or the canvas, except `review`.
+ * performs. Every tool here changes a fact or the canvas, except the reads.
  * Registered once: the handlers reach the engine only through the provider's
- * `act`, `invoke` and `review`, which are stable, so re-registering on every
+ * `act`, `invoke`, `review` and `openQuote`, which are stable, so re-registering on every
  * render would only tell the agent its tools changed when they had not. */
 export function useTool<Shape extends z.ZodRawShape>(
   name: string,
@@ -63,7 +65,7 @@ export function useTool<Shape extends z.ZodRawShape>(
 }
 
 export function BrowserAgentTools() {
-  const { act, invoke, review } = useConfigurator();
+  const { act, invoke, review, openQuote } = useConfigurator();
   const as = (stimulus: Stimulus): Promise<Outcome> => act(stimulus);
 
   // -- reading the specification ------------------------------------------
@@ -77,10 +79,30 @@ export function BrowserAgentTools() {
       "still possible and any proposed value (`asked`, `follows`, `unmet`, " +
       "`open`); open conflicts (`questions`), with the assistant's question " +
       "and any reply under `asked` when it put one to the person; price, carbon, the addressee, " +
-      "the job, and every quote issued. A projection, accurate as of this " +
-      "call: the person may act on the canvas between your calls.",
+      "the job, and every quote issued, with its number, where it stands and " +
+      "which values have moved since (`quotes`); `open_quote` reads one. A " +
+      "projection, accurate as of this call: the person may act on the canvas " +
+      "between your calls.",
     {},
     () => review(),
+    true,
+  );
+
+  useTool(
+    "open_quote",
+    "Read an issued quote, as the offer was frozen when it was made, to " +
+      "check it against what the person asked for before they accept it. " +
+      "Returns each requirement as it stood with what answered it, or that " +
+      "nothing did (`required`); each value with its standing, why it holds " +
+      "and what it adds to the sum and the monthly charge (`values`); the " +
+      "programme's milestones by week, the payments due at each, and what " +
+      "the customer provides (`programme`, `payments`, `by_others`). " +
+      "Sentences beside a value are the canvas's, addressed to the person. " +
+      "`differs` lists the values that have moved in the specification since. " +
+      "Each line's `at` is its address on the quote surface, to link when you " +
+      "report to the person. Changes nothing.",
+    { quote },
+    ({ quote }) => openQuote(quote),
     true,
   );
 
@@ -299,7 +321,9 @@ export function BrowserAgentTools() {
 
   useTool(
     "commit",
-    "Accept a quote, as the person. This commits them to the offer.",
+    "Accept a quote, as the person. This commits them to the offer, so it " +
+      "is their decision: accept only when they have handed it to you, and " +
+      "otherwise report what `open_quote` shows and leave it with them.",
     { quote },
     ({ quote }) => as({ act: "commit", quote }),
   );

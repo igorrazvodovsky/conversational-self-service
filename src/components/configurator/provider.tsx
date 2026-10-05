@@ -457,6 +457,8 @@ interface Configurator {
   invoke: (tool: string, args?: Record<string, unknown>) => Promise<Outcome>;
   /** The reading a model gets — `review` in `agent/tools.py` — for the person's own agent. */
   review: () => Promise<unknown>;
+  /** An issued offer's contents, as `open_quote` in `agent/tools.py` reads them. */
+  openQuote: (quote: string) => Promise<unknown>;
   label: (id: string | null) => string;
 }
 
@@ -617,6 +619,16 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     return body as unknown;
   }, []);
 
+  const openQuote = useCallback(async (quote: string) => {
+    const response = await fetch(
+      `/api/configurator/quotes/${encodeURIComponent(quote)}`,
+      { cache: "no-store" },
+    );
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error ?? "could not read the quote");
+    return body as unknown;
+  }, []);
+
   const labels = useMemo(() => {
     const index = new Map<string, string>();
     for (const variable of view?.variables ?? [])
@@ -630,8 +642,10 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ view, grid, setGrid, busy, error, gesture, act, invoke, review, label }),
-    [view, grid, busy, error, gesture, act, invoke, review, label],
+    () => ({
+      view, grid, setGrid, busy, error, gesture, act, invoke, review, openQuote, label,
+    }),
+    [view, grid, busy, error, gesture, act, invoke, review, openQuote, label],
   );
 
   return (

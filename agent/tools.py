@@ -1,6 +1,6 @@
 """The model's tools.
 
-A verb per thing the model may do, and two readings.  Each verb is a root action of the bootstrap concept
+A verb per thing the model may do, and the readings it answers from.  Each verb is a root action of the bootstrap concept
 and nothing more: the tool records that the model called it, and the rules in
 `syncs/conduct.py` decide what follows.  Each is performed in the flow the
 person's message opened (`hearing.turn()`), so the log joins the words to the
@@ -22,6 +22,12 @@ flow token is; a document is named by its id, and `open_file` returns its
 text from the log, so what the model read is what is on record.  A single `configure(spec)`
 taking the whole assignment — the shape this repository used to have — says
 only that something did.
+
+`review`, `open_file` and `open_quote` are readings: each returns a
+projection of state and records nothing, so the model asking what an offer
+holds is not an action anybody performed.  `open_quote` is the offer as it
+was frozen at issue, the record the quote surface lays out and the person's
+own agent reads at `GET /configurator/quotes/<quote>`.
 
 `show`, `hide`, `frame` and `unframe` are the four that change no fact: they
 choose which facts the canvas shows beside each item
@@ -51,7 +57,7 @@ from engine import Record
 from hearing import follow, heard, turn
 from instance import SPEC, engine
 from syncs import readings
-from views import digest, filed, put_question
+from views import digest, filed, put_question, quoted
 
 
 def _outcome(completion: Record) -> dict[str, Any]:
@@ -262,6 +268,27 @@ def open_file(file: str) -> dict[str, Any]:
     with `read`. A projection, like `review`; it changes nothing.
     """
     return filed(engine, file)
+
+
+@tool
+def open_quote(quote: str) -> dict[str, Any]:
+    """Read an issued quote, as the offer was frozen when it was made.
+
+    `quote` is an id from the `quotes` list `review` returns, where each
+    quote's `number` is what the person calls it ("No. 2"). Returns what the
+    offer holds: each requirement as it stood with what answered it, or that
+    nothing did; each value with its standing, why it holds — who asked for
+    it, in the canvas's words to the person, or the rules that force it —
+    and what it adds to the sum and the monthly charge; the programme's
+    milestones by week, the payments due at each, the warranty, and what
+    the customer provides. `differs` lists the values that have moved in the
+    specification since. A projection, like `review`; it changes nothing.
+
+    Every line carries its address under `at`: link it when you explain the
+    line, rather than reciting the offer. You cannot accept or revoke a
+    quote; the person does, on the quote surface.
+    """
+    return quoted(engine, SPEC, quote)
 
 
 @tool
@@ -547,6 +574,9 @@ def review() -> dict[str, Any]:
     the person does both on the canvas — but an assertion you make should
     respect them, and when a value you assert meets a clause, say so.
 
+    `quotes` lists every quote issued, with its number, where it stands and
+    which values have moved since; `open_quote` reads what one offers.
+
     A projection rather than the state itself. It is accurate as of this call
     and says nothing about what the person has done since.
     """
@@ -562,5 +592,5 @@ def review() -> dict[str, Any]:
 
 configurator_tools = [
     assert_value, withdraw, read, propose, introduce, entitle, quote,
-    show, hide, frame, unframe, review, open_file, ask,
+    show, hide, frame, unframe, review, open_file, open_quote, ask,
 ]

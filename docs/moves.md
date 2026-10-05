@@ -66,6 +66,7 @@ their request, and reads that way in the log.
 | Take a proposed value, or the whole proposal | canvas only | `Deciding/choose`, then [`AnAdoptedValueBecomesAnAssertion`](syncs/conduct.md#proposing-and-not-adopting) | the model may say what it proposed and that it is waiting; it cannot adopt any of it |
 | Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote |
 | Request a quote | canvas, or chat | `Quoting/quote` when the specification is complete and addressed | what is missing, if anything, and where the proposal is |
+| Ask about an offer — "why is the battery backup in No. 2?", "what does it cost me over the term?", "what do I pay on dispatch?", "what do I have to provide?" | chat | nothing; `open_quote` reads the offer as it was frozen at issue | the answer, with the offer's own lines linked — the value, the clause, the milestone — rather than recited |
 | Accept or revoke a quote | canvas only | `Quoting/commit`, `revoke` | nothing; the model cannot accept |
 | Choose what the canvas shows beside each item | canvas, or chat | [`Showing`](concepts/showing.md) | nothing; the point of the move is that the figure is on the canvas rather than recited |
 | Discard the specification | canvas | `Asserting/discard` | nothing |
@@ -81,6 +82,7 @@ what the chat exists for. The reply's moves:
 | Interpretation | after reading the person's words into assertions | what it took them to mean, in the model's vocabulary, inviting correction — the canvas holds the words beside each value asserted in reply, the chat explains the reading | present the reading as the person's choice; recite the words the canvas shows |
 | Consequence | after an assertion, when the rules forced something | what followed and the rule's sentence — the canvas shows the edge, the chat explains it | list every entailment; restate the canvas |
 | Argument | when asked why | the rule, in its own words, and what would have to give | compose a reason no rule states |
+| Explaining an offer | when asked about an issued quote | what the offer holds and why, as it was frozen: the grounds of a value, what a line added, when a payment falls due, what the customer provides — linking the offer's lines at `#quote:` addresses | read the offer against the specification as it stands without saying so; recite the proposal; accept or revoke it |
 | Asking | when its own turn ran into a conflict | the question, put with `ask`, and nothing after it: the turn waits until the person answers, replies or leaves it ([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)) | answer it; treat its own turn as the person's answer; ask again what was already asked and not yet answered |
 | Proposing | when the specification is incomplete and the person seems done stating context | the offer to work out the rest, or what a proposal assumed | say the proposal was adopted |
 | Declining | when asked to do something no rule permits — adopt, accept, change a price | that it cannot, and who can | do it another way |
@@ -139,6 +141,39 @@ the options the canvas already lists, or decide for the person. Each is a
 turn standing in for a fact, and the first is the model reporting a state it
 never checked. The prompt's rule is against withdrawing *unasked*;
 withdrawing at the person's word is the person's answer, carried out.
+
+## An offer, read
+
+An issued quote holds what was true when it was made: the values, the
+requirements as they stood with what answered each, why each value held and
+what it added to the price, the programme as the seller reckoned it, and the
+payments and the work by others the terms set. The quote surface lays that
+out for the person. Every other reader reads it through `open_quote`, which
+the assistant has as a tool and the person's agent has on the page's model
+context, and both get the same record: the offer as frozen, its sentences in
+the canvas's own words, addressed to the person. Reading it records nothing and needs no rule,
+because a read is not an action. `review` lists the
+quotes issued with where each stands and which values have moved since, and
+`open_quote` is the offer itself.
+
+The assistant reads an offer to explain it. Why a value is in the offer is
+its grounds: asked for, given way, or following from a rule, with the rule's
+sentence. What it costs over the term is the sum and the monthly charge the
+offer fixed. When a payment falls due is the stage's share of the sum, at the
+week the programme placed its milestone. What the customer must provide is
+the work by others. Each of those is a line of the offer with its own
+address, so the reply links the line and explains it, as it does for the
+canvas. Accepting or revoking stays the person's: no rule lets the
+assistant commit to an offer, and asked to, it says so and points to where
+the person does it (*Declining*).
+
+The person's agent reads an offer to check it, which is a job a person
+hands over readily: does this offer answer what I asked for, and what does
+it leave unanswered? Reading the offer and checking it against the
+requirements is the agent's, once the person has asked. Accepting is the
+person's decision. The agent holds the person's `commit` and `revoke`, and
+performs them when the person has handed it that decision; otherwise it
+reports what it found and leaves the offer for the person to accept.
 
 ## The suggestions
 

@@ -35,6 +35,9 @@ Three questions test a view:
    smallest thing a person would point at.
 3. *Can they be reached?* Every unit has an address (`address.tsx`), so a link
    between items, a reply in the chat and the person's agent can each name it.
+   Naming a unit needs knowing what it holds, so the readers off the page get
+   the same units: `review` reads the specification, and `open_quote` reads
+   an issued offer line by line, each line with its address.
 
 The same facts may be arranged more than once, one arrangement per question.
 The requirements are the example: the ledger holds the clauses in the order the

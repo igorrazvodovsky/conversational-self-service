@@ -1280,12 +1280,162 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         "customer": view["customer"],
         "project": view["project"],
         "quotable": view["quotable"],
+        # Each quote issued, with where it stands and which values have moved
+        # since; `open_quote` reads the offer itself.
         "quotes": [
             {
                 k: q[k]
-                for k in ("quote", "standing", "amount", "until", "committed", "differs")
+                for k in (
+                    "quote", "number", "standing", "issued", "amount", "until",
+                    "committed", "differs",
+                )
             }
             | {"monthly": q["terms"]["recurring"], "months": q["terms"]["months"]}
             for q in view["quotes"]
         ],
+    }
+
+
+def quoted(engine: Engine, spec: str, quote: str) -> dict[str, Any]:
+    """An issued offer's contents, small enough to hand a language model:
+    the quote the canvas lays out as a proposal, read the way `digest` reads
+    the specification.  Both the model and the person's own agent read it,
+    and nothing here depends on which.
+
+    Everything is as the offer froze it, except the catalogue's labels and
+    `differs`, which compares the offer with the specification now.  The
+    sentence beside a value is the canvas's, addressed to the person.  Each
+    line carries its address on the quote surface under `at`, for a reply to
+    link rather than recite.
+    """
+    q = next((q for q in canvas(engine, spec)["quotes"] if q["quote"] == quote), None)
+    if q is None:
+        return {"error": f"there is no quote {quote}; `review` lists them under `quotes`"}
+    terms = q["terms"]
+    at = f"#quote:{quote}"
+    heading = {h["name"]: h["heading"] for h in q["holds"]}
+    label = {h["name"]: h["label"] for h in q["holds"]}
+    grounds = q["grounds"]
+    by_others = set(terms.get("byOthers", []))
+    # An offer issued before the programme was frozen with it places nothing
+    # but the order, and the surface lays out no milestone for it.
+    milestones = (terms.get("programme") or {}).get("milestones", [])
+    placed = len(milestones) > 1
+    week = {m["event"]: m["week"] for m in milestones} if placed else {}
+
+    def value(name: str) -> dict[str, Any]:
+        line: dict[str, Any] = {
+            "variable": name,
+            "value": f"{heading[name]}: {label[name]}",
+        }
+        # The surface lays out a value's line only with its grounds.
+        ground = (grounds or {}).get(name)
+        if ground is None:
+            return line
+        return line | {
+            "at": f"{at}:variable:{name}",
+            "standing": ground["standing"],
+            **(
+                {"asked": f"{ground['askedLabel']}, which gave way"}
+                if ground.get("askedLabel")
+                else {}
+            ),
+            **({"how": ground["how"]} if ground.get("how") else {}),
+            **(
+                {"because": [o["because"] for o in ground["owing"]]}
+                if ground["owing"]
+                else {}
+            ),
+            # The assertions the rules forced it from, each a line of the
+            # offer in its own right.
+            **(
+                {
+                    "from": [
+                        {"variable": f["variable"], "heading": f["heading"], "at": f"{at}:variable:{f['variable']}"}
+                        for f in ground["following"]
+                    ]
+                }
+                if ground["following"]
+                else {}
+            ),
+            "capital": ground["capital"],
+            "monthly": ground["monthly"],
+        }
+
+    return {
+        "quote": quote,
+        "number": q["number"],
+        "at": at,
+        "standing": q["standing"],
+        "issued": q["issued"],
+        "how": q["how"],
+        "until": q["until"],
+        "committed": q["committed"],
+        "title": terms.get("title"),
+        "site": terms.get("site"),
+        "amount": q["amount"],
+        "monthly": terms["recurring"],
+        "months": terms["months"],
+        # The sum and the maintenance over the term, before financing, as the
+        # quote surface shows it.
+        "over_term": q["amount"] + terms["recurring"] * terms["months"],
+        "currency": engine.catalogue.get("currency", ""),
+        # The values the offer holds that have moved in the specification since.
+        "differs": q["differs"],
+        # The requirements as they stood at issue, with what answered each.
+        "required": (
+            [
+                {
+                    "clause": c["clause"],
+                    "at": f"{at}:clause:{c['clause']}",
+                    "text": plain(c["text"]),
+                    "negotiability": c["negotiability"],
+                    "answered_by": [a["label"] for a in c["answeredBy"]]
+                    or "nothing in the offer answers it",
+                }
+                for c in q["requires"]
+            ]
+            if "requires" in engine.state("Quoting")["from"][quote]
+            else "not recorded: the offer was issued before requirements were frozen with it"
+        ),
+        # Every value supplied, why it holds and what it adds.  An offer
+        # issued before grounds were frozen with it carries the values alone.
+        "values": [
+            value(h["name"]) for h in q["holds"] if h["name"] not in by_others
+        ],
+        "grounds": (
+            "frozen with the offer"
+            if grounds is not None
+            else "not recorded: the offer was issued before grounds were frozen with it"
+        ),
+        "programme": (
+            [
+                {"event": m["event"], "at": f"{at}:event:{m['event']}", "week": m["week"]}
+                for m in milestones
+            ]
+            if placed
+            else "not recorded: the offer places no milestone after the order"
+        ),
+        "warranty_months": terms.get("warranty"),
+        # Each payment as a share of the sum, due at its milestone.  A
+        # milestone the programme does not place has no week.
+        "payments": [
+            {
+                "upon": stage["upon"],
+                "share": stage["share"],
+                "amount": round(q["amount"] * stage["share"], 2),
+                **(
+                    {"event": stage["event"], "week": week.get(stage["event"])}
+                    if stage.get("event")
+                    else {}
+                ),
+            }
+            for stage in terms.get("stages", [])
+        ],
+        # What the customer provides: the values the price assumes, and the
+        # seller's terms on what is provided.
+        "by_others": {
+            "values": [value(name) for name in heading if name in by_others],
+            "terms": terms.get("clauses", {}).get("provided", []),
+        },
     }

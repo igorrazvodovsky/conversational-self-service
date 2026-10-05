@@ -98,7 +98,7 @@ layer beside the agent.
 │   ├── wiring.py          # discovers concepts, wires rules, boots with the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
 │   ├── measures.py        # what the case's plan counts, read off the log — shown to neither party
-│   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest, GET /measures — mounted by langgraph.json
+│   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest, GET /quotes/<quote>, GET /measures — mounted by langgraph.json
 │   ├── tools.py           # the model's tools
 │   ├── hearing.py         # the chat message and its attachments, as a person's `say` and `file` gestures
 │   ├── instance.py        # the one engine every actor shares

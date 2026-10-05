@@ -700,11 +700,15 @@ canvas shows. What a person cannot do it cannot do either: no act reaches
 `Cataloguing`, `Pricing`, `Footprinting` or `Stipulating`
 ([Gestures](gestures.md#what-a-gesture-is-not-allowed-to-be)).
 
-It also gets the model's three verbs that a person has no gesture for,
-through `Copiloting/invoke` under the same actor at
-`POST /configurator/invoke`: `review`, `propose` and `read`. `review` is how
-it sees the canvas. `propose` asks the solver for the cheapest completion,
-which comes back as questions it can then answer as the person would. `read`
+It also gets the model's verbs that a person has no gesture for,
+`propose` and `read`, through `Copiloting/invoke` under the same actor at
+`POST /configurator/invoke`. It reads as the model does, and a read
+performs nothing: `review`, at `GET /configurator/digest`, is how it sees
+the specification, and `open_quote`, at `GET /configurator/quotes/<quote>`,
+is how it reads an offer before the person accepts it, the same record the
+assistant reads ([An offer, read](../moves.md#an-offer-read)). `propose`
+asks the solver for the cheapest completion, which comes back as questions
+it can then answer as the person would. `read`
 is how a requirement it took from a document stays cited: it files the
 document as the person, reads from the filed text, and the rules in
 [Reading](reading.md) check the words against it exactly as they do for the
@@ -751,8 +755,8 @@ same handler in the same tab and lands under `browser` too.
 
 The tools are registered under an agent id no in-app agent has, so the
 assistant is never offered the person's gestures as frontend tools. `review`
-carries the WebMCP `readOnlyHint`; the rest carry none, since each changes a
-fact or the canvas.
+and `open_quote` carry the WebMCP `readOnlyHint`; the rest carry none, since
+each changes a fact or the canvas.
 
 ## The tool names are ours
 

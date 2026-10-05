@@ -5,9 +5,9 @@ in the same process as the graph and shares one engine with the model's tools.
 
 Two kinds of route and no more, because there are only two things to do:
 perform a root action, or read.  This is WYSIWID §6.4's split at the level of
-the wire — `POST /gesture` and `POST /invoke` are the action API, `GET /view`
-and `GET /digest` are the querying capability, and nothing writes through a
-read.  `GET /measures` is a read too, for whoever studies the sessions rather
+the wire — `POST /gesture` and `POST /invoke` are the action API, `GET /view`,
+`GET /digest` and `GET /quotes/<quote>` are the querying capability, and
+nothing writes through a read.  `GET /measures` is a read too, for whoever studies the sessions rather
 than either party in them (`docs/measures.md`).
 
 The person's own agent reaches the engine through both.  The page registers
@@ -15,10 +15,11 @@ the person's gestures on `document.modelContext` (`src/components/
 configurator/webmcp.tsx`), and each lands at `/gesture` as
 `Copiloting/gesture` under the actor `browser`: the rules in
 `syncs/gestures.py` match on the act and not on the actor, so what the
-person's agent may do is what the person may do.  `review`, `propose` and
-`read`, which a person has no gesture for, land at `/invoke` under the same
-actor and fire the model's rules.  See `docs/syncs/conduct.md`, "The
-person's own agent, acting as the person".
+person's agent may do is what the person may do.  `propose` and `read`,
+which a person has no gesture for, land at `/invoke` under the same actor
+and fire the model's rules; its reads, `review` and `open_quote`, are
+`/digest` and `/quotes/<quote>`, and record nothing.  See
+`docs/syncs/conduct.md`, "The person's own agent, acting as the person".
 
 Note what is absent: there is no endpoint per concept action.  A person's click
 is a stimulus, and the rules in `syncs/gestures.py` decide what follows from it.
@@ -38,7 +39,7 @@ from fastapi import Body, FastAPI, HTTPException  # noqa: E402
 
 from instance import SPEC, engine  # noqa: E402
 from measures import measures  # noqa: E402
-from views import canvas, digest  # noqa: E402
+from views import canvas, digest, quoted  # noqa: E402
 
 app = FastAPI()
 
@@ -55,6 +56,13 @@ def review() -> dict[str, Any]:
     return digest(engine, SPEC, actor=BROWSER)
 
 
+@app.get("/configurator/quotes/{quote}")
+def open_quote(quote: str) -> dict[str, Any]:
+    """An issued offer's contents for the person's own agent: the read
+    `tools.py`'s `open_quote` returns to the in-app model, and the same one."""
+    return quoted(engine, SPEC, quote)
+
+
 @app.get("/configurator/measures")
 def measured() -> dict[str, Any]:
     """What the case's plan counts, read off the log.  Reachable through the
@@ -64,7 +72,7 @@ def measured() -> dict[str, Any]:
 
 
 # The person's own agent, as an actor: it performs the person's gestures and
-# the model's three verbs a person has no gesture for.  Which rules apply is
+# the model's verbs a person has no gesture for.  Which rules apply is
 # a matter of the root action and its act or tool, not of this actor.
 BROWSER = "browser"
 ACTORS = {"person", BROWSER}
