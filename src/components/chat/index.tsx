@@ -298,16 +298,33 @@ function UserBubble({ content }: { content?: string }) {
   );
 }
 
-const UserMessage = Object.assign(
-  (props: ComponentProps<typeof CopilotChatUserMessage>) => (
+/** Words the person's own agent said in the chat, as the person: theirs,
+ * and marked as the agent's. Its message carries the flow its words opened
+ * as its id, and the view lists those flows (`converse.tsx`). */
+function AgentBubble({ content }: { content?: string }) {
+  return (
+    <Bubble align="end" variant="outline">
+      <span className="self-end text-xs text-muted-foreground">Your agent</span>
+      <BubbleContent className="text-sm whitespace-pre-wrap">
+        {content}
+      </BubbleContent>
+    </Bubble>
+  );
+}
+
+function OneUserMessage(props: ComponentProps<typeof CopilotChatUserMessage>) {
+  const { view } = useConfigurator();
+  const agents = view?.agentSaid.includes(props.message.id) ?? false;
+  return (
     <CopilotChatUserMessage
       {...props}
-      messageRenderer={UserBubble}
+      messageRenderer={agents ? AgentBubble : UserBubble}
       copyButton={CopyButton}
     />
-  ),
-  CopilotChatUserMessage,
-);
+  );
+}
+
+const UserMessage = Object.assign(OneUserMessage, CopilotChatUserMessage);
 
 /**
  * An empty thread is not an empty specification: the canvas survives a new

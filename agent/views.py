@@ -92,6 +92,8 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
     `Pricing`, and no assertion can precede it.
     """
     words: dict[str, str] = {}
+    # Who said the flow's words: the person, or their own agent as them.
+    spoke: dict[str, str] = {}
     reads: dict[str, dict[str, Any]] = {}
     asserting: dict[str, dict[str, Any]] = {}
     how: dict[str, dict[str, Any]] = {}
@@ -106,6 +108,7 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
         if record.concept == "Conversing" and record.action == "say":
             if output.get("party") == "person" and output.get("text"):
                 words[record.flow] = output["text"]
+                spoke[record.flow] = record.actor
         elif record.concept == "Reading" and record.action == "read":
             reads[record.flow] = {
                 "item": output["item"],
@@ -135,6 +138,7 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
                 "actor": record.actor,
                 "words": read["words"] if read else words.get(record.flow),
                 "source": read["source"] if read else None,
+                "speaker": spoke.get(record.flow),
             }
             how[output["variable"]] = entry
             asserting[record.flow] = {
@@ -142,7 +146,12 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
                 "option": output["option"],
                 **entry,
             }
-    return {"how": how, "stated": stated, "displaced": displaced}
+    return {
+        "how": how,
+        "stated": stated,
+        "displaced": displaced,
+        "agentSaid": sorted(f for f, actor in spoke.items() if actor == BROWSER),
+    }
 
 
 def _source_name(engine: Engine, source: Any) -> str | None:
@@ -164,13 +173,21 @@ def _how(engine: Engine, entry: dict[str, Any], cited: bool = False) -> str:
     stops answering the clause.
     """
     via, actor, words = entry["via"], entry["actor"], entry.get("words")
+    agent_said = entry.get("speaker") == BROWSER
     if words and via == "TheModelMayAssertAValue":
-        return f"the assistant read “{words}” as this"
+        whose = "your agent's " if agent_said else ""
+        return f"the assistant read {whose}“{words}” as this"
     if words and via in {"AChoiceReachesTheAssertions", "ASubstituteReachesTheAssertions"}:
         who = "your agent" if actor == BROWSER else "the assistant"
         name = _source_name(engine, entry.get("source"))
         if cited:
-            where = f"in {name}" if name else "from what you said"
+            where = (
+                f"in {name}"
+                if name
+                else "from what your agent said"
+                if agent_said
+                else "from what you said"
+            )
             return f"{who} read this {where}"
         where = f" in {name}" if name else ""
         return f"{who} read “{words}”{where} as this"
@@ -318,6 +335,7 @@ def _sources(
             )
         return out
 
+    speakers = _speakers(engine, set(conversing["utterances"]))
     out = []
     for file in filing["files"]:
         text = filing["text"][file]
@@ -342,7 +360,8 @@ def _sources(
                 "kind": "utterance",
                 "id": utterance,
                 "name": None,
-                "broughtBy": "person",
+                # The person, or their own agent speaking as them.
+                "broughtBy": speakers.get(utterance, "person"),
                 "text": conversing["text"][utterance],
                 "items": read,
             }
@@ -437,6 +456,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     clauses = ledger(engine, spec)
     # Where each clause came from, and what displaced its answer — both off
     # the trace, neither held by a concept.  See docs/syncs/reading.md.
+    speakers = _speakers(engine, set(engine.state("Conversing")["utterances"]))
     for clause in clauses:
         origin = (
             {
@@ -453,6 +473,12 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "kind": "file" if origin["source"].get("file") else "utterance",
                 "id": origin["source"].get("file") or origin["source"].get("utterance"),
                 "name": _source_name(engine, origin["source"]),
+                # Who said the words read, when they were said in the chat.
+                "broughtBy": (
+                    speakers.get(origin["source"]["utterance"], "person")
+                    if origin["source"].get("utterance")
+                    else None
+                ),
                 "words": origin["words"],
                 # The model's claim that nothing in the catalogue answers it:
                 # an empty answer on the item, read as such and not judged.
@@ -752,6 +778,10 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         "clauses": clauses,
         # What was brought and said, with what was read from each.
         "sources": _sources(engine, clauses, trace["stated"]),
+        # The flows the person's own agent opened by speaking in the chat;
+        # its message there carries the flow as its id, so the chat can say
+        # whose words they were.
+        "agentSaid": trace["agentSaid"],
         # What the last turn changed while the person was not looking at the
         # canvas, for it to mark.  Null when the person's own gesture was the
         # last thing to move the specification.

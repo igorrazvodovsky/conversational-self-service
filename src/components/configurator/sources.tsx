@@ -73,7 +73,7 @@ function OneSource({ source }: { source: Source }) {
       <CardHeader>
         <CardDescription className="flex items-center gap-1.5 uppercase tracking-wide">
           {file ? <FileTextIcon className="size-3.5" /> : <MessageSquareIcon className="size-3.5" />}
-          {file ? "document" : "you said"}
+          {file ? "document" : source.broughtBy === "browser" ? "your agent said" : "you said"}
         </CardDescription>
         <CardTitle className={cn(!file && "font-normal")}>
           {file ? source.name : `“${source.text}”`}

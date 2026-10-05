@@ -59,6 +59,7 @@ their request, and reads that way in the log.
 | Ask why — "why can't I have 630 kg?" | chat | nothing; `review` reads state | the rule's own sentence, and the argument if the person pushes back. This lives in the chat and only there |
 | Ask what a choice cost | chat, or canvas | [`Framing`](concepts/framing.md) | one sentence saying what the narrowed canvas now shows |
 | Answer a conflict question | canvas, or chat | `Deciding/choose` or `decline` by gesture; in the chat, the model withdraws the conceded assertion at the person's word, under its own actor | the model saying what it withdrew and what came back |
+| Talk to the assistant through their own agent — the person's agent says what the person would type | the person's agent, shown in the chat as theirs | `Conversing/say` under the agent's actor, then the assistant's turn in [the flow the words opened](syncs/gestures.md#the-persons-own-agent-speaks-in-the-chat), as for the person's own words | the assistant's reply, returned to the agent as well; a question it put comes back with it, for the agent to answer or hand back |
 | Reply to a question the assistant asked, in words — "keep the hospital", or "that one is for facilities" | chat, or the person's agent | `Conversing/say` about the question as put, through [`APersonRepliesToAQuestion`](syncs/conduct.md#asking-and-waiting-for-the-answer); the question stays on the canvas until something settles it | the model carrying the answer out, or saying it will wait |
 | Take a proposed value, or the whole proposal | canvas only | `Deciding/choose`, then [`AnAdoptedValueBecomesAnAssertion`](syncs/conduct.md#proposing-and-not-adopting) | the model may say what it proposed and that it is waiting; it cannot adopt any of it |
 | Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote |
@@ -168,11 +169,9 @@ already under way says so.
 - *Only a conflict is asked.* A completion that needs a choice, and a quote
   that needs a name and a site, are the same move: a question the turn cannot
   go past. Neither is put with `ask` yet.
-- *The person's agent cannot talk to the assistant.* It reads the
-  assistant's question and replies to it, and that is the whole of the
-  exchange. The assistant's other words reach only the chat. Agent to agent,
-  the assistant would be an AG-UI agent the person's agent runs, and the
-  question would reach it as the interrupt the chat receives now.
+- *The person's agent talks to the assistant only through the page.* It
+  speaks in the chat the person has open, and the assistant's reply reaches
+  it from there. An agent with no page open has no conversation to speak in.
 
 ## See also
 

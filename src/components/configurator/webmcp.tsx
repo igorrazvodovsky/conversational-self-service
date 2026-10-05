@@ -29,7 +29,7 @@ import { z } from "zod";
 import { useConfigurator, type Outcome, type Stimulus } from "./provider";
 
 /** The agent id the tools are constrained to: none that exists in-app. */
-const BROWSER = "browser";
+export const BROWSER = "browser";
 
 const clause = z.string().describe("A clause's id, from `required` in `review`");
 const quote = z.string().describe("A quote's id, from `quotes` in `review`");
@@ -42,7 +42,7 @@ const option = z
  * Registered once: the handlers reach the engine only through the provider's
  * `act`, `invoke` and `review`, which are stable, so re-registering on every
  * render would only tell the agent its tools changed when they had not. */
-function useTool<Shape extends z.ZodRawShape>(
+export function useTool<Shape extends z.ZodRawShape>(
   name: string,
   description: string,
   shape: Shape,

@@ -46,6 +46,17 @@ utterances; a replay is not a person saying anything.
 A message with no id gets the strict test instead, because without an identity
 there is nothing to deduplicate on and the end of the list is the only evidence
 that this is a new turn.
+
+Why some words are already on record.  The person's own agent speaks in the
+chat through the page (`src/components/chat/converse.tsx`): its words are a
+`say` gesture under the actor `browser`, completed before the page runs the
+graph, and the message carries the flow that gesture opened as its id.  Such
+a message is not heard again; its flow becomes the turn's, as a reply in
+words does (`follow`).  The words are checked against the `say` in that flow,
+so an id that merely looks like a flow is heard as the person's.  And the
+model is told who spoke: `attributing` marks the agent's words on every model
+call.  See `docs/syncs/gestures.md`, "The person's own agent speaks in the
+chat".
 """
 
 from __future__ import annotations
@@ -105,6 +116,34 @@ def follow(flow: str, utterance: str) -> None:
         return
     _turn[thread] = flow
     _said[thread] = utterance
+
+
+# Whether a message id is the flow of words already on record, and whose:
+# the utterance and the actor, or nothing.  Read off the log once per id.
+_on_record: dict[str, tuple[str, str] | None] = {}
+
+
+def _said_already(message: HumanMessage) -> tuple[str, str] | None:
+    """The utterance and its actor, when the message's words were said by
+    gesture before the run, in the flow its id names."""
+    identity = getattr(message, "id", None)
+    if not isinstance(identity, str) or not identity.startswith("flow-"):
+        return None
+    if identity not in _on_record:
+        text = _text(message)
+        _on_record[identity] = next(
+            (
+                (record.output["utterance"], record.actor)
+                for record in engine.log.flow(identity)
+                if record.kind == "completion"
+                and record.concept == "Conversing"
+                and record.action == "say"
+                and (record.output or {}).get("text") == text
+                and (record.output or {}).get("utterance")
+            ),
+            None,
+        )
+    return _on_record[identity]
 
 
 def _text(message: HumanMessage) -> str:
@@ -200,7 +239,15 @@ async def hearing(state: dict[str, Any], runtime: Any) -> None:
         return
     else:
         _heard.add(identity)
-    await asyncio.to_thread(_hear, said, _thread())
+    thread = _thread()
+    already = await asyncio.to_thread(_said_already, said)
+    if already is not None:
+        # Words said by gesture before the run: the turn is theirs.
+        if thread is not None:
+            _turn[thread] = said.id
+            _said[thread] = already[0]
+        return
+    await asyncio.to_thread(_hear, said, thread)
 
 
 def _hear(said: HumanMessage, thread: str | None) -> None:
@@ -273,3 +320,32 @@ async def unattaching(request: Any, handler: Any) -> Any:
     return await handler(
         request.override(messages=[_unattached(m) for m in request.messages])
     )
+
+
+BROWSER = "browser"
+
+
+def _attributed(message: Any) -> Any:
+    """The person's own agent's words, marked as theirs for the model."""
+    if not isinstance(message, HumanMessage):
+        return message
+    already = _said_already(message)
+    if already is None or already[1] != BROWSER:
+        return message
+    text = _text(message)
+    return message.model_copy(
+        update={"content": f"[The person's own agent, speaking for them:] {text}"}
+    )
+
+
+@wrap_model_call
+async def attributing(request: Any, handler: Any) -> Any:
+    """The model is told when it is the person's own agent speaking.
+
+    The thread holds the words as they were said; who said them is the
+    `say`'s actor, and the model reads it here, on every call, so it can put
+    each decision to the party it belongs to.  See `docs/syncs/conduct.md`,
+    "The person's own agent, acting as the person".
+    """
+    messages = await asyncio.to_thread(lambda: [_attributed(m) for m in request.messages])
+    return await handler(request.override(messages=messages))

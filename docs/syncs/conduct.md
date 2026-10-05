@@ -721,6 +721,29 @@ this* are one provenance edge under two actors. A flow with `browser` among
 its root actors is one that moved while the person was not looking, and the
 canvas marks what it reached until the person next acts themselves.
 
+The person's agent may also talk to the assistant, in the chat the person
+watches. `converse` says something to it, as the person would in the
+composer: the words are a `say` gesture under the agent's actor, and the
+page then runs the assistant on them in the open conversation
+([The person's own agent speaks in the chat](gestures.md#the-persons-own-agent-speaks-in-the-chat)).
+What comes back is the assistant's reply and, when its turn put a question
+and waits, the question as put. The agent answers that question as it
+answers any: it chooses, leaves it, or replies, and `listen` returns what
+the assistant said once its turn went on. While a question waits, the
+conversation's floor is the person's, so `converse` says nothing and points
+to the answers; while the assistant is still answering, it says nothing
+either, and points to `listen`. A turn it started it waits on for a bounded
+time, and when the turn runs longer it returns what was said so far, for
+`listen` to take up. No rule is added for any of this. The agent speaking is
+the person speaking, and the assistant may do in reply exactly what it may
+do for the person.
+
+The assistant is told who spoke. Each message the person's agent said
+reaches the model marked as the person's agent's words, read from the
+`say`'s actor, so the assistant can put each decision to whoever it belongs
+to: a question the person's agent cannot settle for them is still put, and
+the agent hands it back with a reply.
+
 A desktop client is the same actor. The page also loads the MCP-B relay's
 embed script, which forwards the model context's tools over localhost to a
 relay that any MCP client talks to over stdio. A call from there runs the

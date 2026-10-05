@@ -388,7 +388,11 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                 title="The source, with everything read from it"
                 className={clause.source.kind === "file" ? "text-foreground" : undefined}
               >
-                {clause.source.kind === "file" ? clause.source.name : "what you said"}
+                {clause.source.kind === "file"
+                  ? clause.source.name
+                  : clause.source.broughtBy === "browser"
+                    ? "what your agent said"
+                    : "what you said"}
               </To>
               {clause.statedBy === "model" ? (
                 <Button

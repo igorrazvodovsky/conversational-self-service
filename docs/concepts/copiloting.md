@@ -22,7 +22,8 @@ policy is [Two tiers of concept](../method/boundaries.md).
 | a person acts on a rendered surface | in | `useHumanInTheLoop` (`src/hooks/use-generative-ui-examples.tsx`), A2UI events |
 | the model calls a named tool | in | `agent/tools.py`, the MCP client (`src/app/api/copilotkit/[[...slug]]/route.ts`) |
 | the person's own agent acts for them | in | `useFrontendTool` with `webmcp` (`src/components/configurator/webmcp.tsx`), reaching `POST /configurator/gesture`, and `POST /configurator/invoke` for `review`, `propose` and `read` |
-| the model returns prose | out | `CopilotChat` |
+| the person's own agent speaks to the model | in | `converse` (`src/components/chat/converse.tsx`), a `say` gesture under `browser`, then the chat's run on a message whose id is that gesture's flow |
+| the model returns prose | out | `CopilotChat`, and to the person's own agent the reply `converse` and `listen` return |
 | the model asks the person, and its run waits | out | a LangGraph interrupt from `ask` (`agent/tools.py`), received as an AG-UI interrupt by `useInterrupt` (`src/components/chat/question.tsx`) |
 | the waiting run is resumed | in | `useInterrupt`'s `resolve`, once the view shows the question no longer waits |
 | the model asks that a surface be shown | out | `useComponent`, `useDefaultRenderTool`, A2UI (`agent/src/a2ui_fixed_schema.py`) |

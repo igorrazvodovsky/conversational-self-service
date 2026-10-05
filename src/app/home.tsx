@@ -8,6 +8,7 @@ import { ConfiguratorProvider } from "@/components/configurator/provider";
 import { QuoteSurface } from "@/components/configurator/quotes";
 import { BrowserAgentTools } from "@/components/configurator/webmcp";
 import { ConfiguratorChat } from "@/components/chat";
+import { ConverseTools } from "@/components/chat/converse";
 import { useGenerativeUIExamples } from "@/hooks";
 
 import { CopilotChatConfigurationProvider } from "@copilotkit/react-core/v2";
@@ -42,6 +43,8 @@ export function HomeRoot({ canvasPercent }: { canvasPercent: number }) {
           it, so the canvas renders the outcome as it does for a click.
         */}
         <BrowserAgentTools />
+        {/* And its words to the assistant, in the conversation open now. */}
+        <ConverseTools />
         {/* The answering mode is the clause frame, read on both surfaces. */}
         <AnsweringProvider>
           <ExampleLayout

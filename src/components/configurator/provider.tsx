@@ -146,6 +146,9 @@ export interface Clause {
     id: string;
     /** The file's name; null for the person's own words. */
     name: string | null;
+    /** Who said the words, for a clause read from the chat: `person`, or
+     * `browser` for the person's own agent. Null for a file. */
+    broughtBy: string | null;
     words: string;
     /** The model recorded no option as answering the words: its claim that
      * nothing in the catalogue does, shown as such and not judged. */
@@ -331,6 +334,9 @@ export interface View {
   variables: Variable[];
   clauses: Clause[];
   sources: Source[];
+  /** The flows the person's own agent opened by speaking in the chat. Its
+   * message there carries the flow as its id. */
+  agentSaid: string[];
   price: {
     capital: number;
     recurring: number;
@@ -381,6 +387,9 @@ export type Stimulus = Record<string, unknown> & { act: string };
  * vocabulary they did it in, and the reading afterwards. The same shape
  * `agent/tools.py` hands the in-app model. */
 export interface Outcome {
+  /** The flow the gesture opened, for the person's own agent's words: the
+   * chat message that carries them has it as its id. */
+  flow?: string;
   did: { action: string; "by rule"?: string; refused?: string }[];
   state: unknown;
 }
@@ -515,7 +524,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
         if (!response.ok) throw new Error(body.error ?? "the action was refused");
         show(ticket, body.view);
         setError(null);
-        return { did: body.did, state: body.state } as Outcome;
+        return { flow: body.flow, did: body.did, state: body.state } as Outcome;
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : String(cause));
         throw cause;

@@ -13,7 +13,7 @@ from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 # The configurator
-from hearing import hearing, unattaching
+from hearing import attributing, hearing, unattaching
 from tools import configurator_tools
 
 # Other showcase features, unchanged
@@ -153,6 +153,13 @@ How the configurator works, because it is not the usual kind:
   `#open`. When a reply refers to something the canvas holds, link the word
   rather than reciting the item.
 
+- A message marked as the person's own agent's is the person speaking
+  through an agent they brought, and what it says stands as theirs. Answer
+  it as you would the person. The agent may carry out the parts the person
+  handed it and hand the rest back to them, so put every decision the rules
+  leave open with `ask` as you would for the person, and say whose call it
+  is: a reply that leaves it with the person is an answer, not a refusal.
+
 Other tools: `search_flights` for flight cards, `generate_a2ui` for dashboards,
 `query_data` before rendering a chart.
 """
@@ -164,7 +171,9 @@ agent = create_agent(
     # asked what to do about them.  See `docs/syncs/gestures.md`.
     # `unattaching` hands the model each document as a line naming it; the
     # text is read from the log.  See `docs/syncs/reading.md`.
-    middleware=[hearing, unattaching, CopilotKitMiddleware()],
+    # `attributing` tells the model which words were the person's own
+    # agent's.  See `docs/syncs/gestures.md`.
+    middleware=[hearing, unattaching, attributing, CopilotKitMiddleware()],
     system_prompt=SYSTEM_PROMPT,
 )
 

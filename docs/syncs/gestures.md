@@ -131,20 +131,26 @@ then  { Quoting/revoke: [ quote: ?q ] }
 ## Where a chat message enters
 
 `APersonSays` is the rule that puts what a person said into the log ahead of
-what the model did with it, and it is [Conversing](../concepts/conversing.md)'s
-only entry.
+what the model did with it, and it is how a chat message enters
+[Conversing](../concepts/conversing.md). The model's question and the
+person's reply to it enter through the floor's rules
+([Conduct](conduct.md#asking-and-waiting-for-the-answer)).
 
-The stimulus does not come from the browser. A chat message posted as a second
+The person's stimulus does not come from the browser. A chat message posted as a second
 HTTP request would race the model's run, so the ordering the rule exists to
 establish would hold by luck; it is performed instead in `agent/hearing.py`,
 which runs before the model node of the graph, so the ordering is one the graph
-enforces. A click (`webapp.py`), a tool call (`tools.py`) and a chat message
+enforces. The person's own agent is the exception, and it orders the two
+itself ([The person's own agent speaks in the chat](#the-persons-own-agent-speaks-in-the-chat)).
+A click (`webapp.py`), a tool call (`tools.py`) and a chat message
 (`hearing.py`) each perform a root action, and each does the same nothing
 with it.
 
-Only a person says anything. `Conversing/say` takes a party and no rule invokes
-it with the machine, so the assistant's replies stay in CopilotKit's thread and
-out of the log. That is an absence in this file, not a property of the concept.
+In the chat, only a person, or their own agent as them, says anything here.
+`Conversing/say` takes a party, and the one rule that invokes it with the
+machine records a question the model put, not its reply, so the assistant's
+replies stay in CopilotKit's thread and out of the log. That is an absence
+in the rules, not a property of the concept.
 
 A document attached to the message enters beside it. `APersonFilesADocument`
 carries it into [Filing](../concepts/filing.md), performed by the same module
@@ -183,11 +189,36 @@ value, only that it asserted the value in reply to them. The shared flow
 states exactly that claim, and it is read rather than recorded, so the actor
 table in `CLAUDE.md` gains no row.
 
-The person's own agent arrives with no message and its call opens a flow of
-its own, so nothing joins it to any words and the canvas says *your agent
-asked for this* with none. Nothing declines it, because nothing was asked. A
-person's click is the same: a gesture opens its own flow, and a value the
-person asserted or adopted carries no words.
+A gesture of the person's own agent opens a flow of its own, so nothing
+joins it to any words and the canvas says *your agent asked for this* with
+none. Nothing declines it, because nothing was asked. A person's click is the
+same: a gesture opens its own flow, and a value the person asserted or
+adopted carries no words.
+
+### The person's own agent speaks in the chat
+
+<a id="the-persons-own-agent-speaks-in-the-chat"></a>
+The person's agent may also address the assistant, as the person would in
+the composer. Its words take the other route in: the page performs them as
+a `say` gesture under the actor `browser`, which `APersonSays` carries into
+`Conversing/say` as it carries any `say`, and only once that has completed
+does the page add the words to the chat as a message and run the assistant.
+The message's id is the flow the `say` opened. Nothing races: the run starts
+after the words are on record, because the page awaits the one before
+starting the other.
+
+`agent/hearing.py` then meets a message whose words are already on record.
+It does not record them again. It takes the flow named by the message's id,
+checks that a `Conversing/say` there carries the same words, and makes that
+flow the turn's, as it does for [a reply in words](conduct.md#the-floor-is-carried-by-an-interrupt):
+every tool call the assistant makes in reply runs in it. A message whose id
+names no such utterance is heard as anything else in the chat is, as the
+person's words.
+
+So the trace reads the same for both speakers, and the actor on the `say`
+is what tells them apart: the canvas says *the assistant read your agent's
+"…" as this*, and an utterance a requirement was read from is shown as what
+the person's agent said. No rule is added and none matches on the actor.
 
 What a tool returns to the model is scoped the same way: the effects it
 reports are those that followed the call, not everything in the turn's flow.
