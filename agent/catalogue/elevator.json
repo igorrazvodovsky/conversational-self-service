@@ -29,18 +29,22 @@
     "schedule": [
       {
         "upon": "order, with this quotation accepted",
+        "event": "order",
         "share": 0.3
       },
       {
         "upon": "notice that the equipment is ready for dispatch",
+        "event": "dispatch",
         "share": 0.5
       },
       {
         "upon": "completion of installation",
+        "event": "completion",
         "share": 0.15
       },
       {
         "upon": "acceptance, following the final examination",
+        "event": "acceptance",
         "share": 0.05
       }
     ],
@@ -130,8 +134,8 @@
       "label": "Handover date",
       "group": "agreement",
       "options": [
-        { "value": "standard", "label": "16 weeks from order", "price": 0, "co2": 0, "note": "the factory's ordinary queue, any finish" },
-        { "value": "expedited", "label": "10 weeks from order", "price": 7500, "co2": 0, "note": "a slot bought out of the queue, stock finishes only" }
+        { "value": "standard", "label": "16 weeks from order", "weeks": 16, "price": 0, "co2": 0, "note": "the factory's ordinary queue, any finish" },
+        { "value": "expedited", "label": "10 weeks from order", "weeks": 10, "price": 7500, "co2": 0, "note": "a slot bought out of the queue, stock finishes only" }
       ]
     },
     {

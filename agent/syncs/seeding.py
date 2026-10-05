@@ -66,12 +66,31 @@ def _the_sellers_terms_are_stipulated(c: Completion, _: States) -> list[Invocati
             },
         )
     ]
+    for variable in _catalogue(c).get("variables", []):
+        for option in variable["options"]:
+            if option.get("weeks") is not None:
+                out.append(
+                    Invocation(
+                        "Stipulating",
+                        "promise",
+                        {
+                            "basis": basis,
+                            "option": oid(variable["name"], option["value"]),
+                            "weeks": option["weeks"],
+                        },
+                    )
+                )
     for stage in terms.get("schedule", []):
         out.append(
             Invocation(
                 "Stipulating",
                 "stage",
-                {"basis": basis, "upon": stage["upon"], "share": stage["share"]},
+                {
+                    "basis": basis,
+                    "upon": stage["upon"],
+                    "event": stage["event"],
+                    "share": stage["share"],
+                },
             )
         )
     for section, texts in terms.get("clauses", {}).items():

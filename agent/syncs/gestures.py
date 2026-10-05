@@ -107,6 +107,12 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
             "customer": customer,
             "title": naming["title"].get(spec, ""),
             "site": site,
+            # Where each milestone falls, as the seller reckoned it at issue:
+            # the arithmetic is the seller's and may change, and the offer
+            # must place dispatch where it was placed when it was made.
+            "programme": states["Stipulating"].programme(
+                BASIS, settled.values(), total["term"]
+            ),
             **stipulated,
         },
         "until": (date.today() + timedelta(days=stipulated["validity"])).isoformat(),

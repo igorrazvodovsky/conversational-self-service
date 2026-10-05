@@ -37,7 +37,9 @@ when  { Copiloting/boot: [] => [ catalogue: ?c ; basis: ?b ] }
 where { ?c's terms are ?t }
 then  { Stipulating/stipulate: [ basis: ?b ; validity, warranty,
           approval, installation — as ?t gives them ] ;
-        Stipulating/stage: [ basis: ?b ; upon ; share ]
+        Stipulating/promise: [ basis: ?b ; option ; weeks ]
+          for each option of each variable with a promised handover ;
+        Stipulating/stage: [ basis: ?b ; upon ; event ; share ]
           for each entry of ?t's schedule ;
         Stipulating/clause: [ basis: ?b ; section ; text ]
           for each text under each section of ?t's clauses ;
@@ -149,6 +151,15 @@ the application's start rather than any gesture for the same reason a price
 does: no actor in this application is the seller, and no rule lets a person or
 the model reach [Stipulating](../concepts/stipulating.md) or the seller's
 [Profiling](../concepts/profiling.md) ([Gestures](gestures.md#what-a-gesture-is-not-allowed-to-be)).
+
+A handover promise is the seller's condition on an option, not a description
+of it, so `TheSellersTermsAreStipulated` reads the `weeks` an option carries
+in the file and leaves its label to [Cataloguing](../concepts/cataloguing.md).
+The label says *16 weeks from order* to a person; the promise is the number
+the programme is reckoned from, and neither is parsed out of the other. A
+payment stage carries both of its descriptions the same way: `upon` in the
+seller's words for the proposal, `event` as the milestone the programme
+places it on.
 
 ## See also
 

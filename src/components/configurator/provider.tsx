@@ -272,8 +272,19 @@ export interface Terms {
   approval: number;
   installation: number;
   byOthers: string[];
-  stages: { upon: string; share: number }[];
+  /** Each payment stage, in the seller's words and as the milestone it falls due on. */
+  stages: { upon: string; event?: string; share: number }[];
   clauses: Record<string, string[]>;
+  /**
+   * Stipulating's programme as it answered at issue: each milestone's week
+   * from order, and the months of warranty and of maintenance after
+   * acceptance. Absent on a quote that holds none.
+   */
+  programme?: {
+    milestones: { event: string; week: number }[];
+    warranty: number;
+    maintenance: number;
+  } | null;
 }
 
 /**

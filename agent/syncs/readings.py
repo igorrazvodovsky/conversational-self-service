@@ -48,7 +48,11 @@ def terms(stipulating: dict[str, Any], basis: str) -> dict[str, Any]:
         "installation": stipulating["installation"].get(basis, 0),
         "byOthers": list(stipulating["byOthers"].get(basis, [])),
         "stages": [
-            {"upon": stipulating["upon"][stage], "share": stipulating["share"][stage]}
+            {
+                "upon": stipulating["upon"][stage],
+                "event": stipulating["event"].get(stage),
+                "share": stipulating["share"][stage],
+            }
             for stage in stipulating["stages"].get(basis, [])
         ],
         "clauses": clauses,

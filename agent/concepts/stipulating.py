@@ -8,9 +8,11 @@ state
   warranty:     Basis -> Natural
   approval:     Basis -> Natural
   installation: Basis -> Natural
+  handover:     Basis -> Option -> Natural
   byOthers:     Basis -> set Variable
   stages:       Basis -> seq Stage
   upon:         Stage -> string
+  event:        Stage -> Event
   share:        Stage -> Real
   clauses:      Basis -> seq Clause
   section:      Clause -> string
@@ -20,11 +22,18 @@ state
 terms of the same kind as a financing factor, kept apart because a condition
 is a sentence and a price is arithmetic.  Stages and clauses are individuals
 minted here, in sequence, because their order is what a reader sees.
+
+`programme` is a query, as Pricing's `total` is: the milestones are the ends
+of the periods this concept holds, reckoned here and nowhere else, and it
+records nothing.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Iterable
+
+# The milestones a stage may fall due on, in the order the work reaches them.
+EVENTS = ("order", "approval", "dispatch", "completion", "acceptance")
 
 
 class Stipulating:
@@ -35,9 +44,11 @@ class Stipulating:
         self._warranty: dict[str, int] = {}
         self._approval: dict[str, int] = {}
         self._installation: dict[str, int] = {}
+        self._handover: dict[str, dict[str, int]] = {}
         self._by_others: dict[str, list[str]] = {}
         self._stages: dict[str, list[str]] = {}
         self._upon: dict[str, str] = {}
+        self._event: dict[str, str] = {}
         self._share: dict[str, float] = {}
         self._clauses: dict[str, list[str]] = {}
         self._section: dict[str, str] = {}
@@ -49,9 +60,11 @@ class Stipulating:
             "warranty": dict(self._warranty),
             "approval": dict(self._approval),
             "installation": dict(self._installation),
+            "handover": {b: dict(ws) for b, ws in self._handover.items()},
             "byOthers": {b: list(vs) for b, vs in self._by_others.items()},
             "stages": {b: list(ss) for b, ss in self._stages.items()},
             "upon": dict(self._upon),
+            "event": dict(self._event),
             "share": dict(self._share),
             "clauses": {b: list(cs) for b, cs in self._clauses.items()},
             "section": dict(self._section),
@@ -69,11 +82,16 @@ class Stipulating:
         self._installation[basis] = int(installation)
         return {"basis": basis}
 
-    def stage(self, basis: str, upon: str, share: float) -> dict[str, Any]:
+    def promise(self, basis: str, option: str, weeks: int) -> dict[str, Any]:
+        self._handover.setdefault(basis, {})[option] = int(weeks)
+        return {"basis": basis}
+
+    def stage(self, basis: str, upon: str, event: str, share: float) -> dict[str, Any]:
         stages = self._stages.setdefault(basis, [])
         stage = f"{basis}/stage{len(stages) + 1}"
         stages.append(stage)
         self._upon[stage] = upon
+        self._event[stage] = event
         self._share[stage] = float(share)
         return {"stage": stage}
 
@@ -90,3 +108,40 @@ class Stipulating:
         if variable not in delegated:
             delegated.append(variable)
         return {"basis": basis}
+
+    # -- the read -----------------------------------------------------------
+
+    def programme(self, basis: str, chosen: Iterable[str], term: int) -> dict[str, Any]:
+        """The query in `docs/concepts/stipulating.md`, and nowhere else.
+
+        order       = 0
+        approval    = approval(b)
+        dispatch    = handover − installation(b)
+        completion  = acceptance = handover
+        warranty    = warranty(b) months from acceptance
+        maintenance = term months from the end of warranty
+
+        handover is the weeks promised for a chosen option; with none
+        promised, only order is placed.
+        """
+        promised = self._handover.get(basis, {})
+        # One option per variable, but nothing here knows that; take the
+        # earliest promise rather than the order a set arrived in.
+        weeks = sorted(promised[o] for o in chosen if o in promised)
+        milestones = [{"event": "order", "week": 0}]
+        if weeks:
+            handover = weeks[0]
+            milestones += [
+                {"event": "approval", "week": self._approval.get(basis, 0)},
+                {
+                    "event": "dispatch",
+                    "week": max(handover - self._installation.get(basis, 0), 0),
+                },
+                {"event": "completion", "week": handover},
+                {"event": "acceptance", "week": handover},
+            ]
+        return {
+            "milestones": milestones,
+            "warranty": self._warranty.get(basis, 0),
+            "maintenance": int(term),
+        }

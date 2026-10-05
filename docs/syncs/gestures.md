@@ -115,7 +115,10 @@ where { Constraining: { ?s settled: ?holds }
                    grounds: the grounds of ?holds in ?s ]
         ?terms is [ months ; recurring ; seller: the profile of seller ;
                     customer: the profile of person ;
-                    title: Naming's title of ?s ; site: ?site ; ?stipulated… ]
+                    title: Naming's title of ?s ; site: ?site ;
+                    programme: Stipulating's programme on the catalogue
+                      basis for the values of ?holds over ?months ;
+                    ?stipulated… ]
         ?until is today plus ?stipulated's validity in days }
 then  { Quoting/quote: [ item: ?item ; to: person ;
           amount: ?amount ; terms: ?terms ; until: ?until ] }
@@ -244,7 +247,7 @@ the terms on ?b
        read from Stipulating: { ?b validity: _ ; … }
      with byOthers: Stipulating: { ?b byOthers: _ }
      and  stages: for each ?st in Stipulating: { ?b stages: _ }, in order,
-            [ upon ; share ] of ?st
+            [ upon ; event ; share ] of ?st
      and  clauses: for each ?cl in Stipulating: { ?b clauses: _ }, in order,
             its text, grouped under its section
 ```
@@ -315,6 +318,17 @@ same way: the seller's stipulations from
 job's title and site as they stood, so that the document renders from the
 offer alone and a change to any of them next month does not change a quote
 issued this month.
+
+The programme is copied too, as the answer Stipulating's `programme` gave at
+issue: each milestone with its week from order, and the months of warranty
+and maintenance after acceptance. Copying the periods it is reckoned from
+would not be enough. The arithmetic that turns a handover promise and an
+installation period into a dispatch week is the seller's, and a quote read
+next year must place dispatch where the seller placed it when the offer was
+made, whatever the seller reckons by then. With the stages' events beside it,
+the offer can say what falls due when, and what the person must have done
+by then, without anyone reading a date out of a label. A quote that holds no
+programme is read as having none, and nothing reckons one for it.
 
 The validity period is the seller's stipulation, read from the same basis.
 `Quoting` holds no clock and takes the date as an argument, so the rule adds

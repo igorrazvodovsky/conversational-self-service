@@ -13,7 +13,8 @@
  *
  * A quote's lines are items too: `#quote:<id>:variable:<name>` and
  * `#quote:<id>:clause:<id>`, the frozen value or clause as that offer holds
- * it, which the live address of the same variable does not reach.
+ * it, which the live address of the same variable does not reach; and
+ * `#quote:<id>:event:<key>`, a milestone of its programme.
  *
  * An item lives on one of `Moding`'s surfaces: a clause or a source on the
  * requirements, a variable or a section of the configuration on the canvas,
@@ -32,13 +33,17 @@ export const address = {
   variable: (name: string) => `variable:${name}`,
   clause: (id: string) => `clause:${id}`,
   source: (kind: string, id: string) => `source:${kind}:${id}`,
-  quote: (quote: string, kind: "variable" | "clause", id: string) =>
+  quote: (quote: string, kind: "variable" | "clause" | "event", id: string) =>
     `quote:${quote}:${kind}:${id}`,
 };
 
 /** The quote an address on the quote surface names, if it names one. */
 export const quoteOf = (id: string): string | null =>
   id.startsWith("quote:") ? id.split(":")[1] ?? null : null;
+
+/** The kind of a quote's line an address names: a value, a clause or a milestone. */
+export const quoteKindOf = (id: string): string | null =>
+  id.startsWith("quote:") ? id.split(":")[2] ?? null : null;
 
 export const href = (id: string) => `#${id}`;
 

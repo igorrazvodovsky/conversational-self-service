@@ -9,9 +9,11 @@
  * and the entailed — snapshots with a price — and this surface shows one at a
  * time, under an overview of every offer issued. The one shown opens as a
  * decision — what it costs over its term, what the person provides, how long
- * it stays open — and is read two ways: against what was asked, which is the
- * canvas's question put to the specification as it stood (`grounds.tsx`),
- * and as the proposal sent and signed (`document.tsx`). The overview gives
+ * it stays open — and is read in several ways: against what was asked, which is the
+ * canvas's question put to the specification as it stood (`grounds.tsx`);
+ * along time, what happens when and what the person owes or must have done
+ * by then (`timeline.tsx`); and as the proposal sent and signed
+ * (`document.tsx`). The overview gives
  * each offer its standing, its sum, when it runs out, and which of its frozen
  * values the canvas has since moved away from. That last column is the question a
  * person brings to two quotes, and it is `differs`, a read nobody maintains.
@@ -63,10 +65,11 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { quoteOf, useHash } from "./address";
+import { quoteKindOf, quoteOf, useHash } from "./address";
 import { QuoteDocument, STANDING } from "./document";
 import { AsIssued, Decision } from "./grounds";
 import { day, money } from "./format";
+import { Timeline } from "./timeline";
 import { useConfigurator, type Party, type Quote, type View } from "./provider";
 
 const CUSTOMER: { key: keyof Party; label: string; wide?: boolean }[] = [
@@ -360,7 +363,7 @@ function Comparison({
   );
 }
 
-type Reading = "asked" | "proposal";
+type Reading = "asked" | "timeline" | "proposal";
 
 function RequestButton() {
   const { view, gesture, busy } = useConfigurator();
@@ -389,20 +392,22 @@ export function QuoteSurface() {
   const [selected, setSelected] = useState<string | null>(null);
   // The second quote of a comparison, when one is being made.
   const [against, setAgainst] = useState<string | null>(null);
-  // How the quote is read: against what was asked, or as the proposal sent.
+  // How the quote is read: against what was asked, along time, or as the
+  // proposal sent.
   const [reading, setReading] = useState<Reading>("asked");
   // A newly issued quote is the one to look at.
   useEffect(() => {
     setSelected(latest);
   }, [latest]);
   // An address on a quote's line names the quote, and the reading that
-  // carries its lines.
+  // carries the line: a milestone is on the timeline, anything else is read
+  // against what was asked.
   const hash = useHash();
   useEffect(() => {
     const named = quoteOf(hash);
     if (!named) return;
     setSelected(named);
-    setReading("asked");
+    setReading(quoteKindOf(hash) === "event" ? "timeline" : "asked");
   }, [hash]);
 
   // A read that failed says nothing about the state; what was last read
@@ -517,10 +522,14 @@ export function QuoteSurface() {
             >
               <TabsList>
                 <TabsTrigger value="asked">Against what was asked</TabsTrigger>
+                <TabsTrigger value="timeline">Along time</TabsTrigger>
                 <TabsTrigger value="proposal">As the proposal</TabsTrigger>
               </TabsList>
               <TabsContent value="asked">
                 <AsIssued quote={quote} view={view} />
+              </TabsContent>
+              <TabsContent value="timeline">
+                <Timeline quote={quote} view={view} />
               </TabsContent>
               {/* The sheet as it will print. */}
               <TabsContent value="proposal" className="pt-4">

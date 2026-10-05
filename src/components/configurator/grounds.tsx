@@ -48,7 +48,7 @@ function daysLeft(until: string): number {
 
 function Figure({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div>
+    <div className="bg-muted p-4">
       <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="text-2xl font-semibold tabular-nums">{value}</p>
       <p className="text-xs text-muted-foreground">{note}</p>
@@ -90,7 +90,7 @@ export function Decision({
               : `was valid until ${day(quote.until)}`}
         </span>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-3">
         <Figure
           label="Sum"
           value={money(quote.amount, view.currency)}
