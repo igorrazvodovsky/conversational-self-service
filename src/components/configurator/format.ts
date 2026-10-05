@@ -11,6 +11,12 @@ export const money = (amount: number, currency: string) =>
 export const adds = (amount: number, currency: string) =>
   amount === 0 ? "included" : `+${money(amount, currency)}`;
 
+/** A change between two amounts, signed with a true minus; none is a dash. */
+export const change = (amount: number, currency: string) =>
+  Math.round(amount) === 0
+    ? "—"
+    : `${amount > 0 ? "+" : "−"}${money(Math.abs(amount), currency)}`;
+
 export const day = (iso: string) =>
   new Intl.DateTimeFormat("en-GB", { dateStyle: "long" }).format(
     new Date(iso),

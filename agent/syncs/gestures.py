@@ -88,11 +88,15 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
             # The clauses as they stand, each with the option answering it,
             # frozen with the values: a proposal's basis of design is what
             # the customer asked for, in their words, beside what answers it.
-            "requires": _requires(states, spec),
+            "requires": readings.requires(
+                states["Specifying"].state(), states["Binding"].state(), spec
+            ),
             # Why each value holds, and what it added to the price, frozen
             # too: the catalogue is read afresh at every boot, and an offer
             # read against what was asked must say what was true at issue.
-            "grounds": _grounds(states, spec, settled),
+            "grounds": readings.grounds(
+                constraining, asserting, states["Pricing"].state(), spec, settled
+            ),
         },
         "to": PERSON,
         # One sum, for the equipment supplied and installed.  The line
@@ -117,60 +121,6 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
         },
         "until": (date.today() + timedelta(days=stipulated["validity"])).isoformat(),
     }
-
-
-def _requires(states: States, spec: str) -> list[dict[str, Any]]:
-    """`Specifying: { ?s clauses: ?c* }` with `Binding: { ?ch answers: ?c }`,
-    read for copying into a quote's item."""
-    specifying = states["Specifying"].state()
-    binding = states["Binding"].state()
-    selection = next((s for s, of in binding["for"].items() if of == spec), None)
-    choices = binding["choices"].get(selection, []) if selection else []
-    return [
-        {
-            "clause": clause,
-            "text": specifying["text"][clause],
-            "negotiability": specifying["negotiability"][clause],
-            "answeredBy": [
-                binding["value"][ch] for ch in choices if binding["answers"][ch] == clause
-            ],
-        }
-        for clause in specifying["clauses"].get(spec, [])
-    ]
-
-
-def _grounds(
-    states: States, spec: str, settled: dict[str, str]
-) -> dict[str, dict[str, Any]]:
-    """The grounds of `?holds` in `?s`: for each settled value, whether it
-    was asserted, gave way or follows, by whom, the rules that force it with
-    their reasons, the assertions it rests on, and its line prices."""
-    constraining = states["Constraining"].state()
-    asserting = states["Asserting"].state()
-    pricing = states["Pricing"].state()
-    asserted = asserting["asserted"].get(spec, {})
-    by = asserting["assertedBy"].get(spec, {})
-    owing = constraining["owing"].get(spec, {})
-    following = constraining["following"].get(spec, {})
-    because = constraining["because"]
-    grounds: dict[str, dict[str, Any]] = {}
-    for variable, option in settled.items():
-        asked = asserted.get(variable)
-        grounds[variable] = {
-            "standing": (
-                "follows" if asked is None else "asked" if asked == option else "yielded"
-            ),
-            **({"asked": asked} if asked is not None and asked != option else {}),
-            **({"party": by[variable]} if asked is not None and variable in by else {}),
-            "owing": [
-                {"rule": rule, "because": because.get(rule, rule)}
-                for rule in owing.get(variable, [])
-            ],
-            "following": list(following.get(variable, [])),
-            "capital": pricing["capital"].get(option, 0),
-            "monthly": pricing["monthly"].get(option, 0),
-        }
-    return grounds
 
 
 def _carry(act: str, concept: str, action: str, *arguments: str, **fixed: Any):

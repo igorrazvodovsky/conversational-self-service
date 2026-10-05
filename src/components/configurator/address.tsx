@@ -16,6 +16,13 @@
  * it, which the live address of the same variable does not reach; and
  * `#quote:<id>:event:<key>`, a milestone of its programme.
  *
+ * Two offers compared are a place too: `#compare:<id>:<other>`, where the
+ * other is a quote or `now`, the specification as it stands. A line of the
+ * comparison is `#compare:<id>:<other>:variable:<name>` or
+ * `…:clause:<id>`. The pair is named by the address and held nowhere else, so
+ * a reply in the chat can put a comparison in front of the person without
+ * anything being recorded.
+ *
  * An item lives on one of `Moding`'s surfaces: a clause or a source on the
  * requirements, a variable or a section of the configuration on the canvas,
  * a quote's line on the quotes.
@@ -35,6 +42,15 @@ export const address = {
   source: (kind: string, id: string) => `source:${kind}:${id}`,
   quote: (quote: string, kind: "variable" | "clause" | "event", id: string) =>
     `quote:${quote}:${kind}:${id}`,
+  compare: (quote: string, other: string, kind?: "variable" | "clause", id?: string) =>
+    kind && id ? `compare:${quote}:${other}:${kind}:${id}` : `compare:${quote}:${other}`,
+};
+
+/** The pair a comparison's address names: a quote, and a quote or `now`. */
+export const compareOf = (id: string): [string, string] | null => {
+  if (!id.startsWith("compare:")) return null;
+  const [, quote, other] = id.split(":");
+  return quote && other ? [quote, other] : null;
 };
 
 /** The quote an address on the quote surface names, if it names one. */
@@ -68,7 +84,7 @@ export function useTargeted(id: string): boolean {
 export function surfaceOf(id: string): Surface {
   if (id.startsWith("clause:") || id.startsWith("source:")) return "requirements";
   if (id === "required" || id === "read-from") return "requirements";
-  if (id.startsWith("quote:")) return "quote";
+  if (id.startsWith("quote:") || id.startsWith("compare:")) return "quote";
   return "canvas";
 }
 

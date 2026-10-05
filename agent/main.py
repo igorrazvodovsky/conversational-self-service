@@ -153,7 +153,11 @@ How the configurator works, because it is not the usual kind:
   `#open`, and a line of an issued quote, as that offer holds it, at
   `#quote:<quote>:variable:<name>` or `#quote:<quote>:clause:<id>`, and a
   milestone of its programme at `#quote:<quote>:event:<key>` (`order`,
-  `approval`, `dispatch`, `completion`, `acceptance`). When a
+  `approval`, `dispatch`, `completion`, `acceptance`). Two offers compared
+  are at `#compare:<quote>:<other>`, where the other is a quote or `now`,
+  the specification as it stands, and a line of that comparison at
+  `#compare:<quote>:<other>:variable:<name>`: link one when the person asks
+  what changed between two offers, or since one. When a
   reply refers to something the canvas holds, link the word rather than
   reciting the item.
 

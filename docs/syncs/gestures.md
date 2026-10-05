@@ -277,7 +277,10 @@ None of these is a method of the concept it reads. `Profiling` and `Stipulating`
 expose their relations, and assembling a record from them is the reader's
 business, as it is in WYSIWID §5.5's `RegistrationResponse`. The rule reads
 `Naming`'s title and site the same way. `agent/syncs/readings.py` holds the
-one implementation the rules and the canvas share.
+one implementation the rules and the canvas share. The canvas also reads the
+requirements and the grounds of the specification as it stands, so the quote
+surface can compare an issued offer with what a quote requested now would
+freeze.
 
 The case catalogue's `Quoting.quote` *requires `valid` and `priced`*, and this
 `where` is what that means here, with z3 standing in for the real solver: every variable settled,

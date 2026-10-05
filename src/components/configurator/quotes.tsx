@@ -17,16 +17,21 @@
  * each offer its standing, its sum, when it runs out, and which of its frozen
  * values the canvas has since moved away from. That last column is the question a
  * person brings to two quotes, and it is `differs`, a read nobody maintains.
- * Two quotes can also be compared outright: only the rows on which they
- * differ, with the sums, which is the one slice of a quote that two
- * proposals read side by side cannot give you.
+ * A quote can also be compared outright, with another or with the
+ * specification as it stands (`comparison.tsx`): only the values that
+ * differ, under the requirements they answer, each with whether it was
+ * asserted or follows and what it changed in the sum — what the difference
+ * buys, and whether anybody chose it, which two proposals read side by side
+ * cannot tell you.
  * The request control is disabled with the reason whenever the rule that
  * issues a quote would decline to fire, so that nobody presses a button that
  * goes nowhere. Two of those reasons are about the addressee, so the surface
  * also carries the form that writes `Profiling` and `Naming`.
  *
- * Which quote is being looked at, and which way it is read, is a viewer's
- * convenience, held here; an address on one of a quote's lines sets both.
+ * Which quote is being looked at, which way it is read, and which pair is
+ * being compared are a viewer's convenience, held here; an address on one
+ * of a quote's lines sets the first two, and a comparison's address the
+ * pair.
  * That a quote exists, and its standing, is `Quoting`'s.
  */
 
@@ -65,7 +70,8 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { quoteKindOf, quoteOf, useHash } from "./address";
+import { compareOf, quoteKindOf, quoteOf, useHash } from "./address";
+import { Comparison, NOW } from "./comparison";
 import { QuoteDocument, STANDING } from "./document";
 import { AsIssued, Decision } from "./grounds";
 import { cn } from "@/lib/utils";
@@ -246,7 +252,7 @@ function Issued({
           <TableHead>Issued</TableHead>
           <TableHead>Valid until</TableHead>
           <TableHead>Differs from the canvas</TableHead>
-          {quotes.length > 1 ? (
+          {quotes.length ? (
             <TableHead className="w-24">
               <span className="sr-only">Compare</span>
             </TableHead>
@@ -292,106 +298,43 @@ function Issued({
                     .join(", ")}`
                 : "nothing"}
             </TableCell>
-            {quotes.length > 1 ? (
+            {quotes.length ? (
               <TableCell className="text-right">
                 {q.quote !== selected ? (
                   <Button
                     variant={q.quote === against ? "secondary" : "ghost"}
                     size="xs"
+                    aria-pressed={q.quote === against}
                     onClick={(event) => {
                       event.stopPropagation();
                       onCompare(q.quote === against ? null : q.quote);
                     }}
                   >
-                    {q.quote === against ? "Comparing" : "Compare"}
-                    <span className="sr-only"> No. {q.number}</span>
+                    Compare
+                    <span className="sr-only"> No. {q.number} with the one shown</span>
                   </Button>
-                ) : null}
+                ) : (
+                  // The quote shown is compared with the specification as
+                  // it stands from its own row.
+                  <Button
+                    variant={against === NOW ? "secondary" : "ghost"}
+                    size="xs"
+                    aria-pressed={against === NOW}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onCompare(against === NOW ? null : NOW);
+                    }}
+                  >
+                    Against now
+                    <span className="sr-only">: No. {q.number} with the specification as it stands</span>
+                  </Button>
+                )}
               </TableCell>
             ) : null}
           </TableRow>
         ))}
       </TableBody>
     </Table>
-  );
-}
-
-/**
- * The difference slice: two proposals reduced to the rows on which they
- * differ, with the sums. A rendering of two frozen items side by side and
- * nothing more; which pair is the viewer's, held on the surface.
- */
-function Comparison({
-  a,
-  b,
-  view,
-  onClose,
-}: {
-  a: Quote;
-  b: Quote;
-  view: View;
-  onClose: () => void;
-}) {
-  const of = (q: Quote) => new Map(q.holds.map((h) => [h.name, h]));
-  const ha = of(a);
-  const hb = of(b);
-  const rows = view.variables
-    .map((v) => v.name)
-    .filter((name) => ha.get(name)?.value !== hb.get(name)?.value)
-    .map((name) => ({
-      name,
-      heading: ha.get(name)?.heading ?? hb.get(name)?.heading ?? name,
-      a: ha.get(name)?.label ?? "—",
-      b: hb.get(name)?.label ?? "—",
-    }));
-  const monthly = (q: Quote) =>
-    `${money(q.terms.recurring, view.currency)}/mo over ${q.terms.months / 12} years`;
-  return (
-    <div className="mb-6 border">
-      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2 text-xs">
-        <span className="font-medium">
-          No. {a.number} against No. {b.number}
-        </span>
-        <span className="text-muted-foreground">
-          · {rows.length ? `${rows.length} differ` : "nothing differs"} · frozen values, as issued
-        </span>
-        <Button variant="ghost" size="xs" className="ml-auto" onClick={onClose}>
-          Stop comparing
-        </Button>
-      </div>
-      <Table className="text-xs">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Item</TableHead>
-            <TableHead>No. {a.number}</TableHead>
-            <TableHead>No. {b.number}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.name}>
-              <TableCell className="text-muted-foreground">{row.heading}</TableCell>
-              <TableCell>{row.a}</TableCell>
-              <TableCell>{row.b}</TableCell>
-            </TableRow>
-          ))}
-          <TableRow>
-            <TableCell className="text-muted-foreground">Sum, excluding VAT</TableCell>
-            <TableCell className="tabular-nums font-medium">
-              {money(a.amount, view.currency)}
-            </TableCell>
-            <TableCell className="tabular-nums font-medium">
-              {money(b.amount, view.currency)}
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="text-muted-foreground">Maintenance</TableCell>
-            <TableCell className="tabular-nums">{monthly(a)}</TableCell>
-            <TableCell className="tabular-nums">{monthly(b)}</TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
   );
 }
 
@@ -449,6 +392,13 @@ export function QuoteSurface() {
   // against what was asked.
   const hash = useHash();
   useEffect(() => {
+    // A comparison's address names its pair, and a line in it.
+    const pair = compareOf(hash);
+    if (pair) {
+      setSelected(pair[0]);
+      setAgainst(pair[1]);
+      return;
+    }
     const named = quoteOf(hash);
     if (!named) return;
     setSelected(named);
@@ -480,9 +430,11 @@ export function QuoteSurface() {
 
   const quote = quotes.find((q) => q.quote === selected) ?? quotes.at(-1);
   const other =
-    against && against !== quote?.quote
-      ? quotes.find((q) => q.quote === against)
-      : undefined;
+    against === NOW
+      ? NOW
+      : against && against !== quote?.quote
+        ? quotes.find((q) => q.quote === against)
+        : undefined;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -503,7 +455,7 @@ export function QuoteSurface() {
             quotes={quotes}
             view={view}
             selected={quote?.quote ?? null}
-            against={other?.quote ?? null}
+            against={other === NOW ? NOW : (other?.quote ?? null)}
             onSelect={setSelected}
             onCompare={setAgainst}
           />

@@ -288,21 +288,13 @@ export interface Terms {
 }
 
 /**
- * A quote, from `Quoting`, read with the three calculations its note names:
- * its standing today, which of its frozen values the specification has since
- * moved away from, and a footprint recomputed from the frozen item.
+ * An assignment with its requirements and the grounds of each value: what a
+ * quote froze at issue, or the specification as it stands read the same
+ * way. Either side of a comparison is one.
  */
-export interface Quote {
-  quote: string;
-  number: number;
-  standing: QuoteStanding;
+export interface Side {
   amount: number;
-  terms: Terms;
-  issued: string | null;
-  until: string;
-  committed: string | null;
-  issuedTo: string;
-  how: string | null;
+  terms: { months: number; recurring: number };
   holds: {
     name: string;
     heading: string;
@@ -311,7 +303,7 @@ export interface Quote {
     label: string;
     note: string | null;
   }[];
-  /** The clauses as they stood at issue, each with the option that answered it then. */
+  /** The clauses, each with the option that answers it. */
   requires: {
     clause: string;
     text: string;
@@ -319,22 +311,41 @@ export interface Quote {
     answeredBy: { value: string; label: string }[];
   }[];
   /**
-   * Why each frozen value held at issue, by variable: asserted, gave way, or
-   * follows, with the rules and assertions behind it and what it added to
-   * the price. Absent on a quote issued before the item carried grounds.
+   * Why each value holds, by variable: asserted, gave way, or follows, with
+   * the rules and assertions behind it and what it adds to the price. Absent
+   * on a quote issued before the item carried grounds.
    */
   grounds: Record<string, Ground> | null;
+}
+
+/**
+ * A quote, from `Quoting`, read with the three calculations its note names:
+ * its standing today, which of its frozen values the specification has since
+ * moved away from, and a footprint recomputed from the frozen item. Its side
+ * is as it stood at issue.
+ */
+export interface Quote extends Side {
+  quote: string;
+  number: number;
+  standing: QuoteStanding;
+  terms: Terms;
+  issued: string | null;
+  until: string;
+  committed: string | null;
+  issuedTo: string;
+  how: string | null;
   differs: string[];
   footprint: { made: number; run: number; total: number; complete: boolean };
 }
 
 export interface Ground {
-  standing: "asked" | "yielded" | "follows";
+  /** `unmet` only on the specification as it stands: no quote holds one. */
+  standing: "asked" | "yielded" | "follows" | "unmet";
   /** The option asserted, when it gave way to another. */
   asked?: string;
   askedLabel: string | null;
   party?: string;
-  /** Who asserted it, as the canvas said at issue. */
+  /** Who asserted it, as the canvas said at issue, or says now. */
   how: string | null;
   owing: { rule: string; because: string }[];
   following: { variable: string; heading: string }[];
@@ -394,6 +405,9 @@ export interface View {
   };
   questions: Question[];
   quotes: Quote[];
+  /** The specification read as a quote requested now would freeze it;
+   * `complete` is false while anything is open or the term presumed. */
+  now: Side & { complete: boolean };
   quotable: { ok: boolean; because: string };
   customer: Party;
   seller: Party;

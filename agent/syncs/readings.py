@@ -11,6 +11,11 @@ and *awaits an answer* in `docs/syncs/conduct.md`.  The last is read by the
 canvas, the chat and the model's tool, and by no rule: no rule reads
 `Conversing`.
 
+*The requirements of a specification* and *the grounds of an assignment*
+are in `docs/syncs/gestures.md` too: the rule that issues a quote freezes
+them into it, and the quote surface reads them live to compare an offer
+with the specification as it stands.
+
 `fresh` is the one thing here that is not a reading: it is what *bind a fresh
 identity* means in a `where`.  Replay applies each recorded input again and
 fires no rule, so an identity drawn at random is drawn once.
@@ -58,6 +63,62 @@ def terms(stipulating: dict[str, Any], basis: str) -> dict[str, Any]:
         "clauses": clauses,
     }
 
+
+
+def requires(
+    specifying: dict[str, Any], binding: dict[str, Any], spec: str
+) -> list[dict[str, Any]]:
+    """The requirements of a specification: each clause, in order, with the
+    values that answer it."""
+    selection = next((s for s, of in binding["for"].items() if of == spec), None)
+    choices = binding["choices"].get(selection, []) if selection else []
+    return [
+        {
+            "clause": clause,
+            "text": specifying["text"][clause],
+            "negotiability": specifying["negotiability"][clause],
+            "answeredBy": [
+                binding["value"][ch] for ch in choices if binding["answers"][ch] == clause
+            ],
+        }
+        for clause in specifying["clauses"].get(spec, [])
+    ]
+
+
+def grounds(
+    constraining: dict[str, Any],
+    asserting: dict[str, Any],
+    pricing: dict[str, Any],
+    spec: str,
+    holds: dict[str, str],
+) -> dict[str, dict[str, Any]]:
+    """The grounds of an assignment in a specification: for each value,
+    whether it was asserted, gave way or follows, by whom, the rules that
+    force it with their reasons, the assertions it rests on, and its line
+    prices."""
+    asserted = asserting["asserted"].get(spec, {})
+    by = asserting["assertedBy"].get(spec, {})
+    owing = constraining["owing"].get(spec, {})
+    following = constraining["following"].get(spec, {})
+    because = constraining["because"]
+    out: dict[str, dict[str, Any]] = {}
+    for variable, option in holds.items():
+        asked = asserted.get(variable)
+        out[variable] = {
+            "standing": (
+                "follows" if asked is None else "asked" if asked == option else "yielded"
+            ),
+            **({"asked": asked} if asked is not None and asked != option else {}),
+            **({"party": by[variable]} if asked is not None and variable in by else {}),
+            "owing": [
+                {"rule": rule, "because": because.get(rule, rule)}
+                for rule in owing.get(variable, [])
+            ],
+            "following": list(following.get(variable, [])),
+            "capital": pricing["capital"].get(option, 0),
+            "monthly": pricing["monthly"].get(option, 0),
+        }
+    return out
 
 def pending(deciding: dict[str, Any]) -> list[dict[str, Any]]:
     """The pending questions: every request offered and neither chosen nor declined."""

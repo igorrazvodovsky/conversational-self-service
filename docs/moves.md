@@ -36,7 +36,9 @@ person needs to *understand*, that is what the chat was for. Neither surface
 does the other's job: the chat does not restate the canvas, and the canvas
 does not carry reasoning about intent. The chat may point at the canvas,
 though: every item there has an address, and a reply that refers to one links
-the word rather than reciting the item.
+the word rather than reciting the item. Two offers compared are a place too,
+so a reply can put a comparison in front of the person by linking it, and
+nothing is recorded: which pair is shown stays the viewer's.
 
 ## The person's moves
 

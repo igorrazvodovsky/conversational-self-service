@@ -740,6 +740,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 )
 
     quotes = _quotes(engine, spec, grid, settled, issued, trace["asOf"])
+    price = pricing.total(chosen, BASIS)
     profiling = engine.state("Profiling")
     customer = readings.profile(profiling, "person")
     seller = readings.profile(profiling, "seller")
@@ -798,10 +799,20 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         # canvas, for it to mark.  Null when the person's own gesture was the
         # last thing to move the specification.
         "touched": _touched(engine, spec),
-        "price": pricing.total(chosen, BASIS),
+        "price": price,
         "footprint": footprinting.footprint(chosen, grid, BASIS),
         "questions": questions,
         "quotes": quotes,
+        # The specification read as a quote would freeze it, for comparing an
+        # issued offer with where things stand.
+        "now": _now(
+            engine,
+            spec,
+            settled,
+            how,
+            price,
+            {v["name"] for v in variables if v["standing"] == "unmet"},
+        ),
         "quotable": quotable,
         "customer": customer,
         "seller": seller,
@@ -938,7 +949,6 @@ def _quotes(
     quote issued before the item carried grounds has none, and says so.
     """
     quoting = engine.state("Quoting")
-    catalogue = engine.state("Cataloguing")
     footprinting = engine.concepts["Footprinting"]
     now = date.today().isoformat()
     quotes = []
@@ -957,11 +967,6 @@ def _quotes(
         else:
             standing = "open"
         via, actor, on, seq = issued.get(quote, ("", "", None, 0))
-        grounds: dict[str, dict[str, Any]] | None = item.get("grounds")
-        how = as_of.get(seq, {})
-        # The values that answered a clause at issue: their clause carries
-        # the words beside them, so the sentence says only who read it where.
-        cited = {o for c in item.get("requires", []) for o in c.get("answeredBy", [])}
         quotes.append(
             {
                 "quote": quote,
@@ -974,56 +979,16 @@ def _quotes(
                 "committed": quoting["committed"].get(quote),
                 "issuedTo": quoting["issuedTo"][quote],
                 "how": said(via, actor),
-                "holds": [
-                    {
-                        "name": name,
-                        "heading": catalogue["heading"].get(name, name),
-                        "family": catalogue["family"].get(name, "other"),
-                        "value": option,
-                        "label": catalogue["label"].get(option, option),
-                        "note": catalogue["note"].get(option),
-                    }
-                    for name, option in holds.items()
-                ],
                 # The clauses as they stood at issue, each with the option
-                # that answered it then.  Frozen with the item; only the
-                # catalogue's labels are read live.
-                "requires": [
-                    {
-                        **clause,
-                        "answeredBy": [
-                            {
-                                "value": option,
-                                "label": catalogue["label"].get(option, option),
-                            }
-                            for option in clause.get("answeredBy", [])
-                        ],
-                    }
-                    for clause in item.get("requires", [])
-                ],
-                "grounds": (
-                    None
-                    if grounds is None
-                    else {
-                        name: {
-                            **ground,
-                            "askedLabel": (
-                                catalogue["label"].get(ground["asked"], ground["asked"])
-                                if ground.get("asked")
-                                else None
-                            ),
-                            "how": (
-                                _how(engine, how[name], cited=holds.get(name) in cited)
-                                if ground["standing"] != "follows" and name in how
-                                else None
-                            ),
-                            "following": [
-                                {"variable": v, "heading": catalogue["heading"].get(v, v)}
-                                for v in ground.get("following", [])
-                            ],
-                        }
-                        for name, ground in grounds.items()
-                    }
+                # that answered it then, and the grounds of every value:
+                # frozen with the item; only the catalogue's labels are read
+                # live.
+                **_side(
+                    engine,
+                    holds,
+                    item.get("requires", []),
+                    item.get("grounds"),
+                    as_of.get(seq, {}),
                 ),
                 "differs": sorted(
                     name for name, option in holds.items() if settled.get(name) != option
@@ -1032,6 +997,110 @@ def _quotes(
             }
         )
     return quotes
+
+
+def _side(
+    engine: Engine,
+    holds: dict[str, str],
+    requires: list[dict[str, Any]],
+    grounds: dict[str, dict[str, Any]] | None,
+    how: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    """An assignment with its requirements and grounds, labelled for reading:
+    one side of a comparison, a quote's as frozen or the specification's as
+    it stands.  Who asserted each value is `how`, the trace as it stood when
+    the assignment was read; the sentence leaves out the words when the
+    value's clause already carries them."""
+    catalogue = engine.state("Cataloguing")
+    cited = {o for c in requires for o in c.get("answeredBy", [])}
+    return {
+        "holds": [
+            {
+                "name": name,
+                "heading": catalogue["heading"].get(name, name),
+                "family": catalogue["family"].get(name, "other"),
+                "value": option,
+                "label": catalogue["label"].get(option, option),
+                "note": catalogue["note"].get(option),
+            }
+            for name, option in holds.items()
+        ],
+        "requires": [
+            {
+                **clause,
+                "answeredBy": [
+                    {"value": option, "label": catalogue["label"].get(option, option)}
+                    for option in clause.get("answeredBy", [])
+                ],
+            }
+            for clause in requires
+        ],
+        "grounds": (
+            None
+            if grounds is None
+            else {
+                name: {
+                    **ground,
+                    "askedLabel": (
+                        catalogue["label"].get(ground["asked"], ground["asked"])
+                        if ground.get("asked")
+                        else None
+                    ),
+                    "how": (
+                        _how(engine, how[name], cited=holds.get(name) in cited)
+                        if ground["standing"] != "follows" and name in how
+                        else None
+                    ),
+                    "following": [
+                        {"variable": v, "heading": catalogue["heading"].get(v, v)}
+                        for v in ground.get("following", [])
+                    ],
+                }
+                for name, ground in grounds.items()
+            }
+        ),
+    }
+
+
+def _now(
+    engine: Engine,
+    spec: str,
+    settled: dict[str, str],
+    how: dict[str, dict[str, Any]],
+    price: dict[str, Any],
+    unmet: set[str],
+) -> dict[str, Any]:
+    """The specification as it stands, read the way a quote is: what an offer
+    requested now would freeze, so the quote surface can compare an issued
+    offer with it.  The same readings the rule that issues a quote copies,
+    read live and recorded nowhere.  The specification may be unfinished:
+    a variable still open has no line, and the sum is incomplete until every
+    value is settled and the term chosen.  A value asserted and not met is
+    `unmet` here, which no issued quote can hold."""
+    side = _side(
+        engine,
+        settled,
+        readings.requires(
+            engine.state("Specifying"), engine.state("Binding"), spec
+        ),
+        readings.grounds(
+            engine.state("Constraining"),
+            engine.state("Asserting"),
+            engine.state("Pricing"),
+            spec,
+            settled,
+        ),
+        how,
+    )
+    for name in unmet & set(side["grounds"] or {}):
+        side["grounds"][name]["standing"] = "unmet"
+    return {
+        **side,
+        "amount": price["capital"],
+        "terms": {"months": price["term"], "recurring": price["recurring"]},
+        "complete": price["complete"]
+        and all(v in settled for v in engine.state("Constraining")["range"]),
+    }
 
 
 def _issued(engine: Engine) -> dict[str, tuple[str, str, str, int]]:
