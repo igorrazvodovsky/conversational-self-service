@@ -265,17 +265,11 @@ function OneAnswer({ answer }: { answer: Answer }) {
           "no variable offers this"
         )}
       </span>
-      <span
-        className={cn(
-          "text-sm",
-          unmet && "text-destructive",
-          yielded && "text-muted-foreground line-through",
-        )}
-      >
+      <span className={cn("text-sm", yielded && "text-muted-foreground line-through")}>
         {answer.label}
       </span>
       {unmet ? (
-        <span className="text-destructive">not buildable alongside the rest</span>
+        <span>not buildable alongside the rest</span>
       ) : null}
       {yielded ? (
         <span className="text-muted-foreground">negotiable, and gave way</span>

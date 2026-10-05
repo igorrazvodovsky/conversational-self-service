@@ -138,23 +138,14 @@ function Options({ variable }: { variable: Variable }) {
   );
 }
 
-function Rules({
-  rules,
-  tone,
-}: {
-  rules: Variable["owing"];
-  tone?: "refused";
-}) {
+function Rules({ rules }: { rules: Variable["owing"] }) {
   if (!rules.length) return null;
   return (
     <ul className="space-y-0.5">
       {rules.map((rule) => (
         <li
           key={rule.rule}
-          className={cn(
-            "text-xs",
-            tone === "refused" ? "text-destructive" : "text-muted-foreground",
-          )}
+          className="text-xs text-muted-foreground"
         >
           <span className="font-mono">{rule.rule}</span> {rule.because}
         </li>
@@ -172,11 +163,12 @@ export function AskedCard({ variable }: { variable: Variable }) {
   const framedOnThis = view?.frame?.by === "assertion" && view.frame.variable === variable.name;
   const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
   const isTarget = useTargeted(address.variable(variable.name));
+  const held = new Set(variable.held);
   return (
     <Card
       id={address.variable(variable.name)}
       size="sm"
-      className={cn(addressable, isTarget && targetedRing, unmet && "ring-destructive/60")}
+      className={cn(addressable, isTarget && targetedRing)}
     >
       <CardHeader>
         <CardDescription className="uppercase tracking-wide">
@@ -215,26 +207,29 @@ export function AskedCard({ variable }: { variable: Variable }) {
             {variable.how}
           </p>
         ) : null}
-        {/* Held for a reason: a requirement the person stated rests on this
-            value, so the assistant cannot change it. A value with no
-            requirement behind it carries no mark, whoever set it. */}
-        {variable.held.length ? (
-          <p className="text-xs text-muted-foreground">
-            <LockIcon className="mr-1 inline size-3 align-[-2px]" />
-            yours, for {variable.held.map((h) => `“${plain(h.text)}”`).join(", ")}; the
-            assistant cannot change it
-          </p>
-        ) : null}
-        {/* What the value is for, from `Binding`. An assertion answering no
-            clause is the slice 0 case and is said so, not hidden — unless
-            the person hid the facet, which is theirs to do. */}
+        {/* What the value is for, from `Binding`. A clause the person stated
+            holds the value for a reason, so the assistant cannot change it:
+            the line says so where the clause already stands, rather than
+            repeating the clause. An assertion answering no clause is the
+            slice 0 case and is said so, not hidden — unless the person hid
+            the facet, which is theirs to do; the hold is said either way. */}
         {shown("answers") ? (
           variable.answers.length ? (
             <ul className="space-y-0.5 text-xs">
               {variable.answers.map((answer) => (
                 <li key={answer.clause} className="line-clamp-1" title={plain(answer.text)}>
                   {/* One line: the clause is a link, and the ledger has the words. */}
-                  <span className="text-muted-foreground">for:</span>{" "}
+                  {held.has(answer.clause) ? (
+                    <span
+                      className="text-muted-foreground"
+                      title="Yours: the assistant cannot change it"
+                    >
+                      <LockIcon className="mr-1 inline size-3 align-[-2px]" />
+                      yours, for:
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">for:</span>
+                  )}{" "}
                   <To id={address.clause(answer.clause)} title="The clause, in the requirement ledger">
                     <ClauseText text={answer.text} />
                   </To>
@@ -244,6 +239,11 @@ export function AskedCard({ variable }: { variable: Variable }) {
           ) : (
             <p className="text-xs text-muted-foreground">answers no stated requirement</p>
           )
+        ) : held.size ? (
+          <p className="text-xs text-muted-foreground">
+            <LockIcon className="mr-1 inline size-3 align-[-2px]" />
+            yours; the assistant cannot change it
+          </p>
         ) : null}
         <Collapsible>
           <div className="-ml-2 flex flex-wrap items-center gap-1">
@@ -278,20 +278,20 @@ export function AskedCard({ variable }: { variable: Variable }) {
         </Collapsible>
         {unmet ? (
           <div className="space-y-1">
-            <p className="text-xs font-medium text-destructive">
+            <p className="text-xs">
               On record, and not buildable alongside the rest.
             </p>
             {/* The rules that refused it, kept by `Constraining.refused` rather
                 than only carried in the question — so the account survives the
                 banner being dismissed. */}
-            <Rules rules={variable.refused} tone="refused" />
+            <Rules rules={variable.refused} />
           </div>
         ) : null}
         {yielded ? (
           <div className="space-y-1">
-            {/* A preference the rules could not honour. Not red: by the
-                person's own account this was the thing to give up, so no
-                question is asked and nothing is refused. `Constraining`
+            {/* A preference the rules could not honour. Muted, since it no
+                longer holds: by the person's own account this was the thing
+                to give up, so no question is asked and nothing is refused. `Constraining`
                 records nothing about it; the read is `settled` beside
                 `inclined`. */}
             <p className="text-xs text-muted-foreground">

@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { address, To } from "./address";
 import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
-import { ShowingMenu } from "./showing";
 import { Totals } from "./totals";
 import { Trace } from "./trace";
 import { AskedCard, FollowsRow, OpenRow } from "./variables";
@@ -119,29 +118,25 @@ function FrameBanner() {
 
 /**
  * The strip kept at the top of the configuration's scroll: what moved since
- * the person last acted, which facts the canvas shows, and under them the
- * frame, if any, so a mode begun anywhere is visible, and its way out
- * reachable, from anywhere. The way to each section is in the panel's own
- * header (`example-layout/panel-nav.tsx`), one row with the other surfaces.
+ * the person last acted, and the frame, if any, so a mode begun anywhere is
+ * visible, and its way out reachable, from anywhere. Shown only while there
+ * is one or the other. The way to each section, and which facts the canvas
+ * shows, are in the panel's own header (`example-layout/panel-nav.tsx`).
  */
 function Header() {
   const { view } = useConfigurator();
   if (!view) return null;
   const touched = view.touched;
   const moved = touched ? touched.variables.length + touched.clauses.length : 0;
+  if (!moved && !view.frame) return null;
   return (
     <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-background/95 px-6 py-2 backdrop-blur">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        {moved ? (
-          <span className="text-xs text-muted-foreground">
-            <span className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
-            {touched!.by} moved {moved} since you last acted
-          </span>
-        ) : null}
-        <div className="ml-auto">
-          <ShowingMenu />
-        </div>
-      </div>
+      {moved ? (
+        <p className="text-xs text-muted-foreground">
+          <span className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
+          {touched!.by} moved {moved} since you last acted
+        </p>
+      ) : null}
       <FrameBanner />
     </div>
   );

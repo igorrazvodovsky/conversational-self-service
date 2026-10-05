@@ -58,7 +58,7 @@ export function Trace() {
                     {record.via ?? "— a root action, authorised by nothing"}
                   </span>
                   {record.output && "error" in record.output ? (
-                    <Badge variant="destructive">refused</Badge>
+                    <Badge variant="outline">refused</Badge>
                   ) : null}
                 </li>
               ))}

@@ -96,7 +96,7 @@ export interface Variable {
   } | null;
   /** The requirements the person stated that rest on this value. A value
    * held for a reason is one the assistant cannot change. */
-  held: { clause: string; text: string }[];
+  held: string[];
   options: Option[];
 }
 

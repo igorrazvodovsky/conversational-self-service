@@ -512,7 +512,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     held = readings.reasons(
         asserting, engine.state("Binding"), engine.state("Specifying"), spec
     )
-    texts = {c["clause"]: c["text"] for c in clauses}
 
     variables = []
     for name, offered in catalogue["offers"].items():
@@ -563,9 +562,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "proposed": proposed.get(name),
                 # Held for a reason: the requirements the person stated that
                 # rest on this value, which the model cannot change.
-                "held": [
-                    {"clause": c, "text": texts.get(c, "")} for c in held.get(name, [])
-                ],
+                "held": held.get(name, []),
                 "refused": [
                     {"rule": rule, "because": constraining["because"].get(rule, rule)}
                     for rule in refused.get(name, [])

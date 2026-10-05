@@ -1,8 +1,9 @@
 "use client";
 
-import { SparklesIcon, TriangleAlertIcon } from "lucide-react";
+import { SparklesIcon, SplitIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { address, To } from "./address";
 import { money, tonnes } from "./format";
 import { useConfigurator, type Foreseen, type Question, type View } from "./provider";
 
@@ -35,8 +36,8 @@ function OneQuestion({ question }: { question: Question }) {
   const proposed = (view?.variables ?? []).filter((v) => v.proposed).length;
 
   return (
-    <Alert variant={isCompletion ? "default" : "destructive"}>
-      {isCompletion ? <SparklesIcon /> : <TriangleAlertIcon />}
+    <Alert>
+      {isCompletion ? <SparklesIcon /> : <SplitIcon />}
       <AlertTitle className="text-sm">
         {isCompletion
           ? `The assistant proposed ${proposed} ${proposed === 1 ? "value" : "values"}`
@@ -48,10 +49,9 @@ function OneQuestion({ question }: { question: Question }) {
             ? "Each waits beside its variable under still open. Take them one at a time, or all at once; the assistant cannot."
             : question.reason}
         </p>
+        {isCompletion ? null : <Between question={question} />}
         <Asked question={question} />
-        {/* The destructive alert colours everything inside it; the choices
-            are ordinary controls, not part of the warning. */}
-        <div className="mt-2 flex flex-wrap gap-2 text-foreground">
+        <div className="mt-2 flex flex-wrap gap-2">
           {question.options.map((option, index) =>
             isCompletion ? (
               <Button
@@ -99,6 +99,26 @@ function OneQuestion({ question }: { question: Question }) {
         </div>
       </AlertDescription>
     </Alert>
+  );
+}
+
+/** The assertions a conflict is between, each linked to its card under
+ * asserted — where the account of why it cannot be built stays after the
+ * question is left. */
+function Between({ question }: { question: Question }) {
+  const { label } = useConfigurator();
+  const options = question.options as { variable: string; option: string }[];
+  return (
+    <p className="mt-1">
+      Between{" "}
+      {options.map((option, index) => (
+        <span key={option.option}>
+          {index > 0 ? (index === options.length - 1 ? " and " : ", ") : null}
+          <To id={address.variable(option.variable)}>{label(option.option)}</To>
+        </span>
+      ))}
+      .
+    </p>
   );
 }
 

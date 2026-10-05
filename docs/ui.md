@@ -54,11 +54,11 @@ same function, so app code and primitives merge classes with one engine.
 | Canvas sections, empty and loading states | `Empty`, `Spinner` |
 | The artifact panel | One of `Moding`'s three surfaces at a time — the requirements, the configuration, the quote — switched from the panel's header, or by following a link to an item on another surface |
 | The requirements surface | The ledger with the sources beneath it, across the panel's full width; a sticky strip with the product's name, what the last turn moved, and the clause frame if one is on, linking to the clause and to the configuration |
-| The way around the panel | One `nav` row in the panel's header, a plain anchor per place with its count: the requirements, then the configuration's sections — *asked of you* while a question waits, *asserted*, *follows*, *open* — then the quotes, the three groups divided by a rule. A surface's place performs `focus`; a section is an address on the configuration. There is no level between surface and section (`panel-nav.tsx`) |
-| The configuration's strip | Sticky at the top of its scroll: what the last turn moved, the `Showing` menu, and under them the frame strip, so a frame begun anywhere is visible and its way out reachable from anywhere |
+| The way around the panel | One `nav` row in the panel's header, a plain anchor per place with its count: the requirements, then the configuration's sections — *asked of you* while a question waits, *asserted*, *follows*, *open* — then the quotes, the three groups divided by a rule. A surface's place performs `focus`; a section is an address on the configuration. There is no level between surface and section. At the row's end, while the configuration is showing, the `Showing` menu (`panel-nav.tsx`) |
+| The configuration's strip | Sticky at the top of its scroll while there is something in it: what the last turn moved, and the frame strip, so a frame begun anywhere is visible and its way out reachable from anywhere |
 | An address | Every variable, clause, source and section carries an `id` (`variable:<name>`, `clause:<id>`, `source:<kind>:<id>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row addressed from elsewhere opens. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
 | What the last turn moved | A small square before the heading of each variable and clause the assistant's or the person's own agent's last flow reached, and the assertions a settled value rests on; the strip at the top counts them. Read off the log (`touched` in `agent/views.py`), gone once the person next changes the specification |
-| Asserted value | `Card` with a ghost `Button` to withdraw; unmet is a destructive ring; the *for* line is one line, linking to the clause |
+| Asserted value | `Card` with a ghost `Button` to withdraw; unmet says so in words, and the question links to it; the *for* line is one line, linking to the clause |
 | A value that follows | `Item` (muted) in an `ItemGroup`; *from* names the assertions it rests on, each a link |
 | An open variable | `Collapsible` whose trigger is a ghost `Button`, under a heading row per catalogue family; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
 | Which facts are shown (`Showing`) | `DropdownMenu` of checkbox items, from a ghost `Button` |
@@ -70,7 +70,7 @@ same function, so app code and primitives merge classes with one engine.
 | The answering mode | The frame on a clause: the strip names the clause and says that a value picked now answers it; the clause's `Button` reads *Answering…* and takes the frame off |
 | The sources (`Filing`, `Conversing`) | A `Collapsible` under the ledger, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
 | Price and carbon totals | `Card`; the grid choice is a `ToggleGroup` |
-| An open question | A section, *asked of you*, first on the configuration while one waits; in it an `Alert` (destructive for a conflict) with `Button`s |
+| An open question | A section, *asked of you*, first on the configuration while one waits; in it an `Alert` naming the assertions it is between, each linked to its card, with `Button`s |
 | A value held for a reason | A line on the asserted card naming the requirement it answers, and that the assistant cannot change it |
 | A reading still the assistant's | *Keep* beside its source line in the ledger |
 | The action log | `Collapsible`, `Card`, `Badge` for the actor and for a refusal |
@@ -136,8 +136,14 @@ configurator is one engine, not one per thread.
   dashboard doesn't bring its own palette.
 - Status has no colour of its own — no amber for a question, red for an unmet
   assertion, violet for the model in the log or green for a trend going up —
-  because zinc has no equivalent. It maps onto shadcn's variants:
-  `destructive` for what can't be built, and `Badge` variants for actor, trend
+  because zinc has no equivalent. Nothing on the canvas is an error: a conflict
+  is a question put to the person, and an unmet assertion is on record waiting
+  for that answer. Neither is styled: the words say it, and the question links
+  to the assertions it is between, so finding one is following a link rather
+  than scanning for a mark. A refusal in the trace is an `outline` `Badge`, a
+  permission working rather than a fault. A yielded value is muted and struck
+  through, because it no longer holds. `destructive` is kept for an action that
+  destroys and for a request that failed; `Badge` variants carry actor, trend
   and status.
 - Nothing is smaller than 12px: the canvas's labels are `text-xs`.
 
