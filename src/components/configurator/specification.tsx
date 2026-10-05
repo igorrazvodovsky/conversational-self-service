@@ -14,7 +14,9 @@
  *
  * The document is never the state. A transaction here is a stimulus: a node
  * that appears is `require`, one that vanishes is `strike`, changed text is
- * `reword`, and the node view's controls are `settle`, `move` and `relax`. The mapping lives in `flush` below and holds nothing across
+ * `reword`, a changed order is `move`, and the node view's controls are
+ * `settle` and `relax`. A clause is dragged by the grip that appears beside
+ * it on hover. The mapping lives in `flush` below and holds nothing across
  * renders except what has not yet been sent. See
  * docs/concepts/specifying.md, "The specification is edited as a document".
  *
@@ -28,6 +30,7 @@ import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import Document from "@tiptap/extension-document";
 import Text from "@tiptap/extension-text";
 import { Placeholder } from "@tiptap/extensions";
+import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import {
   EditorContent,
   NodeViewContent,
@@ -37,7 +40,7 @@ import {
   type Editor,
   type NodeViewProps,
 } from "@tiptap/react";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon, XIcon } from "lucide-react";
+import { EllipsisIcon, GripVerticalIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -204,6 +207,35 @@ function textOf(node: ProseMirrorNode): string {
   return out.trim();
 }
 
+/**
+ * The clauses of `placed` that can stay where the state has them: the
+ * longest run that is in the same relative order in both. Every other one
+ * was moved.
+ */
+function keeping(placed: string[], order: string[]): Set<string> {
+  const rank = placed.map((c) => order.indexOf(c));
+  // Patience sorting: `ends[k]` is the index in `placed` ending the best run
+  // of length k + 1 found so far, and `back` links each index to the one
+  // before it in its run.
+  const ends: number[] = [];
+  const back: number[] = [];
+  rank.forEach((r, i) => {
+    let lo = 0;
+    let hi = ends.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (rank[ends[mid]] < r) lo = mid + 1;
+      else hi = mid;
+    }
+    back[i] = lo > 0 ? ends[lo - 1] : -1;
+    ends[lo] = i;
+  });
+  const out = new Set<string>();
+  for (let i = ends.length ? ends[ends.length - 1] : -1; i >= 0; i = back[i])
+    out.add(placed[i]);
+  return out;
+}
+
 /** The clauses a document holds, in order, for diffing against the view. */
 function clausesOf(editor: Editor) {
   const out: { pos: number; clause: string | null; text: string }[] = [];
@@ -301,16 +333,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const open = clause?.negotiability === "open";
   const moved = clause && view?.touched?.clauses.includes(clause.clause) ? view.touched.by : null;
   const isTarget = useTargeted(clause ? address.clause(clause.clause) : "");
-
-  // Where this clause sits, for `move`.
-  const order = view?.clauses.map((c) => c.clause) ?? [];
-  const at = clause ? order.indexOf(clause.clause) : -1;
-  const move = (direction: -1 | 1) => {
-    if (!clause || at < 0) return;
-    const before =
-      direction < 0 ? order[at - 1] : (order[at + 2] ?? null);
-    void gesture({ act: "move", clause: clause.clause, before });
-  };
 
   return (
     <NodeViewWrapper
@@ -476,26 +498,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               <Button
                 variant="ghost"
                 size="icon-xs"
-                disabled={busy || at <= 0}
-                title="Move up"
-                aria-label="Move up"
-                onClick={() => move(-1)}
-              >
-                <ArrowUpIcon />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                disabled={busy || at < 0 || at >= order.length - 1}
-                title="Move down"
-                aria-label="Move down"
-                onClick={() => move(1)}
-              >
-                <ArrowDownIcon />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
                 disabled={busy}
                 title="Strike this clause"
                 aria-label="Strike this clause"
@@ -554,7 +556,8 @@ export function Specification() {
   /**
    * Send what the document says that the state does not: a strike for every
    * identity that has gone, a reword for every changed text, a require for
-   * every node with words and no identity — in document order, one gesture
+   * every node with words and no identity — in document order — and then a
+   * move for every clause the document holds somewhere else, one gesture
    * each, awaited, so the log reads as the person's edits did.
    */
   const flush = useCallback(async () => {
@@ -563,6 +566,7 @@ export function Specification() {
     try {
       const current = viewRef.current;
       if (!current) return;
+      let latest = current;
       const held = new Map(current.clauses.map((c) => [c.clause, c]));
       const inDoc = clausesOf(editor);
       const present = new Set(inDoc.map((n) => n.clause).filter(Boolean));
@@ -581,6 +585,7 @@ export function Specification() {
         if (!n.text) continue;
         const before = new Set((viewRef.current?.clauses ?? []).map((c) => c.clause));
         const next = await gesture({ act: "require", text: n.text });
+        if (next) latest = next;
         const added = next?.clauses.find((c) => !before.has(c.clause));
         if (!added) continue;
         given.current.add(added.clause);
@@ -593,6 +598,19 @@ export function Specification() {
               .setNodeMarkup(n.pos, undefined, { ...node.attrs, clause: added.clause })
               .setMeta("addToHistory", false),
           );
+      }
+      // The order last. A clause just required was appended, so one typed
+      // between two others is moved too. Taken from the right, each moved
+      // clause goes before the one that follows it in the document, which
+      // is by then where the document has it.
+      const order = latest.clauses.map((c) => c.clause);
+      const placed = clausesOf(editor)
+        .map((n) => n.clause)
+        .filter((c): c is string => !!c && order.includes(c));
+      const stay = keeping(placed, order);
+      for (let i = placed.length - 1; i >= 0; i--) {
+        if (stay.has(placed[i])) continue;
+        await gesture({ act: "move", clause: placed[i], before: placed[i + 1] ?? null });
       }
     } finally {
       flushing.current = false;
@@ -620,7 +638,24 @@ export function Specification() {
     [],
   );
 
-  return <EditorContent editor={editor} />;
+  return (
+    <>
+      {editor ? (
+        // Placed against the clause's left edge; the padding takes it out
+        // of the card and level with the first line of words.
+        <DragHandle editor={editor}>
+          <span
+            className="flex cursor-grab pt-3 pr-4 text-muted-foreground hover:text-foreground active:cursor-grabbing"
+            title="Drag to reorder"
+            aria-label="Drag to reorder"
+          >
+            <GripVerticalIcon className="size-4" />
+          </span>
+        </DragHandle>
+      ) : null}
+      <EditorContent editor={editor} />
+    </>
+  );
 }
 
 /** The section: the ledger as a document, with its counts. */
