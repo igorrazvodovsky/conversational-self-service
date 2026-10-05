@@ -64,7 +64,7 @@ def said(via: str | None, actor: str | None, default: str | None = None) -> str 
     return SAID.get((via or "", actor or "")) or HOW.get(via or "", default)
 
 
-def _trace(engine: Engine, spec: str) -> dict[str, Any]:
+def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any]:
     """What the log says that no concept holds, in one pass from the boot mark.
 
     `how` — for each variable, the rule behind its most recent assertion, the
@@ -87,10 +87,16 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
     assertion in that flow, with its words.  Cleared when the clause is
     answered again.
 
+    `asOf` — `how` as it stood at each sequence number in `at`, the records
+    that issued quotes, so that an offer can say who asserted each of its
+    values in the same pass that reads the canvas's.
+
     Scanned from the boot mark rather than from the start of the log: the
     catalogue's arrival is a thousand-odd records of `Cataloguing` and
     `Pricing`, and no assertion can precede it.
     """
+    marks = sorted(at)
+    as_of: dict[int, dict[str, dict[str, Any]]] = {}
     words: dict[str, str] = {}
     # Who said the flow's words: the person, or their own agent as them.
     spoke: dict[str, str] = {}
@@ -100,6 +106,8 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
     stated: set[str] = set()
     displaced: dict[str, dict[str, Any]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        while marks and marks[0] < record.seq:
+            as_of[marks.pop(0)] = dict(how)
         if record.kind != "completion":
             continue
         output = record.output or {}
@@ -146,8 +154,11 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
                 "option": output["option"],
                 **entry,
             }
+    for mark in marks:
+        as_of[mark] = dict(how)
     return {
         "how": how,
+        "asOf": as_of,
         "stated": stated,
         "displaced": displaced,
         "agentSaid": sorted(f for f, actor in spoke.items() if actor == BROWSER),
@@ -450,7 +461,8 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 if option not in allowed
             )
         return False
-    trace = _trace(engine, spec)
+    issued = _issued(engine)
+    trace = _trace(engine, spec, at=tuple(seq for _, _, _, seq in issued.values()))
     how = trace["how"]
     reading = engine.state("Reading")
     clauses = ledger(engine, spec)
@@ -727,7 +739,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                     {**assumed, v["name"]: v["proposed"]["option"]}, dict(inclined)
                 )
 
-    quotes = _quotes(engine, spec, grid, settled)
+    quotes = _quotes(engine, spec, grid, settled, issued, trace["asOf"])
     profiling = engine.state("Profiling")
     customer = readings.profile(profiling, "person")
     seller = readings.profile(profiling, "seller")
@@ -903,7 +915,12 @@ def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
 
 
 def _quotes(
-    engine: Engine, spec: str, grid: str, settled: dict[str, str]
+    engine: Engine,
+    spec: str,
+    grid: str,
+    settled: dict[str, str],
+    issued: dict[str, tuple[str, str, str, int]],
+    as_of: dict[int, dict[str, dict[str, Any]]],
 ) -> list[dict[str, Any]]:
     """The three reads in `docs/concepts/quoting.md`: standing, differs, and
     the quotes themselves.
@@ -913,12 +930,17 @@ def _quotes(
     recomputed from the frozen item against whichever grid the person is
     looking at.  `differs` is the comparison between the frozen item and the
     live state, which nobody maintains.
+
+    `grounds` is the item's, frozen at issue: whether each value was
+    asserted, gave way or follows, and why.  Who asserted it is the log's,
+    read as it stood at the record that issued the quote (`as_of`), so the
+    sentence beside a frozen value is the one the canvas showed then.  A
+    quote issued before the item carried grounds has none, and says so.
     """
     quoting = engine.state("Quoting")
     catalogue = engine.state("Cataloguing")
     footprinting = engine.concepts["Footprinting"]
     now = date.today().isoformat()
-    issued = _issued(engine)
     quotes = []
     for number, quote in enumerate(quoting["quotes"], start=1):
         item = quoting["from"][quote]
@@ -934,7 +956,12 @@ def _quotes(
             standing = "lapsed"
         else:
             standing = "open"
-        via, actor, on = issued.get(quote, ("", "", None))
+        via, actor, on, seq = issued.get(quote, ("", "", None, 0))
+        grounds: dict[str, dict[str, Any]] | None = item.get("grounds")
+        how = as_of.get(seq, {})
+        # The values that answered a clause at issue: their clause carries
+        # the words beside them, so the sentence says only who read it where.
+        cited = {o for c in item.get("requires", []) for o in c.get("answeredBy", [])}
         quotes.append(
             {
                 "quote": quote,
@@ -974,6 +1001,30 @@ def _quotes(
                     }
                     for clause in item.get("requires", [])
                 ],
+                "grounds": (
+                    None
+                    if grounds is None
+                    else {
+                        name: {
+                            **ground,
+                            "askedLabel": (
+                                catalogue["label"].get(ground["asked"], ground["asked"])
+                                if ground.get("asked")
+                                else None
+                            ),
+                            "how": (
+                                _how(engine, how[name], cited=holds.get(name) in cited)
+                                if ground["standing"] != "follows" and name in how
+                                else None
+                            ),
+                            "following": [
+                                {"variable": v, "heading": catalogue["heading"].get(v, v)}
+                                for v in ground.get("following", [])
+                            ],
+                        }
+                        for name, ground in grounds.items()
+                    }
+                ),
                 "differs": sorted(
                     name for name, option in holds.items() if settled.get(name) != option
                 ),
@@ -983,15 +1034,15 @@ def _quotes(
     return quotes
 
 
-def _issued(engine: Engine) -> dict[str, tuple[str, str, str]]:
+def _issued(engine: Engine) -> dict[str, tuple[str, str, str, int]]:
     """For each quote, the rule that issued it, the actor whose call it
-    followed from, and the day it was issued.
+    followed from, the day it was issued, and the record's place in the log.
 
     Both come off the log rather than the concept.  The rule is a provenance
     edge, as for assertions; the date is the completion's timestamp, which the
     concept does not hold because it holds no clock.
     """
-    issued: dict[str, tuple[str, str, str]] = {}
+    issued: dict[str, tuple[str, str, str, int]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if record.kind != "completion" or record.concept != "Quoting":
             continue
@@ -1003,6 +1054,7 @@ def _issued(engine: Engine) -> dict[str, tuple[str, str, str]]:
                 record.via or "",
                 record.actor,
                 date.fromtimestamp(record.at).isoformat(),
+                record.seq,
             )
     return issued
 

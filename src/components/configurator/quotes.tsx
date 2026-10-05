@@ -7,9 +7,13 @@
  * The end of a configuration is not the configuration; it is an offer
  * somebody can accept. Quotes are a third kind of fact beside the asserted
  * and the entailed — snapshots with a price — and this surface shows one at a
- * time as the proposal it is, under an overview of every offer issued: its
- * standing, its sum, when it runs out, and which of its frozen values the
- * canvas has since moved away from. That last column is the question a
+ * time, under an overview of every offer issued. The one shown opens as a
+ * decision — what it costs over its term, what the person provides, how long
+ * it stays open — and is read two ways: against what was asked, which is the
+ * canvas's question put to the specification as it stood (`grounds.tsx`),
+ * and as the proposal sent and signed (`document.tsx`). The overview gives
+ * each offer its standing, its sum, when it runs out, and which of its frozen
+ * values the canvas has since moved away from. That last column is the question a
  * person brings to two quotes, and it is `differs`, a read nobody maintains.
  * Two quotes can also be compared outright: only the rows on which they
  * differ, with the sums, which is the one slice of a quote that two
@@ -19,8 +23,9 @@
  * goes nowhere. Two of those reasons are about the addressee, so the surface
  * also carries the form that writes `Profiling` and `Naming`.
  *
- * Which quote is being looked at is a viewer's convenience, held here; that a
- * quote exists, and its standing, is `Quoting`'s.
+ * Which quote is being looked at, and which way it is read, is a viewer's
+ * convenience, held here; an address on one of a quote's lines sets both.
+ * That a quote exists, and its standing, is `Quoting`'s.
  */
 
 import { ChevronDownIcon, PrinterIcon } from "lucide-react";
@@ -57,7 +62,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { quoteOf, useHash } from "./address";
 import { QuoteDocument, STANDING } from "./document";
+import { AsIssued, Decision } from "./grounds";
 import { day, money } from "./format";
 import { useConfigurator, type Party, type Quote, type View } from "./provider";
 
@@ -352,6 +360,8 @@ function Comparison({
   );
 }
 
+type Reading = "asked" | "proposal";
+
 function RequestButton() {
   const { view, gesture, busy } = useConfigurator();
   if (!view) return null;
@@ -379,10 +389,21 @@ export function QuoteSurface() {
   const [selected, setSelected] = useState<string | null>(null);
   // The second quote of a comparison, when one is being made.
   const [against, setAgainst] = useState<string | null>(null);
+  // How the quote is read: against what was asked, or as the proposal sent.
+  const [reading, setReading] = useState<Reading>("asked");
   // A newly issued quote is the one to look at.
   useEffect(() => {
     setSelected(latest);
   }, [latest]);
+  // An address on a quote's line names the quote, and the reading that
+  // carries its lines.
+  const hash = useHash();
+  useEffect(() => {
+    const named = quoteOf(hash);
+    if (!named) return;
+    setSelected(named);
+    setReading("asked");
+  }, [hash]);
 
   // A read that failed says nothing about the state; what was last read
   // stays up until one succeeds.
@@ -450,9 +471,8 @@ export function QuoteSurface() {
         <Addressee />
 
         {quote ? (
-          // A sheet on the panel's ground, the way it will print.
           <Card className="px-8 py-8">
-            <QuoteDocument
+            <Decision
               quote={quote}
               view={view}
               actions={
@@ -490,6 +510,23 @@ export function QuoteSurface() {
                 </>
               }
             />
+            <Tabs
+              value={reading}
+              onValueChange={(value) => setReading(value as Reading)}
+              className="mt-6"
+            >
+              <TabsList>
+                <TabsTrigger value="asked">Against what was asked</TabsTrigger>
+                <TabsTrigger value="proposal">As the proposal</TabsTrigger>
+              </TabsList>
+              <TabsContent value="asked">
+                <AsIssued quote={quote} view={view} />
+              </TabsContent>
+              {/* The sheet as it will print. */}
+              <TabsContent value="proposal" className="pt-4">
+                <QuoteDocument quote={quote} view={view} />
+              </TabsContent>
+            </Tabs>
           </Card>
         ) : (
           <Empty className="border p-8">

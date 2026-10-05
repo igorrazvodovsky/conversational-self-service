@@ -45,9 +45,10 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
     that fails the rule declines to fire, which is the ordinary meaning of a
     `where`; the view says which condition failed.
 
-    The item is a value, not a reference — the specification's identity and
-    its settled assignment, copied — so the quote holds what was true and
-    cannot see the specification move.  The terms are likewise copied: the
+    The item is a value, not a reference — the specification's identity, its
+    settled assignment, the requirements as they stood and the grounds of
+    every value, copied — so the quote holds what was true and cannot see the
+    specification or the catalogue move.  The terms are likewise copied: the
     seller's stipulations, both parties' profiles and the job's name as they
     stood, so that the document renders from the offer alone and a change to
     any of them next month does not change a quote issued this month.  See
@@ -88,10 +89,15 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
             # frozen with the values: a proposal's basis of design is what
             # the customer asked for, in their words, beside what answers it.
             "requires": _requires(states, spec),
+            # Why each value holds, and what it added to the price, frozen
+            # too: the catalogue is read afresh at every boot, and an offer
+            # read against what was asked must say what was true at issue.
+            "grounds": _grounds(states, spec, settled),
         },
         "to": PERSON,
-        # One sum, for the equipment supplied and installed.  Line prices are
-        # the catalogue's business and do not appear on a proposal.
+        # One sum, for the equipment supplied and installed.  The line
+        # prices are in the grounds and sum to it; the proposal prints the
+        # sum alone.
         "amount": total["capital"],
         "terms": {
             "basis": total["basis"],
@@ -125,6 +131,40 @@ def _requires(states: States, spec: str) -> list[dict[str, Any]]:
         }
         for clause in specifying["clauses"].get(spec, [])
     ]
+
+
+def _grounds(
+    states: States, spec: str, settled: dict[str, str]
+) -> dict[str, dict[str, Any]]:
+    """The grounds of `?holds` in `?s`: for each settled value, whether it
+    was asserted, gave way or follows, by whom, the rules that force it with
+    their reasons, the assertions it rests on, and its line prices."""
+    constraining = states["Constraining"].state()
+    asserting = states["Asserting"].state()
+    pricing = states["Pricing"].state()
+    asserted = asserting["asserted"].get(spec, {})
+    by = asserting["assertedBy"].get(spec, {})
+    owing = constraining["owing"].get(spec, {})
+    following = constraining["following"].get(spec, {})
+    because = constraining["because"]
+    grounds: dict[str, dict[str, Any]] = {}
+    for variable, option in settled.items():
+        asked = asserted.get(variable)
+        grounds[variable] = {
+            "standing": (
+                "follows" if asked is None else "asked" if asked == option else "yielded"
+            ),
+            **({"asked": asked} if asked is not None and asked != option else {}),
+            **({"party": by[variable]} if asked is not None and variable in by else {}),
+            "owing": [
+                {"rule": rule, "because": because.get(rule, rule)}
+                for rule in owing.get(variable, [])
+            ],
+            "following": list(following.get(variable, [])),
+            "capital": pricing["capital"].get(option, 0),
+            "monthly": pricing["monthly"].get(option, 0),
+        }
+    return grounds
 
 
 def _carry(act: str, concept: str, action: str, *arguments: str, **fixed: Any):

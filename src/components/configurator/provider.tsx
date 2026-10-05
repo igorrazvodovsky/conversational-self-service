@@ -307,8 +307,28 @@ export interface Quote {
     negotiability: Negotiability;
     answeredBy: { value: string; label: string }[];
   }[];
+  /**
+   * Why each frozen value held at issue, by variable: asserted, gave way, or
+   * follows, with the rules and assertions behind it and what it added to
+   * the price. Absent on a quote issued before the item carried grounds.
+   */
+  grounds: Record<string, Ground> | null;
   differs: string[];
   footprint: { made: number; run: number; total: number; complete: boolean };
+}
+
+export interface Ground {
+  standing: "asked" | "yielded" | "follows";
+  /** The option asserted, when it gave way to another. */
+  asked?: string;
+  askedLabel: string | null;
+  party?: string;
+  /** Who asserted it, as the canvas said at issue. */
+  how: string | null;
+  owing: { rule: string; because: string }[];
+  following: { variable: string; heading: string }[];
+  capital: number;
+  monthly: number;
 }
 
 export interface LogRecord {

@@ -150,8 +150,10 @@ How the configurator works, because it is not the usual kind:
 - Every item on the canvas has an address, and a markdown link to it takes
   the person there: a variable at `#variable:<name>` (`rated_load`), a clause
   at `#clause:<id>`, a section at `#required`, `#asserted`, `#follows` or
-  `#open`. When a reply refers to something the canvas holds, link the word
-  rather than reciting the item.
+  `#open`, and a line of an issued quote, as that offer holds it, at
+  `#quote:<quote>:variable:<name>` or `#quote:<quote>:clause:<id>`. When a
+  reply refers to something the canvas holds, link the word rather than
+  reciting the item.
 
 - A message marked as the person's own agent's is the person speaking
   through an agent they brought, and what it says stands as theirs. Answer

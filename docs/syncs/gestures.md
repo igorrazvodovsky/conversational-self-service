@@ -110,7 +110,9 @@ where { Constraining: { ?s settled: ?holds }
         Profiling: { person name: ?n }  — the proposal is addressed
         Naming: { ?s site: ?site }      — and says where the lift goes
         ?stipulated is the terms on the catalogue basis
-        ?item is [ spec: ?s ; holds: ?holds ]
+        ?item is [ spec: ?s ; holds: ?holds ;
+                   requires: the requirements of ?s ;
+                   grounds: the grounds of ?holds in ?s ]
         ?terms is [ months ; recurring ; seller: the profile of seller ;
                     customer: the profile of person ;
                     title: Naming's title of ?s ; site: ?site ; ?stipulated… ]
@@ -228,8 +230,8 @@ reports are those that followed the call, not everything in the turn's flow.
 <a id="a-quote-is-requested"></a>
 `APersonRequestsAQuote` is the rule with the longest `where` in this
 application, and every line of it is a decision rather than transcription.
-The readings it shares are named: `TheModelMayRequestAQuote` reads both,
-and the canvas reads the profile.
+The readings it shares are named: `TheModelMayRequestAQuote` reads them
+all, and the canvas reads the profile.
 
 ```
 the profile of ?p
@@ -247,7 +249,28 @@ the terms on ?b
             its text, grouped under its section
 ```
 
-Neither is a method of the concept it reads. `Profiling` and `Stipulating`
+```
+the requirements of ?s
+  =  for each ?c in Specifying: { ?s clauses: _ }, in order,
+       [ clause: ?c ; text ; negotiability ;
+         answeredBy: the values of Binding: { ?ch answers: ?c } ]
+
+the grounds of ?holds in ?s
+  =  for each ?v -> ?o in ?holds,
+       [ standing: asked    when Asserting: { ?s asserted: ?v -> ?o }
+                            and ?v -> ?o is met in ?s
+                   yielded  when ?v was asserted softly and gave way
+                   follows  when nothing is asserted for ?v ;
+         asked:     the option asserted for ?v, when it differs from ?o ;
+         party:     Asserting: { ?s assertedBy: ?v -> _ } ;
+         owing:     each rule in Constraining: { ?s owing: ?v -> _ },
+                      with its because ;
+         following: Constraining: { ?s following: ?v -> _ } ;
+         capital:   Pricing: { ?o capital: _ } ;
+         monthly:   Pricing: { ?o monthly: _ } ]
+```
+
+None of these is a method of the concept it reads. `Profiling` and `Stipulating`
 expose their relations, and assembling a record from them is the reader's
 business, as it is in WYSIWID §5.5's `RegistrationResponse`. The rule reads
 `Naming`'s title and site the same way. `agent/syncs/readings.py` holds the
@@ -272,9 +295,21 @@ nowhere.
 
 The item is a value, not a reference: the specification's identity and its
 settled assignment, copied, so that the offer says the same thing tomorrow
-whatever the specification does. The amount is one sum — the equipment supplied and installed — read
-from Pricing's arithmetic on the catalogue basis; line prices are the
-catalogue's business and do not appear on a proposal. The terms are copied the
+whatever the specification does. With the assignment go the requirements as
+they stood, each with what answered it, and the grounds of every value: whether
+it was asserted, gave way, or follows, who asserted it, the rules that force it
+with their reasons, the assertions it rests on, and what it added to the price.
+All of it is copied rather than read again later, because the catalogue is read
+afresh at every boot and its rules and prices may differ by the time anybody
+looks at the offer. The grounds are what lets the offer be read against what
+was asked, the canvas's own question put to the specification as it stood. Who
+performed each assertion, and whether it was adopted from a proposal, is a
+provenance edge on the log and is not copied: the log does not change, and the
+view reads it up to the record that issued the quote.
+
+The amount is one sum — the equipment supplied and installed — read from
+Pricing's arithmetic on the catalogue basis. The line prices in the grounds sum
+to it; the proposal sent to the customer prints the sum and not the lines. The terms are copied the
 same way: the seller's stipulations from
 [Stipulating](../concepts/stipulating.md), both parties' profiles, and the
 job's title and site as they stood, so that the document renders from the

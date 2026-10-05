@@ -76,7 +76,7 @@ layer beside the agent.
 │   │   │   ├── provider.tsx              # reads /view, performs gestures
 │   │   │   ├── index.tsx                 # the configuration surface: the three sections
 │   │   │   ├── requirements.tsx          # the requirements surface: the ledger and its sources
-│   │   │   ├── totals.tsx                # price and carbon
+│   │   │   ├── standing.tsx              # where the specification stands: quotable or not, and the running price and carbon
 │   │   │   ├── specification.tsx         # the requirement ledger as a Tiptap document; edits become gestures
 │   │   │   ├── sources.tsx               # the documents and words the model read from, item by item, under the ledger
 │   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode (the clause frame)

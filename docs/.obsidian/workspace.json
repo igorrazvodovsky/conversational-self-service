@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "concepts/deciding.md",
+                "file": "ui.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "deciding"
+              "title": "ui"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "concepts/deciding.md",
+                "file": "ui.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -189,6 +189,7 @@
   },
   "active": "83ee5d50279fef92",
   "lastOpenFiles": [
+    "concepts/deciding.md",
     "ui.md",
     "visit.md",
     "conceptual-model.md",
@@ -215,7 +216,6 @@
     "method/objects.md",
     "concept-relations.md",
     "concept-relations.canvas",
-    "concepts/footprinting.md",
     "syncs",
     "concepts",
     "method"

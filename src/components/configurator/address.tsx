@@ -11,8 +11,13 @@
  * after a withdrawal, and the address follows it. A link between two items is
  * a plain anchor to one of these, and so is a link from the chat.
  *
+ * A quote's lines are items too: `#quote:<id>:variable:<name>` and
+ * `#quote:<id>:clause:<id>`, the frozen value or clause as that offer holds
+ * it, which the live address of the same variable does not reach.
+ *
  * An item lives on one of `Moding`'s surfaces: a clause or a source on the
- * requirements, a variable or a section of the configuration on the canvas.
+ * requirements, a variable or a section of the configuration on the canvas,
+ * a quote's line on the quotes.
  * Following an address to the other surface performs `focus` on it — the one
  * thing here that is recorded, and it is what a link is for — and then
  * scrolls to the item once it has rendered. The address itself records
@@ -27,7 +32,13 @@ export const address = {
   variable: (name: string) => `variable:${name}`,
   clause: (id: string) => `clause:${id}`,
   source: (kind: string, id: string) => `source:${kind}:${id}`,
+  quote: (quote: string, kind: "variable" | "clause", id: string) =>
+    `quote:${quote}:${kind}:${id}`,
 };
+
+/** The quote an address on the quote surface names, if it names one. */
+export const quoteOf = (id: string): string | null =>
+  id.startsWith("quote:") ? id.split(":")[1] ?? null : null;
 
 export const href = (id: string) => `#${id}`;
 
@@ -52,6 +63,7 @@ export function useTargeted(id: string): boolean {
 export function surfaceOf(id: string): Surface {
   if (id.startsWith("clause:") || id.startsWith("source:")) return "requirements";
   if (id === "required" || id === "read-from") return "requirements";
+  if (id.startsWith("quote:")) return "quote";
   return "canvas";
 }
 

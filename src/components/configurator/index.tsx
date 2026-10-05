@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { address, To } from "./address";
 import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
-import { Totals } from "./totals";
+import { Standing } from "./standing";
 import { Trace } from "./trace";
 import { AskedCard, FollowsRow, OpenRow } from "./variables";
 
@@ -142,47 +142,6 @@ function Header() {
   );
 }
 
-/** The step off the canvas: request a quote, or go and look at the ones issued. */
-function QuoteCall() {
-  const { view, gesture, busy } = useConfigurator();
-  if (!view) return null;
-  const count = view.quotes.length;
-  return (
-    <section className="mt-6 flex flex-wrap items-center gap-2 border-t pt-4">
-      <span className="text-xs text-muted-foreground">
-        {view.quotable.ok
-          ? "Everything is settled and priced."
-          : `A quote needs everything settled — ${view.quotable.because}.`}
-      </span>
-      <div className="ml-auto flex gap-2">
-        {count ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={() => void gesture({ act: "focus", surface: "quote" })}
-          >
-            {count === 1 ? "1 quote issued" : `${count} quotes issued`}
-          </Button>
-        ) : null}
-        <Button
-          size="sm"
-          variant={view.quotable.ok ? "default" : "outline"}
-          disabled={busy || !view.quotable.ok}
-          title={
-            view.quotable.ok
-              ? "Freeze the values and the price as they stand, for thirty days"
-              : `Not yet: ${view.quotable.because}`
-          }
-          onClick={() => void gesture({ act: "quote" })}
-        >
-          Request a quote
-        </Button>
-      </div>
-    </section>
-  );
-}
-
 /**
  * The configuration's sections as the current state fills them. A frame
  * narrows every section to the items that bear on one question and leaves
@@ -273,7 +232,7 @@ export function ConfiguratorCanvas() {
           <Header />
 
           <div className="mt-4">
-            <Totals />
+            <Standing />
           </div>
 
           {/* Only while something waits on the person: an empty section
@@ -350,11 +309,6 @@ export function ConfiguratorCanvas() {
               ))}
             </Card>
           </Section>
-
-          {/* The end of a configuration is an offer, and the offer is a
-              surface of its own. The canvas only says whether one can be
-              requested yet, and how many there are. */}
-          <QuoteCall />
 
           <Trace />
 
