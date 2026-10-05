@@ -40,7 +40,7 @@ import {
   type Editor,
   type NodeViewProps,
 } from "@tiptap/react";
-import { EllipsisIcon, GripVerticalIcon, XIcon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon, GripVerticalIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,6 +57,7 @@ import { cn } from "@/lib/utils";
 import { address, addressable, Moved, targeted as targetedRing, To, useTargeted } from "./address";
 import {
   NEGOTIABILITY,
+  plain,
   segments,
   token,
   useAnswering,
@@ -316,10 +317,48 @@ function Relax({ clause, onDone }: { clause: Clause; onDone: () => void }) {
  * The node view. The text is `NodeViewContent`, editable; the rest is read
  * from the view by the clause's identity and is not part of the document.
  */
+/**
+ * Take focus to a control in a clause once the clause has rendered again.
+ * A gesture on a clause comes back as a new document, and the node views are
+ * made afresh, so the control the person pressed is gone; this finds its
+ * successor, or the clause itself, so the keyboard keeps its place.
+ */
+function refocus(clause: string, control?: string, tries = 0) {
+  const again = () => setTimeout(() => refocus(clause, control, tries + 1), 50);
+  const at = document.getElementById(address.clause(clause));
+  // While the gesture settles, every control is disabled and the node views
+  // are about to be replaced; wait for live, enabled ones.
+  const wanted =
+    control &&
+    (at?.querySelector<HTMLElement>(`[data-control="${control}"]:not(:disabled)`) ??
+      // A clause moved to an end has that end's button disabled for good;
+      // the other one is the nearest control.
+      at?.querySelector<HTMLElement>(`[data-control^="move-"]:not(:disabled)`));
+  const last = tries >= 40;
+  const target = wanted || (last || !control ? at : null);
+  if (!target) {
+    if (!last) again();
+    return;
+  }
+  if (target === at) at.tabIndex = -1;
+  target.focus();
+  // Focused, it may still be replaced by a write-back a moment later.
+  if (!last) setTimeout(() => {
+    if (!target.isConnected) refocus(clause, control, tries + 1);
+  }, 100);
+}
+
 function ClauseView({ node, decorations }: NodeViewProps) {
   const { view, gesture, busy } = useConfigurator();
   const { answering, setAnswering } = useAnswering();
   const [relaxing, setRelaxing] = useState(false);
+  // Back to the Relax button when the form it opened closes.
+  const relaxButton = useRef<HTMLButtonElement>(null);
+  const wasRelaxing = useRef(false);
+  useEffect(() => {
+    if (wasRelaxing.current && !relaxing) relaxButton.current?.focus();
+    wasRelaxing.current = relaxing;
+  }, [relaxing]);
   const id: string | null = node.attrs.clause;
   const clause = id ? (view?.clauses.find((c) => c.clause === id) ?? null) : null;
   const active = !!clause && answering?.clause === clause.clause;
@@ -327,6 +366,17 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const open = clause?.negotiability === "open";
   const moved = clause && view?.touched?.clauses.includes(clause.clause) ? view.touched.by : null;
   const isTarget = useTargeted(clause ? address.clause(clause.clause) : "");
+  // Moving by button is the same `move` gesture a drag ends in, for the
+  // keyboard and for anyone who cannot drag.
+  const order = view?.clauses.map((c) => c.clause) ?? [];
+  const at = clause ? order.indexOf(clause.clause) : -1;
+  const move = (direction: "up" | "down") => {
+    if (!clause) return;
+    const before = direction === "up" ? order[at - 1] : (order[at + 2] ?? null);
+    void gesture({ act: "move", clause: clause.clause, before }).then(() =>
+      refocus(clause.clause, `move-${direction}`),
+    );
+  };
 
   return (
     <NodeViewWrapper
@@ -354,6 +404,7 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               {hint ? (
                 <span
                   contentEditable={false}
+                  aria-hidden
                   className="pointer-events-none absolute inset-0 text-sm text-muted-foreground"
                 >
                   {hint}
@@ -369,6 +420,11 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               title={clause.formerly.join(" → ")}
             >
               relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
+              {clause.formerly.length > 1 ? (
+                <span className="sr-only">
+                  ; in full, {clause.formerly.join(", then ")}
+                </span>
+              ) : null}
             </p>
           ) : null}
           {/* Where the clause came from, when the model read it: the source
@@ -457,7 +513,13 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               {active ? "Answering…" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}
             </Button>
             {clause.negotiability === "negotiable" && !relaxing ? (
-              <Button size="xs" variant="ghost" disabled={busy} onClick={() => setRelaxing(true)}>
+              <Button
+                ref={relaxButton}
+                size="xs"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => setRelaxing(true)}
+              >
                 Relax
               </Button>
             ) : null}
@@ -471,7 +533,7 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                     size="icon-xs"
                     disabled={busy}
                     title={`${NEGOTIABILITY[clause.negotiability]} — how firmly this is meant`}
-                    aria-label="How firmly this is meant"
+                    aria-label={`How firmly this is meant: ${NEGOTIABILITY[clause.negotiability]}`}
                   >
                     <EllipsisIcon />
                   </Button>
@@ -496,10 +558,38 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               <Button
                 variant="ghost"
                 size="icon-xs"
+                disabled={busy || at <= 0}
+                data-control="move-up"
+                title="Move up"
+                aria-label={`Move up: ${plain(clause.text)}`}
+                onClick={() => move("up")}
+              >
+                <ArrowUpIcon />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                disabled={busy || at < 0 || at >= order.length - 1}
+                data-control="move-down"
+                title="Move down"
+                aria-label={`Move down: ${plain(clause.text)}`}
+                onClick={() => move("down")}
+              >
+                <ArrowDownIcon />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 disabled={busy}
                 title="Strike this clause"
-                aria-label="Strike this clause"
-                onClick={() => void gesture({ act: "strike", clause: clause.clause })}
+                aria-label={`Strike: ${plain(clause.text)}`}
+                onClick={() => {
+                  // The clause goes, and the keyboard goes on to the next.
+                  const next = order[at + 1] ?? order[at - 1];
+                  void gesture({ act: "strike", clause: clause.clause }).then(() => {
+                    if (next) refocus(next);
+                  });
+                }}
               >
                 <XIcon />
               </Button>
@@ -534,7 +624,13 @@ export function Specification() {
     content: documentOf(view),
     immediatelyRender: false,
     editorProps: {
-      attributes: { class: "outline-none", "aria-label": "Your requirements" },
+      attributes: {
+        class: "outline-none",
+        role: "textbox",
+        "aria-multiline": "true",
+        "aria-label": "Your requirements",
+        "aria-describedby": "required-keys",
+      },
     },
     onUpdate: () => schedule(),
     onBlur: () => void flush(),
@@ -642,10 +738,11 @@ export function Specification() {
         // Placed against the clause's left edge; the padding takes it out
         // of the card and level with the first line of words.
         <DragHandle editor={editor}>
+          {/* For the pointer; the keyboard has each clause's Move buttons. */}
           <span
+            aria-hidden
             className="flex cursor-grab pt-3 pr-4 text-muted-foreground hover:text-foreground active:cursor-grabbing"
             title="Drag to reorder"
-            aria-label="Drag to reorder"
           >
             <GripVerticalIcon className="size-4" />
           </span>
@@ -671,12 +768,13 @@ export function Required() {
           {read ? ` · ${read} read by the assistant` : ""}
           {unanswered ? ` · ${unanswered} not yet answered` : ""}
         </span>
-        <span className="basis-full text-xs text-muted-foreground">
+        <span id="required-keys" className="basis-full text-xs text-muted-foreground">
           Enter for another, Backspace on an empty line to strike, @ to name
           the catalogue
         </span>
       </header>
-      <Card className="gap-0 py-0">
+      {/* The ledger is a text field, so its edge is a field's: 3:1. */}
+      <Card className="gap-0 py-0 ring-(--field)">
         <CardContent className="px-3 py-1">
           <Specification />
         </CardContent>

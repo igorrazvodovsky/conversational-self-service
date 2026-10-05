@@ -3,6 +3,7 @@
 import { SparklesIcon, SplitIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useId } from "react";
 import { address, To } from "./address";
 import { money, tonnes } from "./format";
 import { useConfigurator, type Foreseen, type Question, type View } from "./provider";
@@ -34,11 +35,22 @@ function OneQuestion({ question }: { question: Question }) {
   const { gesture, busy, label, view } = useConfigurator();
   const isCompletion = question.about === "completion";
   const proposed = (view?.variables ?? []).filter((v) => v.proposed).length;
+  const title = useId();
+  // Answered, the card goes; the keyboard goes on to the values it moved.
+  const answer = (stimulus: Parameters<typeof gesture>[0]) =>
+    void gesture(stimulus).then(() => {
+      const next = document.getElementById("asserted");
+      if (!next) return;
+      next.tabIndex = -1;
+      next.focus();
+    });
 
+  // A region, not an alert: the chat shows the same question, and its
+  // arrival is announced once, politely (`example-layout/announcer.tsx`).
   return (
-    <Alert>
+    <Alert role="region" aria-labelledby={title}>
       {isCompletion ? <SparklesIcon /> : <SplitIcon />}
-      <AlertTitle className="text-sm">
+      <AlertTitle id={title} className="text-sm">
         {isCompletion
           ? `The assistant proposed ${proposed} ${proposed === 1 ? "value" : "values"}`
           : "These cannot hold together"}
@@ -60,7 +72,7 @@ function OneQuestion({ question }: { question: Question }) {
                 size="sm"
                 disabled={busy}
                 onClick={() =>
-                  void gesture({
+                  answer({
                     act: "choose",
                     request: question.request,
                     option,
@@ -76,7 +88,7 @@ function OneQuestion({ question }: { question: Question }) {
                 foreseen={question.foreseen?.[index]}
                 disabled={busy}
                 onClick={() =>
-                  void gesture({
+                  answer({
                     act: "choose",
                     request: question.request,
                     option,
@@ -91,7 +103,7 @@ function OneQuestion({ question }: { question: Question }) {
             disabled={busy}
             className="text-muted-foreground"
             onClick={() =>
-              void gesture({ act: "decline", request: question.request })
+              answer({ act: "decline", request: question.request })
             }
           >
             Leave it for now

@@ -102,6 +102,13 @@ outline that replaces the primitives' own focus rings.
 darker than stock in the light theme, so the 12px labels keep 4.5:1 on the
 darkest level they sit on.
 
+A text field's edge is `--field`, 80% of `--muted-foreground`, which keeps 3:1
+against every level in both themes; `--input` stays the hairline for
+everything else, where the words say what the thing is. Under
+`prefers-reduced-motion: reduce` every animation and transition settles at
+once, in one rule rather than a `motion-safe:` per utility, because the
+primitives carry their own animations.
+
 ### Levels
 
 Contrast between surfaces comes from neutral levels, not colour, so a thing's
@@ -135,7 +142,7 @@ same function, so app code and primitives merge classes with one engine.
 | Canvas sections, empty and loading states | `Empty`, `Spinner` |
 | The artifact panel | One of `Moding`'s three surfaces at a time — the requirements, the configuration, the quote — switched from the panel's header, or by following a link to an item on another surface |
 | The requirements surface | The ledger with the sources beneath it, across the panel's full width; a sticky strip with the product's name, what the last turn moved, and the clause frame if one is on, linking to the clause and to the configuration |
-| The way around the panel | One `nav` row in the panel's header, a plain anchor per place with its count: the requirements, then the configuration's sections — *asked of you* while a question waits, *asserted*, *follows*, *open* — then the quotes, the three groups divided by a rule. A surface's place performs `focus`; a section is an address on the configuration. There is no level between surface and section. At the row's end, while the configuration is showing, the `Showing` menu (`panel-nav.tsx`) |
+| The way around the panel | One `nav` row in the panel's header, wrapping onto further lines when the panel is narrow or the text large, a plain anchor per place with its count: the requirements, then the configuration's sections — *asked of you* while a question waits, *asserted*, *follows*, *open* — then the quotes, the three groups divided by a rule. A surface's place performs `focus`; a section is an address on the configuration. There is no level between surface and section. At the row's end, while the configuration is showing, the `Showing` menu (`panel-nav.tsx`) |
 | The configuration's strip | Sticky at the top of its scroll while there is something in it: what the last turn moved, and the frame strip, so a frame begun anywhere is visible and its way out reachable from anywhere |
 | An address | Every variable, clause, source, quote line and section carries an `id` (`variable:<name>`, `clause:<id>`, `source:<kind>:<id>`, `quote:<id>:variable:<name>`, `quote:<id>:event:<key>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row addressed from elsewhere opens. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
 | What the last turn moved | A small square before the heading of each variable and clause the assistant's or the person's own agent's last flow reached, and the assertions a settled value rests on; the strip at the top counts them. Read off the log (`touched` in `agent/views.py`), gone once the person next changes the specification |
@@ -231,6 +238,48 @@ configurator is one engine, not one per thread.
   destroys and for a request that failed; `Badge` variants carry actor, trend
   and status.
 - Nothing is smaller than 12px: the canvas's labels are `text-xs`.
+
+## Accessibility
+
+The target is WCAG 2.2 AA, held to the rules in
+[A11Y.md](https://github.com/fecarrico/A11Y.md). The evidence — what was
+checked, how, and what still needs a person — is in `REPORT.md` at the
+repository's root, with the choices between equally conformant patterns in
+`A11Y-DECISIONS.md` beside it.
+
+- *Landmarks.* The panel's header row is a `header`, the surface a `main`, the
+  chat a `section` named *Chat*. Skip links come first in the tab order, to
+  the panel and to the composer; they move focus by script, because a
+  fragment on this page is an item's address.
+- *Headings.* The panel's `main` holds one visually hidden `h1` naming the
+  surface, rendered by the layout so it is there while a surface loads or is
+  empty, and naming the `main`; the eye has the nav. The surfaces' own
+  headings start at `h2`. The proposal's headings start at
+  the level `QuoteDocument` is given: `h1` on the printable page, `h3` under a
+  quote's `h2` on the surface. The window's title names the surface.
+- *Focus follows the person, never the model.* Changing surface from the nav,
+  or skipping to the panel, takes focus to the panel's `main`, named by the
+  surface's `h1` and ringed inside its edge; following an address takes it to
+  the item. A link in a one-line row unclips the row while it has keyboard
+  focus, so its ring and the clause show whole. A surface a rule brings forward takes nothing. When a gesture removes
+  the control that made it — a struck clause, an answered question, a moved
+  clause redrawn — focus goes to the nearest thing that is still there.
+- *What changed is said once.* `example-layout/announcer.tsx` holds the polite
+  status regions: what the last turn moved and a question arriving, and the
+  assistant's run starting and ending. The transcript is a `log`, `aria-busy`
+  while a reply is written, so a reply is never read token by token. A refused
+  gesture is shown and announced as an alert. The question cards are labelled
+  regions, not alerts, because the canvas and the chat show the same question.
+- *State in words.* Strikethrough, dimming, a badge's variant and the moved
+  square are for the eye; each carries visually hidden words beside it —
+  *ruled out*, *the current value*, *answers this clause*, *moved by*. A
+  tooltip holds nothing that is not also on the page.
+- *Every drag has a button.* A clause is moved by its *Move up* and *Move down*
+  buttons, the same `move` gesture a drag ends in; the grip is hidden from
+  assistive technology.
+- *Repeated controls say which.* Each card's *Change*, *Take back* and *What
+  followed from this* carry the variable's name, hidden, after the visible
+  words, so the name still begins with what is read on screen.
 
 ## What is not shadcn, and why
 

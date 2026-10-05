@@ -92,10 +92,18 @@ function WaitingQuestion({
 
   if (!question || status !== "awaiting") return <></>;
 
+  // Answered, the card goes; the keyboard goes back to the composer.
+  const answer = (stimulus: Parameters<typeof gesture>[0]) =>
+    void gesture(stimulus).then(() =>
+      document.querySelector<HTMLElement>("#chat textarea")?.focus(),
+    );
+
+  // A region, not an alert: the canvas shows the same question, and its
+  // arrival is announced once, politely (`example-layout/announcer.tsx`).
   return (
-    <Alert className="my-2">
+    <Alert className="my-2" role="region" aria-labelledby="waiting-question">
       <MessageCircleQuestionIcon />
-      <AlertTitle className="text-sm">The assistant is waiting on you</AlertTitle>
+      <AlertTitle id="waiting-question" className="text-sm">The assistant is waiting on you</AlertTitle>
       <AlertDescription>
         <p>{message ?? question.asked?.text}</p>
         <div className="mt-2 flex flex-col gap-2 text-foreground">
@@ -106,7 +114,7 @@ function WaitingQuestion({
               foreseen={question.foreseen?.[index]}
               disabled={busy}
               onClick={() =>
-                void gesture({ act: "choose", request: question.request, option })
+                answer({ act: "choose", request: question.request, option })
               }
             />
           ))}
@@ -117,7 +125,7 @@ function WaitingQuestion({
               disabled={busy}
               className="text-muted-foreground"
               onClick={() =>
-                void gesture({ act: "decline", request: question.request })
+                answer({ act: "decline", request: question.request })
               }
             >
               Leave it for now

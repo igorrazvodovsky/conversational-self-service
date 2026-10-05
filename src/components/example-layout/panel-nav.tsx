@@ -84,14 +84,23 @@ export function PanelNav() {
   const follow = (place: Place) => {
     if (place.surface === "canvas") goTo(place.id);
     else if (mode !== place.surface)
-      void gesture({ act: "focus", surface: place.surface });
+      // Focus follows the person to the surface they asked for, so the keyboard does not stay behind in the header. A surface
+      // a rule brings forward takes no focus: nobody asked to go there.
+      void gesture({ act: "focus", surface: place.surface }).then((next) => {
+        if (next?.mode === place.surface) focusSurface(place.surface);
+      });
+    else focusSurface(place.surface);
   };
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-2">
+    // Beside the wordmark while there is room for it, on a line of its own
+    // when there is not.
+    <div className="flex min-w-0 flex-[1_1_16rem] flex-wrap items-center gap-2">
+      {/* Wraps rather than scrolling sideways: at a narrow width or a
+          large text size every place stays in view. */}
       <nav
         aria-label="Panel"
-        className="flex min-w-0 items-center overflow-x-auto text-xs whitespace-nowrap"
+        className="flex min-w-0 flex-wrap items-center text-xs whitespace-nowrap"
       >
         {groups.map((places, i) => (
           <Fragment key={i}>
@@ -101,40 +110,45 @@ export function PanelNav() {
                 className="mx-2 h-3.5 w-px shrink-0 bg-border"
               />
             ) : null}
-            <div
+            <ul
               className={cn(
-                "flex items-center gap-x-3",
+                "flex flex-wrap items-center gap-x-3",
                 places[0].surface === mode
                   ? "text-foreground"
                   : "text-muted-foreground",
               )}
             >
               {places.map((place) => (
-                <a
-                  key={place.id}
-                  href={`#${place.id}`}
-                  aria-current={
-                    place.surface === mode && place.surface !== "canvas"
-                      ? "page"
-                      : undefined
-                  }
-                  aria-disabled={busy && place.surface !== "canvas"}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    follow(place);
-                  }}
-                  className={cn(
-                    "hover:text-foreground",
-                    place.surface === mode &&
-                      place.surface !== "canvas" &&
-                      "font-medium",
-                  )}
-                >
-                  {place.title}{" "}
-                  <span className="tabular-nums">{place.count}</span>
-                </a>
+                <li key={place.id}>
+                  <a
+                    href={`#${place.id}`}
+                    aria-current={
+                      place.surface === mode && place.surface !== "canvas"
+                        ? "page"
+                        : undefined
+                    }
+                    aria-disabled={busy && place.surface !== "canvas"}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      // `aria-disabled` says it; this makes it so.
+                      if (busy && place.surface !== "canvas") return;
+                      follow(place);
+                    }}
+                    // The row is tall and the words are small: the padding
+                    // gives the pointer a target the height of the row.
+                    className={cn(
+                      "inline-block py-2 hover:text-foreground",
+                      place.surface === mode &&
+                        place.surface !== "canvas" &&
+                        "font-medium",
+                    )}
+                  >
+                    {place.title}{" "}
+                    <span className="tabular-nums">{place.count}</span>
+                  </a>
+                </li>
               ))}
-            </div>
+            </ul>
           </Fragment>
         ))}
       </nav>
@@ -145,4 +159,21 @@ export function PanelNav() {
       ) : null}
     </div>
   );
+}
+
+/** Take focus to the panel's `main`, named by the surface's `h1`, once that
+ * surface has rendered. The `main` rather than the heading, because a
+ * surface's `h1` may be visually hidden and a ring on it would be invisible. */
+function focusSurface(surface: Surface, tries = 0) {
+  const heading = document.querySelector<HTMLElement>(
+    `#main h1[data-surface="${surface}"]`,
+  );
+  if (!heading) {
+    if (tries < 10) setTimeout(() => focusSurface(surface, tries + 1), 50);
+    return;
+  }
+  const main = document.getElementById("main");
+  if (!main) return;
+  main.tabIndex = -1;
+  main.focus();
 }

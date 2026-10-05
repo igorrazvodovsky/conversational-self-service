@@ -25,6 +25,7 @@
  * What can be done to the quote is the caller's, passed in as `actions`.
  */
 
+import { cn } from "@/lib/utils";
 import { Fragment, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -126,19 +127,46 @@ function Clauses({ items }: { items: string[] | undefined }) {
   );
 }
 
-function Heading({ children }: { children: ReactNode }) {
-  return <h2 className="mb-2 text-sm font-semibold">{children}</h2>;
+type Level = 1 | 2 | 3 | 4 | 5 | 6;
+const tag = (level: number) => `h${Math.min(level, 6) as Level}` as const;
+
+function Heading({ level, children }: { level: number; children: ReactNode }) {
+  const H = tag(level);
+  return <H className="mb-2 text-sm font-semibold">{children}</H>;
+}
+
+/** A heading inside a section, set small and spaced like a label. */
+function Subheading({
+  level,
+  className,
+  children,
+}: {
+  level: number;
+  className: string;
+  children: ReactNode;
+}) {
+  const H = tag(level);
+  return (
+    <H className={cn(className, "text-xs font-normal uppercase tracking-wide text-muted-foreground")}>
+      {children}
+    </H>
+  );
 }
 
 export function QuoteDocument({
   quote,
   view,
   actions,
+  level = 1,
 }: {
   quote: Quote;
   view: Pick<View, "product" | "currency" | "footprint">;
   actions?: ReactNode;
+  /** The level of the proposal's title: 1 when the page is the proposal,
+   * lower when it sits inside a surface that has its own headings. */
+  level?: Level;
 }) {
+  const Title = tag(level);
   const { currency } = view;
   const { terms } = quote;
   const years = terms.months / 12;
@@ -206,9 +234,9 @@ export function QuoteDocument({
 
       {/* The proposal, in one sentence, the way a bid letter opens. */}
       <section className="mt-6 space-y-3">
-        <h1 className="text-xl font-semibold">
+        <Title className="text-xl font-semibold">
           Proposal for one passenger lift, {view.product}
-        </h1>
+        </Title>
         <p>
           {sellerName} proposes to supply and install one (1){" "}
           {say(SENTENCED.platform)} passenger lift, {say(SENTENCED.load)},{" "}
@@ -231,12 +259,10 @@ export function QuoteDocument({
           use the values describe. A proposal that listed only the second
           would be filling the slot for the input with the output. */}
       <section>
-        <Heading>1. Basis of this proposal</Heading>
+        <Heading level={level + 1}>1. Basis of this proposal</Heading>
         {quote.requires?.length ? (
           <>
-            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-              The customer requires
-            </p>
+            <Subheading level={level + 2} className="mb-2">The customer requires</Subheading>
             <Table className="mb-4">
               <TableHeader>
                 <TableRow>
@@ -267,9 +293,7 @@ export function QuoteDocument({
                 ))}
               </TableBody>
             </Table>
-            <p className="mb-2 text-xs uppercase tracking-wide text-muted-foreground">
-              Site and use
-            </p>
+            <Subheading level={level + 2} className="mb-2">Site and use</Subheading>
           </>
         ) : null}
         <dl className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
@@ -284,7 +308,7 @@ export function QuoteDocument({
 
       {/* 2. Scope of supply */}
       <section>
-        <Heading>2. Scope of supply</Heading>
+        <Heading level={level + 1}>2. Scope of supply</Heading>
         <Table>
           <TableHeader>
             <TableRow>
@@ -299,18 +323,22 @@ export function QuoteDocument({
               return (
                 <Fragment key={family}>
                   <TableRow className="bg-muted/40 hover:bg-muted/40">
-                    <TableCell
+                    <TableHead
                       colSpan={2}
-                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                      scope="colgroup"
+                      className="h-auto py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
                     >
                       {heading}
-                    </TableCell>
+                    </TableHead>
                   </TableRow>
                   {lines.map((line) => (
                     <TableRow key={line.name}>
-                      <TableCell className="align-top text-muted-foreground">
+                      <TableHead
+                        scope="row"
+                        className="h-auto py-2 align-top font-normal whitespace-normal text-muted-foreground"
+                      >
                         {line.heading}
-                      </TableCell>
+                      </TableHead>
                       {/* The label only. The catalogue's notes are advice
                           for choosing, and a proposal carries none. */}
                       <TableCell>{line.label}</TableCell>
@@ -328,7 +356,7 @@ export function QuoteDocument({
       {/* 3. Price */}
       <section className="grid gap-6 sm:grid-cols-2">
         <div>
-          <Heading>3. Price</Heading>
+          <Heading level={level + 1}>3. Price</Heading>
           <p className="text-3xl font-semibold tabular-nums">
             {money(quote.amount, currency)}
           </p>
@@ -338,9 +366,7 @@ export function QuoteDocument({
           </p>
         </div>
         <div>
-          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
-            The price includes
-          </p>
+          <Subheading level={level + 2} className="mb-1">The price includes</Subheading>
           <Clauses items={terms.clauses.included} />
         </div>
       </section>
@@ -349,7 +375,7 @@ export function QuoteDocument({
 
       {/* 4. Payment */}
       <section>
-        <Heading>4. Payment</Heading>
+        <Heading level={level + 1}>4. Payment</Heading>
         <Table>
           <TableHeader>
             <TableRow>
@@ -389,7 +415,7 @@ export function QuoteDocument({
 
       {/* 5. Programme */}
       <section>
-        <Heading>5. Programme</Heading>
+        <Heading level={level + 1}>5. Programme</Heading>
         <dl className="space-y-1">
           <Line
             term="Layout drawings for approval"
@@ -415,7 +441,7 @@ export function QuoteDocument({
       {/* 6. Maintenance */}
       <section className="grid gap-6 sm:grid-cols-2">
         <div>
-          <Heading>6. Maintenance agreement</Heading>
+          <Heading level={level + 1}>6. Maintenance agreement</Heading>
           <dl className="space-y-1">
             <Line term="Service level" amount={say(SENTENCED.service)} />
             <Line term="Usage profile" amount={say(SENTENCED.usage)} />
@@ -428,9 +454,7 @@ export function QuoteDocument({
           </dl>
         </div>
         <div>
-          <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
-            On these terms
-          </p>
+          <Subheading level={level + 2} className="mb-1">On these terms</Subheading>
           <Clauses items={terms.clauses.maintenance} />
         </div>
       </section>
@@ -439,7 +463,7 @@ export function QuoteDocument({
 
       {/* 7. Warranty */}
       <section>
-        <Heading>7. Warranty</Heading>
+        <Heading level={level + 1}>7. Warranty</Heading>
         <p>
           The equipment is warranted against defects in materials and
           workmanship for {terms.warranty} months from acceptance, during
@@ -451,7 +475,7 @@ export function QuoteDocument({
 
       {/* 8. Work by others */}
       <section>
-        <Heading>8. Work by others</Heading>
+        <Heading level={level + 1}>8. Work by others</Heading>
         <p className="mb-2">
           The price and the programme assume that the following is provided by
           the customer or their contractor, at no cost to {sellerName}, before
@@ -471,7 +495,7 @@ export function QuoteDocument({
 
       {/* 9. Exclusions */}
       <section>
-        <Heading>9. Not included</Heading>
+        <Heading level={level + 1}>9. Not included</Heading>
         <Clauses items={terms.clauses.excluded} />
       </section>
 
@@ -479,7 +503,7 @@ export function QuoteDocument({
 
       {/* 10. Conditions */}
       <section>
-        <Heading>10. Conditions</Heading>
+        <Heading level={level + 1}>10. Conditions</Heading>
         <Clauses items={terms.clauses.conditions} />
       </section>
 
@@ -487,7 +511,7 @@ export function QuoteDocument({
 
       {/* 11. Carbon annex */}
       <section>
-        <Heading>
+        <Heading level={level + 1}>
           11. Environmental information, modelled over {view.footprint.horizon}{" "}
           years
         </Heading>
@@ -511,7 +535,7 @@ export function QuoteDocument({
 
       {/* 12. Acceptance */}
       <section>
-        <Heading>12. Acceptance</Heading>
+        <Heading level={level + 1}>12. Acceptance</Heading>
         <p>
           This proposal is open for acceptance until {day(quote.until)}. On
           acceptance it, with the conditions above, constitutes the whole

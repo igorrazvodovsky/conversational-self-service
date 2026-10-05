@@ -108,9 +108,10 @@ export function ConversationMenu({
       variant="ghost"
       size="xs"
       title="Conversations"
-      className="min-w-0 font-normal text-muted-foreground"
+      className="min-w-0 shrink font-normal text-muted-foreground"
     >
       <span className="truncate">
+        <span className="sr-only">Conversation: </span>
         {active ? conversationLabel(active.createdAt) : "New conversation"}
       </span>
       <ChevronDownIcon className="shrink-0" />
@@ -140,6 +141,9 @@ export function ConversationMenu({
                     </DropdownMenuLabel>
                     {group.threads.map((thread) => (
                       <DropdownMenuRadioItem key={thread.id} value={thread.id}>
+                        {/* The day heading above is for the eye; a screen
+                            reader on the item hears the day too. */}
+                        <span className="sr-only">{group.heading}, </span>
                         {timeLabel(thread.createdAt)}
                       </DropdownMenuRadioItem>
                     ))}

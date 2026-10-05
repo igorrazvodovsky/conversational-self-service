@@ -68,16 +68,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { quoteKindOf, quoteOf, useHash } from "./address";
 import { QuoteDocument, STANDING } from "./document";
 import { AsIssued, Decision } from "./grounds";
+import { cn } from "@/lib/utils";
 import { day, money } from "./format";
 import { Timeline } from "./timeline";
 import { useConfigurator, type Party, type Quote, type View } from "./provider";
 
-const CUSTOMER: { key: keyof Party; label: string; wide?: boolean }[] = [
-  { key: "name", label: "Name" },
-  { key: "organisation", label: "Organisation" },
-  { key: "address", label: "Address", wide: true },
-  { key: "email", label: "Email" },
-  { key: "phone", label: "Phone" },
+/** Each field says what it holds, so a browser can fill the person's own
+ * details for them; a quote needs the name. */
+const CUSTOMER: {
+  key: keyof Party;
+  label: string;
+  wide?: boolean;
+  required?: boolean;
+  type?: string;
+  autoComplete: string;
+}[] = [
+  { key: "name", label: "Name", required: true, autoComplete: "name" },
+  { key: "organisation", label: "Organisation", autoComplete: "organization" },
+  { key: "address", label: "Address", wide: true, autoComplete: "street-address" },
+  { key: "email", label: "Email", type: "email", autoComplete: "email" },
+  { key: "phone", label: "Phone", type: "tel", autoComplete: "tel" },
 ];
 
 /**
@@ -113,6 +123,9 @@ function Addressee() {
     if (Object.keys(details).length)
       await gesture({ act: "introduce", ...details });
     if (Object.keys(naming).length) await gesture({ act: "entitle", ...naming });
+    // The form is remade from what is now on record; the keyboard goes back
+    // to Save in the new one rather than to the top of the page.
+    setTimeout(() => document.getElementById("addressee-save")?.focus(), 0);
   };
 
   return (
@@ -161,11 +174,14 @@ function Addressee() {
                 >
                   <span className="mb-1 block text-muted-foreground">
                     {field.label}
+                    {field.required ? " (needed for a quote)" : ""}
                   </span>
                   <Input
                     name={field.key}
+                    type={field.type}
                     defaultValue={customer[field.key] ?? ""}
-                    autoComplete="off"
+                    autoComplete={field.autoComplete}
+                    aria-required={field.required || undefined}
                   />
                 </label>
               ))}
@@ -175,9 +191,10 @@ function Addressee() {
               </label>
               <label className="text-xs">
                 <span className="mb-1 block text-muted-foreground">
-                  Site, where the lift is going
+                  Site, where the lift is going (needed for a quote)
                 </span>
                 <Textarea
+                  aria-required
                   name="site"
                   defaultValue={project.site}
                   rows={2}
@@ -185,7 +202,7 @@ function Addressee() {
                 />
               </label>
               <div className="sm:col-span-2 flex justify-end">
-                <Button type="submit" size="sm" disabled={busy}>
+                <Button id="addressee-save" type="submit" size="sm" disabled={busy}>
                   Save
                 </Button>
               </div>
@@ -229,25 +246,39 @@ function Issued({
           <TableHead>Issued</TableHead>
           <TableHead>Valid until</TableHead>
           <TableHead>Differs from the canvas</TableHead>
-          {quotes.length > 1 ? <TableHead className="w-24" /> : null}
+          {quotes.length > 1 ? (
+            <TableHead className="w-24">
+              <span className="sr-only">Compare</span>
+            </TableHead>
+          ) : null}
         </TableRow>
       </TableHeader>
       <TableBody>
         {quotes.map((q) => (
+          // The whole row takes a click, for the pointer; the number is the
+          // control, so the keyboard and a screen reader have a real button
+          // that says which quote is shown.
           <TableRow
             key={q.quote}
             data-state={q.quote === selected ? "selected" : undefined}
-            aria-current={q.quote === selected ? "true" : undefined}
             className="cursor-pointer"
-            tabIndex={0}
             onClick={() => onSelect(q.quote)}
-            onKeyDown={(event) => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              onSelect(q.quote);
-            }}
           >
-            <TableCell className="font-medium">{q.number}</TableCell>
+            <TableCell className="font-medium">
+              <Button
+                variant="link"
+                size="xs"
+                className="px-0"
+                aria-pressed={q.quote === selected}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onSelect(q.quote);
+                }}
+              >
+                <span className="sr-only">Show quotation No. </span>
+                {q.number}
+              </Button>
+            </TableCell>
             <TableCell>{STANDING[q.standing]}</TableCell>
             <TableCell className="text-right tabular-nums">
               {money(q.amount, view.currency)}
@@ -273,6 +304,7 @@ function Issued({
                     }}
                   >
                     {q.quote === against ? "Comparing" : "Compare"}
+                    <span className="sr-only"> No. {q.number}</span>
                   </Button>
                 ) : null}
               </TableCell>
@@ -368,20 +400,33 @@ type Reading = "asked" | "timeline" | "proposal";
 function RequestButton() {
   const { view, gesture, busy } = useConfigurator();
   if (!view) return null;
+  // Why not yet is said beside the button, not in a tooltip: a disabled
+  // button takes no pointer and no focus, so its tooltip reaches nobody.
+  const ok = view.quotable.ok;
   return (
-    <Button
-      size="sm"
-      variant={view.quotable.ok ? "default" : "outline"}
-      disabled={busy || !view.quotable.ok}
-      title={
-        view.quotable.ok
-          ? "Freeze the specification, the price and the terms as they stand into a proposal"
-          : `Not yet: ${view.quotable.because}`
-      }
-      onClick={() => void gesture({ act: "quote" })}
-    >
-      Request a quotation
-    </Button>
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {ok ? null : (
+        <span id="request-why-not" className="text-xs text-muted-foreground">
+          Not yet: {view.quotable.because}
+        </span>
+      )}
+      <Button
+        size="sm"
+        variant={ok ? "default" : "outline"}
+        disabled={busy}
+        aria-disabled={!ok || undefined}
+        aria-describedby={ok ? undefined : "request-why-not"}
+        title={
+          ok
+            ? "Freeze the specification, the price and the terms as they stand into a proposal"
+            : undefined
+        }
+        className={cn(!ok && "opacity-50")}
+        onClick={() => ok && void gesture({ act: "quote" })}
+      >
+        Request a quotation
+      </Button>
+    </div>
   );
 }
 
@@ -510,6 +555,7 @@ export function QuoteSurface() {
                     <Link href={`/quotes/${quote.quote}`} target="_blank">
                       <PrinterIcon />
                       Print
+                      <span className="sr-only"> (opens in a new tab)</span>
                     </Link>
                   </Button>
                 </>
@@ -520,7 +566,7 @@ export function QuoteSurface() {
               onValueChange={(value) => setReading(value as Reading)}
               className="mt-6"
             >
-              <TabsList>
+              <TabsList aria-label="Readings of this quotation">
                 <TabsTrigger value="asked">Against what was asked</TabsTrigger>
                 <TabsTrigger value="timeline">Along time</TabsTrigger>
                 <TabsTrigger value="proposal">As the proposal</TabsTrigger>
@@ -533,7 +579,7 @@ export function QuoteSurface() {
               </TabsContent>
               {/* The sheet as it will print. */}
               <TabsContent value="proposal" className="pt-4">
-                <QuoteDocument quote={quote} view={view} />
+                <QuoteDocument quote={quote} view={view} level={3} />
               </TabsContent>
             </Tabs>
           </Card>

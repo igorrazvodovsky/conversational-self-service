@@ -75,9 +75,11 @@ export function Decision({
   const provided = quote.holds.filter((h) => terms.byOthers.includes(h.name));
   const left = quote.standing === "open" ? daysLeft(quote.until) : null;
   return (
-    <section aria-label="The offer" className="space-y-4">
+    <section aria-labelledby={`${quote.quote}-offer`} className="space-y-4">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2 className="text-base font-semibold">Quotation No. {quote.number}</h2>
+        <h2 id={`${quote.quote}-offer`} className="text-base font-semibold">
+          Quotation No. {quote.number}
+        </h2>
         <Badge variant={quote.standing === "committed" ? "default" : "outline"}>
           {STANDING[quote.standing]}
         </Badge>
@@ -304,7 +306,12 @@ export function AsIssued({
                       ) : null}
                       {g.how ? <p>{g.how}</p> : null}
                       {(answers.get(h.name) ?? []).map((r) => (
-                        <p key={r.clause} className="line-clamp-1" title={plain(r.text)}>
+                        <p
+                          key={r.clause}
+                          // Whole while a link in it has keyboard focus.
+                          className="line-clamp-1 has-[a:focus-visible]:line-clamp-none"
+                          title={plain(r.text)}
+                        >
                           for{" "}
                           <To id={at("clause", r.clause)}>{plain(r.text)}</To>
                         </p>

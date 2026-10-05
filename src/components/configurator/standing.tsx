@@ -141,12 +141,15 @@ export function Standing() {
                   value={grid}
                   onValueChange={(value) => value && setGrid(value as Grid)}
                   aria-label="Electricity grid"
-                  title="The same lift ranks differently against a decarbonising grid."
+                  aria-describedby="grid-why"
                   className="mt-3"
                 >
                   <ToggleGroupItem value="today">Grid today</ToggleGroupItem>
                   <ToggleGroupItem value="decarbonising">Decarbonising</ToggleGroupItem>
                 </ToggleGroup>
+                <p id="grid-why" className="mt-1 text-xs text-muted-foreground">
+                  The same lift ranks differently against a decarbonising grid.
+                </p>
               </div>
             </div>
           </CollapsibleContent>

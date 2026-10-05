@@ -102,11 +102,22 @@ export function useFollowAddress() {
     let tries = 0;
     const find = () => {
       const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ block: "start" });
+      if (el) arrive(el);
       else if (tries++ < 10) setTimeout(find, 50);
     };
     find();
   }, [ready, hash, mode, gesture]);
+}
+
+/** Bring an item into view and take focus to it, so the keyboard and a screen
+ * reader arrive where the eye does rather than staying on the link. An item
+ * that is not itself a control takes focus by script only (`tabIndex = -1`),
+ * which adds no stop to the tab order. */
+function arrive(el: HTMLElement) {
+  el.scrollIntoView({ block: "start" });
+  if (!el.matches("a[href], button, input, select, textarea, [tabindex]"))
+    el.tabIndex = -1;
+  el.focus({ preventScroll: true });
 }
 
 /** Go to an address: set the fragment, or scroll again if it is already
@@ -118,7 +129,7 @@ export function goTo(id: string) {
   if (window.location.hash === `#${id}` || window.location.hash === `#${encodeURIComponent(id)}`) {
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ block: "start" });
+      arrive(el);
       return;
     }
     history.replaceState(null, "", window.location.pathname + window.location.search);
@@ -163,13 +174,17 @@ export function To({
   );
 }
 
-/** The mark on an item the last turn moved, with who moved it. */
+/** The mark on an item the last turn moved, with who moved it. The square is
+ * for the eye; the words are for everyone else. */
 export function Moved({ by }: { by: string }) {
   return (
-    <span
-      aria-label={`Moved by ${by} since you last acted`}
-      title={`Moved by ${by} since you last acted`}
-      className="mr-1.5 inline-block size-1.5 bg-primary align-middle"
-    />
+    <>
+      <span
+        aria-hidden
+        title={`Moved by ${by} since you last acted`}
+        className="mr-1.5 inline-block size-1.5 bg-primary align-middle"
+      />
+      <span className="sr-only">Moved by {by} since you last acted: </span>
+    </>
   );
 }

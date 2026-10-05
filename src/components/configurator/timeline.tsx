@@ -84,7 +84,7 @@ function Span({
     <div
       title={label}
       className={cn(
-        "absolute inset-y-1 overflow-hidden border-x-2 border-background px-1.5 text-[11px] leading-4 whitespace-nowrap text-ellipsis",
+        "absolute inset-y-1 overflow-hidden border-x-2 border-background px-1.5 text-xs leading-4 whitespace-nowrap text-ellipsis",
         muted ? "bg-muted text-muted-foreground" : "bg-foreground/80 text-background",
       )}
       style={{ left: `${(from / of) * 100}%`, width: `${((to - from) / of) * 100}%` }}
@@ -101,7 +101,7 @@ function Mark({ at, of, label }: { at: number; of: number; label: string }) {
       className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-foreground"
       style={{ left: `${(at / of) * 100}%` }}
     >
-      <span className="absolute top-full mt-0.5 -translate-x-1/2 text-[11px] whitespace-nowrap text-muted-foreground">
+      <span className="absolute top-full mt-0.5 -translate-x-1/2 text-xs whitespace-nowrap text-muted-foreground">
         {label}
       </span>
     </div>
@@ -118,7 +118,7 @@ function Axis({ of, step, label }: { of: number; step: number; label: (n: number
         {ticks.map((t) => (
           <span
             key={t}
-            className="absolute top-0.5 -translate-x-1/2 text-[11px] tabular-nums text-muted-foreground"
+            className="absolute top-0.5 -translate-x-1/2 text-xs tabular-nums text-muted-foreground"
             style={{ left: `${(t / of) * 100}%` }}
           >
             {label(t)}
@@ -168,13 +168,24 @@ export function Timeline({ quote, view }: { quote: Quote; view: Pick<View, "curr
 
   return (
     <div className="space-y-8 pt-4">
-      <section aria-label="The works, in weeks from order" className="space-y-2">
-        <h3 className="text-sm font-semibold">The works</h3>
+      <section aria-labelledby={`${quote.quote}-works`} className="space-y-2">
+        <h3 id={`${quote.quote}-works`} className="text-sm font-semibold">
+          The works
+        </h3>
         <p className="text-xs text-muted-foreground">
           Weeks from order{committed ? `, placed on ${day(committed)}` : ""}.
           Handover in week {handover}.
         </p>
-        <div className="space-y-2 pt-2">
+        {/* The lanes in words, for whoever does not see them; the chart is
+            then hidden from a screen reader, which would read it as a run
+            of axis numbers. The payments are in the table below. */}
+        <p className="sr-only">
+          The seller makes the layout drawings in weeks 0 to {week("approval")},
+          manufactures in weeks {week("approval")} to {onSite}, and installs on
+          site in weeks {onSite} to {week("completion")}. You approve the
+          drawings and prepare the site by week {onSite}.
+        </p>
+        <div aria-hidden className="space-y-2 pt-2">
           <Lane label="Seller">
             <Span from={0} to={week("approval")} of={span} label="Layout drawings" muted />
             <Span from={week("approval")} to={onSite} of={span} label="Manufacture" muted />
@@ -207,15 +218,18 @@ export function Timeline({ quote, view }: { quote: Quote; view: Pick<View, "curr
         </div>
       </section>
 
-      <section aria-label="After handover, in years" className="space-y-2">
-        <h3 className="text-sm font-semibold">After handover</h3>
+      <section aria-labelledby={`${quote.quote}-after`} className="space-y-2">
+        <h3 id={`${quote.quote}-after`} className="text-sm font-semibold">
+          After handover
+        </h3>
         <p className="text-xs text-muted-foreground">
           Years from acceptance. Warranty for {programme.warranty} months, then
           maintenance at {money(terms.recurring, view.currency)} a month for{" "}
           {programme.maintenance / 12} years
           {committed ? `, to ${day(dateOf(committed, handover, after))}` : ""}.
         </p>
-        <div className="space-y-2 pt-2">
+        {/* The sentence above says what the lane draws. */}
+        <div aria-hidden className="space-y-2 pt-2">
           <Lane label="Cover">
             <Span
               from={0}
@@ -235,8 +249,9 @@ export function Timeline({ quote, view }: { quote: Quote; view: Pick<View, "curr
         </div>
       </section>
 
-      <section aria-label="What happens when">
+      <section>
         <Table className="text-xs">
+          <caption className="sr-only">What happens when, week by week</caption>
           <TableHeader>
             <TableRow>
               <TableHead className="w-20">Week</TableHead>

@@ -29,6 +29,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useRef,
   useState,
   type RefObject,
 } from "react";
@@ -92,9 +93,28 @@ interface ListHandle {
 }
 
 const OfferList = forwardRef<ListHandle, SuggestionProps<Offer, Reference>>(
-  function OfferList({ items, command, clientRect }, ref) {
+  function OfferList({ items, command, clientRect, editor }, ref) {
     const [selected, setSelected] = useState(0);
     useEffect(() => setSelected(0), [items]);
+    const popup = useRef<HTMLDivElement>(null);
+
+    // Focus stays in the editor while the list is open, so the editor says
+    // which offer the arrows are on; without this a screen reader hears
+    // nothing and Enter picks blind.
+    useEffect(() => {
+      const dom = editor.view.dom;
+      const list = popup.current?.querySelector("[cmdk-list]");
+      const active = popup.current?.querySelector('[cmdk-item][aria-selected="true"]');
+      dom.setAttribute("aria-autocomplete", "list");
+      if (list?.id) dom.setAttribute("aria-controls", list.id);
+      if (active?.id) dom.setAttribute("aria-activedescendant", active.id);
+      else dom.removeAttribute("aria-activedescendant");
+      return () => {
+        dom.removeAttribute("aria-autocomplete");
+        dom.removeAttribute("aria-controls");
+        dom.removeAttribute("aria-activedescendant");
+      };
+    });
 
     const pick = (offer: Offer | undefined) => {
       if (!offer) return;
@@ -138,6 +158,9 @@ const OfferList = forwardRef<ListHandle, SuggestionProps<Offer, Reference>>(
             >
               <ReferenceChip reference={offer} />
               <span className="truncate text-muted-foreground">{offer.under}</span>
+              {!offer.possible ? (
+                <span className="ml-auto shrink-0 text-xs no-underline">ruled out</span>
+              ) : null}
             </CommandItem>
           ))}
         </CommandGroup>
@@ -145,7 +168,7 @@ const OfferList = forwardRef<ListHandle, SuggestionProps<Offer, Reference>>(
 
     return createPortal(
       <div
-        role="presentation"
+        ref={popup}
         className="fixed z-50 w-80 border bg-popover text-popover-foreground shadow-md"
         style={{ top: (rect?.bottom ?? 0) + 4, left: rect?.left ?? 0 }}
       >
@@ -186,7 +209,9 @@ function ReferenceView({ node, editor, getPos }: NodeViewProps) {
           <button
             type="button"
             contentEditable={false}
-            disabled={busy || !answerable}
+            // Bound, it stays reachable so it can say so; it does nothing.
+            disabled={busy || (!answerable && !bound)}
+            aria-disabled={bound || undefined}
             title={
               bound
                 ? "Answers this clause"
@@ -195,12 +220,15 @@ function ReferenceView({ node, editor, getPos }: NodeViewProps) {
                   : undefined
             }
             onClick={() =>
-              clause &&
+              answerable &&
               void gesture({ act: "answer", clause: clause.clause, option: reference.option })
             }
           >
             {bound ? <CheckIcon /> : null}
             {reference.label}
+            <span className="sr-only">
+              {bound ? ", answers this clause" : answerable ? ", answer this clause with it" : ""}
+            </span>
           </button>
         </ReferenceChip>
       ) : (

@@ -109,6 +109,7 @@ export function Split({
 
       <ResizableHandle
         id="workspace-split-handle"
+        aria-label="Resize the chat"
         withHandle
         className={cn(!docked && "hidden")}
       />
@@ -122,16 +123,20 @@ export function Split({
         // accessibility tree by hand.
         inert={mode === "hidden"}
       >
-        {chatHeader}
-        <div
-          className={cn(
-            "min-h-0 w-full flex-1 overflow-y-auto",
-            // Full width is unreadable for a transcript at desktop sizes.
-            mode === "fullscreen" && "mx-auto max-w-3xl",
-          )}
-        >
-          {chat}
-        </div>
+        {/* A named region, so the chat is a landmark beside the panel's
+            `main` and a screen reader can jump between the two. */}
+        <section aria-label="Chat" className="flex min-h-0 flex-1 flex-col">
+          {chatHeader}
+          <div
+            className={cn(
+              "min-h-0 w-full flex-1 overflow-y-auto",
+              // Full width is unreadable for a transcript at desktop sizes.
+              mode === "fullscreen" && "mx-auto max-w-3xl",
+            )}
+          >
+            {chat}
+          </div>
+        </section>
       </ResizablePanel>
     </ResizablePanelGroup>
   );

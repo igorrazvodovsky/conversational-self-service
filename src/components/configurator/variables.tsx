@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDownIcon, LockIcon, SparklesIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, LockIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -90,7 +90,14 @@ function Options({ variable }: { variable: Variable }) {
             )}
             onClick={() => pick(option)}
           >
+            {option.id === variable.asked ? <CheckIcon /> : null}
             {option.label}
+            {/* The strike, the dimming and the tick are for the eye only. */}
+            {option.id === variable.asked ? (
+              <span className="sr-only">, the current value</span>
+            ) : !option.possible ? (
+              <span className="sr-only">, ruled out</span>
+            ) : null}
             {price && option.capital !== null ? (
               <span className="font-normal tabular-nums text-muted-foreground">
                 {adds(option.capital, currency)}
@@ -123,7 +130,8 @@ function Options({ variable }: { variable: Variable }) {
         <ul className="space-y-0.5 text-xs text-muted-foreground">
           {excluded.map((option) => (
             <li key={option.id}>
-              <span className="text-foreground line-through">{option.label}</span>{" "}
+              <span className="text-foreground line-through">{option.label}</span>
+              <span className="sr-only">, ruled out by</span>{" "}
               {option.excluded.map((rule, i) => (
                 <span key={rule.rule}>
                   {i ? " · " : ""}
@@ -182,6 +190,7 @@ export function AskedCard({ variable }: { variable: Variable }) {
         </CardDescription>
         <CardTitle className={cn(yielded && "text-muted-foreground line-through")}>
           {label(variable.asked)}
+          {yielded ? <span className="sr-only"> (gave way)</span> : null}
         </CardTitle>
         <CardAction>
           <Button
@@ -189,7 +198,7 @@ export function AskedCard({ variable }: { variable: Variable }) {
             size="icon-xs"
             disabled={busy}
             title="Take this back"
-            aria-label="Take this back"
+            aria-label={`Take back ${variable.heading}`}
             onClick={() =>
               void gesture({ act: "withdraw", variable: variable.name })
             }
@@ -217,7 +226,13 @@ export function AskedCard({ variable }: { variable: Variable }) {
           variable.answers.length ? (
             <ul className="space-y-0.5 text-xs">
               {variable.answers.map((answer) => (
-                <li key={answer.clause} className="line-clamp-1" title={plain(answer.text)}>
+                <li
+                  key={answer.clause}
+                  // One line, until the link in it has keyboard focus: then the
+                  // clause shows in full and its focus ring is not clipped.
+                  className="truncate has-[a:focus-visible]:overflow-visible has-[a:focus-visible]:whitespace-normal"
+                  title={plain(answer.text)}
+                >
                   {/* One line: the clause is a link, and the ledger has the words. */}
                   {held.has(answer.clause) ? (
                     <span
@@ -251,6 +266,7 @@ export function AskedCard({ variable }: { variable: Variable }) {
               <Button variant="ghost" size="xs" className="text-muted-foreground">
                 <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />
                 Change
+                <span className="sr-only"> {variable.heading}</span>
               </Button>
             </CollapsibleTrigger>
             {/* The requirement slice: narrow the canvas to what this
@@ -269,6 +285,7 @@ export function AskedCard({ variable }: { variable: Variable }) {
                 }
               >
                 What followed from this
+                <span className="sr-only"> {variable.heading}</span>
               </Button>
             ) : null}
           </div>
@@ -437,6 +454,7 @@ export function OpenRow({ variable }: { variable: Variable }) {
             }
           >
             Take it
+            <span className="sr-only"> for {variable.heading}</span>
           </Button>
           <Button
             variant="ghost"
@@ -448,6 +466,7 @@ export function OpenRow({ variable }: { variable: Variable }) {
             }
           >
             Not this one
+            <span className="sr-only"> for {variable.heading}</span>
           </Button>
           {proposed.foreseen ? (
             <div className="basis-full">

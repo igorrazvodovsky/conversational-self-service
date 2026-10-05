@@ -23,6 +23,14 @@ export default function QuotePage() {
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // The tab says which proposal it is, most specific first.
+  const number = view?.quotes.find((q) => q.quote === id)?.number;
+  useEffect(() => {
+    document.title = number
+      ? `Quotation No. ${number} · Northline Lifts`
+      : "Quotation · Northline Lifts";
+  }, [number]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -47,7 +55,7 @@ export default function QuotePage() {
     return (
       <Empty className="h-svh">
         <EmptyHeader>
-          <EmptyDescription>{error}</EmptyDescription>
+          <EmptyDescription role="alert">{error}</EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -73,7 +81,7 @@ export default function QuotePage() {
   }
   return (
     <div className="min-h-svh bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-10 print:max-w-none print:px-0">
+      <main className="mx-auto max-w-3xl px-6 py-10 print:max-w-none print:px-0">
         <div className="mb-6 flex items-center gap-2 print:hidden">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/">
@@ -92,7 +100,7 @@ export default function QuotePage() {
           </Button>
         </div>
         <QuoteDocument quote={quote} view={view} />
-      </div>
+      </main>
     </div>
   );
 }

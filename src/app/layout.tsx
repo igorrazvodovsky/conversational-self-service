@@ -15,11 +15,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>CopilotKit</title>
+        <title>Northline Lifts</title>
         <link
           rel="icon"
           type="image/svg+xml"
-          href="/copilotkit-logo-mark.svg"
+          href="/northline-mark.svg"
         />
         {/*
           Set the theme class BEFORE first paint to avoid a white→dark flash.

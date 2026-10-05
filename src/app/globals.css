@@ -202,14 +202,49 @@ html {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
   --tw-ring-shadow: 0 0 #0000;
-  border-color: var(--input);
 }
 [data-slot="input-group"] [data-slot="input-group-control"]:focus-visible {
   outline: none;
 }
-input[data-slot="input"]:focus-visible,
-textarea[data-slot="textarea"]:focus-visible {
-  border-color: var(--input);
+
+/*
+ * A text field's edge is the only thing that says it is a field, so it is
+ * held to the 3:1 a component's boundary needs against every level it sits
+ * on. `--input` is the hairline the levels were drawn with and stays that
+ * for everything else, where the words say what the thing is. Fields only,
+ * and not an invalid one, whose border is the other state.
+ */
+:root {
+  --field: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+}
+input[data-slot="input"]:not([aria-invalid="true"]),
+textarea[data-slot="textarea"]:not([aria-invalid="true"]),
+[data-slot="input-group"]:not(:has([aria-invalid="true"])) {
+  border-color: var(--field);
+}
+
+/* The panel's `main` takes focus whole; its ring is drawn inside, where the
+ * panel's edge cannot clip it. */
+main#main:focus-visible {
+  outline-offset: -2px;
+}
+
+/*
+ * Motion only for those who have not asked for less. Under the preference
+ * every animation and transition settles at once — the collapsibles, the
+ * chevrons, the menus, the spinner — and scrolling jumps rather than glides.
+ * One rule here rather than a `motion-safe:` on every utility, because the
+ * primitives carry their own animations and are not edited.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /*

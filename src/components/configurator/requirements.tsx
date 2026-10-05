@@ -33,10 +33,10 @@ function Header() {
   return (
     <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-ground/95 px-6 py-2 backdrop-blur">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <h1 className="text-sm font-semibold">{view.product}</h1>
+        <h2 className="text-sm font-semibold">{view.product}</h2>
         {moved ? (
           <span className="text-xs text-muted-foreground">
-            <span className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
+            <span aria-hidden className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
             {touched!.by} moved {moved} since you last acted
           </span>
         ) : null}

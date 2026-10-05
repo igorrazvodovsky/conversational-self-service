@@ -27,7 +27,9 @@ import {
 } from "lucide-react";
 import {
   CopilotChat,
+  CopilotChatAssistantMessage,
   CopilotChatInput,
+  CopilotChatMessageView,
   CopilotChatSuggestionPill,
   CopilotChatUserMessage,
 } from "@copilotkit/react-core/v2";
@@ -72,6 +74,8 @@ const ComposerTextArea = forwardRef<
     <InputGroupTextarea
       ref={ref}
       rows={1}
+      // The placeholder goes when the person types; the name stays.
+      aria-label="Message the assistant"
       placeholder="Describe the building, or ask a question"
       className="max-h-40 min-h-0 text-sm leading-relaxed"
       {...props}
@@ -226,9 +230,19 @@ const SuggestionStrip = forwardRef<HTMLDivElement, ComponentProps<"div">>(
 const SuggestionPill = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof CopilotChatSuggestionPill>
->(function SuggestionPill({ icon, isLoading, children, ...props }, ref) {
+>(function SuggestionPill({ icon, isLoading, children, className, ...props }, ref) {
   return (
-    <Button ref={ref} variant="outline" size="xs" {...props}>
+    <Button
+      ref={ref}
+      variant="outline"
+      size="xs"
+      {...props}
+      // A long suggestion wraps rather than running out of a narrow chat.
+      className={cn(
+        className,
+        "h-auto min-h-6 max-w-full shrink py-1 text-left whitespace-normal",
+      )}
+    >
       {isLoading ? <Spinner /> : icon}
       {children}
     </Button>
@@ -242,15 +256,20 @@ const SuggestionPill = forwardRef<
 function CopyButton({
   onClick,
   title,
+  name,
   className: _libraryClass,
   ...props
-}: ComponentProps<typeof CopilotChatUserMessage.CopyButton>) {
+}: ComponentProps<typeof CopilotChatUserMessage.CopyButton> & {
+  /** Says whose words are copied, so a list of the transcript's buttons
+   * is not a column of identical "Copy". */
+  name: string;
+}) {
   const [copied, setCopied] = useState(false);
   return (
     <Button
       variant="ghost"
       size="icon-xs"
-      aria-label={title || "Copy"}
+      aria-label={copied ? `${name}: copied` : name}
       title={title || "Copy"}
       className="text-muted-foreground"
       onClick={async (event) => {
@@ -286,12 +305,21 @@ function ScrollToBottomButton({
   );
 }
 
+const CopyYours = (props: ComponentProps<typeof CopilotChatUserMessage.CopyButton>) => (
+  <CopyButton {...props} name="Copy your message" />
+);
+const CopyReply = (
+  props: ComponentProps<typeof CopilotChatAssistantMessage.CopyButton>,
+) => <CopyButton {...props} name="Copy the assistant's reply" />;
+
 /** Only the bubble is replaced: CopilotKit's container still draws a turn's
- * attachments above it and its toolbar below. */
+ * attachments above it and its toolbar below. Who is speaking is said in
+ * words, since the side a bubble sits on is for the eye. */
 function UserBubble({ content }: { content?: string }) {
   return (
     <Bubble align="end" variant="secondary">
       <BubbleContent className="text-sm whitespace-pre-wrap">
+        <span className="sr-only">You said: </span>
         {content}
       </BubbleContent>
     </Bubble>
@@ -319,12 +347,55 @@ function OneUserMessage(props: ComponentProps<typeof CopilotChatUserMessage>) {
     <CopilotChatUserMessage
       {...props}
       messageRenderer={agents ? AgentBubble : UserBubble}
-      copyButton={CopyButton}
+      copyButton={CopyYours}
     />
   );
 }
 
 const UserMessage = Object.assign(OneUserMessage, CopilotChatUserMessage);
+
+/** The markdown body stays CopilotKit's, at this app's reading size rather
+ * than prose's own 16px (important, because both are utilities and
+ * stylesheet order would otherwise decide), and says who is speaking. */
+function AssistantMarkdown(
+  props: ComponentProps<typeof CopilotChatAssistantMessage.MarkdownRenderer>,
+) {
+  return (
+    <>
+      <span className="sr-only">The assistant said: </span>
+      <CopilotChatAssistantMessage.MarkdownRenderer
+        {...props}
+        className={cn(props.className, "text-sm! leading-relaxed!")}
+      />
+    </>
+  );
+}
+
+/**
+ * The transcript, as a log: a screen reader hears each new turn once, and
+ * nothing while a reply is still being written (`aria-busy`). That a reply
+ * has started and finished is said by `RunAnnouncer`.
+ */
+// Module constants, so the memoised slots see the same props on every
+// streamed token and the cursor is not remounted.
+const ASSISTANT_MESSAGE = { markdownRenderer: AssistantMarkdown, copyButton: CopyReply };
+const Cursor = () => <Spinner className="size-3 text-muted-foreground" />;
+
+function OneTranscript(props: ComponentProps<typeof CopilotChatMessageView>) {
+  return (
+    <CopilotChatMessageView
+      {...props}
+      role="log"
+      aria-label="Conversation"
+      aria-busy={props.isRunning || undefined}
+      userMessage={UserMessage}
+      assistantMessage={ASSISTANT_MESSAGE}
+      cursor={Cursor}
+    />
+  );
+}
+
+const Transcript = Object.assign(OneTranscript, CopilotChatMessageView);
 
 /**
  * An empty thread is not an empty specification: the canvas survives a new
@@ -401,17 +472,7 @@ function Chat() {
       suggestionView={{ container: SuggestionStrip, suggestion: SuggestionPill }}
       welcomeScreen={WelcomeScreen}
       scrollView={{ scrollToBottomButton: ScrollToBottomButton }}
-      messageView={{
-        userMessage: UserMessage,
-        // The markdown body stays CopilotKit's, at this app's reading size
-        // rather than prose's own 16px. Important, because both are utilities
-        // and stylesheet order would otherwise decide.
-        assistantMessage: {
-          markdownRenderer: "text-sm! leading-relaxed!",
-          copyButton: CopyButton,
-        },
-        cursor: () => <Spinner className="size-3 text-muted-foreground" />,
-      }}
+      messageView={Transcript}
     />
   );
 }
