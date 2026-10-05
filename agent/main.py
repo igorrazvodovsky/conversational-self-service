@@ -21,7 +21,7 @@ from src.query import query_data
 from src.a2ui_dynamic_schema import generate_a2ui
 from src.a2ui_fixed_schema import search_flights
 
-model = ChatOpenAI(model="gpt-5.4-mini", model_kwargs={"parallel_tool_calls": False})
+model = ChatOpenAI(model="gpt-6-luna", model_kwargs={"parallel_tool_calls": False})
 
 SYSTEM_PROMPT = """
 You help a person specify an EP-3000 lift. Keep replies to one or two sentences.
