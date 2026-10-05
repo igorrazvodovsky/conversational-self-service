@@ -46,15 +46,16 @@ HOW = {
     "TheModelMayRequestAQuote": "the assistant asked for this",
 }
 
-# The same edge under a second actor.  A browser agent's invocations fire the
-# model's rules — the rules match on the tool, not on who called it — so the
-# provenance edge alone reads "the assistant", and the actor on the record is
-# what says otherwise.  See docs/syncs/conduct.md, "A browser agent, on the
-# same terms".
+# The same edge under a second actor.  The person's own agent performs the
+# person's gestures — the rules match on the act, not on who performed it — so
+# the provenance edge alone reads "you", and the actor on the record is what
+# says otherwise.  See docs/syncs/conduct.md, "The person's own agent, acting
+# as the person".
 BROWSER = "browser"
 SAID = {
-    ("TheModelMayAssertAValue", BROWSER): "a browser agent asked for this",
-    ("TheModelMayRequestAQuote", BROWSER): "a browser agent asked for this",
+    ("APersonAssertsAValue", BROWSER): "your agent asked for this",
+    ("AnAdoptedValueBecomesAnAssertion", BROWSER): "adopted from a proposal by your agent",
+    ("APersonRequestsAQuote", BROWSER): "your agent asked for this",
 }
 
 
@@ -74,7 +75,7 @@ def _trace(engine: Engine, spec: str) -> dict[str, Any]:
     a `Reading/read` in the same flow carries that reading's words and source
     instead, since the chain from `read` to `assert` runs inside one root
     action and the read most recently recorded in the flow is the one.  A
-    gesture's flow and a browser agent's hold no utterance, and those
+    gesture's flow and the person's own agent's hold no utterance, and those
     assertions carry none.
 
     `stated` — every clause ever stated, struck ones included, so that a
@@ -166,7 +167,7 @@ def _how(engine: Engine, entry: dict[str, Any], cited: bool = False) -> str:
     if words and via == "TheModelMayAssertAValue":
         return f"the assistant read “{words}” as this"
     if words and via in {"AChoiceReachesTheAssertions", "ASubstituteReachesTheAssertions"}:
-        who = "a browser agent" if actor == BROWSER else "the assistant"
+        who = "your agent" if actor == BROWSER else "the assistant"
         name = _source_name(engine, entry.get("source"))
         if cited:
             where = f"in {name}" if name else "from what you said"
@@ -182,7 +183,7 @@ def _touched(engine: Engine, spec: str) -> dict[str, Any] | None:
     The most recent flow that reached an assertion or a clause, and the
     variables and clauses its records name.  A flow the person opened by a
     gesture is theirs and marks nothing: they were looking.  A flow with the
-    model or a browser agent among its root actors is what moved while they
+    model or the person's own agent among its root actors is what moved while they
     were not, and the marks stand until the person next changes the
     specification themselves.  Read off the log; held by nobody.
     """
@@ -215,7 +216,7 @@ def _touched(engine: Engine, spec: str) -> dict[str, Any] | None:
         if not others:
             return None
         return {
-            "by": "a browser agent" if BROWSER in others else "the assistant",
+            "by": "your agent" if BROWSER in others else "the assistant",
             "variables": sorted(flow["variables"]),
             "clauses": sorted(flow["clauses"]),
         }
@@ -937,8 +938,14 @@ def plain(text: str) -> str:
     return REFERENCE.sub(r"\1", text)
 
 
-def digest(engine: Engine, spec: str) -> dict[str, Any]:
-    """The same reading, small enough to hand a language model."""
+def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
+    """The same reading, small enough to hand a language model.
+
+    `actor` is who reads it.  The person's own agent (`browser`) acts as the
+    person, so a value their requirement holds is not out of its reach, and
+    a proposed value comes with the question that adopts it.
+    """
+    agent = actor == BROWSER
     view = canvas(engine, spec)
     label = {
         option["id"]: option["label"]
@@ -994,7 +1001,7 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
             )
             + (
                 " — the person's requirement rests on it: you cannot change it; ask them"
-                if v["held"]
+                if v["held"] and not agent
                 else ""
             )
             for v in view["variables"]
@@ -1029,7 +1036,19 @@ def digest(engine: Engine, spec: str) -> dict[str, Any]:
             {
                 "variable": v["name"],
                 "heading": v["heading"],
-                "proposed": v["proposed"]["label"] if v["proposed"] else None,
+                "proposed": (
+                    (
+                        {
+                            "label": v["proposed"]["label"],
+                            "request": v["proposed"]["request"],
+                            "option": v["proposed"]["option"],
+                        }
+                        if agent
+                        else v["proposed"]["label"]
+                    )
+                    if v["proposed"]
+                    else None
+                ),
                 "options": [
                     {"id": o["id"], "label": o["label"]}
                     for o in v["options"]

@@ -13,9 +13,11 @@
  * CopilotKit state channel would tell us — by design: state lives behind the
  * actions now, not in the channel.
  *
- * A browser agent is a third caller and needs no polling: its tool calls run
- * in this page (`webmcp.tsx`), go to `POST /invoke`, and the view comes back
- * with the outcome as it does for a gesture.
+ * The person's own agent is a third caller and needs no polling: its tool
+ * calls run in this page (`webmcp.tsx`) and go to `POST /gesture` as the
+ * person's acts under its own actor, or to `POST /invoke` for the model's
+ * verbs a person has no gesture for, and the view comes back with the
+ * outcome as it does for a gesture.
  */
 
 import { useAgent } from "@copilotkit/react-core/v2";
@@ -370,11 +372,15 @@ interface Configurator {
   error: string | null;
   /** Perform a root action; resolves to the view as the rules left it, or null if refused. */
   gesture: (stimulus: Stimulus) => Promise<View | null>;
-  /** A browser agent calls one of the model's tools. Resolves to what the
-   * tool returns a model; rejects when the engine refuses the call, so the
-   * agent hears the refusal rather than a silent nothing. */
+  /** The person's own agent performs one of the person's gestures, as them.
+   * Resolves to what the rules did and the digest it reads; rejects when the
+   * request fails, so the agent hears it rather than a silent nothing. */
+  act: (stimulus: Stimulus) => Promise<Outcome>;
+  /** The person's own agent calls one of the model's verbs a person has no
+   * gesture for. Resolves to what the tool returns a model; rejects when the
+   * engine refuses the call. */
   invoke: (tool: string, args?: Record<string, unknown>) => Promise<Outcome>;
-  /** The reading a model gets — `review` in `agent/tools.py` — for a browser agent. */
+  /** The reading a model gets — `review` in `agent/tools.py` — for the person's own agent. */
   review: () => Promise<unknown>;
   label: (id: string | null) => string;
 }
@@ -471,6 +477,34 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     }
   }, [show]);
 
+  const act = useCallback(
+    async (stimulus: Stimulus) => {
+      setBusy(true);
+      const ticket = take();
+      try {
+        const response = await fetch(
+          `/api/configurator/gesture?actor=browser&grid=${gridRef.current}`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(stimulus),
+          },
+        );
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error ?? "the action was refused");
+        show(ticket, body.view);
+        setError(null);
+        return { did: body.did, state: body.state } as Outcome;
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : String(cause));
+        throw cause;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [show],
+  );
+
   const invoke = useCallback(
     async (tool: string, args: Record<string, unknown> = {}) => {
       setBusy(true);
@@ -521,8 +555,8 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ view, grid, setGrid, busy, error, gesture, invoke, review, label }),
-    [view, grid, busy, error, gesture, invoke, review, label],
+    () => ({ view, grid, setGrid, busy, error, gesture, act, invoke, review, label }),
+    [view, grid, busy, error, gesture, act, invoke, review, label],
   );
 
   return (

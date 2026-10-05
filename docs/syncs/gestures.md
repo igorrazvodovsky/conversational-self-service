@@ -183,9 +183,9 @@ value, only that it asserted the value in reply to them. The shared flow
 states exactly that claim, and it is read rather than recorded, so the actor
 table in `CLAUDE.md` gains no row.
 
-A browser agent's call arrives with no message and opens a flow of its own,
-so nothing joins it to any words and the canvas says *a browser agent asked
-for this* with none. Nothing declines it, because nothing was asked. A
+The person's own agent arrives with no message and its call opens a flow of
+its own, so nothing joins it to any words and the canvas says *your agent
+asked for this* with none. Nothing declines it, because nothing was asked. A
 person's click is the same: a gesture opens its own flow, and a value the
 person asserted or adopted carries no words.
 
@@ -381,6 +381,16 @@ carries a `Copiloting/invoke` to `Quoting/commit`, so an offer is accepted by
 the person or by nobody. Between them the absences say what the model is
 for here: it can work out what to build and what it would cost, and it can make
 neither of those yours.
+
+### Whoever acts for the person
+
+Every rule here matches on the act, never on the actor, so an act the
+person's own agent sends is the person's act. That agent reaches the same
+root action under the actor `browser`, and the asymmetries above hold
+between the person and the seller's assistant, not between the person and
+whoever they have asked to act for them. How much they delegate is theirs to
+decide, in their own agent. See
+[Conduct](conduct.md#the-persons-own-agent-acting-as-the-person).
 
 ## Why a click is not an endpoint
 

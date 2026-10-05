@@ -10,13 +10,15 @@ and `GET /digest` are the querying capability, and nothing writes through a
 read.  `GET /measures` is a read too, for whoever studies the sessions rather
 than either party in them (`docs/measures.md`).
 
-`/invoke` is how a browser agent reaches the engine: the page registers the
-model's tools on `document.modelContext` (`src/components/configurator/
-webmcp.tsx`), and each call lands here as `Copiloting/invoke` under the actor
-`browser`, exactly as the in-app model's calls land from `tools.py` under
-`model`.  The rules in `syncs/conduct.py` match on the tool and not on the
-actor, so what a browser agent may do is what the model may do, and what it
-may not is the same absence.  See `docs/syncs/conduct.md`.
+The person's own agent reaches the engine through both.  The page registers
+the person's gestures on `document.modelContext` (`src/components/
+configurator/webmcp.tsx`), and each lands at `/gesture` as
+`Copiloting/gesture` under the actor `browser`: the rules in
+`syncs/gestures.py` match on the act and not on the actor, so what the
+person's agent may do is what the person may do.  `review`, `propose` and
+`read`, which a person has no gesture for, land at `/invoke` under the same
+actor and fire the model's rules.  See `docs/syncs/conduct.md`, "The
+person's own agent, acting as the person".
 
 Note what is absent: there is no endpoint per concept action.  A person's click
 is a stimulus, and the rules in `syncs/gestures.py` decide what follows from it.
@@ -32,7 +34,7 @@ from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import Body, FastAPI  # noqa: E402
+from fastapi import Body, FastAPI, HTTPException  # noqa: E402
 
 from instance import SPEC, engine  # noqa: E402
 from measures import measures  # noqa: E402
@@ -48,9 +50,9 @@ def view(grid: str = "today") -> dict[str, Any]:
 
 @app.get("/configurator/digest")
 def review() -> dict[str, Any]:
-    """The reading a model gets: the same projection `tools.py`'s `review`
-    returns to the in-app model, handed to a browser agent."""
-    return digest(engine, SPEC)
+    """The reading the person's own agent gets: the projection `tools.py`'s
+    `review` returns to the in-app model, read as the person reads it."""
+    return digest(engine, SPEC, actor=BROWSER)
 
 
 @app.get("/configurator/measures")
@@ -61,17 +63,18 @@ def measured() -> dict[str, Any]:
     return measures(engine)
 
 
-# The one root action a model performs.  Whether that model is the graph in
-# this process or an agent in the person's browser is a matter of the actor
-# on the record, not of which rules apply.
+# The person's own agent, as an actor: it performs the person's gestures and
+# the model's three verbs a person has no gesture for.  Which rules apply is
+# a matter of the root action and its act or tool, not of this actor.
 BROWSER = "browser"
+ACTORS = {"person", BROWSER}
 
 
 @app.post("/configurator/invoke")
 def invoke(
     stimulus: dict[str, Any] = Body(...), grid: str = "today"
 ) -> dict[str, Any]:
-    """A browser agent called one of the model's tools.
+    """The person's own agent called one of the model's tools.
 
     The body carries the tool's name under `tool` and its arguments beside
     it, as `tools.py` passes them.  The response is what the tool returns to
@@ -80,6 +83,12 @@ def invoke(
     """
     stimulus.setdefault("spec", SPEC)
     completion = engine.root("Copiloting", "invoke", actor=BROWSER, **stimulus)
+    return _outcome(completion, grid)
+
+
+def _outcome(completion: Any, grid: str) -> dict[str, Any]:
+    """What the person's own agent hears back: what the rules did, in the
+    shape `tools.py` hands the in-app model, and the reading afterwards."""
     did = []
     for record in engine.log.flow(completion.flow):
         if record.kind != "completion" or record.concept == "Copiloting":
@@ -94,14 +103,14 @@ def invoke(
     return {
         "flow": completion.flow,
         "did": did,
-        "state": digest(engine, SPEC),
+        "state": digest(engine, SPEC, actor=BROWSER),
         "view": canvas(engine, SPEC, grid=grid),
     }
 
 
 @app.post("/configurator/gesture")
 def gesture(
-    stimulus: dict[str, Any] = Body(...), grid: str = "today"
+    stimulus: dict[str, Any] = Body(...), grid: str = "today", actor: str = "person"
 ) -> dict[str, Any]:
     """A person acted on an application surface.
 
@@ -112,9 +121,17 @@ def gesture(
     a property of the read that comes back and not of the act.  Which carbon
     intensity somebody is looking at is not something they did, and it has no
     business in the action log.
+
+    `actor` is `browser` when the person's own agent performed it, and the
+    response is then what `/invoke` returns: what the rules did, and the
+    digest it reads.
     """
+    if actor not in ACTORS:
+        raise HTTPException(status_code=400, detail=f"no actor {actor}")
     stimulus.setdefault("spec", SPEC)
-    completion = engine.root("Copiloting", "gesture", actor="person", **stimulus)
+    completion = engine.root("Copiloting", "gesture", actor=actor, **stimulus)
+    if actor == BROWSER:
+        return _outcome(completion, grid)
     return {
         "flow": completion.flow,
         "view": canvas(engine, SPEC, grid=grid),

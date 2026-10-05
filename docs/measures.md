@@ -16,7 +16,7 @@ page, in the digest or among the tools reads it.
 ## Nobody being measured sees the measures
 
 The measures are not on the canvas, not in the digest, and not among the
-model's tools or the browser agent's. A model told its own disown rate reads
+model's tools or the person's own agent's. A model told its own disown rate reads
 more cautiously, and a person shown theirs strikes differently; either would
 change the thing being counted. The canvas already shows each fact the
 measures count — *answers nothing* beside an unbound value, *the assistant
@@ -40,6 +40,13 @@ choices(i)   =  the Binding/propose completions with via AReadAnswerIsProposed
 words(c)     =  the text of c's require, then of each reword or relax of c, in order
 stater(c)    =  the party on c's require
 ```
+
+The person's own agent acts as the person
+([Conduct](syncs/conduct.md#the-persons-own-agent-acting-as-the-person)), so
+what it states, answers, adopts or withdraws counts as the person's here:
+the party on the record is the person's, and so is the decision to delegate.
+Where the case needs the human apart from their agent, the actor on the
+root action says which, and no measure below reads it yet.
 
 ## Slice 1 — whether a value answers a requirement
 
@@ -95,11 +102,11 @@ fates(i)    =  for clause(i) = c, each that applies:
                  withdrawn    a Binding/retract of a choice in choices(i)
                               with via AWithdrawnValueRetractsItsChoices,
                               after a withdraw whose actor is the person
+                              or the person's own agent
                  displaced    a Binding/retract of a choice in choices(i)
                               with via AnOverwrittenValueRetractsItsChoices
                  withdrawn by the model
                               as withdrawn, after a withdraw by the model
-                              or a browser agent
                  conceded     as withdrawn, after a withdraw with via
                               TheConcededAssertionIsWithdrawn, whoever
                               chose the concession

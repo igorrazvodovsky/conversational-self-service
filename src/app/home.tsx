@@ -37,7 +37,7 @@ export function HomeRoot({ canvasPercent }: { canvasPercent: number }) {
       */}
       <ConfiguratorProvider>
         {/*
-          The model's tools, registered on the page for a browser agent
+          The person's gestures, registered on the page for their own agent
           (WebMCP). Inside the provider because each call is performed through
           it, so the canvas renders the outcome as it does for a click.
         */}

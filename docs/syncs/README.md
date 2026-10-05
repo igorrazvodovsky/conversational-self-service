@@ -202,9 +202,10 @@ framed struck, or the specification discarded. See
 The model is a root actor too, and every one of its invocations reaches a
 concept action by way of a rule that says it may. There is no rule that lets it
 adopt a completion, commit to a quote, change a price, or list a catalogue
-option, and that is the whole of the enforcement. A browser agent reaching
-the page through WebMCP performs the same root action under its own actor,
-and the same rules decide what follows. See [Conduct](conduct.md).
+option, and that is the whole of the enforcement. An agent the person
+brings, reaching the page through WebMCP, is not the model: it acts as the
+person, through their gestures under its own actor, and the person's rules
+decide what follows. See [Conduct](conduct.md#the-persons-own-agent-acting-as-the-person).
 
 ## Checking these against the design rules
 

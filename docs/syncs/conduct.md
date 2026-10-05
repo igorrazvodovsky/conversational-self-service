@@ -560,52 +560,63 @@ The practical difference from a system prompt is that this list is checkable.
 not by reasoning about what a model is likely to infer from a paragraph of
 English.
 
-## A browser agent, on the same terms
+## The person's own agent, acting as the person
 
-The model's verbs and its reading are also registered on the page's WebMCP model
-context (`document.modelContext`), through `useFrontendTool` with `webmcp`
-set ([`src/components/configurator/webmcp.tsx`](../../src/components/configurator/webmcp.tsx)).
-A browser agent that visits the page — Chrome's own, or any other that
-speaks WebMCP — finds the same tools the in-app assistant has, under the
-same names, with the same descriptions, and nothing else.
+Which grant an agent gets depends on whose agent it is, not on where it
+runs. The in-app assistant is the seller's: it lives on the seller's page,
+answers to the seller's prompt, and is a party to the configuration in its
+own right. Everything above is written for it, and the absences hold for it.
+An agent the person brings — Chrome's own, or Claude Desktop through the
+MCP-B relay — is the person's: it acts because they asked it to, and how much
+they hand it is theirs to decide, in their own agent, not the seller's to
+decide in these rules. So it gets the person's grant, not the model's.
 
-Each call is `Copiloting/invoke` with the actor `browser`, reaching the
-engine at `POST /configurator/invoke` as the assistant's calls reach it from
-`agent/tools.py`. Every rule above matches on the tool and not on the actor,
-so the grant is the same grant: a browser agent may assert, withdraw,
-propose, introduce, entitle, quote, show, hide, frame and unframe, and the
-absences hold for it exactly as they hold for the assistant. It reads
-nothing, since it has no source to cite ([Reading](reading.md#the-model-reads)).
-No rule carries its invocation to `Deciding/choose`, `Quoting/commit`,
-`Specifying` or `Binding`, and a value held for a reason is out of its
-reach as it is out of the assistant's. It can fill the specification in, and
-it cannot adopt a proposal, accept an offer or state what the person
-requires — which is what
-makes the tools safe to hand to an agent nobody here wrote. The exposure
-adds no rule; it adds another actor to rules that already existed.
+The page registers the person's gestures on its WebMCP model context
+(`document.modelContext`), through `useFrontendTool` with `webmcp` set
+([`src/components/configurator/webmcp.tsx`](../../src/components/configurator/webmcp.tsx)).
+Each call is `Copiloting/gesture`, carrying the same `act` the canvas would
+send, and reaches the engine at `POST /configurator/gesture` with the actor
+`browser`. Every rule in [Gestures](gestures.md), [Binding](binding.md) and
+[Reading](reading.md) matches on the act and not on the actor, so the grant
+is the person's grant and no rule is added for it: the person's agent may
+file a document, state, reword, relax, settle, move, strike or keep a
+clause, answer one, assert or withdraw a value, adopt a proposed value or
+the whole completion, answer or decline a conflict, introduce the person,
+entitle the job, request, accept or revoke a quote, and change what the
+canvas shows. What a person cannot do it cannot do either: no act reaches
+`Cataloguing`, `Pricing`, `Footprinting` or `Stipulating`
+([Gestures](gestures.md#what-a-gesture-is-not-allowed-to-be)).
 
-A browser agent's call opens a flow of its own, since no message opened one
-for it, so no utterance is joined to what it asserts and the canvas shows
-none beside the value.
+It also gets the model's three verbs that a person has no gesture for,
+through `Copiloting/invoke` under the same actor at
+`POST /configurator/invoke`: `review`, `propose` and `read`. `review` is how
+it sees the canvas. `propose` asks the solver for the cheapest completion,
+which comes back as questions it can then answer as the person would. `read`
+is how a requirement it took from a document stays cited: it files the
+document as the person, reads from the filed text, and the rules in
+[Reading](reading.md) check the words against it exactly as they do for the
+assistant. A clause read that way carries the model as its stater, and the
+agent keeps it as the person's with `keep` when the person has told it to.
+`assert` is not offered a second time through `invoke`; for the person's
+agent it is the gesture, and a value it asserts is the person's.
 
-What tells the two models apart is the actor on the record, not a rule.
-`Asserting.assertedBy` writes `model` for both, because both are a model
-asserting on the person's behalf; the log's `actor` says which, and the
-canvas reads it: *the assistant asked for this* and *a browser agent asked
-for this* are one provenance edge under two actors. "The model" in the rule
-names is a role, and two things fill it.
+What tells the person from their agent is the actor on the record, not a
+rule. `APersonAssertsAValue` writes `person` as the party in both cases,
+because the agent asserts as the person; the log's `actor` says who acted,
+and the canvas reads it: *you asked for this* and *your agent asked for
+this* are one provenance edge under two actors. A flow with `browser` among
+its root actors is one that moved while the person was not looking, and the
+canvas marks what it reached until the person next acts themselves.
 
 A desktop client is the same actor. The page also loads the MCP-B relay's
 embed script, which forwards the model context's tools over localhost to a
-relay that any MCP client — Claude Desktop, say — talks to over stdio. A
-call from there runs the same handler in the same tab and lands under
-`browser` too: the rules do not know, and do not need to know, whether the
-model that asked lives in the browser or beside it.
+relay that any MCP client talks to over stdio. A call from there runs the
+same handler in the same tab and lands under `browser` too.
 
 The tools are registered under an agent id no in-app agent has, so the
-assistant is never offered a second copy of its own tools as frontend tools.
-`review` carries the WebMCP `readOnlyHint`; the rest carry none, since each
-changes a fact or the canvas.
+assistant is never offered the person's gestures as frontend tools. `review`
+carries the WebMCP `readOnlyHint`; the rest carry none, since each changes a
+fact or the canvas.
 
 ## The tool names are ours
 

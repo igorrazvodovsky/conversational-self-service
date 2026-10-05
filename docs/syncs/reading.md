@@ -62,8 +62,10 @@ then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ; ite
 One rule with two triggers, on the shape of the source. The utterance is the
 one that opened the turn, handed to the tool by `agent/hearing.py` as the
 flow token is, so a reading of the person's words names the words it read.
-A call with no file and no utterance, a browser agent's, reads nothing:
-there is no source to check it against.
+A call with no file and no utterance reads nothing: there is no source to
+check it against. The person's own agent has no message in the chat, so it
+reads only from a file, which it files first as the person
+([Conduct](conduct.md#the-persons-own-agent-acting-as-the-person)).
 
 The `where` is that check. A reading cites its source, and a citation the
 source does not bear out is not one: words from a document cited to the

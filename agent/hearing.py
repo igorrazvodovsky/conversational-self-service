@@ -22,7 +22,7 @@ turn is performed in it (`tools.py` asks `turn()` for it).  That is what joins
 *the person said "hospital, six storeys"* to *the model asserted
 `building_type:hospital`* in the log: the same flow token on both, with no
 field anywhere recording the link and no rule writing one.  The canvas reads
-it back beside the value (`views.py`).  A browser agent's call arrives with no
+it back beside the value (`views.py`).  The person's own agent arrives with no
 message and opens a flow of its own, so nothing joins it to any words.  See
 `docs/syncs/gestures.md`, "Where a chat message enters".
 

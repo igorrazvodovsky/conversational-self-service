@@ -85,7 +85,7 @@ layer beside the agent.
 │   │   │   ├── document.tsx              # a quote laid out as a commercial proposal
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
 │   │   │   ├── address.tsx               # every item's address, and links between them
-│   │   │   ├── webmcp.tsx                # the model's tools, registered for a browser agent (WebMCP)
+│   │   │   ├── webmcp.tsx                # the person's gestures, registered for their own agent (WebMCP)
 │   │   │   └── variables.tsx             # asked / follows / open rows
 │   │   ├── example-layout/               # the artifact panel (requirements, configuration or quote, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features
@@ -135,24 +135,26 @@ comments is ordinary maintenance.
 
 ### The root actors, and what each may do
 
-The browser agent column is the model column: a WebMCP-capable browser
-visiting the page finds the model's verbs and its reading registered on
-`document.modelContext`, calls them as `Copiloting.invoke` under its own
-actor, and the same conduct rules decide what follows.
+Whose agent it is decides the column, not where it runs. The model is the
+seller's assistant, in the page. The person's agent is one the person brings,
+such as a WebMCP-capable browser or Claude Desktop through the relay. It finds the
+person's gestures registered on `document.modelContext`, performs them as
+`Copiloting.gesture` under its own actor, and the person's rules decide what
+follows. How much the person delegates is theirs to set, in their own agent.
 
-|  | person | model | browser agent |
+|  | person | model | person's agent |
 |---|---|---|---|
-| state, relax or strike a requirement, in their own words | yes | no | no |
-| read a requirement from a document or the person's words, cited to its source | — | yes | no |
-| keep a reading as the person's own | yes | no | no |
-| attach a document | yes | no | no |
-| say which requirement a value answers | yes | no | no |
-| assert or withdraw a value | yes | yes, unless it answers a requirement the person stated | yes, unless it answers a requirement the person stated |
+| state, relax or strike a requirement, in their own words | yes | no | yes |
+| read a requirement from a document or the person's words, cited to its source | — | yes | yes, from a document it filed |
+| keep a reading as the person's own | yes | no | yes |
+| attach a document | yes | no | yes |
+| say which requirement a value answers | yes | no | yes |
+| assert or withdraw a value | yes | yes, unless it answers a requirement the person stated | yes |
 | propose a completion | — | yes | yes |
-| **adopt one, a value at a time or whole** | **yes** | **no** | **no** |
+| **adopt one, a value at a time or whole** | **yes** | **no** | **yes** |
 | say who the person is, and where the lift goes | yes | yes | yes |
 | request a quote | yes | yes | yes |
-| **accept or revoke one** | **yes** | **no** | **no** |
+| **accept or revoke one** | **yes** | **no** | **yes** |
 | choose which facts the canvas shows beside each item | yes | yes | yes |
 | narrow the canvas to what followed from one assertion | yes | yes | yes |
 | change a price, the catalogue, or the seller's terms | no | no | no |
@@ -229,8 +231,8 @@ Claude Desktop's entry, with absolute paths because the app's `PATH` has no
 ```
 
 The client then sees `review`, `assert_value` and the rest beside the relay's
-own `webmcp_list_sources`, and acts as the browser agent does — see
-[Conduct](docs/syncs/conduct.md#a-browser-agent-on-the-same-terms).
+own `webmcp_list_sources`, and acts as the person's agent — see
+[Conduct](docs/syncs/conduct.md#the-persons-own-agent-acting-as-the-person).
 
 ## UI components
 

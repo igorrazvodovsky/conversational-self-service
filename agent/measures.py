@@ -21,6 +21,8 @@ from typing import Any
 from engine import Engine
 
 PERSON = "person"
+# The person, and their own agent acting as them (docs/measures.md).
+PERSONS = {PERSON, "browser"}
 
 ANSWERED = {"AChoiceReachesTheAssertions", "ASubstituteReachesTheAssertions"}
 ASKED = {"APersonAssertsAValue", "TheModelMayAssertAValue"}
@@ -114,7 +116,7 @@ def measures(engine: Engine) -> dict[str, Any]:
                     withdraw = by_id.get(r.after)
                     if withdraw is not None and withdraw.via == CONCEDED:
                         fate = "conceded"
-                    elif withdraw is not None and withdraw.actor == PERSON:
+                    elif withdraw is not None and withdraw.actor in PERSONS:
                         fate = "withdrawn"
                     else:
                         fate = "withdrawn by the model"
