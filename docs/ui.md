@@ -8,6 +8,62 @@ square, dense and sharp.
 This is presentation only. No concept, action or rule changed, and nothing here
 belongs in `docs/concepts/` or `docs/syncs/`.
 
+## What a view is
+
+The facts are small and addressed, and a view is a question asked of them. The
+question decides the arrangement; the catalogue's families, a document's
+customary sections or the order things were recorded in do not. The canvas is
+the model: *asserted*, *follows* and *open* are computed from the state, so the
+same variable is under one heading today and another after a withdrawal, and
+its address follows it.
+
+This is Dorian Taylor's distinction between a category's extension, the
+members it lists, and its intension, the rule that admits them. Paper made the
+document the smallest unit that could be stored and exchanged, so information
+was arranged by fixed lists of document-sized chunks. On a screen the unit can
+be a clause, and small units that are cheap to reach give many paths through
+the same facts (Taylor, *Intentionally Intensional Information Architecture*,
+IA Summit 2017, <https://doriantaylor.com/ia-summit-2017>).
+
+Three questions test a view:
+
+1. *What does it answer?* It should be statable as a rule over the state —
+   *what followed from this assertion*, *what is waiting for you*, *what the
+   model read from this document*. A view whose groups are a list kept in the
+   component is arranged by extension.
+2. *What are its units?* A variable, a clause, a source, a quote line: the
+   smallest thing a person would point at.
+3. *Can they be reached?* Every unit has an address (`address.tsx`), so a link
+   between items, a reply in the chat and the person's agent can each name it.
+
+The same facts may be arranged more than once, one arrangement per question.
+The requirements are the example: the ledger holds the clauses in the order the
+person wrote them, and the sources beneath it hold the same clauses grouped by
+where they were read from. A second arrangement is a second question, not a
+duplicate.
+
+The quote document is the arrangement for leaving the app: the package that is
+sent, printed and signed, shaped like what a lift manufacturer sends. It
+answers the questions a recipient brings to paper and no others, and its
+sections are a fixed list (`SCOPE` and `SENTENCED` in `document.tsx`) for that
+reason. Its lines have no addresses, and it renders the frozen values as one
+scope, without the asserted, the entailed and the adopted told apart. What a
+person deciding on an offer asks of it is the canvas's question, put to the
+specification as it stood when the offer was made.
+
+Two things the principle leaves open:
+
+- *Which moment a view shows.* Looking at the specification as it stood at a
+  quote, rather than now, changes what a view is about. That is neither
+  `Moding`, which chooses a surface, nor `Framing`, which narrows one. Which
+  quote is being looked at is a viewer's convenience held on the surface, like
+  the chat's geometry; if a party other than the viewer is to set it, it is a
+  candidate concept.
+- *Where `Showing` and `Framing` reach.* Both serve the configuration only
+  (`showing.tsx`, `panel-nav.tsx`). A surface gets a frame or a facet when it
+  has a question that needs one, and each such extension is a change to the
+  concept's note first.
+
 ## Adding a component
 
 ```bash
@@ -37,7 +93,27 @@ position, a `dark` variant broad enough to match the
 outline that replaces the primitives' own focus rings.
 
 `--ring` is one zinc step darker than stock in both themes. Stock zinc's ring is
-2.63:1 against white, and a focus indicator needs 3:1.
+2.63:1 against white, and a focus indicator needs 3:1. `--muted-foreground` is
+darker than stock in the light theme, so the 12px labels keep 4.5:1 on the
+darkest level they sit on.
+
+### Levels
+
+Contrast between surfaces comes from neutral levels, not colour, so a thing's
+place in the scale reads before its words do. The stylesheet adds three tokens
+to shadcn's, outermost first:
+
+| Level | Token | What sits on it |
+|---|---|---|
+| Frame | `--frame` | Both panels' header rows, one band across the split |
+| Ground | `--ground` | The artifact panel and its sticky strips |
+| Raised | `--card` | A thing on the ground: an asserted value, the totals, the ledger, the open variables, the proposal |
+| Sunken | `--sunken` | A thing set into the ground: a value that follows |
+| Band | `--muted` | A band inside a card: a family heading, the frame strip, a source's text |
+
+The chat stays on `--background`, so the two panels alternate. The dark theme
+keeps the order: the frame darkest, the ground a step above the chat, a card a
+step above the ground, and a sunken thing back down at the chat's level.
 
 ### `cn`
 
@@ -59,12 +135,13 @@ same function, so app code and primitives merge classes with one engine.
 | An address | Every variable, clause, source and section carries an `id` (`variable:<name>`, `clause:<id>`, `source:<kind>:<id>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row addressed from elsewhere opens. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
 | What the last turn moved | A small square before the heading of each variable and clause the assistant's or the person's own agent's last flow reached, and the assertions a settled value rests on; the strip at the top counts them. Read off the log (`touched` in `agent/views.py`), gone once the person next changes the specification |
 | Asserted value | `Card` with a ghost `Button` to withdraw; unmet says so in words, and the question links to it; the *for* line is one line, linking to the clause |
-| A value that follows | `Item` (muted) in an `ItemGroup`; *from* names the assertions it rests on, each a link |
+| A value that follows | `Item` in an `ItemGroup`, on `--sunken` rather than the variant's half-strength muted, which all but vanishes on the ground; *from* names the assertions it rests on, each a link |
 | An open variable | `Collapsible` whose trigger is a ghost `Button`, under a heading row per catalogue family; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
 | Which facts are shown (`Showing`) | `DropdownMenu` of checkbox items, from a ghost `Button` |
 | The requirement document (`Specifying`) | A Tiptap editor in a `Card`; each clause a node view with `Button`s to frame the canvas on it (answer), relax, move and strike and a `DropdownMenu` of radio items for how firmly it is meant; the empty-clause hint from Tiptap's `Placeholder`, placed by the node view |
 | A reference in a clause | `Badge` (`outline` for an individual, `secondary` for a value, `default` once the value answers the clause); the `@` list is `Command` with grouped `CommandItem`s |
 | The offers issued | `Table`, one row per quote, the selected row `data-state=selected`; a ghost `Button` per row to compare |
+| A proposal | The quote document in a `Card`, a sheet on the ground; the printable page draws it without one |
 | Two quotes compared | `Table` of the rows that differ, with the sums |
 | The frame (`Framing`) | A bordered strip in the sticky nav with the counts of the slice and a ghost `Button` to show everything; the way in is a ghost `Button` on an asserted card, or the `Button` on a clause |
 | The answering mode | The frame on a clause: the strip names the clause and says that a value picked now answers it; the clause's `Button` reads *Answering…* and takes the frame off |

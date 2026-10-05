@@ -29,15 +29,28 @@
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
+  /* A step darker than stock zinc-500, so 12px labels keep 4.5:1 on the
+     frame band and sunken rows, the darkest levels they sit on (4.9:1 there,
+     5.5:1 on white). */
+  --muted-foreground: oklch(0.52 0.016 285.938);
   --accent: oklch(0.967 0.001 286.375);
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   /* zinc-500, a step darker than stock zinc's --ring, which is 2.63:1 against
-     white. A focus indicator needs 3:1; this is 4.83:1. */
+     white. A focus indicator needs 3:1; this is 4.83:1 on white and 4.3:1 on
+     the frame band. */
   --ring: oklch(0.552 0.016 285.938);
+
+  /* Levels of scale, outermost first (docs/ui.md): the frame band the panel
+     headers share, the ground the artifact panel's surfaces stand on, then
+     `--card` for a thing raised off that ground and `--sunken` for one set
+     into it, and `--muted` for a band inside a card. The chat stays on
+     `--background`, so the two panels alternate. */
+  --frame: oklch(0.96 0.003 286);
+  --ground: oklch(0.98 0.002 286);
+  --sunken: oklch(0.958 0.003 286);
 
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -79,6 +92,13 @@
   /* zinc-400, the light theme's step on its own side. */
   --ring: oklch(0.705 0.015 286.067);
 
+  /* Dark keeps the order: the frame darkest, the ground a step above the
+     chat's background, a card a step above the ground, and a sunken thing
+     back down at the chat's level. */
+  --frame: oklch(0.115 0.004 286);
+  --ground: oklch(0.172 0.005 286);
+  --sunken: oklch(0.141 0.005 286);
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -111,6 +131,9 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-frame: var(--frame);
+  --color-ground: var(--ground);
+  --color-sunken: var(--sunken);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

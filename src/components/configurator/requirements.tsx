@@ -31,7 +31,7 @@ function Header() {
   const touched = view.touched;
   const moved = touched ? touched.clauses.length : 0;
   return (
-    <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-background/95 px-6 py-2 backdrop-blur">
+    <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-ground/95 px-6 py-2 backdrop-blur">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
         <h1 className="text-sm font-semibold">{view.product}</h1>
         {moved ? (
@@ -71,7 +71,7 @@ export function RequirementsSurface() {
   const { view } = useConfigurator();
   if (!view) return null;
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto">
       <div className="px-6 pb-6">
         <Header />
         <div className="mt-4">

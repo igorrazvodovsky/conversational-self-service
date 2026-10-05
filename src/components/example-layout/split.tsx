@@ -102,7 +102,7 @@ export function Split({
         minSize={sideBySide ? "360px" : undefined}
         // min-h-0/min-w-0 so the artifact scrolls inside the panel rather
         // than growing it.
-        className="relative flex min-h-0 min-w-0 flex-col"
+        className="relative flex min-h-0 min-w-0 flex-col bg-ground"
       >
         {artifact}
       </ResizablePanel>

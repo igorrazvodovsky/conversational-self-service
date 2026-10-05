@@ -133,7 +133,7 @@ export function ChatSurfaceHeader({
   const hydrated = useHydrated();
 
   return (
-    <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b px-2">
+    <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b bg-frame px-2">
       <ConversationMenu
         conversations={conversations}
         activeThreadId={activeThreadId}

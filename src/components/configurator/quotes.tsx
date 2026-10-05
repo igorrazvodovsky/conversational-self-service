@@ -414,7 +414,7 @@ export function QuoteSurface() {
       : undefined;
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto">
       <div className="px-6 py-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">
@@ -450,44 +450,47 @@ export function QuoteSurface() {
         <Addressee />
 
         {quote ? (
-          <QuoteDocument
-            quote={quote}
-            view={view}
-            actions={
-              <>
-                {quote.standing === "open" ? (
-                  <>
-                    <Button
-                      size="sm"
-                      disabled={busy}
-                      onClick={() =>
-                        void gesture({ act: "commit", quote: quote.quote })
-                      }
-                    >
-                      Accept this proposal
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={busy}
-                      className="text-muted-foreground"
-                      onClick={() =>
-                        void gesture({ act: "revoke", quote: quote.quote })
-                      }
-                    >
-                      Revoke
-                    </Button>
-                  </>
-                ) : null}
-                <Button variant="outline" size="sm" asChild className="ml-auto">
-                  <Link href={`/quotes/${quote.quote}`} target="_blank">
-                    <PrinterIcon />
-                    Print
-                  </Link>
-                </Button>
-              </>
-            }
-          />
+          // A sheet on the panel's ground, the way it will print.
+          <Card className="px-8 py-8">
+            <QuoteDocument
+              quote={quote}
+              view={view}
+              actions={
+                <>
+                  {quote.standing === "open" ? (
+                    <>
+                      <Button
+                        size="sm"
+                        disabled={busy}
+                        onClick={() =>
+                          void gesture({ act: "commit", quote: quote.quote })
+                        }
+                      >
+                        Accept this proposal
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={busy}
+                        className="text-muted-foreground"
+                        onClick={() =>
+                          void gesture({ act: "revoke", quote: quote.quote })
+                        }
+                      >
+                        Revoke
+                      </Button>
+                    </>
+                  ) : null}
+                  <Button variant="outline" size="sm" asChild className="ml-auto">
+                    <Link href={`/quotes/${quote.quote}`} target="_blank">
+                      <PrinterIcon />
+                      Print
+                    </Link>
+                  </Button>
+                </>
+              }
+            />
+          </Card>
         ) : (
           <Empty className="border p-8">
             <EmptyHeader>

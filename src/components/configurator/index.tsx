@@ -130,7 +130,7 @@ function Header() {
   const moved = touched ? touched.variables.length + touched.clauses.length : 0;
   if (!moved && !view.frame) return null;
   return (
-    <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-background/95 px-6 py-2 backdrop-blur">
+    <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-ground/95 px-6 py-2 backdrop-blur">
       {moved ? (
         <p className="text-xs text-muted-foreground">
           <span className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
@@ -267,7 +267,7 @@ export function ConfiguratorCanvas() {
   const families = byFamily(open);
 
   return (
-    <div className="@container h-full bg-background">
+    <div className="@container h-full">
       <div className="h-full overflow-y-auto">
         <div className="px-6 pb-6">
           <Header />

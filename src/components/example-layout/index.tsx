@@ -69,7 +69,7 @@ export function ExampleLayout({
           <>
             {/* The panel's own header: the wordmark and the way around the
                 panel, surfaces and sections in one row. */}
-            <div className="flex h-9 shrink-0 items-center gap-4 border-b pr-3 pl-3">
+            <div className="flex h-9 shrink-0 items-center gap-4 border-b bg-frame pr-3 pl-3">
               <div className="flex shrink-0 items-center gap-1.5">
                 <span className="text-base font-extrabold">CopilotKit</span>
                 <img

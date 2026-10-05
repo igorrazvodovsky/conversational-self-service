@@ -338,7 +338,9 @@ export function FollowsRow({ variable }: { variable: Variable }) {
       size="xs"
       variant="muted"
       role="listitem"
-      className={cn("items-start", addressable, isTarget && targetedRing)}
+      // Set into the panel's ground, under the raised asserted cards. The
+      // variant's own half-strength muted all but vanishes on that ground.
+      className={cn("items-start bg-sunken", addressable, isTarget && targetedRing)}
     >
       <ItemContent className="gap-1">
         {/* Not `ItemTitle`: it clamps to one line, and undoing the clamp
