@@ -28,7 +28,7 @@ from datetime import date
 from typing import Any
 
 from engine import Engine
-from wiring import BASIS, WORKSPACE
+from wiring import BASIS, FACETS, WORKSPACE
 from syncs import readings
 
 # Which rule put an assertion on record, in words.  Three sentences, three
@@ -368,10 +368,18 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
 
     # Which facts the canvas shows at a glance — `Showing`, read for the
     # workspace's lens.  The list carries every facet offered, in words, so
-    # the menu and the model's digest read the same thing.
+    # the menu and the model's digest read the same thing.  `usual` is
+    # whether the facet is shown before anybody has touched the menu, so the
+    # page's URL can leave the usual out (docs/ui.md, "Links").
     shown = set(showing["shown"].get(WORKSPACE, []))
+    usual = {facet for facet, _, seeded in FACETS if seeded}
     facets = [
-        {"facet": facet, "about": showing["about"].get(facet, facet), "shown": facet in shown}
+        {
+            "facet": facet,
+            "about": showing["about"].get(facet, facet),
+            "shown": facet in shown,
+            "usual": facet in usual,
+        }
         for facet in showing["offered"].get(WORKSPACE, [])
     ]
     capital = pricing.state()["capital"]
@@ -1611,6 +1619,7 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
             }
             | {
                 "at": f"#quote:{q['quote']}",
+                "page": f"/quotes/{q['quote']}",
                 "monthly": q["terms"]["recurring"],
                 "months": q["terms"]["months"],
             }
@@ -1689,6 +1698,7 @@ def quoted(engine: Engine, spec: str, quote: str) -> dict[str, Any]:
         "quote": quote,
         "number": q["number"],
         "at": at,
+        "page": f"/quotes/{quote}",
         "standing": q["standing"],
         "issued": q["issued"],
         "how": q["how"],

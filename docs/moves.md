@@ -38,7 +38,9 @@ does not carry reasoning about intent. The chat may point at the canvas,
 though: every item there has an address, and a reply that refers to one links
 the word rather than reciting the item. Two offers compared are a place too,
 so a reply can put a comparison in front of the person by linking it, and
-nothing is recorded: which pair is shown stays the viewer's.
+nothing is recorded: which pair is shown stays the viewer's. A link is the
+page's URL too, so the person can send one to a colleague, and their own agent
+can link its work from a chat of its own ([Links](ui.md#links)).
 
 ## The person's moves
 

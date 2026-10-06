@@ -49,6 +49,7 @@ import {
   targeted,
   useTargeted,
 } from "@/components/configurator/address";
+import { useFollowLink } from "@/components/configurator/link";
 import { useConfigurator } from "@/components/configurator/provider";
 import { useStateSuggestions } from "./suggestions";
 import {
@@ -466,21 +467,27 @@ function WelcomeScreen({
 
 /**
  * A reply may point at the canvas: a markdown link to an item's address
- * (`configurator/address.tsx`). The markdown renderer opens every link in a
- * new tab, which for a fragment of this page would open the page again, so a
- * same-page fragment is taken back here and set on this window.
+ * (`configurator/address.tsx`), or the page's full URL, which names a view
+ * as well (`configurator/link.tsx`) — one the person pasted, or one their
+ * own agent wrote. The markdown renderer opens every link in a new tab,
+ * which for this page would open the page again, so a link to this page is
+ * taken back here and followed in this window.
  */
-function followAddress(event: MouseEvent<HTMLDivElement>) {
-  const anchor = (event.target as HTMLElement).closest("a");
-  const href = anchor?.getAttribute("href");
-  if (!anchor || !href?.startsWith("#")) return;
-  event.preventDefault();
-  goTo(decodeURIComponent(href.slice(1)));
-}
-
 export function ConfiguratorChat() {
+  const follow = useFollowLink();
+  const onClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    const anchor = (event.target as HTMLElement).closest("a");
+    const href = anchor?.getAttribute("href");
+    if (!anchor || !href) return;
+    // A modified click asks for a new tab, which is the browser's to open.
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    if (href.startsWith("#")) {
+      event.preventDefault();
+      goTo(decodeURIComponent(href.slice(1)));
+    } else if (follow(href)) event.preventDefault();
+  };
   return (
-    <div className="contents" onClickCapture={followAddress}>
+    <div className="contents" onClickCapture={onClickCapture}>
       <WaitingProvider>
         <Chat />
       </WaitingProvider>

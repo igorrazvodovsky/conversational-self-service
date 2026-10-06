@@ -29,15 +29,18 @@
  * also carries the form that writes `Profiling` and `Naming`.
  *
  * Which quote is being looked at, which way it is read, and which pair is
- * being compared are a viewer's convenience, held here; an address on one
- * of a quote's lines sets the first two, and a comparison's address the
- * pair.
+ * being compared are a viewer's convenience, held in the page's URL —
+ * `quote`, `reading` and `against` (`link.tsx`) — so a link to an offer
+ * read one way opens it read that way, and the back button undoes a
+ * choice. An address on one of a quote's lines sets the first two, and a
+ * comparison's address the pair.
  * That a quote exists, and its standing, is `Quoting`'s.
  */
 
 import { ChevronDownIcon, PrinterIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -70,8 +73,9 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { compareOf, quoteKindOf, quoteOf, useHash } from "./address";
+import { addressable, compareOf, quoteKindOf, quoteOf, useHash } from "./address";
 import { Comparison, NOW } from "./comparison";
+import { CopyLink, READINGS, linkTo, setQuery, type Reading } from "./link";
 import { QuoteDocument, STANDING } from "./document";
 import { AsIssued, Decision } from "./grounds";
 import { cn } from "@/lib/utils";
@@ -338,8 +342,6 @@ function Issued({
   );
 }
 
-type Reading = "asked" | "timeline" | "proposal";
-
 function RequestButton() {
   const { view, gesture, busy } = useConfigurator();
   if (!view) return null;
@@ -377,32 +379,46 @@ export function QuoteSurface() {
   const { view, error, gesture, busy } = useConfigurator();
   const quotes = view?.quotes ?? [];
   const latest = quotes[quotes.length - 1]?.quote ?? null;
-  const [selected, setSelected] = useState<string | null>(null);
+  const params = useSearchParams();
+  const selected = params.get("quote");
   // The second quote of a comparison, when one is being made.
-  const [against, setAgainst] = useState<string | null>(null);
+  const against = params.get("against");
   // How the quote is read: against what was asked, along time, or as the
   // proposal sent.
-  const [reading, setReading] = useState<Reading>("asked");
-  // A newly issued quote is the one to look at.
+  const asked = params.get("reading") as Reading | null;
+  const reading: Reading = asked && READINGS.includes(asked) ? asked : "asked";
+  // Each choice is the person going somewhere, so a new history entry.
+  const setSelected = (quote: string) => setQuery({ quote }, true);
+  const setAgainst = (other: string | null) => setQuery({ against: other }, true);
+  const setReading = (next: Reading) =>
+    setQuery({ reading: next === "asked" ? null : next }, true);
+  // A newly issued quote is the one to look at; those issued before the page
+  // opened are not new.
+  const seen = useRef<string | null | undefined>(undefined);
+  const loaded = view !== null;
   useEffect(() => {
-    setSelected(latest);
-  }, [latest]);
+    if (!loaded) return;
+    const before = seen.current;
+    seen.current = latest;
+    if (before !== undefined && latest && latest !== before)
+      setQuery({ quote: latest, against: null });
+  }, [loaded, latest]);
   // An address on a quote's line names the quote, and the reading that
   // carries the line: a milestone is on the timeline, anything else is read
-  // against what was asked.
+  // against what was asked. Following it made the history entry already.
   const hash = useHash();
   useEffect(() => {
     // A comparison's address names its pair, and a line in it.
     const pair = compareOf(hash);
     if (pair) {
-      setSelected(pair[0]);
-      setAgainst(pair[1]);
+      setQuery({ quote: pair[0], against: pair[1] });
       return;
     }
     const named = quoteOf(hash);
     if (!named) return;
-    setSelected(named);
-    setReading(quoteKindOf(hash) === "event" ? "timeline" : "asked");
+    // The quote itself is read whichever way the link asked.
+    const kind = quoteKindOf(hash);
+    setQuery(kind ? { quote: named, reading: kind === "event" ? "timeline" : null } : { quote: named });
   }, [hash]);
 
   // A read that failed says nothing about the state; what was last read
@@ -473,7 +489,10 @@ export function QuoteSurface() {
         <Addressee />
 
         {quote ? (
-          <Card className="px-8 py-8">
+          <Card
+            id={`quote:${quote.quote}`}
+            className={cn("px-8 py-8", addressable)}
+          >
             <Decision
               quote={quote}
               view={view}
@@ -503,7 +522,13 @@ export function QuoteSurface() {
                       </Button>
                     </>
                   ) : null}
-                  <Button variant="outline" size="sm" asChild className="ml-auto">
+                  <CopyLink
+                    size="sm"
+                    label="Copy link"
+                    className="ml-auto"
+                    url={() => linkTo(`quote:${quote.quote}`)}
+                  />
+                  <Button variant="outline" size="sm" asChild>
                     <Link href={`/quotes/${quote.quote}`} target="_blank">
                       <PrinterIcon />
                       Print

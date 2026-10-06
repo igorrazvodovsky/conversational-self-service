@@ -106,14 +106,90 @@ Two things the principle leaves open:
   quote, rather than now, changes what a view is about. That is neither
   `Moding`, which chooses a surface, nor `Framing`, which narrows one. Which
   quote is being looked at, and which pair is being compared, is a viewer's
-  convenience held on the surface, like the chat's geometry. A comparison has
-  an address, so the assistant can put one in front of the person by linking
-  it without setting anything; if a party other than the viewer is to set
-  either, it is a candidate concept.
+  convenience held in the page's URL ([Links](#links)), not in the log. A
+  comparison has an address, so the assistant can put one in front of the
+  person by linking it without setting anything; if a party other than the
+  viewer is to set either, it is a candidate concept.
 - *Where `Showing` and `Framing` reach.* Both serve the configuration only
   (`showing.tsx`, `panel-nav.tsx`). A surface gets a frame or a facet when it
   has a question that needs one, and each such extension is a change to the
   concept's note first.
+
+## Links
+
+Work on a configuration is shared by link: a person sends a colleague what
+they are looking at, the assistant points at an item in a reply, and the
+person's own agent, working through WebMCP, reports what it did in its own
+chat with links back to the page. So the page's URL is its state. A link
+names the place, and opening it shows the same place to whoever opens it.
+
+The URL has two parts, and they name different things:
+
+- *The fragment names an item*: `#variable:<name>`, `#clause:<id>`,
+  `#choice:<id>`, `#quote:<id>:variable:<name>` and the rest in `address.tsx`.
+  An item's address is what a link to the item carries, and nothing else, so
+  following one never changes how the canvas is presented beyond bringing
+  the item's surface forward and, when a frame leaves the item out, taking
+  the frame off.
+- *The query names the view*, in words the page itself uses — the
+  surface, the frame, the facets shown, the grid, the quote and how it is
+  read, the comparison, the conversation (`link.tsx`).
+
+Opening a link performs the gestures that bring the recorded view to what
+the query says: `focus`, `frame` or `unframe`, `show` and `hide`, each only
+where the recorded view differs, so a reload records nothing. The same
+happens when a link to this page is followed from the chat. A parameter that
+is absent leaves its part of the view as it is: the view is a fact every
+party shares, and a link that says nothing about it does not change it.
+Going back through the browser's history follows the query too, but an
+entry in the history was written by the page, which leaves out only
+defaults, so there an absent parameter is its default. The rest are
+viewer conveniences and are not recorded; an absent one is its default — the
+latest quote, read against what was asked, compared with nothing, on
+today's grid.
+
+The page writes the view back into the address bar as it changes, whoever
+changed it, so the address bar is always a link to what is on screen.
+Defaults are left out of it. A change the person makes by navigating —
+another surface, a filter, another quote, another reading, a comparison — is
+a new entry in the history, so the back button returns to where they were;
+one another party makes replaces the entry. A link copied to send on spells
+out every recorded part, defaults included, so whoever opens it sees exactly
+this whatever their view was.
+
+Links outlive their items. An item can be struck, withdrawn or never
+issued, and a link to it still arrives somewhere: the page says, visibly and
+to a screen reader, that nothing is at that address now, and stays where it
+landed. Arriving by a link assumes nothing about how the person got there
+(Nielsen 2002): the item is ringed and takes focus on its surface, inside the
+panel's header and its way around.
+
+The addresses are kept. Each one is made of the page's own words — a
+variable's name, a clause's id, a quote's id, a surface's name — and never of
+how the page is built, so none has to change when the implementation does
+(Berners-Lee 1998). An address once given out goes on working; a scheme that
+changes keeps the old form as an alias. A quote has a page of its own,
+`/quotes/<id>`, the proposal as it prints, which is the link to send someone
+who should read the offer and nothing else.
+
+Readers off the page need links that work off the page. `review` and
+`open_quote` give every unit its address under `at`, which the in-app chat
+follows in place. The person's agent works in a chat of its own, where a
+fragment means nothing, so the page's tools also give every unit its URL under
+`link`, a quote's printable page under `page`, and every result the URL of
+the view the call left under `here`. An agent that reports what it did links
+the work it did.
+
+Following Alfy (2025), the view is in the URL only as far as it is state:
+nothing secret, nothing typed and unsent, nothing that changes by the
+moment.
+
+- Berners-Lee, T. (1998). *Cool URIs don't change*. W3C.
+  <https://www.w3.org/Provider/Style/URI>
+- Nielsen, J. (2002). *Deep linking is good linking*. Nielsen Norman Group.
+  <https://www.nngroup.com/articles/deep-linking-is-good-linking/>
+- Alfy, A. (2025). *Your URL is your state*.
+  <https://alfy.blog/2025/10/31/your-url-is-your-state.html>
 
 ## Adding a component
 

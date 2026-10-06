@@ -23,11 +23,18 @@
  *
  * The tools are registered under an agent id no in-app agent has, so the
  * assistant is never offered the person's gestures.
+ *
+ * The person's agent reports to the person in a chat of its own, where a
+ * fragment of this page means nothing. So every result is linked
+ * (`link.tsx`): each unit carries its URL under `link` beside its address
+ * under `at`, a quote its printable page under `page`, and the result the
+ * URL of the view the call left under `here`, to hand the person.
  */
 
 import { useFrontendTool } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
+import { linked, viewLink } from "./link";
 import { useConfigurator, type Outcome, type Stimulus } from "./provider";
 
 /** The agent id the tools are constrained to: none that exists in-app. */
@@ -51,12 +58,19 @@ export function useTool<Shape extends z.ZodRawShape>(
   handler: (args: z.infer<z.ZodObject<Shape>>) => Promise<unknown>,
   readOnly = false,
 ) {
+  const { latest } = useConfigurator();
   useFrontendTool(
     {
       name,
       description,
       parameters: z.object(shape),
-      handler,
+      handler: async (args: z.infer<z.ZodObject<Shape>>) => {
+        const result = linked(await handler(args));
+        const view = latest();
+        return result && typeof result === "object" && !Array.isArray(result) && view
+          ? { ...result, here: viewLink(view) }
+          : result;
+      },
       agentId: BROWSER,
       webmcp: readOnly ? { annotations: { readOnlyHint: true } } : true,
     },
@@ -81,7 +95,10 @@ export function BrowserAgentTools() {
       "and any reply under `asked` when it put one to the person; price, carbon, the addressee, " +
       "the job, and every quote issued, with its number, where it stands and " +
       "which values have moved since (`quotes`); `open_quote` reads one. " +
-      "Every item carries its address on the page under `at`, and `struck` " +
+      "Every item carries its address on the page under `at` and its URL " +
+      "under `link`, and a quote its printable proposal under `page`: link " +
+      "them when you tell the person what you did or found. `here` is the URL " +
+      "of the canvas as it stands, which the person can open or send on. `struck` " +
       "lists what the person struck from a reading. A " +
       "projection, accurate as of this call: the person may act on the canvas " +
       "between your calls.",
@@ -101,8 +118,9 @@ export function BrowserAgentTools() {
       "the customer provides (`programme`, `payments`, `by_others`). " +
       "Sentences beside a value are the canvas's, addressed to the person. " +
       "`differs` lists the values that have moved in the specification since. " +
-      "Each line's `at` is its address on the quote surface, to link when you " +
-      "report to the person. Changes nothing.",
+      "Each line's `link` is its URL on the quote surface, to link when you " +
+      "report to the person, and `page` is the proposal as it prints, the " +
+      "link to send someone who should read the offer. Changes nothing.",
     { quote },
     ({ quote }) => openQuote(quote),
     true,
