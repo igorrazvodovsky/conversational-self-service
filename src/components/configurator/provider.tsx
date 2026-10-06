@@ -39,7 +39,7 @@ export type Standing = "asked" | "yielded" | "unmet" | "follows" | "open";
  * requirements, and the offer. The chat is not one — where it sits is the
  * person's view state (`example-layout/chat-surface.tsx`), which no rule
  * reaches. */
-export type Surface = "requirements" | "canvas" | "quote";
+export type Surface = "canvas" | "quote";
 export type Grid = "today" | "decarbonising";
 
 export interface Option {

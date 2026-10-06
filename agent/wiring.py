@@ -119,12 +119,12 @@ def build(path: Path = CATALOGUE) -> Engine:
         basis=BASIS,
         grids=GRIDS,
         workspace=WORKSPACE,
-        # The configuration's surface first: it is the one given attention.
-        # The requirements are a surface of their own, linked to it; the quote
-        # is the third.  The conversation is not a surface; where the chat sits
-        # is the person's view state, which no rule reaches
-        # (docs/concepts/moding.md).
-        surfaces=["canvas", "requirements", "quote"],
+        # The specification first: it is the one given attention, and it
+        # holds what is asked for beside what answers it.  The quote is the
+        # other: the offers, as they were made.  The conversation is not a
+        # surface; where the chat sits is the person's view state, which no
+        # rule reaches (docs/concepts/moding.md).
+        surfaces=["canvas", "quote"],
         facets=[{"facet": f, "about": a, "shown": s} for f, a, s in FACETS],
         spec=SPEC,
     )

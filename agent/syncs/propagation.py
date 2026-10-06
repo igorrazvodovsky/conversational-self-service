@@ -37,9 +37,9 @@ def _an_issued_quote_is_shown(c: Completion, _: States) -> list[Invocation]:
 def _a_framed_requirement_shows_the_configuration(
     c: Completion, _: States
 ) -> list[Invocation]:
-    """What a clause frame selects is on the configuration, and so is the
-    pick that answers the clause; framing one brings that surface forward,
-    whichever party did it."""
+    """What a clause frame selects is on the specification, and so is the
+    pick that answers the clause; framing one from the quotes brings the
+    specification forward, whichever party did it."""
     if c.failed:
         return []
     frame = c.output.get("frame")

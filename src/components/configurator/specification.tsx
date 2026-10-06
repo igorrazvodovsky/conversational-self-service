@@ -1,13 +1,15 @@
 "use client";
 
 /**
- * The specification, edited as a document.
+ * The ledger, edited as a document: the canvas's *asked for* section.
  *
  * A Tiptap editor whose schema is a sequence of clause nodes and nothing
  * else. Each node carries the clause's identity from `Specifying` as an
- * attribute; the text is editable in place, and everything else about the
- * clause — its negotiability, what answers it — is rendered beside the text
- * by the node view and is not text. Nothing is asked of a line as it is
+ * attribute and is one line of the requirement ledger: the text is editable
+ * in place on the left, and everything else about the clause — its
+ * negotiability, its source, and on the right the values answering it with
+ * what each forced (`ledger.tsx`) — is rendered by the node view and is not
+ * text. The requirement and its answer are one line, on one surface. Nothing is asked of a line as it is
  * typed: it is a clause the moment it has words. The words may name the
  * catalogue — `@` offers it — and a reference so placed is part of the text,
  * written as a token (`references.tsx`).
@@ -20,9 +22,13 @@
  * renders except what has not yet been sent. See
  * docs/concepts/specifying.md, "The specification is edited as a document".
  *
- * While the editor has focus it owns the text; the view from the server is
- * written back into it only when it does not, so that a refresh while the
+ * While the person is typing it owns the text; the view from the server is
+ * written back into it only when they are not, so that a refresh while the
  * model is working cannot overwrite what a person is in the middle of typing.
+ * Focus on a control inside a line — a card's *Change*, *Take back* — is not
+ * typing. While a frame is on the document is read, not written: only the
+ * lines in the frame are shown, and nothing can be typed into lines that are
+ * not.
  */
 
 import { mergeAttributes, Node } from "@tiptap/core";
@@ -54,7 +60,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { address, addressable, Moved, targeted as targetedRing, To, useTargeted } from "./address";
+import { address, addressable, Moved, To, useTargeted } from "./address";
 import {
   NEGOTIABILITY,
   plain,
@@ -66,11 +72,12 @@ import {
 import { referencing } from "./references";
 import {
   useConfigurator,
-  type Answer,
   type Clause,
   type Negotiability,
   type View,
 } from "./provider";
+import { Answers, framedAsserted, ledger, Unbound } from "./ledger";
+import { Sources } from "./sources";
 
 // -- the schema ---------------------------------------------------------------
 
@@ -252,39 +259,6 @@ function clausesOf(editor: Editor) {
 
 // -- one clause, rendered -----------------------------------------------------
 
-function OneAnswer({ answer }: { answer: Answer }) {
-  const unmet = answer.standing === "unmet";
-  const yielded = answer.standing === "yielded";
-  return (
-    <li className="flex flex-wrap items-baseline gap-x-2 text-xs">
-      <span className="uppercase tracking-wide text-muted-foreground">
-        {answer.variable ? (
-          <To id={address.choice(answer.choice)} title="The value, on its line of the configuration">
-            {answer.heading}
-          </To>
-        ) : (
-          "no variable offers this"
-        )}
-      </span>
-      <span className={cn("text-sm", yielded && "text-muted-foreground line-through")}>
-        {answer.label}
-      </span>
-      {unmet ? (
-        <span>not buildable alongside the rest</span>
-      ) : null}
-      {yielded ? (
-        <span className="text-muted-foreground">negotiable, and gave way</span>
-      ) : null}
-      {answer.replaced ? (
-        <span className="text-muted-foreground">
-          in place of {answer.replaced}
-          {answer.reason ? `: ${answer.reason}` : ""}
-        </span>
-      ) : null}
-    </li>
-  );
-}
-
 function Relax({ clause, onDone }: { clause: Clause; onDone: () => void }) {
   const { gesture, busy } = useConfigurator();
   const [wording, setWording] = useState(clause.text);
@@ -366,6 +340,10 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const open = clause?.negotiability === "open";
   const moved = clause && view?.touched?.clauses.includes(clause.clause) ? view.touched.by : null;
   const isTarget = useTargeted(clause ? address.clause(clause.clause) : "");
+  // This line's place in the ledger: whether the frame leaves it, and what
+  // answers it.
+  const lines = view ? ledger(view, framedAsserted(view)) : null;
+  const outside = !!view?.frame && (!clause || !lines?.shown.has(clause.clause));
   // Moving by button is the same `move` gesture a drag ends in, for the
   // keyboard and for anyone who cannot drag.
   const order = view?.clauses.map((c) => c.clause) ?? [];
@@ -382,218 +360,205 @@ function ClauseView({ node, decorations }: NodeViewProps) {
     <NodeViewWrapper
       id={clause ? address.clause(clause.clause) : undefined}
       className={cn(
-        "group/clause relative border-b py-2 last:border-b-0",
+        "group/clause relative border-b py-3 last:border-b-0",
         clause && addressable,
-        "scroll-mt-4",
+        "scroll-mt-28",
         (active || isTarget) && "ring-1 ring-ring",
+        outside && "hidden",
       )}
     >
-      <div className="flex items-start gap-3">
-        {moved ? (
-          <div contentEditable={false} className="pt-1.5 select-none">
-            <Moved by={moved} />
-          </div>
-        ) : null}
-        <div className="min-w-0 flex-1 space-y-1.5">
-          {relaxing && clause ? (
-            <div contentEditable={false}>
-              <Relax clause={clause} onDone={() => setRelaxing(false)} />
+      {/* One line of the ledger: the requirement on the left, in the
+          person's words; what answers it on the right. */}
+      <div className="grid gap-3 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4">
+        <div className="flex min-w-0 items-start gap-3">
+          {moved ? (
+            <div contentEditable={false} className="pt-1.5 select-none">
+              <Moved by={moved} />
             </div>
-          ) : (
-            <div className="relative">
-              {hint ? (
-                <span
-                  contentEditable={false}
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 text-sm text-muted-foreground"
-                >
-                  {hint}
-                </span>
-              ) : null}
-              <NodeViewContent className="text-sm outline-none" />
-            </div>
-          )}
-          {clause?.formerly.length ? (
-            <p
-              contentEditable={false}
-              className="text-xs text-muted-foreground select-none"
-              title={clause.formerly.join(" → ")}
-            >
-              relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
-              {clause.formerly.length > 1 ? (
-                <span className="sr-only">
-                  ; in full, {clause.formerly.join(", then ")}
-                </span>
-              ) : null}
-            </p>
           ) : null}
-          {/* Where the clause came from, when the model read it: the source
-              beside the words, so the reading is checked where it stands.
-              A clause the person typed says nothing here. */}
-          {clause?.source ? (
-            <p
-              contentEditable={false}
-              className="text-xs text-muted-foreground select-none"
-              title={clause.source.words}
-            >
-              {/* The assistant's reading until the person keeps or rewords
-                  it; keeping makes them the party who stated it. */}
-              {clause.statedBy === "model" ? "the assistant's reading of " : "read from "}
-              <To
-                id={address.source(clause.source.kind, clause.source.id)}
-                title="The source, with everything read from it"
-                className={clause.source.kind === "file" ? "text-foreground" : undefined}
+          <div className="min-w-0 flex-1 space-y-1.5">
+            {relaxing && clause ? (
+              <div contentEditable={false}>
+                <Relax clause={clause} onDone={() => setRelaxing(false)} />
+              </div>
+            ) : (
+              <div className="relative">
+                {hint ? (
+                  <span
+                    contentEditable={false}
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 text-sm text-muted-foreground"
+                  >
+                    {hint}
+                  </span>
+                ) : null}
+                <NodeViewContent className="text-sm outline-none" />
+              </div>
+            )}
+            {clause?.formerly.length ? (
+              <p
+                contentEditable={false}
+                className="text-xs text-muted-foreground select-none"
+                title={clause.formerly.join(" → ")}
               >
-                {clause.source.kind === "file"
-                  ? clause.source.name
-                  : clause.source.broughtBy === "browser"
-                    ? "what your agent said"
-                    : "what you said"}
-              </To>
-              {clause.statedBy === "model" ? (
+                relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
+                {clause.formerly.length > 1 ? (
+                  <span className="sr-only">
+                    ; in full, {clause.formerly.join(", then ")}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+            {/* Where the clause came from, when the model read it: the source
+                beside the words, so the reading is checked where it stands.
+                A clause the person typed says nothing here. */}
+            {clause?.source ? (
+              <p
+                contentEditable={false}
+                className="text-xs text-muted-foreground select-none"
+                title={clause.source.words}
+              >
+                {/* The assistant's reading until the person keeps or rewords
+                    it; keeping makes them the party who stated it. */}
+                {clause.statedBy === "model" ? "the assistant's reading of " : "read from "}
+                <To
+                  id={address.source(clause.source.kind, clause.source.id)}
+                  title="The source, with everything read from it"
+                  className={clause.source.kind === "file" ? "text-foreground" : undefined}
+                >
+                  {clause.source.kind === "file"
+                    ? clause.source.name
+                    : clause.source.broughtBy === "browser"
+                      ? "what your agent said"
+                      : "what you said"}
+                </To>
+                {clause.statedBy === "model" ? (
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    disabled={busy}
+                    className="ml-1 h-5"
+                    title="Make this requirement yours, as the assistant read it"
+                    onClick={() => void gesture({ act: "keep", clause: clause.clause })}
+                  >
+                    Keep
+                  </Button>
+                ) : null}
+              </p>
+            ) : null}
+            {clause ? (
+              <div
+                contentEditable={false}
+                className="flex flex-wrap items-center gap-1 select-none"
+              >
+                {/* Frame the canvas on this clause: its answers, what they
+                    forced, what could still answer it — and while it is
+                    framed, a pick answers it. Pressed again, the frame comes
+                    off. The line's one way to answer it. */}
                 <Button
                   size="xs"
-                  variant="ghost"
+                  variant={active ? "default" : "outline"}
                   disabled={busy}
-                  className="ml-1 h-5"
-                  title="Make this requirement yours, as the assistant read it"
-                  onClick={() => void gesture({ act: "keep", clause: clause.clause })}
+                  title={
+                    active
+                      ? "Show everything again"
+                      : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
+                  }
+                  onClick={() => setAnswering(active ? null : clause)}
                 >
-                  Keep
+                  {active ? "Answering…" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}
+                  <span className="sr-only"> “{plain(clause.text)}”</span>
                 </Button>
-              ) : null}
-            </p>
-          ) : null}
-          {clause ? (
-            <div contentEditable={false} className="select-none">
-              {clause.answers.length ? (
-                <ul className="space-y-0.5">
-                  {clause.answers.map((answer) => (
-                    <OneAnswer key={answer.choice} answer={answer} />
-                  ))}
-                </ul>
-              ) : clause.displaced ? (
-                <p className="text-xs text-muted-foreground">
-                  <s>{clause.displaced.label}</s> displaced by{" "}
-                  <span className="text-foreground">{clause.displaced.byLabel}</span>
-                  {": "}
-                  {clause.displaced.how}
-                </p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {open
-                    ? "Left open on purpose: nothing needs to answer this."
-                    : clause.source?.unanswerable
-                      ? "The assistant found nothing in the catalogue for this."
-                      : "Not yet answered."}
-                </p>
-              )}
-            </div>
-          ) : null}
-        </div>
-        {clause ? (
-          <div
-            contentEditable={false}
-            className="flex shrink-0 flex-col items-end gap-1 select-none"
-          >
-            {/* Frame the canvas on this clause: its answers, what they
-                forced, what could still answer it — and while it is framed,
-                a pick answers it. Pressed again, the frame comes off. */}
-            <Button
-              size="xs"
-              variant={active ? "default" : "outline"}
-              disabled={busy}
-              title={
-                active
-                  ? "Show everything again"
-                  : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
-              }
-              onClick={() => setAnswering(active ? null : clause)}
-            >
-              {active ? "Answering…" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}
-            </Button>
-            {clause.negotiability === "negotiable" && !relaxing ? (
-              <Button
-                ref={relaxButton}
-                size="xs"
-                variant="ghost"
-                disabled={busy}
-                onClick={() => setRelaxing(true)}
-              >
-                Relax
-              </Button>
-            ) : null}
-            <div className="flex gap-0.5">
-              {/* How firmly the clause is meant: fixed until settled otherwise.
-                  Out of the way, since it is asked only when it matters. */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                {clause.negotiability === "negotiable" && !relaxing ? (
+                  <Button
+                    ref={relaxButton}
+                    size="xs"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => setRelaxing(true)}
+                  >
+                    Relax
+                  </Button>
+                ) : null}
+                <div className="ml-auto flex gap-0.5">
+                  {/* How firmly the clause is meant: fixed until settled
+                      otherwise. Out of the way, since it is asked only when
+                      it matters. */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        disabled={busy}
+                        title={`${NEGOTIABILITY[clause.negotiability]} — how firmly this is meant`}
+                        aria-label={`How firmly this is meant: ${NEGOTIABILITY[clause.negotiability]}`}
+                      >
+                        <EllipsisIcon />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>How firmly this is meant</DropdownMenuLabel>
+                      <DropdownMenuRadioGroup
+                        value={clause.negotiability}
+                        onValueChange={(negotiability) => {
+                          if (negotiability !== clause.negotiability)
+                            void gesture({ act: "settle", clause: clause.clause, negotiability });
+                        }}
+                      >
+                        {(Object.keys(NEGOTIABILITY) as Negotiability[]).map((key) => (
+                          <DropdownMenuRadioItem key={key} value={key}>
+                            {NEGOTIABILITY[key]}
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    disabled={busy || at <= 0}
+                    data-control="move-up"
+                    title="Move up"
+                    aria-label={`Move up: ${plain(clause.text)}`}
+                    onClick={() => move("up")}
+                  >
+                    <ArrowUpIcon />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    disabled={busy || at < 0 || at >= order.length - 1}
+                    data-control="move-down"
+                    title="Move down"
+                    aria-label={`Move down: ${plain(clause.text)}`}
+                    onClick={() => move("down")}
+                  >
+                    <ArrowDownIcon />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon-xs"
                     disabled={busy}
-                    title={`${NEGOTIABILITY[clause.negotiability]} — how firmly this is meant`}
-                    aria-label={`How firmly this is meant: ${NEGOTIABILITY[clause.negotiability]}`}
-                  >
-                    <EllipsisIcon />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>How firmly this is meant</DropdownMenuLabel>
-                  <DropdownMenuRadioGroup
-                    value={clause.negotiability}
-                    onValueChange={(negotiability) => {
-                      if (negotiability !== clause.negotiability)
-                        void gesture({ act: "settle", clause: clause.clause, negotiability });
+                    title="Strike this clause"
+                    aria-label={`Strike: ${plain(clause.text)}`}
+                    onClick={() => {
+                      // The clause goes, and the keyboard goes on to the next.
+                      const next = order[at + 1] ?? order[at - 1];
+                      void gesture({ act: "strike", clause: clause.clause }).then(() => {
+                        if (next) refocus(next);
+                      });
                     }}
                   >
-                    {(Object.keys(NEGOTIABILITY) as Negotiability[]).map((key) => (
-                      <DropdownMenuRadioItem key={key} value={key}>
-                        {NEGOTIABILITY[key]}
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                disabled={busy || at <= 0}
-                data-control="move-up"
-                title="Move up"
-                aria-label={`Move up: ${plain(clause.text)}`}
-                onClick={() => move("up")}
-              >
-                <ArrowUpIcon />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                disabled={busy || at < 0 || at >= order.length - 1}
-                data-control="move-down"
-                title="Move down"
-                aria-label={`Move down: ${plain(clause.text)}`}
-                onClick={() => move("down")}
-              >
-                <ArrowDownIcon />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                disabled={busy}
-                title="Strike this clause"
-                aria-label={`Strike: ${plain(clause.text)}`}
-                onClick={() => {
-                  // The clause goes, and the keyboard goes on to the next.
-                  const next = order[at + 1] ?? order[at - 1];
-                  void gesture({ act: "strike", clause: clause.clause }).then(() => {
-                    if (next) refocus(next);
-                  });
-                }}
-              >
-                <XIcon />
-              </Button>
-            </div>
+                    <XIcon />
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        {clause && lines ? (
+          <div contentEditable={false} className="min-w-0">
+            <Answers clause={clause} drawn={lines.lines.get(clause.clause) ?? []} />
           </div>
         ) : null}
       </div>
@@ -602,6 +567,16 @@ function ClauseView({ node, decorations }: NodeViewProps) {
 }
 
 // -- the editor, and the mapping from transactions to gestures ---------------
+
+/**
+ * Whether the person is typing: the editor has focus, and it is in the words
+ * rather than on a control set into a line, which is not text.
+ */
+function typing(editor: Editor): boolean {
+  if (!editor.isFocused || !editor.isEditable) return false;
+  const active = document.activeElement;
+  return !(active instanceof HTMLElement && active.closest('[contenteditable="false"]'));
+}
 
 const SETTLE_AFTER = 700;
 
@@ -638,7 +613,7 @@ export function Specification() {
 
   const writeBack = useCallback(
     (next: View | null) => {
-      if (!editor || editor.isFocused) return;
+      if (!editor || typing(editor)) return;
       const wanted = documentOf(next);
       given.current = new Set((next?.clauses ?? []).map((c) => c.clause));
       if (JSON.stringify(editor.getJSON()) !== JSON.stringify(wanted))
@@ -725,6 +700,15 @@ export function Specification() {
     writeBack(view);
   }, [writeBack, view]);
 
+  // A frame is a way of reading the ledger, and answering from it: the lines
+  // outside it are hidden, so nothing is typed while one is on.
+  const framed = !!view?.frame;
+  useEffect(() => {
+    if (!editor) return;
+    if (framed && editor.isEditable) void flush().then(() => editor.setEditable(false, false));
+    else if (!framed && !editor.isEditable) editor.setEditable(true, false);
+  }, [editor, framed, flush]);
+
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
@@ -753,32 +737,54 @@ export function Specification() {
   );
 }
 
-/** The section: the ledger as a document, with its counts. */
-export function Required() {
+/**
+ * The section: what is asked for — the ledger as a document, a requirement
+ * and what answers it on each line, then the values answering none, then the
+ * sources the assistant read requirements from. Its id is `asserted`, and
+ * the document's is `required`, the two places the chat links to.
+ */
+export function AskedFor() {
   const { view } = useConfigurator();
   if (!view) return null;
-  const unanswered = view.counts.unanswered;
+  const asserted = framedAsserted(view);
+  const { unbound, unanswered, shown } = ledger(view, asserted);
   const read = view.counts.read;
   return (
-    <section id="required" className="scroll-mt-4">
+    <section id="asserted" className="mt-6 scroll-mt-28">
       <header className="mb-2 flex flex-wrap items-baseline gap-x-2">
-        <h2 className="text-sm font-semibold">Required</h2>
+        <h2 className="text-sm font-semibold">Asked for</h2>
         <span className="text-xs text-muted-foreground">
-          {view.clauses.length} · in your words
-          {read ? ` · ${read} read by the assistant` : ""}
-          {unanswered ? ` · ${unanswered} not yet answered` : ""}
+          {[
+            `${shown.size} required, in your words`,
+            `${asserted.length} asserted`,
+            read ? `${read} read by the assistant` : "",
+            unanswered ? `${unanswered} not yet answered` : "",
+            unbound.length ? `${unbound.length} answering nothing` : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </span>
-        <span id="required-keys" className="basis-full text-xs text-muted-foreground">
-          Enter for another, Backspace on an empty line to strike, @ to name
-          the catalogue
-        </span>
+        {view.frame ? null : (
+          <span id="required-keys" className="basis-full text-xs text-muted-foreground">
+            Enter for another, Backspace on an empty line to strike, @ to name
+            the catalogue
+          </span>
+        )}
       </header>
-      {/* The ledger is a text field, so its edge is a field's: 3:1. */}
-      <Card className="gap-0 py-0 ring-(--field)">
+      {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
+          it is read, and a frame that leaves no line says so. */}
+      <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-(--field)">
         <CardContent className="px-3 py-1">
           <Specification />
+          {view.frame && !shown.size ? (
+            <p className="py-3 text-xs text-muted-foreground">
+              No requirement bears on this.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
+      <Unbound unbound={unbound} />
+      <Sources />
     </section>
   );
 }

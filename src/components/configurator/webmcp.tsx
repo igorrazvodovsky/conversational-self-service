@@ -341,7 +341,7 @@ export function BrowserAgentTools() {
 
   useTool(
     "focus",
-    "Bring a surface forward: `requirements`, `canvas` or `quote`.",
+    "Bring a surface forward: `canvas`, the specification, or `quote`.",
     { surface: z.string() },
     ({ surface }) => as({ act: "focus", surface }),
   );

@@ -24,9 +24,8 @@
  * a reply in the chat can put a comparison in front of the person without
  * anything being recorded.
  *
- * An item lives on one of `Moding`'s surfaces: a clause or a source on the
- * requirements, a choice, a variable, a question, a turn or a section of
- * the configuration on the canvas,
+ * An item lives on one of `Moding`'s two surfaces: a clause, a choice, a
+ * source, a variable, a question, a turn or a section on the specification,
  * a quote's line on the quotes.
  * Following an address to the other surface performs `focus` on it — the one
  * thing here that is recorded, and it is what a link is for — and then
@@ -91,8 +90,6 @@ export function useTargeted(id: string): boolean {
 /** The surface an address is on; none for the chat, which is always there. */
 export function surfaceOf(id: string): Surface | null {
   if (id.startsWith("said:")) return null;
-  if (id.startsWith("clause:") || id.startsWith("source:")) return "requirements";
-  if (id === "required" || id === "read-from") return "requirements";
   if (id.startsWith("quote:") || id.startsWith("compare:")) return "quote";
   return "canvas";
 }

@@ -17,7 +17,8 @@ import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
 import { Standing } from "./standing";
 import { Trace } from "./trace";
-import { ledger, Ledger } from "./ledger";
+import { framedAsserted } from "./ledger";
+import { AskedFor } from "./specification";
 import { FollowsRow, OpenRow } from "./variables";
 
 function Section({
@@ -25,15 +26,12 @@ function Section({
   title,
   hint,
   count,
-  empty = !count,
   children,
 }: {
   id: string;
   title: string;
   hint: string;
   count: number;
-  /** Whether there is nothing to draw; by default, a count of nothing. */
-  empty?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -44,7 +42,7 @@ function Section({
           {count} · {hint}
         </span>
       </header>
-      {!empty ? (
+      {count ? (
         children
       ) : (
         <Empty className="border p-4">
@@ -157,12 +155,7 @@ function Header() {
 export function sections(view: View) {
   const framed = view.variables.filter((v) => v.framed);
   return {
-    asserted: framed.filter(
-      (v) =>
-        v.standing === "asked" ||
-        v.standing === "yielded" ||
-        v.standing === "unmet",
-    ),
+    asserted: framedAsserted(view),
     follows: framed.filter((v) => v.standing === "follows"),
     open: framed.filter((v) => v.standing === "open"),
     questions: waiting(view),
@@ -183,22 +176,21 @@ function byFamily(open: Variable[]): [string, Variable[]][] {
 const family = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
 
 /**
- * The configuration: what is the case.
+ * The specification: what is the case.
  *
  * The three sections are the design's whole claim made visible: what a party
- * asserted, what follows from it, and what is still open are three different
+ * asked for, what follows from it, and what is still open are three different
  * kinds of fact, and a configurator that keeps them in one field cannot show
  * you this. The grouping is a property of the current state — it changes on
  * every action and cuts across the catalogue's own families.
  *
- * The asserted section is the requirement ledger rendered whole
- * (`ledger.tsx`): a line per requirement, with the values answering it and
- * what each forced, and a last line of values answering none. The unit it
- * holds is the choice, the one the case's design is about, so the relation
- * between a clause and its answer is read here rather than reconstructed
- * across surfaces. The requirements surface (`requirements.tsx`) is where
- * the clauses are worded and their sources read; each line links to its
- * clause there, and a clause's answer line links to its choice here.
+ * The first section is the requirement ledger written as a document
+ * (`specification.tsx`, `ledger.tsx`): each requirement on its own line, in
+ * the person's words and edited there, beside the values asserted to answer
+ * it and what each forced, with a last line of values answering none, and
+ * the sources the assistant read from beneath. Its unit is the choice, the
+ * relation the case's design is about, so a requirement and its answer are
+ * one line on one surface. The only other surface is the quotes.
  */
 export function ConfiguratorCanvas() {
   const { view, error } = useConfigurator();
@@ -227,9 +219,8 @@ export function ConfiguratorCanvas() {
     );
   }
 
-  const { asserted: asked, follows, open, questions } = sections(view);
+  const { follows, open, questions } = sections(view);
   const families = byFamily(open);
-  const lines = ledger(view, asked);
 
   return (
     <div className="@container h-full">
@@ -254,28 +245,10 @@ export function ConfiguratorCanvas() {
             </Section>
           ) : null}
 
-          {/* The ledger: by the requirement each value answers. A line with
-              no answer is a requirement still to answer, and the last line,
-              values answering none, is slice 0 inside the same build. */}
-          <Section
-            id="asserted"
-            title="Asserted"
-            hint={[
-              "put there by a party, and revisable, by what each answers",
-              lines.unanswered ? `${lines.unanswered} not yet answered` : "",
-              lines.unbound.length ? `${lines.unbound.length} answering nothing` : "",
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-            count={asked.length}
-            empty={!asked.length && !lines.lines.length}
-          >
-            {/* On the ground, not in a card: the asserted values are the
-                raised things, and a card around them would flatten that. */}
-            <div className="border-y">
-              <Ledger asserted={asked} />
-            </div>
-          </Section>
+          {/* What is asked for: the requirement ledger, written as a
+              document, each requirement beside what answers it, and the
+              values answering none. */}
+          <AskedFor />
 
           <Section
             id="follows"

@@ -7,6 +7,7 @@ import {
   useConfigurator,
   type Surface,
 } from "@/components/configurator/provider";
+import { ledger } from "@/components/configurator/ledger";
 import { ShowingMenu } from "@/components/configurator/showing";
 import { cn } from "@/lib/utils";
 
@@ -18,34 +19,26 @@ interface Place {
 }
 
 /**
- * The way around the panel, in one row: the three surfaces `Moding` offers,
- * in the order a configuration runs, with the configuration's sections in
- * the middle in place of its name. A surface is one place; the
- * configuration is several, and there is no level between. Every place says
- * how much is in it.
+ * The way around the panel, in one row: the two surfaces `Moding` offers,
+ * the specification's sections in place of its name, then the quotes. A
+ * surface is one place; the specification is several, and there is no level
+ * between. Every place says how much is in it.
  *
- * The requirements and the quotes are reached by `focus`. A section is an
- * address on the configuration (`address.tsx`): following it brings the
- * configuration forward if it is not, then scrolls to the section.
+ * The quotes are reached by `focus`. A section is an address on the
+ * specification (`address.tsx`): following it brings the specification
+ * forward if it is not, then scrolls to the section.
  *
- * At the row's end, while the configuration is showing, the `Showing` menu:
- * which facts the configuration shows beside each item. It has nothing to
- * say about the other surfaces.
+ * At the row's end, while the specification is showing, the `Showing` menu:
+ * which facts it shows beside each item. It has nothing to say about the
+ * quotes.
  */
 export function PanelNav() {
   const { view, gesture, busy } = useConfigurator();
   if (!view) return null;
   const mode = view.mode;
   const { asserted, follows, open, questions } = sections(view);
+  const lines = ledger(view, asserted);
   const groups: Place[][] = [
-    [
-      {
-        id: "required",
-        title: "Requirements",
-        count: view.clauses.length,
-        surface: "requirements",
-      },
-    ],
     [
       ...(questions.length
         ? [
@@ -58,9 +51,11 @@ export function PanelNav() {
           ]
         : []),
       {
+        // Every line of the ledger the frame leaves: each requirement, and
+        // the line of values answering none when there are any.
         id: "asserted",
-        title: "Asserted",
-        count: asserted.length,
+        title: "Asked for",
+        count: lines.shown.size + (lines.unbound.length ? 1 : 0),
         surface: "canvas",
       },
       {

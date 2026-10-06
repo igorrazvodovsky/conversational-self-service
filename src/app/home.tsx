@@ -3,7 +3,6 @@
 import { ExampleLayout } from "@/components/example-layout";
 import { ConfiguratorCanvas } from "@/components/configurator";
 import { AnsweringProvider } from "@/components/configurator/clauses";
-import { RequirementsSurface } from "@/components/configurator/requirements";
 import { ConfiguratorProvider } from "@/components/configurator/provider";
 import { QuoteSurface } from "@/components/configurator/quotes";
 import { BrowserAgentTools } from "@/components/configurator/webmcp";
@@ -45,12 +44,11 @@ export function HomeRoot({ canvasPercent }: { canvasPercent: number }) {
         <BrowserAgentTools />
         {/* And its words to the assistant, in the conversation open now. */}
         <ConverseTools />
-        {/* The answering mode is the clause frame, read on both surfaces. */}
+        {/* The answering mode is the clause frame, read from the ledger. */}
         <AnsweringProvider>
           <ExampleLayout
             canvasPercent={canvasPercent}
             chatContent={<ConfiguratorChat />}
-            requirementsContent={<RequirementsSurface />}
             appContent={<ConfiguratorCanvas />}
             quoteContent={<QuoteSurface />}
           />

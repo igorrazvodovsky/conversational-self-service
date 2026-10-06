@@ -17,14 +17,12 @@ import {
 } from "@/components/configurator/provider";
 
 const TITLE: Record<Surface, string> = {
-  requirements: "Requirements",
-  canvas: "Configuration",
+  canvas: "Specification",
   quote: "Quotes",
 };
 
 interface ExampleLayoutProps {
   chatContent: ReactNode;
-  requirementsContent: ReactNode;
   appContent: ReactNode;
   quoteContent: ReactNode;
   /** The division the server read from the cookie, so both sides agree. */
@@ -34,8 +32,8 @@ interface ExampleLayoutProps {
 /**
  * Two surfaces: the artifact panel and the chat.
  *
- * Which artifact is on the panel — the requirements, the configuration or
- * the offer — is a fact
+ * Which artifact is on the panel — the specification or the offers — is a
+ * fact
  * of `Moding`, held behind the concept layer, and this component renders it
  * rather than owning it. Both the person's navigation and the model's tool call
  * reach it through `Moding/focus`, by a rule; the one that fires when the
@@ -51,14 +49,15 @@ interface ExampleLayoutProps {
  */
 export function ExampleLayout({
   chatContent,
-  requirementsContent,
   appContent,
   quoteContent,
   canvasPercent,
 }: ExampleLayoutProps) {
   const { view } = useConfigurator();
-  const mode: Surface =
-    view?.mode === "quote" || view?.mode === "requirements" ? view.mode : "canvas";
+  // Any surface the layout does not draw reads as the specification, so a
+  // focus on a surface no longer offered, replayed from a journal, lands
+  // somewhere.
+  const mode: Surface = view?.mode === "quote" ? "quote" : "canvas";
   // An address names an item on one of the surfaces; following one brings
   // that surface forward and scrolls to the item (`configurator/address.tsx`).
   useFollowAddress();
@@ -118,11 +117,7 @@ export function ExampleLayout({
                 {TITLE[mode]}
                 {view ? ` of ${view.product}` : ""}
               </h1>
-              {mode === "quote"
-                ? quoteContent
-                : mode === "requirements"
-                  ? requirementsContent
-                  : appContent}
+              {mode === "quote" ? quoteContent : appContent}
             </main>
           </>
         }

@@ -192,13 +192,14 @@ unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
 behind it is a value in the model's vocabulary that answers nothing — which
 is every value in slice 0. [The measures](../measures.md#slice-1--whether-a-value-answers-a-requirement)
 count it, split by who stated the clause, and keep the history a withdrawal
-erases. The configuration renders the read whole, as its asserted section:
-a line per clause, with the choices answering it, each at `#choice:<id>`
-beside what its value forced, and a last line of the unbound values. A
-clause nothing answers and a value answering nothing are on the same view,
-so the share is something a person can see rather than something a script
-has to count, and with no clause stated the section is slice 0's, every
-value on the last line.
+erases. The canvas renders the read whole, as its first section, *asked
+for*: the requirement document, a line per clause in the person's words,
+with the choices answering it beside the words, each at `#choice:<id>` with
+what its value forced, and a last line of the unbound values. A clause
+nothing answers and a value answering nothing are on the same view, so the
+share is something a person can see rather than something a script has to
+count, and with no clause stated the section is slice 0's, every value on
+the last line.
 
 The same read, frozen, goes into a quote. The item a quote holds gains the
 clauses as they stood at issue, each with the option that answered it, and

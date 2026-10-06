@@ -1,41 +1,54 @@
 "use client";
 
 /**
- * The requirement ledger, rendered whole: the asserted section of the
- * configuration, arranged by the requirement each value answers.
+ * What answers each requirement, on the requirement's own line.
  *
- * Its unit is the choice — a value bound to the clause it answers, with what
- * that value forced — and each has an address, `#choice:<id>`. A line is one
- * requirement in the person's words, the choices answering it, and what the
- * rules made of them; a requirement nothing answers is a line with its
- * answer missing, and the values answering nothing are the last line, with
- * its requirement missing. So both of slice 1's gaps are on one view, and
- * with no requirement stated the section is slice 0's: every value on the
- * last line, the `answers` column empty.
+ * The ledger is the requirement document (`specification.tsx`): each clause
+ * is a line, its words on the left, editable, and on the right the choices
+ * answering it — a value bound to the clause, with what the value forced —
+ * each at `#choice:<id>`. This module draws the right-hand side, and the last
+ * line, the values answering no clause. A clause nothing answers is a line
+ * with a gap where its answer goes, so both of slice 1's gaps are on one
+ * view, and with no clause stated the section is slice 0's: every value on
+ * the last line.
  *
  * The question is a read over `Specifying`, `Binding`, `Asserting` and
- * `Constraining` together (`ledger` in `agent/views.py`). The wording of
- * each clause is the requirements surface's; a line links there and does
- * not edit it.
+ * `Constraining` together (`ledger` in `agent/views.py`); whether an answer
+ * still stands is the read's `standing`, and the frame decides only how much
+ * of it is drawn.
  */
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
-import { ClauseText, plain, useAnswering } from "./clauses";
 import { useConfigurator, type Answer, type Clause, type Variable, type View } from "./provider";
 import { AskedCard } from "./variables";
 
-/** One line of the ledger: a clause and the asserted values answering it. */
-export interface Line {
-  clause: Clause;
-  /** Each answer, with the variable asserting it — none when the answer is
-   * displaced or unrealisable — and whether the frame leaves it in. */
-  answers: { answer: Answer; variable: Variable | null; inFrame: boolean }[];
+/** One choice on a line: its answer, the variable asserting it, and how it is drawn. */
+export interface Drawn {
+  answer: Answer;
+  /** None when the answer is displaced or unrealisable. */
+  variable: Variable | null;
+  /** Whether the frame leaves the variable in. */
+  inFrame: boolean;
+  /** Drawn whole here: the first line it answers, inside the frame. */
+  whole: boolean;
 }
 
 /**
- * The ledger's lines as the current state and frame fill them. A frame on a
+ * The values a party asserted, as the frame narrows them. A yielded or unmet
+ * value is asserted: it sits with what was asked for, not with what followed,
+ * because nothing about the person's requirement changed.
+ */
+export function framedAsserted(view: View): Variable[] {
+  return view.variables.filter(
+    (v) =>
+      v.framed && (v.standing === "asked" || v.standing === "yielded" || v.standing === "unmet"),
+  );
+}
+
+/**
+ * The ledger as the current state and frame fill it: which lines are in the
+ * frame, each line's choices, and the values answering none. A frame on a
  * clause leaves its line; a frame on an assertion leaves the lines its value
  * answers. `asserted` is already narrowed by the frame.
  */
@@ -43,28 +56,38 @@ export function ledger(view: View, asserted: Variable[]) {
   const byName = new Map(asserted.map((v) => [v.name, v]));
   const every = new Map(view.variables.map((v) => [v.name, v]));
   const frame = view.frame;
-  const clauses = view.clauses.filter((c) =>
-    !frame
-      ? true
-      : frame.by === "clause"
-        ? c.clause === frame.clause
-        : c.answers.some((a) => a.variable && byName.has(a.variable)),
+  const shown = new Set(
+    view.clauses
+      .filter((c) =>
+        !frame
+          ? true
+          : frame.by === "clause"
+            ? c.clause === frame.clause
+            : c.answers.some((a) => a.variable && byName.has(a.variable)),
+      )
+      .map((c) => c.clause),
   );
-  const lines: Line[] = clauses.map((clause) => ({
-    clause,
-    // Whether an answer still stands is the server's read (`standing`);
-    // the frame decides only how much of it is drawn here.
-    answers: clause.answers.map((answer) => {
-      const stands = answer.standing !== "displaced" && answer.standing !== "unrealisable";
-      const variable = stands && answer.variable ? every.get(answer.variable) ?? null : null;
-      return { answer, variable, inFrame: !!variable && byName.has(variable.name) };
-    }),
-  }));
+  const whole = new Set<string>();
+  const lines = new Map<string, Drawn[]>();
+  for (const clause of view.clauses) {
+    lines.set(
+      clause.clause,
+      clause.answers.map((answer) => {
+        const stands = answer.standing !== "displaced" && answer.standing !== "unrealisable";
+        const variable = stands && answer.variable ? every.get(answer.variable) ?? null : null;
+        const inFrame = !!variable && byName.has(variable.name);
+        // Drawn whole once, on the first line in the frame that it answers.
+        const first = inFrame && shown.has(clause.clause) && !whole.has(variable!.name);
+        if (first) whole.add(variable!.name);
+        return { answer, variable, inFrame, whole: first };
+      }),
+    );
+  }
   const unbound = asserted.filter((v) => !v.answers.length);
-  const unanswered = lines.filter(
-    (l) => !l.answers.length && l.clause.negotiability !== "open",
+  const unanswered = view.clauses.filter(
+    (c) => shown.has(c.clause) && !c.answers.length && c.negotiability !== "open",
   ).length;
-  return { lines, unbound, unanswered };
+  return { shown, lines, unbound, unanswered };
 }
 
 /**
@@ -94,41 +117,28 @@ function Forced({ variable }: { variable: Variable }) {
   );
 }
 
-/** An answer with no asserted value on the canvas: displaced or unrealisable. */
-function Stale({ answer }: { answer: Answer }) {
+/** An answer with no asserted value: displaced or unrealisable. */
+function Gone({ answer }: { answer: Answer }) {
   return (
     <p className="text-xs text-muted-foreground">
       {answer.heading ? `${answer.heading}: ` : ""}
       <span className="line-through">{answer.label}</span>{" "}
-      {answer.standing === "unrealisable"
-        ? "— no variable offers this"
-        : "— no longer asserted"}
+      {answer.standing === "unrealisable" ? "— no variable offers this" : "— no longer asserted"}
     </p>
   );
 }
 
-/** One choice: the value answering a clause, and what it forced. */
-function ChoiceCell({
-  answer,
-  variable,
-  clause,
-  first,
-  inFrame,
-}: {
-  answer: Answer;
-  variable: Variable | null;
-  clause: string;
-  first: boolean;
-  inFrame: boolean;
-}) {
+/** One choice: the value answering the clause, and what it forced. */
+function Choice({ drawn, clause }: { drawn: Drawn; clause: string }) {
   const { label } = useConfigurator();
+  const { answer, variable, inFrame, whole } = drawn;
   const id = address.choice(answer.choice);
   const isTarget = useTargeted(id);
   return (
     <div id={id} className={cn("min-w-0 space-y-1", addressable, isTarget && targetedRing)}>
       {!variable ? (
-        <Stale answer={answer} />
-      ) : first ? (
+        <Gone answer={answer} />
+      ) : whole ? (
         <>
           <AskedCard variable={variable} under={clause} />
           <Forced variable={variable} />
@@ -141,7 +151,7 @@ function ChoiceCell({
           <span className="uppercase tracking-wide text-muted-foreground">
             {variable.heading}
           </span>{" "}
-          <To id={address.variable(variable.name)} title="The value, on the line it was drawn on">
+          <To id={address.variable(variable.name)} title="The value, where it is drawn">
             {label(variable.asked)}
           </To>{" "}
           <span className="text-muted-foreground">
@@ -153,117 +163,61 @@ function ChoiceCell({
   );
 }
 
-function Requirement({ clause }: { clause: Clause }) {
-  const firmness =
-    clause.negotiability === "fixed"
-      ? "fixed"
-      : clause.negotiability === "negotiable"
-        ? "negotiable"
-        : "left open";
+/**
+ * The right-hand side of a clause's line: its choices, or the gap where they
+ * go. The way to answer is the line's own control, beside its words.
+ */
+export function Answers({ clause, drawn }: { clause: Clause; drawn: Drawn[] }) {
+  if (drawn.length)
+    return (
+      <div className="min-w-0 space-y-2">
+        {drawn.map((d) => (
+          <Choice key={d.answer.choice} drawn={d} clause={clause.clause} />
+        ))}
+      </div>
+    );
   return (
-    <div className="min-w-0 border-l-2 border-border pl-3">
-      <p className="text-sm">
-        <To id={address.clause(clause.clause)} title="The clause, in the requirement ledger's own words">
-          <ClauseText text={clause.text} />
-        </To>
-      </p>
-      <p className="mt-0.5 text-xs text-muted-foreground">
-        {firmness}
-        {clause.statedBy === "person" ? "" : clause.source ? " · read by the assistant" : ""}
-      </p>
-    </div>
+    <p className="text-xs text-muted-foreground">
+      {clause.negotiability === "open"
+        ? "Left open on purpose: nothing needs to answer this."
+        : clause.displaced ? (
+            <>
+              <s>{clause.displaced.label}</s> displaced by{" "}
+              <span className="text-foreground">{clause.displaced.byLabel}</span>
+              {": "}
+              {clause.displaced.how}
+            </>
+          ) : clause.source?.unanswerable ? (
+            "The assistant found nothing in the catalogue for this."
+          ) : (
+            "Not yet answered."
+          )}
+    </p>
   );
 }
 
-function Unanswered({ clause }: { clause: Clause }) {
-  const { busy } = useConfigurator();
-  const { answering, setAnswering } = useAnswering();
-  const active = answering?.clause === clause.clause;
-  if (clause.negotiability === "open")
-    return <p className="text-xs text-muted-foreground">Left open on purpose: nothing needs to answer this.</p>;
+/** The last line: the values asserted with nothing said about what for. */
+export function Unbound({ unbound }: { unbound: Variable[] }) {
+  if (!unbound.length) return null;
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-      <span>
-        {clause.source?.unanswerable
-          ? "The assistant found nothing in the catalogue for this."
-          : "Not yet answered."}
-        {clause.displaced ? (
-          <>
-            {" "}
-            It was {clause.displaced.label}, displaced by {clause.displaced.byLabel}.
-          </>
-        ) : null}
-      </span>
-      <Button
-        size="xs"
-        variant={active ? "default" : "outline"}
-        disabled={busy}
-        title={
-          active
-            ? "Show everything again"
-            : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
-        }
-        onClick={() => setAnswering(active ? null : clause)}
-      >
-        {active ? "Answering…" : "Answer"}
-        <span className="sr-only"> “{plain(clause.text)}”</span>
-      </Button>
-    </div>
-  );
-}
-
-/** The ledger: one line per requirement, then the values answering none. */
-export function Ledger({ asserted }: { asserted: Variable[] }) {
-  const { view } = useConfigurator();
-  if (!view) return null;
-  const { lines, unbound } = ledger(view, asserted);
-  const drawn = new Set<string>();
-  const line = "grid gap-2 border-b py-3 last:border-b-0 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4";
-  return (
-    <div role="list" aria-label="Asserted values, by the requirement each answers">
-      {lines.map(({ clause, answers }) => (
-        <div key={clause.clause} role="listitem" className={line}>
-          <Requirement clause={clause} />
-          <div className="min-w-0 space-y-2">
-            {answers.length ? (
-              answers.map(({ answer, variable, inFrame }) => {
-                const first = inFrame && !drawn.has(variable!.name);
-                if (first) drawn.add(variable!.name);
-                return (
-                  <ChoiceCell
-                    key={answer.choice}
-                    answer={answer}
-                    variable={variable}
-                    clause={clause.clause}
-                    first={first}
-                    inFrame={inFrame}
-                  />
-                );
-              })
-            ) : (
-              <Unanswered clause={clause} />
-            )}
+    <div
+      id="unbound"
+      className="mt-2 grid scroll-mt-28 gap-2 border border-dashed p-3 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4"
+    >
+      <div className="min-w-0">
+        <p className="text-sm text-muted-foreground">Answering no stated requirement</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          asserted with nothing said about what for
+        </p>
+      </div>
+      <div className="grid min-w-0 gap-2 @5xl:grid-cols-2">
+        {unbound.map((variable) => (
+          <div key={variable.name} className="min-w-0 space-y-1">
+            <AskedCard variable={variable} under={null} />
+            <Forced variable={variable} />
           </div>
-        </div>
-      ))}
-      {unbound.length ? (
-        <div role="listitem" className={line}>
-          <div className="min-w-0 border-l-2 border-dashed border-border pl-3">
-            <p className="text-sm text-muted-foreground">Answering no stated requirement</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              asserted with nothing said about what for
-            </p>
-          </div>
-          <div className="grid min-w-0 gap-2 @5xl:grid-cols-2">
-            {unbound.map((variable) => (
-              <div key={variable.name} className="min-w-0 space-y-1">
-                <AskedCard variable={variable} under={null} />
-                <Forced variable={variable} />
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
+        ))}
+      </div>
     </div>
   );
 }
