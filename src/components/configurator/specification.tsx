@@ -79,6 +79,7 @@ import {
   type Negotiability,
   type View,
 } from "./provider";
+import { useNavigate } from "./link";
 import {
   Answers,
   AnswersDetails,
@@ -796,7 +797,9 @@ const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
  * names the frame. A gap with nothing in it cannot be chosen.
  */
 function Filters() {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, busy } = useConfigurator();
+  // A filter is a place the person goes, and the back button returns from.
+  const navigate = useNavigate();
   if (!view) return null;
   const frame = view.frame;
   const value = !frame ? "all" : frame.by === "gap" ? frame.gap : "";
@@ -811,7 +814,7 @@ function Filters() {
       aria-label="Show"
       onValueChange={(next) => {
         if (!next || next === value) return;
-        void gesture(
+        void navigate(
           next === "all" ? { act: "unframe" } : { act: "frame", frame: { by: "gap", gap: next } },
         );
       }}

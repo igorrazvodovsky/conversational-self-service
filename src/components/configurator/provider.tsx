@@ -64,6 +64,8 @@ export interface Facet {
   facet: string;
   about: string;
   shown: boolean;
+  /** Shown before anybody has touched the menu. */
+  usual: boolean;
 }
 
 export interface Variable {
@@ -481,6 +483,9 @@ interface Configurator {
   /** An issued offer's contents, as `open_quote` in `agent/tools.py` reads them. */
   openQuote: (quote: string) => Promise<unknown>;
   label: (id: string | null) => string;
+  /** The view as last shown, read when called rather than when rendered:
+   * what a tool's result links to once the call has settled. */
+  latest: () => View | null;
 }
 
 const ConfiguratorContext = createContext<Configurator | null>(null);
@@ -507,15 +512,20 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   // Equal positions are the same state; the later request wins so a change
   // of grid shows.
   const issued = useRef(0);
-  const shown = useRef({ at: -1, ticket: 0 });
+  const shown = useRef<{ at: number; ticket: number; view: View | null }>({
+    at: -1,
+    ticket: 0,
+    view: null,
+  });
   const take = () => ++issued.current;
   const show = useCallback((ticket: number, next: View) => {
     const at = Math.max(0, ...next.turns.flatMap((t) => t.records.map((r) => r.seq)));
     const current = shown.current;
     if (at < current.at || (at === current.at && ticket < current.ticket)) return;
-    shown.current = { at, ticket };
+    shown.current = { at, ticket, view: next };
     setView(next);
   }, []);
+  const latest = useCallback(() => shown.current.view, []);
 
   const refresh = useCallback(async () => {
     const ticket = take();
@@ -664,9 +674,9 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      view, grid, setGrid, busy, error, gesture, act, invoke, review, openQuote, label,
+      view, grid, setGrid, busy, error, gesture, act, invoke, review, openQuote, label, latest,
     }),
-    [view, grid, busy, error, gesture, act, invoke, review, openQuote, label],
+    [view, grid, busy, error, gesture, act, invoke, review, openQuote, label, latest],
   );
 
   return (

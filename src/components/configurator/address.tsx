@@ -34,6 +34,13 @@
  * one the frame leaves out performs `unframe`. Those two are recorded. The address itself records
  * nothing: it names a place on a view, and the state the view shows is
  * reconstructed from the log on its own.
+ *
+ * The fragment is half of the page's URL; the query, which names the view
+ * the item is shown in, is `link.tsx`'s, and a link's query is followed
+ * before its fragment. An address with nothing at it — an item struck,
+ * withdrawn, never issued — still arrives: the page says nothing is there
+ * now, and stays where it landed. The addresses are kept, so a link given
+ * out goes on working (`docs/ui.md`, "Links").
  */
 
 import { useAgent, useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
@@ -105,11 +112,13 @@ export function surfaceOf(id: string): Surface | null {
  * reason — a rule bringing the specification forward, the toggle — so the
  * address does not pull the person back.
  */
-export function useFollowAddress() {
+export function useFollowAddress(arrived: boolean): string | null {
   const { view, gesture } = useConfigurator();
   const hash = useHash();
   const mode = view?.mode ?? null;
-  const ready = view !== null;
+  const ready = view !== null && arrived;
+  // The address followed last, when nothing was found at it.
+  const [lost, setLost] = useState<string | null>(null);
   const pending = useRef<string | null>(null);
   const framed = useRef(false);
   const isFramed = !!view?.frame;
@@ -118,6 +127,7 @@ export function useFollowAddress() {
   }, [isFramed]);
   useEffect(() => {
     pending.current = hash || null;
+    setLost(null);
   }, [hash]);
   useEffect(() => {
     const id = pending.current;
@@ -139,10 +149,28 @@ export function useFollowAddress() {
         widened = true;
         tries = 0;
         void gesture({ act: "unframe" }).then(() => setTimeout(find, 50));
-      }
+      } else if (tries < 40) setTimeout(find, 50);
+      // Words in the chat render once their conversation has loaded, and go
+      // to themselves then (`chat/index.tsx`).
+      else if (surface) setLost(id);
     };
     find();
   }, [ready, hash, mode, gesture]);
+  return lost;
+}
+
+/** What the page says when a link's item is not there now. */
+export function Lost({ id }: { id: string | null }) {
+  return (
+    <div role="status">
+      {id ? (
+        <p className="border-b bg-muted px-3 py-1.5 text-xs text-foreground">
+          Nothing is at <code className="font-mono">#{id}</code> now: it may have
+          been struck, withdrawn or never issued.
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 /** Bring an item into view and take focus to it, so the keyboard and a screen

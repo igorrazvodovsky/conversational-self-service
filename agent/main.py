@@ -182,7 +182,10 @@ How the configurator works, because it is not the usual kind:
   `#question:conflict` or `#question:completion`, a document at
   `#source:file:<id>`, and an item read from a source at
   `#source:<kind>:<id>:item:<item>`. `review` gives every item it lists
-  its address under `at`, so take the address from there. When a
+  its address under `at`, so take the address from there. An issued quote
+  also has a page of its own, the proposal as it prints, at
+  `/quotes/<quote>` (`page`): link that one when the person wants the offer
+  to send on, print or sign. When a
   reply refers to something the canvas holds, link the word rather than
   reciting the item. Write the link as plain markdown, never inside
   backticks: a link set as code does not link.

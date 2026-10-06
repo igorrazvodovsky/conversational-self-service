@@ -84,9 +84,12 @@ export default function QuotePage() {
       <main className="mx-auto max-w-3xl px-6 py-10 print:max-w-none print:px-0">
         <div className="mb-6 flex items-center gap-2 print:hidden">
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/">
+            {/* Whoever opens this page may have come straight to it from a
+                link someone sent, so the way into the app names where it
+                goes rather than assuming they came from there. */}
+            <Link href={`/?on=quotes&quote=${encodeURIComponent(id)}#quote:${encodeURIComponent(id)}`}>
               <ArrowLeftIcon />
-              Back to the configurator
+              Open in the configurator
             </Link>
           </Button>
           <Button

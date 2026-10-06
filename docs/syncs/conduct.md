@@ -757,6 +757,16 @@ embed script, which forwards the model context's tools over localhost to a
 relay that any MCP client talks to over stdio. A call from there runs the
 same handler in the same tab and lands under `browser` too.
 
+The person's agent reports to the person wherever they talk to it, which is
+seldom this page. So what the page's tools return links back to it: every
+unit `review` and `open_quote` carry under `at` also carries its URL under
+`link`, an issued quote its printable page under `page`, and every result the
+URL of the view the call left under `here`
+([Links](../ui.md#links)). An agent that narrowed the canvas, asserted a value
+or requested a quote can hand the person the link to it, and the person, or
+whoever they forward it to, lands on it. Linking performs nothing, and needs
+no rule.
+
 The tools are registered under an agent id no in-app agent has, so the
 assistant is never offered the person's gestures as frontend tools. `review`
 and `open_quote` carry the WebMCP `readOnlyHint`; the rest carry none, since

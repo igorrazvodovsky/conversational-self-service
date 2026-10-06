@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import { goTo } from "@/components/configurator/address";
+import { CopyViewLink, useNavigate } from "@/components/configurator/link";
 import { sections } from "@/components/configurator";
 import {
   useConfigurator,
@@ -37,10 +38,16 @@ interface Place {
  *
  * At the row's end, while the specification is showing, the `Showing` menu:
  * which facts it shows beside each item. It has nothing to say about the
- * quotes.
+ * quotes. Last, *Copy link*: the URL of the view as it stands, every part
+ * spelled out, to send to someone (`link.tsx`).
+ *
+ * A surface's link is its URL, `?on=quotes`, so it can be opened in another
+ * tab or copied as any link can; followed here, it is a new entry in the
+ * history, and the back button returns to the surface before.
  */
 export function PanelNav() {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, busy } = useConfigurator();
+  const navigate = useNavigate();
   if (!view) return null;
   const mode = view.mode;
   const { questions } = sections(view);
@@ -67,7 +74,7 @@ export function PanelNav() {
     else if (mode !== place.surface)
       // Focus follows the person to the surface they asked for, so the keyboard does not stay behind in the header. A surface
       // a rule brings forward takes no focus: nobody asked to go there.
-      void gesture({ act: "focus", surface: place.surface }).then((next) => {
+      void navigate({ act: "focus", surface: place.surface }).then((next) => {
         if (next?.mode === place.surface) focusSurface(place.surface);
       });
     else focusSurface(place.surface);
@@ -96,7 +103,13 @@ export function PanelNav() {
                 return (
                   <NavigationMenuItem key={place.id}>
                     <NavigationMenuLink
-                      href={`#${place.id}`}
+                      href={
+                        place.at
+                          ? `#${place.id}`
+                          : place.surface === "quote"
+                            ? "/?on=quotes"
+                            : "/?on=specification"
+                      }
                       active={current}
                       aria-disabled={busy && !place.at}
                       onClick={(event) => {
@@ -125,11 +138,10 @@ export function PanelNav() {
           ))}
         </NavigationMenuList>
       </NavigationMenu>
-      {mode === "canvas" ? (
-        <div className="ml-auto shrink-0">
-          <ShowingMenu />
-        </div>
-      ) : null}
+      <div className="ml-auto flex shrink-0 items-center">
+        {mode === "canvas" ? <ShowingMenu /> : null}
+        <CopyViewLink />
+      </div>
     </div>
   );
 }

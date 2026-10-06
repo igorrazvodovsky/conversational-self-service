@@ -10,7 +10,8 @@ import {
 import { RefetchWhenRunEnds, useConversations } from "./conversation-menu";
 import { CanvasAnnouncer, RunAnnouncer } from "./announcer";
 import { Split } from "./split";
-import { useFollowAddress } from "@/components/configurator/address";
+import { Lost, useFollowAddress } from "@/components/configurator/address";
+import { usePlace } from "@/components/configurator/link";
 import {
   useConfigurator,
   type Surface,
@@ -58,9 +59,13 @@ export function ExampleLayout({
   // focus on a surface no longer offered, replayed from a journal, lands
   // somewhere.
   const mode: Surface = view?.mode === "quote" ? "quote" : "canvas";
-  // An address names an item on one of the surfaces; following one brings
-  // that surface forward and scrolls to the item (`configurator/address.tsx`).
-  useFollowAddress();
+  // The URL is the page's state: its query names the view, followed when
+  // the page opens and written back as the view changes
+  // (`configurator/link.tsx`); its fragment names an item on one of the
+  // surfaces, and following one brings that surface forward and scrolls to
+  // the item (`configurator/address.tsx`).
+  const arrived = usePlace();
+  const lost = useFollowAddress(arrived);
   // The tab names the surface in front, most specific first: a screen
   // reader announces the title, and a surface is this page's route.
   useEffect(() => {
@@ -104,6 +109,7 @@ export function ExampleLayout({
               <PanelNav />
             </header>
             <CanvasAnnouncer />
+            <Lost id={lost} />
             {/* Named by the surface's `h1`; focus lands here when the person
                 changes surface (`panel-nav.tsx`) or skips to it. */}
             <main

@@ -100,14 +100,97 @@ Two things the principle leaves open:
   quote, rather than now, changes what a view is about. That is neither
   `Moding`, which chooses a surface, nor `Framing`, which narrows one. Which
   quote is being looked at, and which pair is being compared, is a viewer's
-  convenience held on the surface, like the chat's geometry. A comparison has
-  an address, so the assistant can put one in front of the person by linking
-  it without setting anything; if a party other than the viewer is to set
-  either, it is a candidate concept.
+  convenience held in the page's URL ([Links](#links)), not in the log. A
+  comparison has an address, so the assistant can put one in front of the
+  person by linking it without setting anything; if a party other than the
+  viewer is to set either, it is a candidate concept.
 - *Where `Showing` and `Framing` reach.* Both serve the configuration only
   (`showing.tsx`, `panel-nav.tsx`). A surface gets a frame or a facet when it
   has a question that needs one, and each such extension is a change to the
   concept's note first.
+
+## Links
+
+Work on a configuration is shared by link: a person sends a colleague what
+they are looking at, the assistant points at an item in a reply, and the
+person's own agent, working through WebMCP, reports what it did in its own
+chat with links back to the page. So the page's URL is its state. A link
+names the place, and opening it shows the same place to whoever opens it.
+
+The URL has two parts, and they name different things:
+
+- *The fragment names an item*: `#variable:<name>`, `#clause:<id>`,
+  `#choice:<id>`, `#quote:<id>:variable:<name>` and the rest in `address.tsx`.
+  An item's address is what a link to the item carries, and nothing else, so
+  following one never changes how the canvas is presented beyond bringing
+  the item's surface forward and, when a frame leaves the item out, taking
+  the frame off.
+- *The query names the view*, in words the page itself uses:
+
+  | Parameter | Values | Held by |
+  |---|---|---|
+  | `on` | `specification`, `quotes` | `Moding` |
+  | `frame` | `none`, `gap:open`, `gap:unanswered`, `gap:unbound`, `assertion:<variable>`, `clause:<id>` | `Framing` |
+  | `show` | facet names, comma-separated, possibly none | `Showing` |
+  | `grid` | `today`, `decarbonising` | the read, never the log |
+  | `quote` | a quote's id | the quote surface |
+  | `reading` | `asked`, `timeline`, `proposal` | the quote surface |
+  | `against` | a quote's id, or `now` | the quote surface |
+  | `thread` | a conversation's id | the chat |
+
+Opening a link performs the gestures that bring the recorded view to what
+the query says: `focus`, `frame` or `unframe`, `show` and `hide`, each only
+where the recorded view differs, so a reload records nothing. The same
+happens when the person goes back through the browser's history, and when a
+link to this page is followed from the chat. A parameter that is absent
+leaves its part of the view as it is: the view is a fact every party shares,
+and a link that says nothing about it does not change it. The rest are
+viewer conveniences and are not recorded; an absent one is its default — the
+latest quote, read against what was asked, compared with nothing, on
+today's grid.
+
+The page writes the view back into the address bar as it changes, whoever
+changed it, so the address bar is always a link to what is on screen.
+Defaults are left out of it. A change the person makes by navigating —
+another surface, a filter, another quote, another reading, a comparison — is
+a new entry in the history, so the back button returns to where they were;
+one another party makes replaces the entry. *Copy link* in the panel's header
+copies the view with every recorded part spelled out, `frame=none` and an
+empty `show` included, so whoever opens it sees exactly this.
+
+Links outlive their items. An item can be struck, withdrawn or never
+issued, and a link to it still arrives somewhere: the page says, visibly and
+to a screen reader, that nothing is at that address now, and stays where it
+landed. Arriving by a link assumes nothing about how the person got there
+(Nielsen 2002): the item is ringed and takes focus on its surface, inside the
+panel's header and its way around.
+
+The addresses are kept. Each one is made of the page's own words — a
+variable's name, a clause's id, a quote's id, a surface's name — and never of
+how the page is built, so none has to change when the implementation does
+(Berners-Lee 1998). An address once given out goes on working; a scheme that
+changes keeps the old form as an alias. A quote has a page of its own,
+`/quotes/<id>`, the proposal as it prints, which is the link to send someone
+who should read the offer and nothing else.
+
+Readers off the page need links that work off the page. `review` and
+`open_quote` give every unit its address under `at`, which the in-app chat
+follows in place. The person's agent works in a chat of its own, where a
+fragment means nothing, so the page's tools also give every unit its URL under
+`link`, a quote's printable page under `page`, and every result the URL of
+the view the call left under `here`. An agent that reports what it did links
+the work it did.
+
+Following Alfy (2025), the view is in the URL only as far as it is state:
+nothing secret, nothing typed and unsent, nothing that changes by the
+moment.
+
+- Berners-Lee, T. (1998). *Cool URIs don't change*. W3C.
+  <https://www.w3.org/Provider/Style/URI>
+- Nielsen, J. (2002). *Deep linking is good linking*. Nielsen Norman Group.
+  <https://www.nngroup.com/articles/deep-linking-is-good-linking/>
+- Alfy, A. (2025). *Your URL is your state*.
+  <https://alfy.blog/2025/10/31/your-url-is-your-state.html>
 
 ## Adding a component
 
@@ -184,7 +267,8 @@ same function, so app code and primitives merge classes with one engine.
 | The way around the panel | One `nav` row in the panel's header, wrapping onto further lines when the panel is narrow or the text large, a `NavigationMenuLink` per place, one `NavigationMenuList` with no viewport since nothing drops down: *asked of you* with its count while a question waits, an address on the specification; then the two surfaces, *Specification* and *Quote*, divided by a rule, each performing `focus`. What the specification shows is chosen by the filters above its list, not here. At the row's end, while the specification is showing, the `Showing` menu (`panel-nav.tsx`) |
 | The specification's strip | Sticky at the top of its scroll while there is something in it: what the last turn moved, and the frame strip for a frame on an assertion or a clause, so one begun anywhere is visible and its way out reachable from anywhere |
 | The filters | A `ToggleGroup` above the list: *All*, then each gap with its count — *still open*, *not yet answered*, *answering nothing*. A gap is `frame` by gap and *All* is `unframe`, so the filter is a fact of `Framing` the model can set too. The pressed item is solid, as the primitive's muted fill all but vanishes on the ground; a gap with nothing in it is disabled. While an assertion or a clause frames the canvas none is pressed |
-| An address | Every variable, clause, source and quote line, and the list, carries an `id` (`variable:<name>`, `clause:<id>`, `choice:<id>`, `source:<kind>:<id>`, `quote:<id>:variable:<name>`, `quote:<id>:event:<key>`, `compare:<id>:<other>:variable:<name>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row, and a ledger line, addressed from elsewhere opens; an item the frame leaves out is not drawn, so following its address takes the frame off. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
+| An address | Every variable, clause, source and quote line, and the list, carries an `id` (`variable:<name>`, `clause:<id>`, `choice:<id>`, `source:<kind>:<id>`, `quote:<id>:variable:<name>`, `quote:<id>:event:<key>`, `compare:<id>:<other>:variable:<name>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row, and a ledger line, addressed from elsewhere opens; an item the frame leaves out is not drawn, so following its address takes the frame off. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too, by fragment or by the page's full URL, and either is followed in place. An address with nothing at it says so in an `Alert` under the panel's header, also announced |
+| A link to the view | A ghost `Button` with a link icon at the end of the panel's header, *Copy link*, copying the URL of the view with every recorded part spelled out ([Links](#links)), and saying it did; a quote's *Copy link* beside *Print* copies its address on the quote surface |
 | What the last turn moved | A small square before the heading of each variable and clause the assistant's or the person's own agent's last flow reached, and the assertions a settled value rests on; the strip at the top counts them. Read off the log (`touched` in `agent/views.py`), gone once the person next changes the specification |
 | The ledger | The specification's one list: the requirement document, a line per clause, read as a question and its answer. A line shows the clause's words, editable, and beneath them each choice answering it as its heading and value, addressed (`choice:<id>`), with the values it forced beneath it as muted heading-and-value pairs. Everything else is the open line's: where the words were read from, whether they were relaxed, who asserted the value, what else it answers and whether it is held, its options, taking it back, and the rules behind what it forced, set in under a rule. A line opens while the caret is in it, so reading the document with the caret reviews it a line at a time; from its value, a `Button` that says whether it is expanded; and when the page is at one of its addresses. Opened from its value or an address, it stays open until closed there. A clause with no answer says so beneath its words. After the document, a line per value answering nothing, its question *No stated requirement*; a line per value that follows from no assertion drawn; and the open variables, a line per catalogue family. A value answering two clauses is drawn on the first line and named on the second as the same pair, its value a link, and so is one the frame leaves out; whether an answer still stands is the read's `standing`, never the frame. While a frame is on, the document is read-only and shows only the lines in the frame |
 | Asserted value | Its heading, muted, and its value as a ghost `Button` that opens the line; what stands against it stays beside the value in words — *gave way to*, struck through, or *not buildable with the rest*, which the question links to. Open, the line shows who asserted it, *Also answers* or *Also held for* each other clause it answers as a link, its options and a ghost *Take back* `Button` |
