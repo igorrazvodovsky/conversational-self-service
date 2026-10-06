@@ -7,6 +7,7 @@ import {
   useConfigurator,
   type Surface,
 } from "@/components/configurator/provider";
+import { Log } from "@/components/configurator/log";
 import { ShowingMenu } from "@/components/configurator/showing";
 import {
   NavigationMenu,
@@ -37,7 +38,8 @@ interface Place {
  *
  * At the row's end, while the specification is showing, the `Showing` menu:
  * which facts it shows beside each item. It has nothing to say about the
- * quotes.
+ * quotes. Last, on either surface, the bell: the log, read by turn, opening
+ * on what the other party changed (`log.tsx`).
  */
 export function PanelNav() {
   const { view, gesture, busy } = useConfigurator();
@@ -125,11 +127,10 @@ export function PanelNav() {
           ))}
         </NavigationMenuList>
       </NavigationMenu>
-      {mode === "canvas" ? (
-        <div className="ml-auto shrink-0">
-          <ShowingMenu />
-        </div>
-      ) : null}
+      <div className="ml-auto flex shrink-0 items-center gap-1">
+        {mode === "canvas" ? <ShowingMenu /> : null}
+        <Log />
+      </div>
     </div>
   );
 }

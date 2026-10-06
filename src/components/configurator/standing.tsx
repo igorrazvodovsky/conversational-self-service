@@ -13,6 +13,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { goTo, To } from "./address";
 import { money, tonnes } from "./format";
+import { LIFE, priced } from "./life";
 import { useShown } from "./showing";
 import { useConfigurator, type Grid, type View } from "./provider";
 
@@ -49,6 +50,8 @@ export function Standing() {
   const shown = useShown();
   if (!view) return null;
   const { price, footprint, currency, counts, quotable } = view;
+  const byStage = priced(view.stages);
+  const years = price.term / 12;
   const asked = counts.asked + counts.yielded + counts.unmet;
   const issued = view.quotes.length;
 
@@ -101,10 +104,10 @@ export function Standing() {
                 );
               }}
             >
-              {counts.open} still open
+              {counts.open} open
             </a>
           ) : (
-            `${counts.open} still open`
+            `${counts.open} open`
           )}
         </p>
 
@@ -115,7 +118,7 @@ export function Standing() {
                 {money(price.capital, currency)}
               </span>
               <span className="text-muted-foreground">
-                {" "}equipment{quotable.ok ? "" : ", so far"}
+                {" "}one-off{quotable.ok ? "" : ", so far"}
               </span>
             </span>
             <span>
@@ -136,9 +139,22 @@ export function Standing() {
           <CollapsibleContent>
             <div className="mt-3 grid gap-6 @xl:grid-cols-2">
               <div>
+                {/* The price by stage of the lift's life: what is paid once
+                    for each, and the maintenance charge by the month. */}
                 <dl className="space-y-1 text-xs">
+                  {LIFE.map(({ stage, words }) => {
+                    const { capital: once, monthly } = byStage[stage];
+                    if (!once && !monthly) return null;
+                    const amount = [
+                      once ? money(once, currency) : null,
+                      monthly ? `${money(monthly, currency)}/mo` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" + ");
+                    return <Line key={stage} term={words} amount={amount} />;
+                  })}
                   <Line
-                    term={`Monthly, over ${price.term / 12 || "—"} years${
+                    term={`Monthly, over ${years || "—"} years${
                       price.presumed ? " (presumed)" : ""
                     }`}
                     amount={money(price.instalment, currency)}
@@ -164,12 +180,21 @@ export function Standing() {
                 )}
               </div>
               <div>
+                {/* The carbon by stage, over the service life: maintaining
+                    and running it accrue every year of it, whatever the
+                    maintenance agreement's term. */}
                 <dl className="space-y-1 text-xs">
-                  <Line term="Making it" amount={tonnes(footprint.made)} />
-                  <Line
-                    term="Running it"
-                    amount={footprint.complete ? tonnes(footprint.run) : "—"}
-                  />
+                  {LIFE.map(({ stage, words }) => (
+                    <Line
+                      key={stage}
+                      term={words}
+                      amount={
+                        stage === "run" && !footprint.complete
+                          ? "—"
+                          : tonnes(footprint[stage])
+                      }
+                    />
+                  ))}
                 </dl>
                 {/* Two states, both named, rather than one button whose
                     label is the state it is in. */}

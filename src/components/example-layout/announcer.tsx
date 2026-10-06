@@ -17,7 +17,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAgent } from "@copilotkit/react-core/v2";
 import { sections } from "@/components/configurator";
+import { byOf, isNotice } from "@/components/configurator/log";
 import { useConfigurator } from "@/components/configurator/provider";
+
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** The text of a live region, set so that saying the same thing twice is
  * heard twice: the region is emptied first, and the words arrive a moment
@@ -36,19 +39,14 @@ function useAnnouncement(): [string, (text: string) => void] {
   return [message, say];
 }
 
-const plural = (n: number, one: string, many: string) =>
-  `${n} ${n === 1 ? one : many}`;
-
-/** What the last turn moved on the canvas, and a question that has just
- * arrived; and, visibly, a gesture the concept layer refused. */
+/** A turn by the other party, as it lands under the bell, and
+ * a question that has just arrived; and, visibly, a gesture the concept
+ * layer refused. */
 export function CanvasAnnouncer() {
   const { view, error } = useConfigurator();
   const [message, say] = useAnnouncement();
-  const touched = view?.touched ?? null;
-  const moved = touched ? touched.variables.length + touched.clauses.length : 0;
-  const movedKey = touched
-    ? `${touched.by}:${[...touched.variables, ...touched.clauses].join(",")}`
-    : "";
+  const latest = view?.turns.find(isNotice) ?? null;
+  const movedKey = latest?.flow ?? "";
   const asked = view ? sections(view).questions.length : 0;
   const seen = useRef({ movedKey, asked, ready: false });
 
@@ -59,8 +57,8 @@ export function CanvasAnnouncer() {
     // The state the page opened on is not news.
     if (!last.ready) return;
     const said: string[] = [];
-    if (movedKey && movedKey !== last.movedKey && touched)
-      said.push(`${touched.by} moved ${plural(moved, "item", "items")}.`);
+    if (movedKey && movedKey !== last.movedKey && latest)
+      said.push(`${capital(byOf(latest))} changed the specification; see Notifications.`);
     if (asked > last.asked)
       said.push(
         asked === 1
@@ -68,7 +66,7 @@ export function CanvasAnnouncer() {
           : `${asked} questions are waiting for you, under Asked of you.`,
       );
     if (said.length) say(said.join(" "));
-  }, [view, movedKey, asked, moved, touched, say]);
+  }, [view, movedKey, asked, latest, say]);
 
   return (
     <>

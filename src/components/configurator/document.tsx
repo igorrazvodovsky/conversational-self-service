@@ -41,6 +41,7 @@ import {
 import type { Party, Quote, View } from "./provider";
 
 import { day, money, tonnes as tonnesOf } from "./format";
+import { LIFE } from "./life";
 
 const tonnes = (kg: number) => `${tonnesOf(kg)} CO₂e`;
 
@@ -54,8 +55,8 @@ export const STANDING: Record<Quote["standing"], string> = {
 };
 
 // The catalogue's families, given the headings a proposal uses. `context`
-// is the basis of design and `agreement` the maintenance agreement; neither
-// is in the scope table.
+// is the basis of design, and the families for installing, maintaining and
+// ending the lift have sections of their own; none is in the scope table.
 const SCOPE: [string, string][] = [
   ["performance", "Performance"],
   ["platform", "Platform and drive"],
@@ -72,6 +73,11 @@ const SENTENCED = {
   service: "service_level",
   usage: "usage_profile",
   connectivity: "connectivity_package",
+  coverage: "maintenance_scope",
+  maintainability: "maintainability",
+  existing: "existing_equipment",
+  hours: "site_hours",
+  end: "end_of_life",
   platform: "platform",
   load: "rated_load",
   speed: "rated_speed",
@@ -361,8 +367,9 @@ export function QuoteDocument({
             {money(quote.amount, currency)}
           </p>
           <p className="text-xs text-muted-foreground">
-            for the equipment supplied and installed, excluding VAT, firm for
-            the validity period
+            for the equipment supplied and installed, with the works and the
+            arrangement for the end of its life stated, excluding VAT, firm
+            for the validity period
           </p>
         </div>
         <div>
@@ -425,10 +432,16 @@ export function QuoteDocument({
             term="Delivery of the equipment"
             amount={say(SENTENCED.handover) || "as agreed"}
           />
+          {say(SENTENCED.existing) && !held.get(SENTENCED.existing)?.value.endsWith(":none") ? (
+            <Line term="The existing lift" amount={say(SENTENCED.existing)} />
+          ) : null}
           <Line
             term="Installation and commissioning"
             amount={`approximately ${terms.installation} weeks on site`}
           />
+          {say(SENTENCED.hours) ? (
+            <Line term="Working hours on site" amount={say(SENTENCED.hours)} />
+          ) : null}
           <Line
             term="Final examination and acceptance"
             amount="on completion, by a notified body"
@@ -444,8 +457,17 @@ export function QuoteDocument({
           <Heading level={level + 1}>6. Maintenance agreement</Heading>
           <dl className="space-y-1">
             <Line term="Service level" amount={say(SENTENCED.service)} />
+            {say(SENTENCED.coverage) ? (
+              <Line term="Coverage" amount={say(SENTENCED.coverage)} />
+            ) : null}
             <Line term="Usage profile" amount={say(SENTENCED.usage)} />
             <Line term="Connectivity" amount={say(SENTENCED.connectivity)} />
+            {say(SENTENCED.maintainability) ? (
+              <Line
+                term="Maintainable by others"
+                amount={say(SENTENCED.maintainability)}
+              />
+            ) : null}
             <Line term="Term" amount={say(SENTENCED.term) || `${years} years`} />
             <Line
               term="Charge, per month, excluding VAT"
@@ -461,9 +483,25 @@ export function QuoteDocument({
 
       <Separator className="my-6" />
 
-      {/* 7. Warranty */}
+      {/* 7. End of life */}
+      <section className="grid gap-6 sm:grid-cols-2">
+        <div>
+          <Heading level={level + 1}>7. End of life</Heading>
+          <dl className="space-y-1">
+            <Line term="At the end of its life" amount={say(SENTENCED.end) || "as the owner arranges"} />
+          </dl>
+        </div>
+        <div>
+          <Subheading level={level + 2} className="mb-1">On these terms</Subheading>
+          <Clauses items={terms.clauses.end_of_life ?? []} />
+        </div>
+      </section>
+
+      <Separator className="my-6" />
+
+      {/* 8. Warranty */}
       <section>
-        <Heading level={level + 1}>7. Warranty</Heading>
+        <Heading level={level + 1}>8. Warranty</Heading>
         <p>
           The equipment is warranted against defects in materials and
           workmanship for {terms.warranty} months from acceptance, during
@@ -473,9 +511,9 @@ export function QuoteDocument({
 
       <Separator className="my-6" />
 
-      {/* 8. Work by others */}
+      {/* 9. Work by others */}
       <section>
-        <Heading level={level + 1}>8. Work by others</Heading>
+        <Heading level={level + 1}>9. Work by others</Heading>
         <p className="mb-2">
           The price and the programme assume that the following is provided by
           the customer or their contractor, at no cost to {sellerName}, before
@@ -493,34 +531,40 @@ export function QuoteDocument({
 
       <Separator className="my-6" />
 
-      {/* 9. Exclusions */}
+      {/* 10. Exclusions */}
       <section>
-        <Heading level={level + 1}>9. Not included</Heading>
+        <Heading level={level + 1}>10. Not included</Heading>
         <Clauses items={terms.clauses.excluded} />
       </section>
 
       <Separator className="my-6" />
 
-      {/* 10. Conditions */}
+      {/* 11. Conditions */}
       <section>
-        <Heading level={level + 1}>10. Conditions</Heading>
+        <Heading level={level + 1}>11. Conditions</Heading>
         <Clauses items={terms.clauses.conditions} />
       </section>
 
       <Separator className="my-6" />
 
-      {/* 11. Carbon annex */}
+      {/* 12. Carbon annex */}
       <section>
         <Heading level={level + 1}>
-          11. Environmental information, modelled over {view.footprint.horizon}{" "}
+          12. Environmental information, modelled over {view.footprint.horizon}{" "}
           years
         </Heading>
         <dl className="max-w-sm space-y-1">
-          <Line term="Embodied" amount={tonnes(quote.footprint.made)} />
-          <Line
-            term={`In use, grid ${view.footprint.grid}`}
-            amount={quote.footprint.complete ? tonnes(quote.footprint.run) : "—"}
-          />
+          {LIFE.map(({ stage, words }) => (
+            <Line
+              key={stage}
+              term={stage === "run" ? `${words}, grid ${view.footprint.grid}` : words}
+              amount={
+                stage === "run" && !quote.footprint.complete
+                  ? "—"
+                  : tonnes(quote.footprint[stage])
+              }
+            />
+          ))}
           <Line
             term="Total"
             amount={quote.footprint.complete ? tonnes(quote.footprint.total) : "—"}
@@ -533,9 +577,9 @@ export function QuoteDocument({
 
       <Separator className="my-6" />
 
-      {/* 12. Acceptance */}
+      {/* 13. Acceptance */}
       <section>
-        <Heading level={level + 1}>12. Acceptance</Heading>
+        <Heading level={level + 1}>13. Acceptance</Heading>
         <p>
           This proposal is open for acceptance until {day(quote.until)}. On
           acceptance it, with the conditions above, constitutes the whole

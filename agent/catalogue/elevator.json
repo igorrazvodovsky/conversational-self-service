@@ -85,59 +85,17 @@
       ],
       "maintenance": [
         "The maintenance agreement begins when the warranty period ends and runs for the contract term stated, with the charge reviewed each year against the published index of labour costs.",
-        "The charge is based on the usage profile stated; sustained use beyond it is grounds for review."
+        "The charge is based on the usage profile stated; sustained use beyond it is grounds for review.",
+        "What the coverage stated excludes is quoted and approved before the work is done.",
+        "Where the lift is stated to be maintainable by others, the service tool, its passwords and the wiring diagrams are handed over at acceptance and do not expire."
+      ],
+      "end_of_life": [
+        "Where take-back is stated, we dismantle and remove the lift at the end of its service life at the price stated, indexed to the published index of labour costs, and return certificates of recycling.",
+        "Where it is not, dismantling and disposal are the owner's, and a declaration of the lift's materials is handed over at acceptance so that whoever does the work knows what the lift contains."
       ]
     }
   },
   "variables": [
-    {
-      "name": "service_level",
-      "label": "Service level",
-      "group": "agreement",
-      "options": [
-        { "value": "basic", "label": "Business-hours support, next-day response", "monthly_price": 150, "co2": 0 },
-        { "value": "standard", "label": "24/7 call-out, 8 h response, 99.5 % uptime", "monthly_price": 300, "co2": 0 },
-        { "value": "premium", "label": "99.9 % uptime, 4 h response, remote diagnostics", "monthly_price": 550, "co2": 0 }
-      ]
-    },
-    {
-      "name": "contract_term",
-      "label": "Contract term",
-      "group": "agreement",
-      "options": [
-        { "value": "y5", "label": "5 years", "co2": 0 },
-        { "value": "y10", "label": "10 years", "co2": 0 },
-        { "value": "y15", "label": "15 years", "co2": 0 }
-      ]
-    },
-    {
-      "name": "usage_profile",
-      "label": "Usage profile",
-      "group": "agreement",
-      "options": [
-        { "value": "low", "label": "A few trips an hour", "monthly_price": 50, "co2": 0 },
-        { "value": "medium", "label": "Steady traffic through the day", "monthly_price": 120, "co2": 0 },
-        { "value": "heavy", "label": "Near-continuous traffic", "monthly_price": 260, "co2": 0 }
-      ]
-    },
-    {
-      "name": "connectivity_package",
-      "label": "Connectivity package",
-      "group": "agreement",
-      "options": [
-        { "value": "none", "label": "Not connected", "co2": 0 },
-        { "value": "connected", "label": "Remote monitoring and diagnostics", "monthly_price": 80, "co2": 0 }
-      ]
-    },
-    {
-      "name": "lead_time",
-      "label": "Handover date",
-      "group": "agreement",
-      "options": [
-        { "value": "standard", "label": "16 weeks from order", "weeks": 16, "price": 0, "co2": 0, "note": "the factory's ordinary queue, any finish" },
-        { "value": "expedited", "label": "10 weeks from order", "weeks": 10, "price": 7500, "co2": 0, "note": "a slot bought out of the queue, stock finishes only" }
-      ]
-    },
     {
       "name": "building_type",
       "label": "Building type",
@@ -210,11 +168,11 @@
       "label": "Travel height",
       "group": "performance",
       "options": [
-        { "value": "low_0_15", "label": "Up to 15 m", "co2": 1300 },
-        { "value": "mid_15_30", "label": "15–30 m", "co2": 2600 },
-        { "value": "high_30_50", "label": "30–50 m", "co2": 4300 },
-        { "value": "very_high_50_75", "label": "50–75 m", "co2": 6400 },
-        { "value": "tower_75_100", "label": "75–100 m", "co2": 8500 }
+        { "value": "low_0_15", "label": "Up to 15 m", "co2": 1300, "co2_installed": 150, "co2_ended": 120 },
+        { "value": "mid_15_30", "label": "15–30 m", "co2": 2600, "co2_installed": 300, "co2_ended": 220 },
+        { "value": "high_30_50", "label": "30–50 m", "co2": 4300, "co2_installed": 500, "co2_ended": 350 },
+        { "value": "very_high_50_75", "label": "50–75 m", "co2": 6400, "co2_installed": 750, "co2_ended": 500 },
+        { "value": "tower_75_100", "label": "75–100 m", "co2": 8500, "co2_installed": 1000, "co2_ended": 650 }
       ]
     },
     {
@@ -232,10 +190,10 @@
       "label": "Product platform",
       "group": "platform",
       "options": [
-        { "value": "hydro_s300", "label": "S300 (hydraulic, low-rise)", "price": 45000, "co2": 2200 },
-        { "value": "mrl_m500", "label": "M500 (machine-room-less, mid-rise)", "price": 58000, "co2": 2350 },
-        { "value": "mrl_m700", "label": "M700 (machine-room-less, high-rise)", "price": 78000, "co2": 2600 },
-        { "value": "highrise_h900", "label": "H900 (machine room, tower)", "price": 125000, "co2": 3200 }
+        { "value": "hydro_s300", "label": "S300 (hydraulic, low-rise)", "price": 45000, "co2": 2200, "co2_installed": 600, "co2_ended": 450 },
+        { "value": "mrl_m500", "label": "M500 (machine-room-less, mid-rise)", "price": 58000, "co2": 2350, "co2_installed": 700, "co2_ended": 380 },
+        { "value": "mrl_m700", "label": "M700 (machine-room-less, high-rise)", "price": 78000, "co2": 2600, "co2_installed": 850, "co2_ended": 450 },
+        { "value": "highrise_h900", "label": "H900 (machine room, tower)", "price": 125000, "co2": 3200, "co2_installed": 1300, "co2_ended": 650 }
       ]
     },
     {
@@ -461,6 +419,101 @@
         { "value": "none", "label": "Open to every floor", "price": 0, "co2": 0 },
         { "value": "card_reader", "label": "Card reader in the car", "price": 2800, "co2": 25, "note": "a badge unlocks the floors it is allowed" },
         { "value": "destination_linked", "label": "Badge at the lobby panel", "price": 5200, "co2": 40, "note": "the badge names the floor, so the panel routes the passenger to a car" }
+      ]
+    },
+    {
+      "name": "lead_time",
+      "label": "Handover date",
+      "group": "installation",
+      "options": [
+        { "value": "standard", "label": "16 weeks from order", "weeks": 16, "price": 0, "co2": 0, "note": "the factory's ordinary queue, any finish" },
+        { "value": "expedited", "label": "10 weeks from order", "weeks": 10, "price": 7500, "co2": 0, "note": "a slot bought out of the queue, stock finishes only" }
+      ]
+    },
+    {
+      "name": "existing_equipment",
+      "label": "Existing lift",
+      "group": "installation",
+      "options": [
+        { "value": "none", "label": "None, a new shaft", "price": 0, "co2": 0 },
+        { "value": "strip_recycle", "label": "Dismantled and removed by us, metals recycled", "price": 9500, "co2": 0, "co2_installed": 350, "note": "the old car, machine and rails leave site sorted, with certificates of recycling" },
+        { "value": "strip_by_others", "label": "Removed by the customer's contractor before we start", "price": 0, "co2": 0, "co2_installed": 400, "note": "the shaft is handed over empty, with no assurance of what is recycled" }
+      ]
+    },
+    {
+      "name": "site_hours",
+      "label": "Working hours on site",
+      "group": "installation",
+      "options": [
+        { "value": "normal", "label": "Weekdays, normal working hours", "price": 0, "co2": 0 },
+        { "value": "out_of_hours", "label": "Evenings and weekends, with the building in use", "price": 8500, "co2": 0, "co2_installed": 60, "note": "for a building that cannot lose its lift by day" }
+      ]
+    },
+    {
+      "name": "service_level",
+      "label": "Service level",
+      "group": "maintenance",
+      "options": [
+        { "value": "basic", "label": "Business-hours support, next-day response", "monthly_price": 150, "co2": 0, "co2_upkeep": 80 },
+        { "value": "standard", "label": "24/7 call-out, 8 h response, 99.5 % uptime", "monthly_price": 300, "co2": 0, "co2_upkeep": 120 },
+        { "value": "premium", "label": "99.9 % uptime, 4 h response, remote diagnostics", "monthly_price": 550, "co2": 0, "co2_upkeep": 160 }
+      ]
+    },
+    {
+      "name": "contract_term",
+      "label": "Contract term",
+      "group": "maintenance",
+      "options": [
+        { "value": "y5", "label": "5 years", "co2": 0 },
+        { "value": "y10", "label": "10 years", "co2": 0 },
+        { "value": "y15", "label": "15 years", "co2": 0 }
+      ]
+    },
+    {
+      "name": "usage_profile",
+      "label": "Usage profile",
+      "group": "maintenance",
+      "options": [
+        { "value": "low", "label": "A few trips an hour", "monthly_price": 50, "co2": 0, "co2_upkeep": 30 },
+        { "value": "medium", "label": "Steady traffic through the day", "monthly_price": 120, "co2": 0, "co2_upkeep": 60 },
+        { "value": "heavy", "label": "Near-continuous traffic", "monthly_price": 260, "co2": 0, "co2_upkeep": 120 }
+      ]
+    },
+    {
+      "name": "connectivity_package",
+      "label": "Connectivity package",
+      "group": "maintenance",
+      "options": [
+        { "value": "none", "label": "Not connected", "co2": 0 },
+        { "value": "connected", "label": "Remote monitoring and diagnostics", "monthly_price": 80, "co2": 0, "co2_upkeep": -20, "note": "fewer call-outs: a fault is diagnosed before anyone drives out" }
+      ]
+    },
+    {
+      "name": "maintenance_scope",
+      "label": "Maintenance coverage",
+      "group": "maintenance",
+      "options": [
+        { "value": "oil_grease", "label": "Examination and lubrication; parts and repairs billed", "monthly_price": 90, "co2": 0, "note": "the lowest charge, and the least predictable cost" },
+        { "value": "semi", "label": "Planned maintenance and minor parts; major components billed", "monthly_price": 160, "co2": 0 },
+        { "value": "comprehensive", "label": "All parts and labour, major components included", "monthly_price": 290, "co2": 0 }
+      ]
+    },
+    {
+      "name": "maintainability",
+      "label": "Maintainable by others",
+      "group": "maintenance",
+      "options": [
+        { "value": "proprietary", "label": "Service tool and parameters kept by us", "price": 0, "co2": 0 },
+        { "value": "open", "label": "Service tool, passwords and wiring diagrams handed over, without expiry", "price": 6000, "co2": 0, "note": "another firm can maintain the lift when this agreement ends" }
+      ]
+    },
+    {
+      "name": "end_of_life",
+      "label": "At the end of its life",
+      "group": "end-of-life",
+      "options": [
+        { "value": "owner", "label": "Dismantled and disposed of by the owner's contractor", "price": 0, "co2": 0 },
+        { "value": "take_back", "label": "Taken back by us: dismantled, parts refurbished, metals recycled", "price": 3500, "co2": 0, "co2_ended": -250, "note": "a price fixed now for work done at the end of the service life" }
       ]
     }
   ],
@@ -963,6 +1016,48 @@
         ["ch2200", "h3400"], ["ch2200", "h3800"], ["ch2200", "h4200"], ["ch2200", "h4600"],
         ["ch2400", "h3800"], ["ch2400", "h4200"], ["ch2400", "h4600"]
       ]
+    },
+    {
+      "id": "R55",
+      "label": "A new building has no existing lift to remove",
+      "type": "implication",
+      "if_all": [{ "var": "installation", "in": ["new_build"] }],
+      "then": { "var": "existing_equipment", "in": ["none"] }
+    },
+    {
+      "id": "R56",
+      "label": "A modernization begins by taking the old lift out",
+      "type": "implication",
+      "if_all": [{ "var": "installation", "in": ["modernization"] }],
+      "then": { "var": "existing_equipment", "in": ["strip_recycle", "strip_by_others"] }
+    },
+    {
+      "id": "R57",
+      "label": "A hospital keeps a lift by day while its old one is replaced",
+      "type": "implication",
+      "if_all": [{ "var": "building_type", "in": ["hospital"] }, { "var": "installation", "in": ["modernization"] }],
+      "then": { "var": "site_hours", "in": ["out_of_hours"] }
+    },
+    {
+      "id": "R58",
+      "label": "The 99.9 % uptime promise carries the parts risk too",
+      "type": "implication",
+      "if_all": [{ "var": "service_level", "in": ["premium"] }],
+      "then": { "var": "maintenance_scope", "in": ["comprehensive"] }
+    },
+    {
+      "id": "R59",
+      "label": "A hospital cannot wait for a repair to be approved",
+      "type": "implication",
+      "if_all": [{ "var": "building_type", "in": ["hospital"] }],
+      "then": { "var": "maintenance_scope", "in": ["semi", "comprehensive"] }
+    },
+    {
+      "id": "R60",
+      "label": "Take-back runs through our European recovery network",
+      "type": "implication",
+      "if_all": [{ "var": "end_of_life", "in": ["take_back"] }],
+      "then": { "var": "region", "in": ["europe"] }
     }
   ],
   "footprint": {
@@ -971,7 +1066,7 @@
     "grid_factor": 0.22,
     "grid_factor_decarbonising": 0.11,
     "fabrication_multiplier": 1.9,
-    "module_scope": "Embodied ≈ EN 15804 A1–A3 with a fabrication multiplier; use-phase ≈ B6. Installation, maintenance and end-of-life are not modelled. All figures are illustrative modelled estimates, not a verified assessment.",
+    "module_scope": "Making ≈ EN 15804 A1–A3 with a fabrication multiplier; installation ≈ A4–A5; maintenance ≈ B2–B4 over the service life; energy in use ≈ B6; end of life ≈ C1–C4. Benefits beyond the life cycle (module D) are not counted. All figures are illustrative modelled estimates, not a verified assessment.",
     "annual_kwh": {
       "a": {
         "low": { "low_0_15": 631, "mid_15_30": 948, "high_30_50": 1323, "very_high_50_75": 1702, "tower_75_100": 2159 },

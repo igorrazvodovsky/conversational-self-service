@@ -10,7 +10,7 @@ import {
 import { Item, ItemContent } from "@/components/ui/item";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { address, addressable, Moved, targeted as targetedRing, To, useTargeted } from "./address";
+import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
 import { ClauseText, useAnswering } from "./clauses";
 import { Consequences } from "./question";
 import { adds, kilos } from "./format";
@@ -100,9 +100,10 @@ function Options({ variable }: { variable: Variable }) {
                 {adds(option.monthly, currency)}/mo
               </span>
             ) : null}
-            {carbon && option.embodied !== null ? (
+            {carbon && option.carbon !== null ? (
               <span className="font-normal tabular-nums text-muted-foreground">
-                +{kilos(option.embodied)}
+                {option.carbon < 0 ? "−" : "+"}
+                {kilos(Math.abs(option.carbon))}
               </span>
             ) : null}
           </Button>
@@ -172,10 +173,9 @@ export function AssertedPair({
   open: boolean;
   onToggle: () => void;
 }) {
-  const { label, view } = useConfigurator();
+  const { label } = useConfigurator();
   const unmet = variable.standing === "unmet";
   const yielded = variable.standing === "yielded";
-  const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
   const isTarget = useTargeted(address.variable(variable.name));
   return (
     <div
@@ -187,7 +187,6 @@ export function AssertedPair({
       )}
     >
       <span className="text-muted-foreground">
-        {moved ? <Moved by={moved} /> : null}
         {variable.heading}
       </span>
       <Button
@@ -340,12 +339,7 @@ export function FollowsPair({
   variable: Variable;
   addressed?: boolean;
 }) {
-  const { label, view } = useConfigurator();
-  const touched = view?.touched;
-  const moved =
-    touched && variable.following.some((f) => touched.variables.includes(f.variable))
-      ? touched.by
-      : null;
+  const { label } = useConfigurator();
   const isTarget = useTargeted(address.variable(variable.name));
   return (
     <li
@@ -359,7 +353,6 @@ export function FollowsPair({
       <span aria-hidden>↳</span>
       <span className="sr-only">forced: </span>
       <span>
-        {moved ? <Moved by={moved} /> : null}
         {variable.heading}
       </span>
       <span className="text-foreground">{label(variable.value)}</span>
@@ -393,14 +386,8 @@ export function FollowsRow({
   variable: Variable;
   addressed?: boolean;
 }) {
-  const { label, view } = useConfigurator();
+  const { label } = useConfigurator();
   const shown = useShown();
-  // Moved with an assertion the last turn made: the value rests on it.
-  const touched = view?.touched;
-  const moved =
-    touched && variable.following.some((f) => touched.variables.includes(f.variable))
-      ? touched.by
-      : null;
   const isTarget = useTargeted(address.variable(variable.name));
   return (
     <Item
@@ -418,7 +405,6 @@ export function FollowsRow({
             between heading and value. A value has to be free to wrap. */}
         <div className="flex flex-wrap items-baseline gap-x-2 text-xs font-medium">
           <span className="font-normal uppercase tracking-wide text-muted-foreground">
-            {moved ? <Moved by={moved} /> : null}
             {variable.heading}
           </span>
           <span className="text-sm">{label(variable.value)}</span>
@@ -452,7 +438,7 @@ export function FollowsRow({
  * the rest. Neither is a pick from the options, which would be the person's
  * own value and read that way. */
 export function OpenRow({ variable }: { variable: Variable }) {
-  const { gesture, busy, view } = useConfigurator();
+  const { gesture, busy } = useConfigurator();
   const live = variable.options.filter((option) => option.possible);
   const gone = variable.options.length - live.length;
   const proposed = variable.proposed;
@@ -464,7 +450,6 @@ export function OpenRow({ variable }: { variable: Variable }) {
   useEffect(() => {
     if (targeted) setOpen(true);
   }, [targeted]);
-  const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
 
   return (
     <Collapsible
@@ -479,7 +464,6 @@ export function OpenRow({ variable }: { variable: Variable }) {
           className="h-auto w-full justify-between gap-2 px-3 py-2 text-left text-sm font-normal"
         >
           <span>
-            {moved ? <Moved by={moved} /> : null}
             {variable.heading}
           </span>
           <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">

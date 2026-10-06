@@ -297,7 +297,7 @@ export function Comparison({
         : address.quote(left.id, "variable", v);
 
   const why = (who: Named, n: string, g: Ground | undefined, h: Held | undefined) => {
-    if (!h) return <p>still open</p>;
+    if (!h) return <p>open</p>;
     if (!g) return null;
     if (g.standing === "follows")
       return (
@@ -484,7 +484,7 @@ export function Comparison({
               currency,
             )} a month.`}
         {unfinished
-          ? " The specification is not finished, so its sum is not yet an offer."
+          ? " The specification is not finished, so its sum is not an offer."
           : null}
       </p>
     </section>

@@ -222,52 +222,6 @@ def _how(engine: Engine, entry: dict[str, Any], cited: bool = False) -> str:
     return said(via, actor, default=via) or via
 
 
-def _touched(engine: Engine, spec: str) -> dict[str, Any] | None:
-    """What the last turn changed, for the canvas to mark.
-
-    The most recent flow that reached an assertion or a clause, and the
-    variables and clauses its records name.  A flow the person opened by a
-    gesture is theirs and marks nothing: they were looking.  A flow with the
-    model or the person's own agent among its root actors is what moved while they
-    were not, and the marks stand until the person next changes the
-    specification themselves.  Read off the log; held by nobody.
-    """
-    flows: dict[str, dict[str, Any]] = {}
-    order: list[str] = []
-    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
-        if record.kind != "completion":
-            continue
-        flow = flows.get(record.flow)
-        if flow is None:
-            flow = flows[record.flow] = {"actors": set(), "variables": set(), "clauses": set()}
-            order.append(record.flow)
-        if record.via is None:
-            flow["actors"].add(record.actor)
-        output = record.output or {}
-        if "error" in output:
-            continue
-        if record.concept == "Asserting" and record.action in {"assert", "withdraw"}:
-            if output.get("spec") == spec and output.get("variable"):
-                flow["variables"].add(output["variable"])
-        elif record.concept == "Specifying" and output.get("clause"):
-            flow["clauses"].add(output["clause"])
-        elif record.concept == "Binding" and output.get("requirement"):
-            flow["clauses"].add(output["requirement"])
-    for token in reversed(order):
-        flow = flows[token]
-        if not (flow["variables"] or flow["clauses"]):
-            continue
-        others = flow["actors"] - {"person"}
-        if not others:
-            return None
-        return {
-            "by": "your agent" if BROWSER in others else "the assistant",
-            "variables": sorted(flow["variables"]),
-            "clauses": sorted(flow["clauses"]),
-        }
-    return None
-
-
 def put_question(engine: Engine, request: Any) -> dict[str, Any] | None:
     """The question the model last put about a request, and where it stands:
     Conduct's *awaits an answer*, with the clause it reads from the log —
@@ -422,7 +376,15 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     ]
     capital = pricing.state()["capital"]
     monthly = pricing.state()["monthly"]
-    embodied = footprinting.state()["embodied"]
+
+    def carbon(option: str) -> float | None:
+        """What the option adds over the lift's life, every stage it has a
+        figure for: the footprint of the option alone, which draws no energy,
+        so its run is nothing."""
+        state = footprinting.state()
+        if not any(option in state[k] for k in ("embodied", "installed", "upkeep", "ended")):
+            return None
+        return footprinting.footprint([option], grid, BASIS)["total"]
 
     asserted = asserting["asserted"].get(spec, {})
     assumed = constraining["assumed"].get(spec, {})
@@ -652,7 +614,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                         "possible": option in allowed,
                         "capital": capital.get(option),
                         "monthly": monthly.get(option),
-                        "embodied": embodied.get(option),
+                        "carbon": carbon(option),
                         # The one facet that costs a solver check per option,
                         # asked only while it is shown.
                         "excluded": [
@@ -795,7 +757,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     if unmet:
         quotable = {"ok": False, "because": f"{unmet} asserted and not buildable"}
     elif still_open:
-        quotable = {"ok": False, "because": f"{still_open} still open"}
+        quotable = {"ok": False, "because": f"{still_open} open"}
     elif not customer.get("name"):
         quotable = {"ok": False, "because": "no name to address the proposal to"}
     elif not project["site"]:
@@ -841,12 +803,11 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         "said": trace["said"],
         # The conversation each utterance was said in, when it was recorded.
         "saidIn": trace["saidIn"],
-        # What the last turn changed while the person was not looking at the
-        # canvas, for it to mark.  Null when the person's own gesture was the
-        # last thing to move the specification.
-        "touched": _touched(engine, spec),
         "price": price,
         "footprint": footprinting.footprint(chosen, grid, BASIS),
+        # What falls at each stage of the lift's life, by the catalogue's
+        # family: the one-off and the monthly sums of the settled values.
+        "stages": _stages(catalogue, pricing, chosen),
         "questions": questions,
         "quotes": quotes,
         # The specification read as a quote would freeze it, for comparing an
@@ -884,81 +845,206 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             # the person struck are in `sources`, item by item.
             "read": sum(1 for c in clauses if c["source"]),
         },
-        # The latest turns, each whole.  Behaviour only: the catalogue's
-        # arrival is a thousand records of Cataloguing and Pricing, and
-        # nobody wants to read it back.
-        "turns": turns(engine),
+        # The log, read by turn, latest activity first.  Behaviour only: the
+        # catalogue's arrival is a thousand records of Cataloguing and
+        # Pricing, and nobody wants to read it back.
+        "turns": (log := turns(engine, spec)),
+        "kinds": [{"kind": k, "label": label} for k, label in KINDS],
+        # Who has taken a turn, so a party that never acts is never offered.
+        "parties": _parties(log),
+        # Where the log stood when this was read, so a response from
+        # further back than what is shown can be told apart.
+        "at": engine.log.last_seq,
     }
 
 
-def turns(engine: Engine, latest: int = 8) -> list[dict[str, Any]]:
+def _stages(
+    catalogue: dict[str, Any], pricing: Any, chosen: list[str]
+) -> list[dict[str, Any]]:
+    """The settled values' prices, summed by the catalogue's family, in the
+    catalogue's order.  A join of two concepts' exposed state, as a `where`
+    would make it: Pricing knows amounts, Cataloguing knows families, and
+    neither knows the other."""
+    state = pricing.state()
+    family_of = catalogue["family"]
+    sums: dict[str, dict[str, Any]] = {}
+    for family in family_of.values():
+        sums.setdefault(family, {"family": family, "capital": 0.0, "monthly": 0.0})
+    for option in chosen:
+        variable = option.split(":", 1)[0]
+        family = family_of.get(variable, "other")
+        line = sums.setdefault(family, {"family": family, "capital": 0.0, "monthly": 0.0})
+        line["capital"] += state["capital"].get(option, 0.0)
+        line["monthly"] += state["monthly"].get(option, 0.0)
+    return list(sums.values())
+
+
+# What a turn did, by the concepts its records were written in.  A turn is
+# usually several of these at once, so each is a filter over the log rather
+# than a section of it.  Constraining is left out: it follows from what was
+# asserted, and is never all a turn did.  A turn whose every record was
+# refused, or that reached no concept here, did nothing.
+KINDS = [
+    ("specification", "The specification"),
+    ("questions", "Questions"),
+    ("reading", "Words and documents"),
+    ("quotes", "Quotes"),
+    ("party", "Who and where"),
+    ("view", "The view"),
+    ("nothing", "Nothing"),
+]
+# Who takes a turn, by the side of the sale they act for.  `person` is
+# whoever is looking; an actor not named here is listed by its name.
+PARTIES = {
+    "person": ("You", "buyer"),
+    "browser": ("Your agent", "buyer"),
+    "model": ("The assistant", "seller"),
+}
+
+_KIND_OF = {
+    "Specifying": "specification",
+    "Asserting": "specification",
+    "Binding": "specification",
+    "Deciding": "questions",
+    "Conversing": "reading",
+    "Filing": "reading",
+    "Reading": "reading",
+    "Quoting": "quotes",
+    "Profiling": "party",
+    "Naming": "party",
+    "Moding": "view",
+    "Showing": "view",
+    "Framing": "view",
+}
+
+
+def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
     """The log read by turn: `docs/ui.md`, "What a view is".
 
     A flow is one occasion — the person's words and the calls the model made
     in reply, or one gesture and what the rules did with it — so the turn is
-    the unit, opened by its first record, with every completion under it.
-    The latest turns, newest first, each whole; a turn that only brought a
-    surface forward is marked `moved` and not counted among them.
+    the unit, latest activity first.  Each says who opened it and who took
+    part, what it did (`kinds`), what it changed in the specification's
+    words — the clauses stated, reworded and struck, the values answered
+    and withdrawn, each as it was then — and every completion it wrote, with
+    the rule that authorised it.  A refused record is listed and changes
+    nothing.  A turn is `fresh` when it came after the person last changed
+    the specification themselves, whoever took it; a turn that only brought
+    a surface forward is marked `moved`.  Read off the log; held by nobody.
     """
+    flows: dict[str, dict[str, Any]] = {}
     order: list[str] = []
+    text: dict[str, str] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
-        if record.kind == "completion" and (not order or order[-1] != record.flow):
+        if record.kind != "completion":
+            continue
+        flow = flows.get(record.flow)
+        if flow is None:
+            output = record.output or {}
+            flow = flows[record.flow] = {
+                "flow": record.flow,
+                "actor": record.actor,
+                "at": record.at,
+                # What started it: a gesture's act, the tool the model
+                # called, or the action itself.
+                "opened": output.get("act") or output.get("tool") or record.action,
+                "parties": set(),
+                "kinds": set(),
+                "said": None,
+                "files": [],
+                "stated": [],
+                "reworded": [],
+                "struck": [],
+                "asserted": [],
+                "withdrawn": [],
+                "records": [],
+            }
+        # Latest activity: a run resumed after a question moves its turn up.
+        if not order or order[-1] != record.flow:
             if record.flow in order:
                 order.remove(record.flow)
             order.append(record.flow)
-    out = []
-    shown = 0
-    for flow in reversed(order):
-        # A long run of surfaces brought forward is bounded too.
-        if shown == latest or len(out) == latest * 4:
-            break
-        records = [
-            r for r in engine.log.flow(flow)
-            if r.kind == "completion" and r.seq > engine.settled_at
-        ]
-        opened = records[0]
-        stimulus = opened.output or {}
-        words = next(
-            (
-                r.output
-                for r in records
-                if r.concept == "Conversing" and r.action == "say"
-                and "error" not in (r.output or {})
-            ),
-            None,
+        output = record.output or {}
+        refused = "error" in output
+        flow["records"].append(
+            {
+                "seq": record.seq,
+                "concept": record.concept,
+                "action": record.action,
+                "actor": record.actor,
+                "via": record.via,
+                "refused": refused,
+            }
         )
-        # A turn that only brought a surface forward: true, and about no fact
-        # of the specification, so it does not count among the latest.
-        moved = all(r.concept in {"Copiloting", "Moding"} for r in records)
-        shown += not moved
+        if record.via is None:
+            flow["parties"].add(record.actor)
+        if refused:
+            continue
+        if record.concept in _KIND_OF:
+            flow["kinds"].add(_KIND_OF[record.concept])
+        if record.concept == "Conversing" and record.action == "say":
+            if flow["said"] is None and output.get("text"):
+                flow["said"] = {"utterance": output.get("utterance"), "text": output["text"]}
+        elif record.concept == "Reading" and record.action == "read":
+            name = _source_name(engine, output.get("source"))
+            if name and name not in flow["files"]:
+                flow["files"].append(name)
+        elif record.concept == "Specifying" and output.get("spec") == spec:
+            clause = output.get("clause")
+            if record.action == "require":
+                text[clause] = record.input.get("text", "")
+                flow["stated"].append({"clause": clause, "text": text[clause]})
+            elif record.action in {"reword", "relax"}:
+                text[clause] = record.input.get("text", "")
+                flow["reworded"].append({"clause": clause, "text": text[clause]})
+            elif record.action == "strike":
+                flow["struck"].append({"clause": clause, "text": text.get(clause, "")})
+        elif record.concept == "Asserting" and output.get("spec") == spec:
+            variable = output.get("variable")
+            if not variable:
+                continue
+            if record.action == "assert":
+                flow["asserted"].append({"variable": variable, "option": output.get("option")})
+            elif record.action == "withdraw":
+                flow["withdrawn"].append(variable)
+    out: list[dict[str, Any]] = []
+    fresh = True
+    for token in reversed(order[-latest:]):
+        flow = flows[token]
+        parties = flow["parties"]
+        if parties == {"person"} and "specification" in flow["kinds"]:
+            # The person changed the specification: this, and what came
+            # before, they have seen.
+            fresh = False
+        flow["fresh"] = fresh
+        # A turn that only brought a surface forward: true, and about no
+        # fact of the specification.
+        flow["moved"] = flow["kinds"] == {"view"} and all(
+            r["concept"] in {"Copiloting", "Moding"} for r in flow["records"]
+        )
         out.append(
             {
-                "flow": flow,
-                "moved": moved,
-                "actor": opened.actor,
-                "at": opened.at,
-                # What started it: the words said, a gesture's act, or the
-                # tool the model called.
-                "opened": stimulus.get("act") or stimulus.get("tool") or opened.action,
-                "said": (
-                    {"utterance": words["utterance"], "text": words["text"]}
-                    if words
-                    else None
-                ),
-                "records": [
-                    {
-                        "seq": r.seq,
-                        "concept": r.concept,
-                        "action": r.action,
-                        "actor": r.actor,
-                        "via": r.via,
-                        "refused": "error" in (r.output or {}),
-                    }
-                    for r in records
-                ],
+                **flow,
+                "parties": sorted(parties),
+                "kinds": [k for k, _ in KINDS if k in flow["kinds"]] or ["nothing"],
             }
         )
     return out
+
+
+def _parties(log: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Every actor with a root action among the turns, the named ones first,
+    each with its name and the side of the sale it acts for."""
+    present = {p for turn in log for p in turn["parties"]}
+    actors = [a for a in PARTIES if a in present] + sorted(present - PARTIES.keys())
+    return [
+        {
+            "actor": a,
+            "label": PARTIES.get(a, (a, None))[0],
+            "side": PARTIES.get(a, (a, None))[1],
+        }
+        for a in actors
+    ]
 
 
 def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
@@ -1425,7 +1511,10 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         ],
         "price": view["price"],
         "footprint": {
-            k: view["footprint"][k] for k in ("made", "run", "total", "complete")
+            k: view["footprint"][k]
+            for k in (
+                "made", "installed", "maintained", "run", "ended", "total", "complete",
+            )
         },
         # A completion with nothing left proposed has no card on the canvas,
         # and so no address.

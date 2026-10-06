@@ -166,7 +166,7 @@ function AskedRecord({ question, result }: { question?: string; result?: string 
           : outcome.status === "overtaken"
             ? "Replaced by a later conflict"
             : outcome.status === "passed"
-              ? "Passed over; still open on the canvas"
+              ? "Passed over; open on the canvas"
               : outcome.status === "replied"
                 ? `${outcome.by === "the person's own agent" ? "Your agent" : "You"} replied: “${outcome.replied}”`
                 : null;

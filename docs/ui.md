@@ -66,15 +66,20 @@ made — not which concept holds the facts.
 
 The log is read by turn. Every record carries the flow it ran in, and a flow
 is one occasion: the person's words and the calls the model made in reply,
-or one gesture and what the rules did with it. So the trace answers *what
-did this turn do, and on whose authority*, and its unit is the turn, at
-`#turn:<flow>`, opened by what started it. A single record is smaller than
-anything a person would point at, and the order records were written in is
-the arrangement the principle rules out. A turn that only brought a surface
-forward is still a turn, and true, but it answers nothing about the
-specification, so the trace folds a run of them into one line and does not
-count them among the latest turns it shows. The words that opened a turn are in
-the chat too, at `#said:<utterance>`, and the trace and the sources link to
+or one gesture and what the rules did with it. So the log answers *what did
+each turn change, and on whose authority*, and its unit is the turn, at
+`#turn:<flow>`. A single record is smaller than anything a person would point
+at, and the order records were written in is the arrangement the principle
+rules out. A turn says first what it changed, in the specification's words,
+and beneath that each record it wrote, with the rule that authorised it. What
+a turn did is computed from its records, and a turn is usually several
+things at once: it may read a requirement, answer it and put a question. So
+what it did, like who took part in it, is a filter over one list, and the
+notification center is that list with everyone else's changes chosen. A
+turn that only brought a surface forward is still a turn, and true, but it
+answers nothing about the specification, so a run of them folds into one
+line. The words that opened a turn are in
+the chat too, at `#said:<utterance>`, and the log and the sources link to
 them. Words said in another conversation are reached by opening that
 conversation first, which is a viewer's convenience like the chat's
 geometry. The chat is no `Moding` surface, so following an address there
@@ -182,10 +187,10 @@ same function, so app code and primitives merge classes with one engine.
 | The question section, empty and loading states | `Empty`, `Spinner` |
 | The artifact panel | One of `Moding`'s two surfaces at a time — the specification, the quotes — switched from the panel's header, or by following a link to an item on the other surface |
 | The way around the panel | One `nav` row in the panel's header, wrapping onto further lines when the panel is narrow or the text large, a `NavigationMenuLink` per place, one `NavigationMenuList` with no viewport since nothing drops down: *asked of you* with its count while a question waits, an address on the specification; then the two surfaces, *Specification* and *Quote*, divided by a rule, each performing `focus`. What the specification shows is chosen by the filters above its list, not here. At the row's end, while the specification is showing, the `Showing` menu (`panel-nav.tsx`) |
-| The specification's strip | Sticky at the top of its scroll while there is something in it: what the last turn moved, and the frame strip for a frame on an assertion or a clause, so one begun anywhere is visible and its way out reachable from anywhere |
-| The filters | A `ToggleGroup` above the list: *All*, then each gap with its count — *still open*, *not yet answered*, *answering nothing*. A gap is `frame` by gap and *All* is `unframe`, so the filter is a fact of `Framing` the model can set too. The pressed item is solid, as the primitive's muted fill all but vanishes on the ground; a gap with nothing in it is disabled. While an assertion or a clause frames the canvas none is pressed |
+| The specification's strip | Sticky at the top of its scroll while a frame is on an assertion or a clause, so one begun anywhere is visible and its way out reachable from anywhere |
+| The filters | A `ToggleGroup` above the list: *All*, then each gap with its count — *open*, *unanswered*, *answering nothing*. A gap is `frame` by gap and *All* is `unframe`, so the filter is a fact of `Framing` the model can set too. The pressed item is solid, as the primitive's muted fill all but vanishes on the ground; a gap with nothing in it is disabled. While an assertion or a clause frames the canvas none is pressed |
 | An address | Every variable, clause, source and quote line, and the list, carries an `id` (`variable:<name>`, `clause:<id>`, `choice:<id>`, `source:<kind>:<id>`, `quote:<id>:variable:<name>`, `quote:<id>:event:<key>`, `compare:<id>:<other>:variable:<name>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row, and a ledger line, addressed from elsewhere opens; an item the frame leaves out is not drawn, so following its address takes the frame off. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
-| What the last turn moved | A small square before the heading of each variable and clause the assistant's or the person's own agent's last flow reached, and the assertions a settled value rests on; the strip at the top counts them. Read off the log (`touched` in `agent/views.py`), gone once the person next changes the specification |
+| The log | A bell at the end of the panel's header, on either surface, opening a `Sheet`: one entry per turn, latest activity first — who opened it and when, the words or documents it read, and what it stated, reworded, struck, answered or withdrew, each clause or value still on the canvas a link to its address; beneath, a `Collapsible` of the records it wrote, each with its actor, its concept's action and the rule that authorised it. Above the list, a ghost `Button` for who took part and one for what the turn did, each opening a `DropdownMenu` of checkbox items with their counts, which stays open while several are chosen; the parties are every one that has taken a turn, grouped by the side of the sale it acts for. A turn shows when one of its parties and one of the things it did are checked, and the last item checked in a menu cannot be unchecked. The triggers are labelled *People* and *Activity*; what is chosen is in the menus. Who is filtered by the parties hidden, not those shown, so a party that takes its first turn is shown without anyone choosing it. Everyone but the viewer, and changes to the specification, are chosen at first, which is the notification center. The bell counts the turns by anyone else that changed the specification since the person last changed it themselves, whatever is chosen, and a rule divides those from the ones before. What is chosen is a viewer's convenience kept in the browser, not `Framing`: the log is about no fact of the configuration. Following a `#turn:` address opens the sheet, on either surface, and chooses what shows that turn; it records nothing. Read off the log (`turns` in `agent/views.py`); nothing records that the sheet was opened |
 | The ledger | The specification's one list: the requirement document, a line per clause, read as a question and its answer. A line shows the clause's words, editable, and beneath them each choice answering it as its heading and value, addressed (`choice:<id>`), with the values it forced beneath it as muted heading-and-value pairs. Everything else is the open line's: where the words were read from, whether they were relaxed, who asserted the value, what else it answers and whether it is held, its options, taking it back, and the rules behind what it forced, set in under a rule. A line opens while the caret is in it, so reading the document with the caret reviews it a line at a time; from its value, a `Button` that says whether it is expanded; and when the page is at one of its addresses. Opened from its value or an address, it stays open until closed there. A clause with no answer says so beneath its words. After the document, a line per value answering nothing, its question *No stated requirement*; a line per value that follows from no assertion drawn; and the open variables, a line per catalogue family. A value answering two clauses is drawn on the first line and named on the second as the same pair, its value a link, and so is one the frame leaves out; whether an answer still stands is the read's `standing`, never the frame. While a frame is on, the document is read-only and shows only the lines in the frame |
 | Asserted value | Its heading, muted, and its value as a ghost `Button` that opens the line; what stands against it stays beside the value in words — *gave way to*, struck through, or *not buildable with the rest*, which the question links to. Open, the line shows who asserted it, *Also answers* or *Also held for* each other clause it answers as a link, its options and a ghost *Take back* `Button` |
 | A value that follows | Beneath each asserted value it rests on, a muted heading-and-value pair, addressed under the first; the rules behind it are the open line's. One resting on no assertion drawn has a line of its own, an `Item` on `--sunken` rather than the variant's half-strength muted, which all but vanishes on the ground, where *from* names the assertions it rests on, each a link |
@@ -202,7 +207,7 @@ same function, so app code and primitives merge classes with one engine.
 | The frame (`Framing`) | On an assertion or a clause, a bordered strip in the sticky nav with the counts of the slice and a ghost `Button` to show everything; the way in is the `Button` on a clause. An answer has no way in of its own, since what it forced is beneath it and what it ruled out is on the options; the assistant or the person's own agent may still frame an assertion. On a gap, the filters |
 | The answering mode | The frame on a clause: the strip names the clause and says that a value picked now answers it; the clause's expand icon `Button` shows pressed, as a collapse icon, and takes the frame off |
 | The sources (`Filing`, `Conversing`) | A `Collapsible` under the ledger, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
-| Where the specification stands | A `Card` first on the specification: a `Badge` naming the state (`default` when ready to quote, `outline` otherwise), the reason a quote cannot be requested yet, *Request a quote* and the quotes issued as `Button`s, the counts asked, followed and open, and one line with the equipment price (*so far* until it is ready) and the modelled carbon; the monthly, lifetime and carbon breakdown and the grid's `ToggleGroup` in a `Collapsible` |
+| Where the specification stands | A `Card` first on the specification: a `Badge` naming the state (`default` when ready to quote, `outline` otherwise), the reason a quote cannot be requested yet, *Request a quote* and the quotes issued as `Button`s, the counts asked, followed and open, and one line with the one-off price (*so far* until it is ready) and the modelled carbon; in a `Collapsible`, the price and the carbon by stage of the lift's life (making, installing, maintaining and running it, and the end of its life, named once in `life.ts`), the monthly and lifetime figures, and the grid's `ToggleGroup` |
 | An open question | A section, *asked of you*, first on the specification while one waits; in it an `Alert` naming the assertions it is between, each linked to where it is drawn, with `Button`s |
 | A value held for a reason | Said in words on the open line: *Yours: the assistant cannot change it* for the line's own clause, *Also held for* for another |
 | A reading still the assistant's | *Keep* beside its words, shown whether or not the line is open, since it waits on the person; the open line says whose reading it is and of what |
@@ -273,7 +278,7 @@ configurator is one engine, not one per thread.
   is a question put to the person, and an unmet assertion is on record waiting
   for that answer. Neither is styled: the words say it, and the question links
   to the assertions it is between, so finding one is following a link rather
-  than scanning for a mark. A refusal in the trace is an `outline` `Badge`, a
+  than scanning for a mark. A refusal in the log is an `outline` `Badge`, a
   permission working rather than a fault. A yielded value is muted and struck
   through, because it no longer holds. `destructive` is kept for an action that
   destroys and for a request that failed; `Badge` variants carry actor, trend
@@ -306,15 +311,15 @@ repository's root, with the choices between equally conformant patterns in
   the control that made it — a struck clause, an answered question, a moved
   clause redrawn — focus goes to the nearest thing that is still there.
 - *What changed is said once.* `example-layout/announcer.tsx` holds the polite
-  status regions: what the last turn moved and a question arriving, and the
+  status regions: a turn by the other party landing under the bell and a question arriving, and the
   assistant's run starting and ending. The transcript is a `log`, `aria-busy`
   while a reply is written, so a reply is never read token by token. A refused
   gesture is shown and announced as an alert. The question cards are labelled
   regions, not alerts, because the canvas and the chat show the same question.
-- *State in words.* Strikethrough, dimming, a badge's variant and the moved
-  square are for the eye; each carries visually hidden words beside it —
-  *ruled out*, *the current value*, *answers this clause*, *moved by*. A
-  tooltip holds nothing that is not also on the page.
+- *State in words.* Strikethrough, dimming and a badge's variant are for
+  the eye; each carries visually hidden words beside it — *ruled out*, *the
+  current value*, *answers this clause*. A tooltip holds nothing that is not
+  also on the page.
 - *Repeated controls say which.* An answer's value, *Take back*, *Keep* and
   *Relax* carry the variable or the clause, hidden, after the visible words,
   so the name still begins with what is read on screen.

@@ -411,7 +411,7 @@ is a rule over the current state, read in `agent/views.py`, so a frame on a
 gap follows the state as it moves: answer the last unanswered clause and the
 frame selects nothing.
 
-What was asked for, what follows from it and what is still open are kinds
+What was asked for, what follows from it and what is open are kinds
 of fact, not places on the canvas. Each item says which it is where it
 stands — a value that follows sits under the assertions it
 rests on, with the rule — but they are not three places. The specification

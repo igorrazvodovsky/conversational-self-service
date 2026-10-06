@@ -36,12 +36,12 @@ const OPENERS: Suggestion[] = [
   {
     title: "A hospital in Munich",
     message:
-      "I need a lift for a new 12-storey hospital in Munich. Say what that already forces, and which rules force it.",
+      "I need a lift for a new 12-storey hospital in Munich. Say what that forces, and which rules force it.",
   },
   {
     title: "A six-storey apartment block",
     message:
-      "A six-storey residential building in Lyon, eight flats to a floor. Tell me what that already settles and what is still open.",
+      "A six-storey residential building in Lyon, eight flats to a floor. Tell me what that settles and what is open.",
   },
   {
     title: "What can you configure?",
@@ -135,7 +135,7 @@ export function suggestionsFor(view: View | null, label: Label): Suggestion[] {
   if (unanswered)
     out.push({
       title: `What could answer “${clip(unanswered.text)}”?`,
-      message: `Narrow the canvas to my requirement “${unanswered.text}” and tell me what could still answer it.`,
+      message: `Narrow the canvas to my requirement “${unanswered.text}” and tell me what could answer it.`,
     });
 
   // The model read requirements from words or a document; the person checks its reading.

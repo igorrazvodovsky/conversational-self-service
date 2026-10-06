@@ -151,7 +151,9 @@ def _with_ties_broken(
 def _carbon_weights(states: States, spec: str) -> dict[str, float]:
     """What each option adds to the lifetime footprint, as a constant per option.
 
-    Embodied carbon is already per-option.  The use phase is not: it is a table
+    Every stage but one is already per-option: making it, times the basis's
+    uplift; installing it; its upkeep, times the horizon; and ending it.  The
+    use phase is not: it is a table
     lookup on energy class, usage profile and travel together, and over
     twenty-five years it is the larger half.  Weighing embodied carbon alone
     would answer "make it greener" with the standard drive package, because a
@@ -175,8 +177,14 @@ def _carbon_weights(states: States, spec: str) -> dict[str, float]:
     footprinting = states["Footprinting"].state()
     constraining = states["Constraining"].state()
     possible = constraining["possible"].get(spec, {})
-    weights = dict(footprinting["embodied"])
     horizon = footprinting["horizon"].get(BASIS, 0)
+    uplift = footprinting["uplift"].get(BASIS, 1.0)
+    weights: dict[str, float] = {}
+    for stage, times in (
+        ("embodied", uplift), ("installed", 1.0), ("upkeep", horizon), ("ended", 1.0),
+    ):
+        for option, mass in footprinting[stage].items():
+            weights[option] = weights.get(option, 0.0) + mass * times
     intensity = footprinting["intensity"].get("today", 0.0)
     axes = ("energy_class", "usage_profile", "travel")
     allowed = [set(possible.get(axis, [])) for axis in axes]

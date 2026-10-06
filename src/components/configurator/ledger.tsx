@@ -264,7 +264,7 @@ export function Answers({
           ) : clause.source?.unanswerable ? (
             "Nothing in the catalogue for this."
           ) : (
-            "Not yet answered."
+            "Unanswered."
           )}
     </p>
   );
@@ -377,7 +377,7 @@ function byFamily(open: Variable[]): [string, Variable[]][] {
  */
 export function Open({ open }: { open: Variable[] }) {
   return byFamily(open).map(([family, rows]) => (
-    <Line key={family} question={`${family}: still open`}>
+    <Line key={family} question={`${family}: open`}>
       <div className="border">
         {rows.map((variable) => (
           <OpenRow key={variable.name} variable={variable} />

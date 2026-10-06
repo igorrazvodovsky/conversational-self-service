@@ -66,6 +66,12 @@ then  { Pricing/list: [ option ; capital ] for each option with a price ;
 sync TheCatalogueIsFootprinted
 when  { Copiloting/boot: [] => [ catalogue: ?c ; basis: ?b ; grids: ?g ] }
 then  { Footprinting/attribute: [ option ; embodied ] for each option with a figure ;
+        Footprinting/attribute: [ option ; installed ]
+          for each option with a figure for installation ;
+        Footprinting/attribute: [ option ; ended ]
+          for each option with a figure for the end of its life ;
+        Footprinting/recur: [ option ; upkeep ]
+          for each option with a yearly figure for its upkeep ;
         Footprinting/meter: [ class ; usage ; travel ; energy ]
           for each entry of the annual demand table ;
         Footprinting/rate: [ grid ; intensity ] for each grid ?g names ;

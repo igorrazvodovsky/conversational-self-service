@@ -225,7 +225,7 @@ then  { Constraining/consider: [ spec: ?s ] }
 A specification is started in `Asserting`, with nothing asserted of it, and
 the solver begins tracking it, with nothing assumed. From then on every
 variable has a set of possible options before anybody has asked for anything,
-which is what the canvas reads as still open.
+which is what the canvas reads as open.
 
 ## A discarded specification leaves the solver
 
@@ -541,7 +541,7 @@ then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
 ```
 
 The same for a [gap](gestures.md#the-canvas-is-narrowed-to-one-gap): what is
-still open, unanswered or answering nothing is on the specification, so the
+open, unanswered or answering nothing is on the specification, so the
 model asked what is left to do brings it forward when it narrows to it.
 
 ## A frame goes with what it framed

@@ -27,8 +27,9 @@
  * anything being recorded.
  *
  * An item lives on one of `Moding`'s two surfaces: a clause, a choice, a
- * source, a variable, a question, a turn or a section on the specification,
- * a quote's line on the quotes.
+ * source, a variable, a question or a section on the specification, a
+ * quote's line on the quotes. A turn is in the log, which opens over
+ * either, and the words said are in the chat.
  * Following an address to the other surface performs `focus` on it — what a
  * link is for — and then scrolls to the item once it has rendered; following
  * one the frame leaves out performs `unframe`. Those two are recorded. The address itself records
@@ -91,7 +92,7 @@ export function useTargeted(id: string): boolean {
 
 /** The surface an address is on; none for the chat, which is always there. */
 export function surfaceOf(id: string): Surface | null {
-  if (id.startsWith("said:")) return null;
+  if (id.startsWith("said:") || id.startsWith("turn:")) return null;
   if (id.startsWith("quote:") || id.startsWith("compare:")) return "quote";
   return "canvas";
 }
@@ -134,7 +135,7 @@ export function useFollowAddress() {
       const el = document.getElementById(id);
       if (el) arrive(el);
       else if (tries++ < 10) setTimeout(find, 50);
-      else if (framed.current && !widened) {
+      else if (framed.current && !widened && surface === "canvas") {
         // Not drawn: the frame leaves it out. Show everything, and look again.
         widened = true;
         tries = 0;
@@ -207,21 +208,6 @@ export function To({
     >
       {children}
     </a>
-  );
-}
-
-/** The mark on an item the last turn moved, with who moved it. The square is
- * for the eye; the words are for everyone else. */
-export function Moved({ by }: { by: string }) {
-  return (
-    <>
-      <span
-        aria-hidden
-        title={`Moved by ${by} since you last acted`}
-        className="mr-1.5 inline-block size-1.5 bg-primary align-middle"
-      />
-      <span className="sr-only">Moved by {by} since you last acted: </span>
-    </>
   );
 }
 

@@ -49,7 +49,9 @@ export interface Option {
   possible: boolean;
   capital: number | null;
   monthly: number | null;
-  embodied: number | null;
+  /** What the option adds to the carbon over the lift's life, every stage
+   * it has a figure for; null when it has none. */
+  carbon: number | null;
   /** The rules that rule the option out, from `Constraining.excluding`.
    * Read only while the `excluded` facet is shown; empty otherwise, and
    * empty when the option is out by the person's own assertion alone. */
@@ -340,7 +342,29 @@ export interface Quote extends Side {
   issuedTo: string;
   how: string | null;
   differs: string[];
-  footprint: { made: number; run: number; total: number; complete: boolean };
+  footprint: Carbon;
+}
+
+/**
+ * Footprinting's estimate, stage by stage of the lift's life: making it,
+ * installing it, maintaining it and running it over the service life, and
+ * taking it out at the end. `complete` when the energy in use is known.
+ */
+export interface Carbon {
+  made: number;
+  installed: number;
+  maintained: number;
+  run: number;
+  ended: number;
+  total: number;
+  complete: boolean;
+}
+
+/** The settled values' prices summed by the catalogue's family, in its order. */
+export interface Stage {
+  family: string;
+  capital: number;
+  monthly: number;
 }
 
 export interface Ground {
@@ -358,18 +382,35 @@ export interface Ground {
   monthly: number;
 }
 
-/** One turn of the log: a flow, opened by its first record, with every
- * completion under it (`docs/ui.md`, "What a view is"). */
+/** One turn of the log: a flow, with every completion it wrote
+ * (`docs/ui.md`, "What a view is"). */
 export interface Turn {
   flow: string;
-  /** Whether the turn only brought a surface forward. */
-  moved: boolean;
+  /** Who opened it. */
   actor: string;
+  /** Every party with a root action in it. */
+  parties: string[];
+  /** What it did, by the concepts it reached: keys of `View.kinds`. */
+  kinds: string[];
+  /** Whether it only brought a surface forward. */
+  moved: boolean;
+  /** Whether it came after the person last changed the specification
+   * themselves, whoever took it. */
+  fresh: boolean;
+  /** Seconds since the epoch. */
   at: number;
-  /** What started it: `say`, a gesture's act, or the tool the model called. */
+  /** What started it: a gesture's act, the tool the model called, or the action. */
   opened: string;
-  /** The words that opened it, when it was opened by words. */
+  /** The words said in it, when it was opened by words. */
   said: { utterance: string; text: string } | null;
+  /** The documents read in it. */
+  files: string[];
+  /** The clauses and values it changed, each as it was then. */
+  stated: { clause: string; text: string }[];
+  reworded: { clause: string; text: string }[];
+  struck: { clause: string; text: string }[];
+  asserted: { variable: string; option: string }[];
+  withdrawn: string[];
   records: {
     seq: number;
     concept: string;
@@ -412,10 +453,7 @@ export interface View {
     factor: number;
     complete: boolean;
   };
-  footprint: {
-    made: number;
-    run: number;
-    total: number;
+  footprint: Carbon & {
     grid: string;
     intensity: number;
     basis: string;
@@ -424,6 +462,8 @@ export interface View {
     scope: string;
     complete: boolean;
   };
+  /** What falls at each stage of the lift's life, by the catalogue's family. */
+  stages: Stage[];
   questions: Question[];
   quotes: Quote[];
   /** The specification read as a quote requested now would freeze it;
@@ -433,18 +473,21 @@ export interface View {
   customer: Party;
   seller: Party;
   project: { title: string; site: string };
-  /** What the last turn changed while the person was not looking at the
-   * canvas, read off the log: who moved it, and which variables and clauses.
-   * Null when the person's own gesture was the last thing to move the
-   * specification. */
-  touched: { by: string; variables: string[]; clauses: string[] } | null;
   counts: Record<Standing, number> & {
     unanswered: number;
     unbound: number;
     /** Clauses the model read, from a document or the person's words. */
     read: number;
   };
+  /** The log, read by turn, latest activity first. */
   turns: Turn[];
+  /** Who has taken a turn, with their name and the side of the sale they
+   * act for; `person` is whoever is looking. */
+  parties: { actor: string; label: string; side: "buyer" | "seller" | null }[];
+  /** What a turn can have done, in order, with its name. */
+  kinds: { kind: string; label: string }[];
+  /** Where the log stood when the view was read. */
+  at: number;
 }
 
 export type Stimulus = Record<string, unknown> & { act: string };
@@ -510,7 +553,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   const shown = useRef({ at: -1, ticket: 0 });
   const take = () => ++issued.current;
   const show = useCallback((ticket: number, next: View) => {
-    const at = Math.max(0, ...next.turns.flatMap((t) => t.records.map((r) => r.seq)));
+    const at = next.at;
     const current = shown.current;
     if (at < current.at || (at === current.at && ticket < current.ticket)) return;
     shown.current = { at, ticket };

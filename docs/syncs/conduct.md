@@ -153,7 +153,7 @@ open to answer it — for when the conversation is about that requirement; the
 model may frame a clause and may not answer one, as
 [Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement) says. The
 third, `[ by: "gap" ; gap: ?g ]`, narrows it to one
-[gap](gestures.md#the-canvas-is-narrowed-to-one-gap) — what is still open,
+[gap](gestures.md#the-canvas-is-narrowed-to-one-gap) — what is open,
 the requirements nothing answers, or the values answering none — for when
 the person asks what is left to do.
 
@@ -462,7 +462,9 @@ settled on none. Without this the objective weighs only capital, and *make it
 cheaper* answers with 24/7 support and near-continuous traffic, because neither
 costs anything to buy.
 
-_Carbon._ Embodied carbon is already one number per option. The use phase is
+_Carbon._ Every stage but one is already a number per option: making it,
+times the basis's uplift; installing it; its upkeep, times the service life;
+and taking it out at the end of its life. The use phase is
 a lookup on energy class, usage profile and travel height together, and over
 a service life it is the larger half. The rule charges it to each of those
 three variables, averaged over the possibilities the specification still allows

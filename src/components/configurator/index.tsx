@@ -13,7 +13,6 @@ import { address, To } from "./address";
 import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
 import { Standing } from "./standing";
-import { Trace } from "./trace";
 import { framedAsserted } from "./ledger";
 import { AskedFor } from "./specification";
 
@@ -82,7 +81,7 @@ function FrameBanner() {
           </span>
           <span className="text-muted-foreground">
             · forced {count("follows")}
-            {count("open") ? ` · narrowed ${count("open")} still open` : ""}
+            {count("open") ? ` · narrowed ${count("open")} open` : ""}
             {yielded ? ` · ${yielded} gave way` : ""}
             {unmet ? ` · ${unmet} unmet` : ""}
           </span>
@@ -96,7 +95,7 @@ function FrameBanner() {
             </To>
           </span>
           <span className="text-muted-foreground">
-            · answered by {asked} · {count("follows")} followed · {count("open")} still open
+            · answered by {asked} · {count("follows")} followed · {count("open")} open
             could answer it · a value picked now does
           </span>
         </>
@@ -115,27 +114,16 @@ function FrameBanner() {
 }
 
 /**
- * The strip kept at the top of the configuration's scroll: what moved since
- * the person last acted, and the frame, if any, so a mode begun anywhere is
- * visible, and its way out reachable, from anywhere. Shown only while there
- * is one or the other. The way to each section, and which facts the canvas
- * shows, are in the panel's own header (`example-layout/panel-nav.tsx`).
+ * The strip kept at the top of the configuration's scroll: the frame, if
+ * any, so a mode begun anywhere is visible, and its way out reachable, from
+ * anywhere. What the other party changed is in the log, behind the bell in
+ * the panel's header (`log.tsx`).
  */
 function Header() {
   const { view } = useConfigurator();
-  if (!view) return null;
-  const touched = view.touched;
-  const moved = touched ? touched.variables.length + touched.clauses.length : 0;
-  const framed = view.frame && view.frame.by !== "gap";
-  if (!moved && !framed) return null;
+  if (!view?.frame || view.frame.by === "gap") return null;
   return (
-    <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-ground/95 px-6 py-2 backdrop-blur">
-      {moved ? (
-        <p className="text-xs text-muted-foreground">
-          <span aria-hidden className="mr-1.5 inline-block size-1.5 bg-primary align-middle" />
-          {touched!.by} moved {moved} since you last acted
-        </p>
-      ) : null}
+    <div className="sticky top-0 z-10 -mx-6 border-b bg-ground/95 px-6 py-2 backdrop-blur">
       <FrameBanner />
     </div>
   );
@@ -226,8 +214,6 @@ export function ConfiguratorCanvas() {
           {/* The one list: each requirement beside what answers it and
               what that forced, the values answering none, what is open. */}
           <AskedFor />
-
-          <Trace />
 
           <p className="mt-6 text-xs/relaxed text-muted-foreground">
             {view.footprint.scope}

@@ -19,7 +19,7 @@ In code, values are primitives and collections — MSM §5.2 calls them value-ob
 | `label`, `note`, `heading`, `family` | `agent/concepts/cataloguing.py` |
 | `because` — a rule's sentence | `agent/concepts/constraining.py` |
 | money: `capital`, `monthly`, `factor`, `months` | `agent/concepts/pricing.py` |
-| mass and energy: `embodied`, `demand`, `intensity` | `agent/concepts/footprinting.py` |
+| mass and energy: `embodied`, `installed`, `upkeep`, `ended`, `demand`, `intensity` | `agent/concepts/footprinting.py` |
 | `scope` — what the carbon estimate covers and omits | `agent/concepts/footprinting.py` |
 | a retraction candidate, `{variable, option}` | `agent/syncs/propagation.py` |
 | an assignment, `Variable -> Option` | `agent/concepts/constraining.py`, `complete` |

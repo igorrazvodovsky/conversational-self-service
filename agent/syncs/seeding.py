@@ -190,19 +190,27 @@ def _the_catalogue_is_priced(c: Completion, _: States) -> list[Invocation]:
 def _the_catalogue_is_footprinted(c: Completion, _: States) -> list[Invocation]:
     catalogue = _catalogue(c)
     out: list[Invocation] = []
+    # The catalogue's key for each stage, and the case of the action it seeds.
+    stages = (
+        ("co2", "attribute", "embodied"),
+        ("co2_installed", "attribute", "installed"),
+        ("co2_ended", "attribute", "ended"),
+        ("co2_upkeep", "recur", "upkeep"),
+    )
     for variable in catalogue.get("variables", []):
         for option in variable["options"]:
-            if option.get("co2") is not None:
-                out.append(
-                    Invocation(
-                        "Footprinting",
-                        "attribute",
-                        {
-                            "option": oid(variable["name"], option["value"]),
-                            "embodied": option["co2"],
-                        },
+            for key, action, argument in stages:
+                if option.get(key) is not None:
+                    out.append(
+                        Invocation(
+                            "Footprinting",
+                            action,
+                            {
+                                "option": oid(variable["name"], option["value"]),
+                                argument: option[key],
+                            },
+                        )
                     )
-                )
     footprint = catalogue.get("footprint", {})
     for klass, by_usage in footprint.get("annual_kwh", {}).items():
         for usage, by_travel in by_usage.items():

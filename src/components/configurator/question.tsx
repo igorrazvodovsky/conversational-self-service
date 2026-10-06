@@ -66,7 +66,7 @@ function OneQuestion({ question }: { question: Question }) {
       <AlertDescription>
         <p>
           {isCompletion
-            ? "Each waits beside its variable under still open. Take them one at a time, or all at once; the assistant cannot."
+            ? "Each waits beside its variable under Open. Take them one at a time, or all at once; the assistant cannot."
             : question.reason}
         </p>
         {isCompletion ? null : <Between question={question} />}

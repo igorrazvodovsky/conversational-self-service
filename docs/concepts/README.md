@@ -148,6 +148,17 @@ item; a concept holding it again would be `answers` under a second name. It
 becomes a concept the day a clause carries a quantity or a standard's class
 that has to be translated into an option.
 
+_Installing, Servicing, Decommissioning._ Each is a stage of the lift's
+life, not a concept. What the specification commits to at each stage is a
+choice like any other: how the old lift leaves and when the team works,
+what the maintenance covers and who can do it, and what happens to the lift
+at the end of its life. Each is a catalogue variable in a family named for
+its stage, so it is priced by [Pricing](pricing.md), bounded by
+[Constraining](constraining.md), and its carbon is a stage of
+[Footprinting](footprinting.md)'s estimate. The operating life itself, such
+as the visits, the call-outs and the examinations, happens after the
+parties have committed, and is outside the case.
+
 _Accounting._ Login, roles, price visibility. The case's catalogue puts
 `Account` and `Role` outside the case, and [Profiling](profiling.md) is
 deliberately only the half of a profile that appears on a letterhead.

@@ -325,7 +325,7 @@ async function run(name, base) {
     //    the person is on, then on each other place in the nav.
     const seen = async () => ({
       // With the period: the line's own words, not the filter's label.
-      unanswered: (await holds(page, QUIET)) && (await holds(page, "Not yet answered.")),
+      unanswered: (await holds(page, QUIET)) && (await holds(page, "Unanswered.")),
       unbound:
         (await holds(page, "Hospital")) &&
         ((await holds(page, "answers no stated requirement")) ||

@@ -42,14 +42,14 @@ Ask for a hospital lift and the usage profile becomes near-continuous, the
 rescue system becomes a full battery backup, and most of the rated loads
 disappear. None of that was chosen. The canvas therefore tells three kinds of
 fact apart — **asked for**, **follows from that** (with the rule that forces
-it), and **still open** — and which kind an item is, is a property of the
+it), and **open** — and which kind an item is, is a property of the
 current state, not of the catalogue. Each item says which it is where it
 stands, rather than in a section of its own: a value that follows sits under
 each assertion it rests on, and a kind of fact is a filter over one list.
 
 Everything else in the design follows from taking that seriously:
 
-- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the specification is one list, the requirement ledger written as a document — each requirement on its own line in the person's words, edited there, beside the values asserted to answer it with what each forced beneath it, then a line with an empty requirement for each value answering nothing, then what is still open — and the proposal's basis of design renders from the same read. The requirement and its answer are one line on one surface, because the relation between them is the one the case is about. The person does the mapping by picking an option while answering a clause; the model states and answers a clause only by reading it from a source, and only the person makes its reading theirs.
+- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the specification is one list, the requirement ledger written as a document — each requirement on its own line in the person's words, edited there, beside the values asserted to answer it with what each forced beneath it, then a line with an empty requirement for each value answering nothing, then what is open — and the proposal's basis of design renders from the same read. The requirement and its answer are one line on one surface, because the relation between them is the one the case is about. The person does the mapping by picking an option while answering a clause; the model states and answers a clause only by reading it from a source, and only the person makes its reading theirs.
 - [`Asserting`](docs/concepts/asserting.md) records assertions a party made, in the model's vocabulary — the case's name for it. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
 - [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. The log's first entry for a turn is the person's words rather than the model's tool call, and the model's calls in reply run in the flow those words opened, so the canvas can say *the assistant read "hospital, six storeys" as this* from the flow token alone. When the model's turn runs into a conflict it puts the question to the person and its run waits, an AG-UI interrupt carrying the floor; the answer is always the person's gesture — a choice, leaving it, or a reply in words, which leaves the question open for whoever holds the decision. No rule reads the concept; the view does.
 - [`Filing`](docs/concepts/filing.md) keeps a document the person attached, as text, so a passage can be cited; [`Reading`](docs/concepts/reading.md) holds what the model read from it or from the person's words, with the options it took to answer each item. A reading becomes a clause stated by the model and an answer asserted by it ([Reading](docs/syncs/reading.md)), at once and visibly, and the person corrects it by striking, re-answering or withdrawing, or keeps it as their own. A reading with no answer is the model's claim that the catalogue holds nothing for it, shown as such. A later requirement on the same variable displaces the earlier answer while that answer is the assistant's reading, and the canvas says what displaced it; a value answering a requirement the person stated or kept is theirs, and the model cannot change it.
@@ -83,8 +83,10 @@ layer beside the agent.
 │   │   │   ├── sources.tsx               # the documents and words the model read from, item by item, under the ledger
 │   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode (the clause frame)
 │   │   │   ├── question.tsx              # the open Deciding questions
+│   │   │   ├── log.tsx                   # the log by turn, behind the bell: what each turn changed and on whose authority, opening on the other party's changes
 │   │   │   ├── quotes.tsx                # the quote surface: every offer issued, two compared, the addressee, one proposal at a time
 │   │   │   ├── document.tsx              # a quote laid out as a commercial proposal
+│   │   │   ├── life.ts                   # the stages of the lift's life, and the catalogue's families read against them
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
 │   │   │   ├── address.tsx               # every item's address, and links between them
 │   │   │   ├── webmcp.tsx                # the person's gestures, registered for their own agent (WebMCP)

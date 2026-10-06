@@ -62,7 +62,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { address, addressable, Moved, To, useTargeted } from "./address";
+import { address, addressable, To, useTargeted } from "./address";
 import {
   NEGOTIABILITY,
   plain,
@@ -375,7 +375,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const active = !!clause && answering?.clause === clause.clause;
   const hint = hintOf(decorations);
   const open = clause?.negotiability === "open";
-  const moved = clause && view?.touched?.clauses.includes(clause.clause) ? view.touched.by : null;
   const isTarget = useTargeted(clause ? address.clause(clause.clause) : "");
   // This line's place in the ledger: whether the frame leaves it, and what
   // answers it.
@@ -414,11 +413,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
           requirement in the person's words, and beneath it what answers
           it. Everything else is the open line's. */}
       <div className="flex min-w-0 items-start gap-3">
-        {moved ? (
-          <div contentEditable={false} className="pt-1.5 select-none">
-            <Moved by={moved} />
-          </div>
-        ) : null}
         <div className="min-w-0 flex-1">
           {relaxing && clause ? (
             <div contentEditable={false}>
@@ -781,8 +775,8 @@ export function Specification() {
 
 /** The gaps a person can narrow the list to, in the order they are offered. */
 const GAPS: { gap: Gap; title: string; count: (view: View) => number }[] = [
-  { gap: "open", title: "Still open", count: (view) => view.counts.open },
-  { gap: "unanswered", title: "Not yet answered", count: (view) => view.counts.unanswered },
+  { gap: "open", title: "Open", count: (view) => view.counts.open },
+  { gap: "unanswered", title: "Unanswered", count: (view) => view.counts.unanswered },
   { gap: "unbound", title: "Answering nothing", count: (view) => view.counts.unbound },
 ];
 

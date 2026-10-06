@@ -75,7 +75,7 @@ export function BrowserAgentTools() {
     "Read the specification as it stands: what is required, in its own " +
       "words, and what answers each clause (`required`); the documents on " +
       "record (`files`); what is asserted, what follows and the rule that " +
-      "forces it, what cannot be met, and what is still open with the options " +
+      "forces it, what cannot be met, and what is open with the options " +
       "still possible and any proposed value (`asked`, `follows`, `unmet`, " +
       "`open`); open conflicts (`questions`), with the assistant's question " +
       "and any reply under `asked` when it put one to the person; price, carbon, the addressee, " +
