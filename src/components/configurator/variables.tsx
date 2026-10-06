@@ -163,7 +163,16 @@ function Rules({ rules }: { rules: Variable["owing"] }) {
 }
 
 /** A variable a party asserted a value for, or asserted an impossible one for. */
-export function AskedCard({ variable }: { variable: Variable }) {
+export function AskedCard({
+  variable,
+  under,
+}: {
+  variable: Variable;
+  /** The ledger line it is drawn on: the clause, or null for the line of
+   * values answering none. That clause, or the absence of one, is the line's
+   * own heading, so the card names only the other clauses it answers. */
+  under?: string | null;
+}) {
   const { gesture, busy, label, view } = useConfigurator();
   const shown = useShown();
   const unmet = variable.standing === "unmet";
@@ -172,6 +181,13 @@ export function AskedCard({ variable }: { variable: Variable }) {
   const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
   const isTarget = useTargeted(address.variable(variable.name));
   const held = new Set(variable.held);
+  const inLedger = under !== undefined;
+  const answers = inLedger
+    ? variable.answers.filter((a) => a.clause !== under)
+    : variable.answers;
+  // On its own line, a value held for the clause it answers there says so
+  // once, without repeating the clause.
+  const heldHere = inLedger && under !== null && held.has(under);
   return (
     <Card
       id={address.variable(variable.name)}
@@ -222,10 +238,16 @@ export function AskedCard({ variable }: { variable: Variable }) {
             repeating the clause. An assertion answering no clause is the
             slice 0 case and is said so, not hidden — unless the person hid
             the facet, which is theirs to do; the hold is said either way. */}
+        {heldHere ? (
+          <p className="text-xs text-muted-foreground">
+            <LockIcon className="mr-1 inline size-3 align-[-2px]" />
+            yours; the assistant cannot change it
+          </p>
+        ) : null}
         {shown("answers") ? (
-          variable.answers.length ? (
+          answers.length ? (
             <ul className="space-y-0.5 text-xs">
-              {variable.answers.map((answer) => (
+              {answers.map((answer) => (
                 <li
                   key={answer.clause}
                   // One line, until the link in it has keyboard focus: then the
@@ -240,10 +262,10 @@ export function AskedCard({ variable }: { variable: Variable }) {
                       title="Yours: the assistant cannot change it"
                     >
                       <LockIcon className="mr-1 inline size-3 align-[-2px]" />
-                      yours, for:
+                      {inLedger ? "yours, also for:" : "yours, for:"}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground">for:</span>
+                    <span className="text-muted-foreground">{inLedger ? "also for:" : "for:"}</span>
                   )}{" "}
                   <To id={address.clause(answer.clause)} title="The clause, in the requirement ledger">
                     <ClauseText text={answer.text} />
@@ -251,10 +273,10 @@ export function AskedCard({ variable }: { variable: Variable }) {
                 </li>
               ))}
             </ul>
-          ) : (
+          ) : inLedger ? null : (
             <p className="text-xs text-muted-foreground">answers no stated requirement</p>
           )
-        ) : held.size ? (
+        ) : held.size && !heldHere ? (
           <p className="text-xs text-muted-foreground">
             <LockIcon className="mr-1 inline size-3 align-[-2px]" />
             yours; the assistant cannot change it

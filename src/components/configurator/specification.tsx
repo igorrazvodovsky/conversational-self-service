@@ -259,7 +259,7 @@ function OneAnswer({ answer }: { answer: Answer }) {
     <li className="flex flex-wrap items-baseline gap-x-2 text-xs">
       <span className="uppercase tracking-wide text-muted-foreground">
         {answer.variable ? (
-          <To id={address.variable(answer.variable)} title="The value, where the canvas holds it">
+          <To id={address.choice(answer.choice)} title="The value, on its line of the configuration">
             {answer.heading}
           </To>
         ) : (

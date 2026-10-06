@@ -47,7 +47,7 @@ the catalogue.
 
 Everything else in the design follows from taking that seriously:
 
-- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the canvas has a *required* section above the three, and the proposal's basis of design renders from it. The person does the mapping by picking an option while answering a clause; the model states and answers a clause only by reading it from a source, and only the person makes its reading theirs.
+- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the canvas's asserted section is the requirement ledger, a line per clause with the values answering it and what each forced, and the proposal's basis of design renders from the same read. The person does the mapping by picking an option while answering a clause; the model states and answers a clause only by reading it from a source, and only the person makes its reading theirs.
 - [`Asserting`](docs/concepts/asserting.md) records assertions a party made, in the model's vocabulary — the case's name for it. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
 - [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. The log's first entry for a turn is the person's words rather than the model's tool call, and the model's calls in reply run in the flow those words opened, so the canvas can say *the assistant read "hospital, six storeys" as this* from the flow token alone. When the model's turn runs into a conflict it puts the question to the person and its run waits, an AG-UI interrupt carrying the floor; the answer is always the person's gesture — a choice, leaving it, or a reply in words, which leaves the question open for whoever holds the decision. No rule reads the concept; the view does.
 - [`Filing`](docs/concepts/filing.md) keeps a document the person attached, as text, so a passage can be cited; [`Reading`](docs/concepts/reading.md) holds what the model read from it or from the person's words, with the options it took to answer each item. A reading becomes a clause stated by the model and an answer asserted by it ([Reading](docs/syncs/reading.md)), at once and visibly, and the person corrects it by striking, re-answering or withdrawing, or keeps it as their own. A reading with no answer is the model's claim that the catalogue holds nothing for it, shown as such. A later requirement on the same variable displaces the earlier answer while that answer is the assistant's reading, and the canvas says what displaced it; a value answering a requirement the person stated or kept is theirs, and the model cannot change it.
@@ -75,10 +75,11 @@ layer beside the agent.
 │   │   ├── configurator/                 # the canvas
 │   │   │   ├── provider.tsx              # reads /view, performs gestures
 │   │   │   ├── index.tsx                 # the configuration surface: the three sections
-│   │   │   ├── requirements.tsx          # the requirements surface: the ledger and its sources
+│   │   │   ├── ledger.tsx                # the asserted section as the requirement ledger: a line per clause, its choices and what they forced
+│   │   │   ├── requirements.tsx          # the requirements surface: the requirement document and its sources
 │   │   │   ├── standing.tsx              # where the specification stands: quotable or not, and the running price and carbon
-│   │   │   ├── specification.tsx         # the requirement ledger as a Tiptap document; edits become gestures
-│   │   │   ├── sources.tsx               # the documents and words the model read from, item by item, under the ledger
+│   │   │   ├── specification.tsx         # the clauses as a Tiptap document; edits become gestures
+│   │   │   ├── sources.tsx               # the documents and words the model read from, item by item, under the document
 │   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode (the clause frame)
 │   │   │   ├── question.tsx              # the open Deciding questions
 │   │   │   ├── quotes.tsx                # the quote surface: every offer issued, two compared, the addressee, one proposal at a time

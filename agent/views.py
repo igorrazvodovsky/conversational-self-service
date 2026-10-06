@@ -1280,8 +1280,11 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
                     if c["source"]
                     else None
                 ),
+                # Each answer is a choice, with its address on the
+                # configuration's ledger line: the value, and what it forced.
                 "answered_by": [
-                    f"{a['heading']}: {a['label']}" for a in c["answers"]
+                    {"says": f"{a['heading']}: {a['label']}", "at": f"#choice:{a['choice']}"}
+                    for a in c["answers"]
                 ],
                 "displaced_by": (
                     f"{c['displaced']['byLabel']} ({c['displaced']['how']})"

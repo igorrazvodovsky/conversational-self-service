@@ -166,7 +166,9 @@ How the configurator works, because it is not the usual kind:
   picks its answer there, and you cannot.
 - Every item on the canvas has an address, and a markdown link to it takes
   the person there: a variable at `#variable:<name>` (`rated_load`), a clause
-  at `#clause:<id>`, a section at `#required`, `#asserted`, `#follows` or
+  at `#clause:<id>`, a value answering a clause, on its ledger line with what
+  it forced, at `#choice:<id>` (link that one when saying what answers a
+  requirement or what an answer forced), a section at `#required`, `#asserted`, `#follows` or
   `#open`, and a line of an issued quote, as that offer holds it, at
   `#quote:<quote>:variable:<name>` or `#quote:<quote>:clause:<id>`, and a
   milestone of its programme at `#quote:<quote>:event:<key>` (`order`,

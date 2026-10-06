@@ -42,10 +42,22 @@ Three questions test a view:
    as, under `read_at`.
 
 The same facts may be arranged more than once, one arrangement per question.
-The requirements are the example: the ledger holds the clauses in the order the
-person wrote them, and the sources beneath it hold the same clauses grouped by
-where they were read from. A second arrangement is a second question, not a
-duplicate.
+The requirements are the example: the requirement document holds the clauses
+in the order the person wrote them, and the sources beneath it hold the same
+clauses grouped by where they were read from. A second arrangement is a second
+question, not a duplicate.
+
+The configuration's asserted section is the requirement ledger
+([Binding](syncs/binding.md#the-ledger-is-a-read)) rendered whole, and its
+unit is the choice: a value bound to the clause it answers, with what the
+value forced. The question it answers is *what is each value for, and what
+did it cost*, so a line is a requirement, the values answering it and their
+consequences, and a requirement nothing answers is a line with a gap where
+its answer goes. Values answering nothing share the last line. That is why the
+clause and its answer are on one view rather than linked across two: nearly
+everything a person does crosses between them, and the relation is what the
+case's design is about. The requirement document keeps the wording, and links
+each answer to its line.
 
 The log is read by turn. Every record carries the flow it ran in, and a flow
 is one occasion: the person's words and the calls the model made in reply,
@@ -142,7 +154,7 @@ to shadcn's, outermost first:
 |---|---|---|
 | Frame | `--frame` | Both panels' header rows, one band across the split |
 | Ground | `--ground` | The artifact panel and its sticky strips |
-| Raised | `--card` | A thing on the ground: an asserted value, the standing, the ledger, the open variables, the proposal |
+| Raised | `--card` | A thing on the ground: an asserted value, the standing, the requirement document, the open variables, the proposal |
 | Sunken | `--sunken` | A thing set into the ground: a value that follows |
 | Band | `--muted` | A band inside a card: a family heading, the frame strip, a source's text, a quote's figures |
 
@@ -164,16 +176,17 @@ same function, so app code and primitives merge classes with one engine.
 |---|---|
 | Canvas sections, empty and loading states | `Empty`, `Spinner` |
 | The artifact panel | One of `Moding`'s three surfaces at a time — the requirements, the configuration, the quote — switched from the panel's header, or by following a link to an item on another surface |
-| The requirements surface | The ledger with the sources beneath it, across the panel's full width; a sticky strip with the product's name, what the last turn moved, and the clause frame if one is on, linking to the clause and to the configuration |
+| The requirements surface | The requirement document with the sources beneath it, across the panel's full width; a sticky strip with the product's name, what the last turn moved, and the clause frame if one is on, linking to the clause and to the configuration |
 | The way around the panel | One `nav` row in the panel's header, wrapping onto further lines when the panel is narrow or the text large, a plain anchor per place with its count: the requirements, then the configuration's sections — *asked of you* while a question waits, *asserted*, *follows*, *open* — then the quotes, the three groups divided by a rule. A surface's place performs `focus`; a section is an address on the configuration. There is no level between surface and section. At the row's end, while the configuration is showing, the `Showing` menu (`panel-nav.tsx`) |
 | The configuration's strip | Sticky at the top of its scroll while there is something in it: what the last turn moved, and the frame strip, so a frame begun anywhere is visible and its way out reachable from anywhere |
-| An address | Every variable, clause, source, quote line and section carries an `id` (`variable:<name>`, `clause:<id>`, `source:<kind>:<id>`, `quote:<id>:variable:<name>`, `quote:<id>:event:<key>`, `compare:<id>:<other>:variable:<name>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row addressed from elsewhere opens. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
+| An address | Every variable, clause, source, quote line and section carries an `id` (`variable:<name>`, `clause:<id>`, `choice:<id>`, `source:<kind>:<id>`, `quote:<id>:variable:<name>`, `quote:<id>:event:<key>`, `compare:<id>:<other>:variable:<name>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row addressed from elsewhere opens. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
 | What the last turn moved | A small square before the heading of each variable and clause the assistant's or the person's own agent's last flow reached, and the assertions a settled value rests on; the strip at the top counts them. Read off the log (`touched` in `agent/views.py`), gone once the person next changes the specification |
-| Asserted value | `Card` with a ghost `Button` to withdraw; unmet says so in words, and the question links to it; the *for* line is one line, linking to the clause |
+| The ledger | The asserted section: on the ground between two rules, a line per clause, the clause in a left column ruled at its edge with its firmness, its choices in the right; the columns stack in a narrow panel. Each choice is addressed (`choice:<id>`), and under its card a line says what its value *forced*, each a link to the value that follows. A clause with no answer says so, with an *Answer* `Button` that frames the canvas on it; the last line, ruled dashed, holds the values answering nothing. A value answering two clauses is drawn on the first line and named on the second |
+| Asserted value | `Card` with a ghost `Button` to withdraw; unmet says so in words, and the question links to it; on its ledger line the card names only the other clauses it answers, as *also for*, each linking to the clause |
 | A value that follows | `Item` in an `ItemGroup`, on `--sunken` rather than the variant's half-strength muted, which all but vanishes on the ground; *from* names the assertions it rests on, each a link |
 | An open variable | `Collapsible` whose trigger is a ghost `Button`, under a heading row per catalogue family; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
 | Which facts are shown (`Showing`) | `DropdownMenu` of checkbox items, from a ghost `Button` |
-| The requirement document (`Specifying`) | A Tiptap editor in a `Card`; each clause a node view with `Button`s to frame the canvas on it (answer), relax, move and strike and a `DropdownMenu` of radio items for how firmly it is meant; the empty-clause hint from Tiptap's `Placeholder`, placed by the node view |
+| The requirement document (`Specifying`) | A Tiptap editor in a `Card`; each clause's answer links to its choice on the ledger; each clause a node view with `Button`s to frame the canvas on it (answer), relax, move and strike and a `DropdownMenu` of radio items for how firmly it is meant; the empty-clause hint from Tiptap's `Placeholder`, placed by the node view |
 | A reference in a clause | `Badge` (`outline` for an individual, `secondary` for a value, `default` once the value answers the clause); the `@` list is `Command` with grouped `CommandItem`s |
 | The offers issued | `Table`, one row per quote, the selected row `data-state=selected`; a ghost `Button` per row to compare it with the one selected, and on the selected row one to compare it with the specification now |
 | The quote shown | A `Card` on the ground: the decision — standing, days left, the sum, the maintenance charge and both over the term, each a `--muted` band, what the person provides, and the controls to accept, revoke and print — over `Tabs`, one per reading |
@@ -183,11 +196,11 @@ same function, so app code and primitives merge classes with one engine.
 | A quote compared | With another quote, or with the specification now (`now`, read as a quote requested now would freeze it). One `Table` of the values that differ, a `tbody` per group headed by the requirements its values answer on either side (a requirement gained, lost, reworded or left unanswered on one side says so), then the values answering none. Each side says whether its value was asserted, gave way or follows, with who asserted it; a value that follows on both sides is dimmed and called a consequence, linked to the assertions it rests on. Each line carries its change in the sum and the monthly charge, and a sentence says whether the lines account for the whole difference; a value held on both sides but priced differently has a group of its own. The comparison and each line are addressed (`compare:<id>:<other>`, `…:variable:<name>`, `…:clause:<id>`); the sums, the term and the programme are reached through the comparison's own address. Against a quote issued before quotes kept their grounds, only the values that differ, with the reason (`comparison.tsx`) |
 | The frame (`Framing`) | A bordered strip in the sticky nav with the counts of the slice and a ghost `Button` to show everything; the way in is a ghost `Button` on an asserted card, or the `Button` on a clause |
 | The answering mode | The frame on a clause: the strip names the clause and says that a value picked now answers it; the clause's `Button` reads *Answering…* and takes the frame off |
-| The sources (`Filing`, `Conversing`) | A `Collapsible` under the ledger, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
+| The sources (`Filing`, `Conversing`) | A `Collapsible` under the requirement document, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
 | Where the specification stands | A `Card` first on the configuration: a `Badge` naming the state (`default` when ready to quote, `outline` otherwise), the reason a quote cannot be requested yet, *Request a quote* and the quotes issued as `Button`s, the counts asked, followed and open, and one line with the equipment price (*so far* until it is ready) and the modelled carbon; the monthly, lifetime and carbon breakdown and the grid's `ToggleGroup` in a `Collapsible` |
 | An open question | A section, *asked of you*, first on the configuration while one waits; in it an `Alert` naming the assertions it is between, each linked to its card, with `Button`s |
 | A value held for a reason | A line on the asserted card naming the requirement it answers, and that the assistant cannot change it |
-| A reading still the assistant's | *Keep* beside its source line in the ledger |
+| A reading still the assistant's | *Keep* beside its source line in the requirement document |
 | The action log | `Collapsible`, `Card`, `Badge` for the actor and for a refusal |
 | Artifact panel and chat split | `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle` |
 | Conversation list and new-conversation control | `DropdownMenu` of radio items grouped under `DropdownMenuLabel` days, `Button` |

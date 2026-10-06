@@ -4,7 +4,8 @@
  * Addresses on the surfaces.
  *
  * Every item worth returning to has a fragment: a variable at
- * `#variable:<name>`, a clause at `#clause:<id>`, a source at
+ * `#variable:<name>`, a clause at `#clause:<id>`, a choice — a value bound
+ * to the clause it answers, on its ledger line — at `#choice:<id>`, a source at
  * `#source:<kind>:<id>`, a section at `#<section>`. The fragment is the id of
  * the element that renders the item, wherever the current state puts it — the
  * same variable is a card under asserted today and a row under still open
@@ -24,8 +25,8 @@
  * anything being recorded.
  *
  * An item lives on one of `Moding`'s surfaces: a clause or a source on the
- * requirements, a variable, a question, a turn or a section of the
- * configuration on the canvas,
+ * requirements, a choice, a variable, a question, a turn or a section of
+ * the configuration on the canvas,
  * a quote's line on the quotes.
  * Following an address to the other surface performs `focus` on it — the one
  * thing here that is recorded, and it is what a link is for — and then
@@ -41,6 +42,7 @@ import { useConfigurator, type Surface } from "./provider";
 export const address = {
   variable: (name: string) => `variable:${name}`,
   clause: (id: string) => `clause:${id}`,
+  choice: (id: string) => `choice:${id}`,
   source: (kind: string, id: string) => `source:${kind}:${id}`,
   item: (kind: string, id: string, item: string) => `source:${kind}:${id}:item:${item}`,
   question: (about: string) => `question:${about}`,
