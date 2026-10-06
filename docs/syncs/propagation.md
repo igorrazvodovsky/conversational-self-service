@@ -493,12 +493,15 @@ when  { Framing/frame: [ lens: workspace ; frame: [ by: "clause" ; clause: ?c ] 
 then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
 ```
 
-The requirements are a surface of their own too, and a clause is framed from
-there. What the frame selects — the clause's answers, what they forced, what
-could still answer it — is on the configuration, and so is the pick that
-answers it ([Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement)),
-so framing a requirement brings the configuration forward, whichever party
-did it. The frame strip there links back to the clause.
+A clause is framed from its line in the ledger, which is on the
+specification, and the rule then changes nothing. It is there for a frame
+put from anywhere else — the model's tool while the person reads an offer, or
+their own agent's: what the frame selects — the clause's answers, what they
+forced, what could still answer it — is on the specification, and so is the
+pick that answers it
+([Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement)), so
+framing a requirement brings the specification forward, whichever party did
+it.
 
 ## A frame goes with what it framed
 

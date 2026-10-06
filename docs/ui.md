@@ -157,7 +157,7 @@ to shadcn's, outermost first:
 |---|---|---|
 | Frame | `--frame` | Both panels' header rows, one band across the split |
 | Ground | `--ground` | The artifact panel and its sticky strips |
-| Raised | `--card` | A thing on the ground: an asserted value, the standing, the requirement document, the open variables, the proposal |
+| Raised | `--card` | A thing on the ground: an asserted value, the standing, the requirement document, the open variables, the proposal. An asserted value on a line of the requirement document is a card inside the document's card, at the same level: the line's rule and its two columns set it apart, not a step in the scale |
 | Sunken | `--sunken` | A thing set into the ground: a value that follows |
 | Band | `--muted` | A band inside a card: a family heading, the frame strip, a source's text, a quote's figures |
 
@@ -201,7 +201,7 @@ same function, so app code and primitives merge classes with one engine.
 | The sources (`Filing`, `Conversing`) | A `Collapsible` under the ledger, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
 | Where the specification stands | A `Card` first on the specification: a `Badge` naming the state (`default` when ready to quote, `outline` otherwise), the reason a quote cannot be requested yet, *Request a quote* and the quotes issued as `Button`s, the counts asked, followed and open, and one line with the equipment price (*so far* until it is ready) and the modelled carbon; the monthly, lifetime and carbon breakdown and the grid's `ToggleGroup` in a `Collapsible` |
 | An open question | A section, *asked of you*, first on the specification while one waits; in it an `Alert` naming the assertions it is between, each linked to its card, with `Button`s |
-| A value held for a reason | A line on the asserted card naming the requirement it answers, and that the assistant cannot change it |
+| A value held for a reason | A line on the asserted card saying the assistant cannot change it; on the line of the requirement holding it, the requirement is beside it, and elsewhere the card names it |
 | A reading still the assistant's | *Keep* beside its source line in the requirement document |
 | The action log | `Collapsible`, `Card`, `Badge` for the actor and for a refusal |
 | Artifact panel and chat split | `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle` |

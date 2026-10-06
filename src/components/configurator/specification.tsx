@@ -764,12 +764,13 @@ export function AskedFor() {
             .filter(Boolean)
             .join(" · ")}
         </span>
-        {view.frame ? null : (
-          <span id="required-keys" className="basis-full text-xs text-muted-foreground">
-            Enter for another, Backspace on an empty line to strike, @ to name
-            the catalogue
-          </span>
-        )}
+        {/* What the keys do, which the editor points at: while a frame is
+            on, that nothing can be typed. */}
+        <span id="required-keys" className="basis-full text-xs text-muted-foreground">
+          {view.frame
+            ? "Narrowed: show everything to write or reword a requirement"
+            : "Enter for another, Backspace on an empty line to strike, @ to name the catalogue"}
+        </span>
       </header>
       {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
           it is read, and a frame that leaves no line says so. */}

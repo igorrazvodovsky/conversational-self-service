@@ -27,9 +27,10 @@
  *   them, the one it answered and the one it found nothing for;
  * - *what it cost*: clicks and surface changes, step by step and in all.
  *
- * Both builds share one agent, so the state is reset before each run. Point
- * them at an agent with a throwaway journal (`AGENT_JOURNAL`): the reset
- * strikes every clause and discards the specification.
+ * Each build runs against its own agent, with a throwaway journal
+ * (`AGENT_JOURNAL`): an agent offers the surfaces its own frontend draws, and
+ * the reset strikes every clause and discards the specification. See
+ * `e2e/README.md`.
  *
  *   BEFORE=http://localhost:3101 AFTER=http://localhost:3102 node e2e/ledger-flow.cjs
  *

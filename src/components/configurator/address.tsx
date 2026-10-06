@@ -100,7 +100,7 @@ export function surfaceOf(id: string): Surface | null {
  * arrives after the page does, so the browser's own scroll to the fragment
  * finds nothing; this repeats it when the surface has rendered. A fragment
  * already followed is left alone when the surface changes for another
- * reason — a rule bringing the configuration forward, the toggle — so the
+ * reason — a rule bringing the specification forward, the toggle — so the
  * address does not pull the person back.
  */
 export function useFollowAddress() {
