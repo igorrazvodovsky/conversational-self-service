@@ -10,7 +10,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { To } from "./address";
 import { money, tonnes } from "./format";
+import { useShown } from "./showing";
 import { useConfigurator, type Grid, type View } from "./provider";
 
 /**
@@ -43,6 +45,7 @@ function Line({ term, amount }: { term: string; amount: string }) {
  */
 export function Standing() {
   const { view, gesture, busy, grid, setGrid } = useConfigurator();
+  const shown = useShown();
   if (!view) return null;
   const { price, footprint, currency, counts, quotable } = view;
   const asked = counts.asked + counts.yielded + counts.unmet;
@@ -84,7 +87,9 @@ export function Standing() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {asked} asked · {counts.follows} follow from that · {counts.open} still open
+          <To id="asserted">{asked} asked</To> ·{" "}
+          <To id="follows">{counts.follows} follow from that</To> ·{" "}
+          <To id="open">{counts.open} still open</To>
         </p>
 
         <Collapsible>
@@ -114,15 +119,34 @@ export function Standing() {
           </div>
           <CollapsibleContent>
             <div className="mt-3 grid gap-6 @xl:grid-cols-2">
-              <dl className="space-y-1 text-xs">
-                <Line
-                  term={`Monthly, over ${price.term / 12 || "—"} years${
-                    price.presumed ? " (presumed)" : ""
-                  }`}
-                  amount={money(price.instalment, currency)}
-                />
-                <Line term="Lifetime" amount={money(price.lifetime, currency)} />
-              </dl>
+              <div>
+                <dl className="space-y-1 text-xs">
+                  <Line
+                    term={`Monthly, over ${price.term / 12 || "—"} years${
+                      price.presumed ? " (presumed)" : ""
+                    }`}
+                    amount={money(price.instalment, currency)}
+                  />
+                  <Line term="Lifetime" amount={money(price.lifetime, currency)} />
+                </dl>
+                {/* The sum is of the values on the canvas, and what each
+                    adds is the price facet, beside the value. */}
+                {shown("price") ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    What each value adds is beside it on the canvas.
+                  </p>
+                ) : (
+                  <Button
+                    variant="link"
+                    size="xs"
+                    className="mt-1 h-auto px-0"
+                    disabled={busy}
+                    onClick={() => void gesture({ act: "show", facet: "price" })}
+                  >
+                    Show what each value adds
+                  </Button>
+                )}
+              </div>
               <div>
                 <dl className="space-y-1 text-xs">
                   <Line term="Making it" amount={tonnes(footprint.made)} />

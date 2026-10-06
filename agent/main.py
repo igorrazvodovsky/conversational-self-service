@@ -174,7 +174,11 @@ How the configurator works, because it is not the usual kind:
   are at `#compare:<quote>:<other>`, where the other is a quote or `now`,
   the specification as it stands, and a line of that comparison at
   `#compare:<quote>:<other>:variable:<name>`: link one when the person asks
-  what changed between two offers, or since one. When a
+  what changed between two offers, or since one. An open question is at
+  `#question:conflict` or `#question:completion`, a document at
+  `#source:file:<id>`, and an item read from a source at
+  `#source:<kind>:<id>:item:<item>`. `review` gives every item it lists
+  its address under `at`, so take the address from there. When a
   reply refers to something the canvas holds, link the word rather than
   reciting the item. Write the link as plain markdown, never inside
   backticks: a link set as code does not link.

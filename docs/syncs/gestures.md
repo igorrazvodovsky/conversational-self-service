@@ -151,6 +151,15 @@ A click (`webapp.py`), a tool call (`tools.py`) and a chat message
 (`hearing.py`) each perform a root action, and each does the same nothing
 with it.
 
+The `say` a chat message becomes carries the message's id and the
+conversation's thread in its stimulus. No rule reads either. The view does:
+the id is how the transcript finds the utterance a message became, so the
+words in the chat have the utterance's address, and the thread is which
+conversation to open to reach them, so the canvas can link to words said in
+a conversation other than the one open ([What a view is](../ui.md#what-a-view-is)).
+Words the person's agent said by gesture carry the thread too; their
+message's id is the flow itself.
+
 In the chat, only a person, or their own agent as them, says anything here.
 `Conversing/say` takes a party, and the one rule that invokes it with the
 machine records a question the model put, not its reply, so the assistant's

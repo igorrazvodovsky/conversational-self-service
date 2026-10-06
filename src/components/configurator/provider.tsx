@@ -353,14 +353,26 @@ export interface Ground {
   monthly: number;
 }
 
-export interface LogRecord {
-  seq: number;
-  kind: string;
-  concept: string;
-  action: string;
+/** One turn of the log: a flow, opened by its first record, with every
+ * completion under it (`docs/ui.md`, "What a view is"). */
+export interface Turn {
+  flow: string;
+  /** Whether the turn only brought a surface forward. */
+  moved: boolean;
   actor: string;
-  via: string | null;
-  output: Record<string, unknown> | null;
+  at: number;
+  /** What started it: `say`, a gesture's act, or the tool the model called. */
+  opened: string;
+  /** The words that opened it, when it was opened by words. */
+  said: { utterance: string; text: string } | null;
+  records: {
+    seq: number;
+    concept: string;
+    action: string;
+    actor: string;
+    via: string | null;
+    refused: boolean;
+  }[];
 }
 
 export interface View {
@@ -379,6 +391,10 @@ export interface View {
   /** The flows the person's own agent opened by speaking in the chat. Its
    * message there carries the flow as its id. */
   agentSaid: string[];
+  /** The utterance each chat message became, by the message's id. */
+  said: Record<string, string>;
+  /** The conversation each utterance was said in, when it was recorded. */
+  saidIn: Record<string, string>;
   price: {
     capital: number;
     recurring: number;
@@ -423,7 +439,7 @@ export interface View {
     /** Clauses the model read, from a document or the person's words. */
     read: number;
   };
-  log: LogRecord[];
+  turns: Turn[];
 }
 
 export type Stimulus = Record<string, unknown> & { act: string };
@@ -489,7 +505,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   const shown = useRef({ at: -1, ticket: 0 });
   const take = () => ++issued.current;
   const show = useCallback((ticket: number, next: View) => {
-    const at = next.log.length ? next.log[next.log.length - 1].seq : 0;
+    const at = Math.max(0, ...next.turns.flatMap((t) => t.records.map((r) => r.seq)));
     const current = shown.current;
     if (at < current.at || (at === current.at && ticket < current.ticket)) return;
     shown.current = { at, ticket };

@@ -142,6 +142,16 @@ turn standing in for a fact, and the first is the model reporting a state it
 never checked. The prompt's rule is against withdrawing *unasked*;
 withdrawing at the person's word is the person's answer, carried out.
 
+## The specification, read
+
+`review` is the canvas for the readers off the page: the assistant, and the
+person's agent. It returns the same units the canvas arranges, each with the
+address the canvas gives it under `at`: a requirement and the item it was
+read as, a value asserted, followed or open, an open question, a document,
+an item the person struck, and an issued quote. A reply that refers to one
+links it rather than reciting it, and the person's agent can name the item
+it means. Like `open_quote`, it records nothing.
+
 ## An offer, read
 
 An issued quote holds what was true when it was made: the values, the
@@ -193,7 +203,8 @@ chat is a surface. So a conflict offers *why can't these hold together* and
 *give up this one*; a proposal offers *what did it assume*, never *take it*;
 a displaced or unanswered requirement offers to look at it; a settled value
 offers its argument; an incomplete specification offers a completion; a
-complete one offers a quote, and an issued one asks what has moved since. The
+complete one offers a quote, and an issued one asks what has moved since,
+whether it answers what was asked, and what changed from the one before. The
 openers appear only while nothing has been asserted or required, and the
 welcome screen reads the same fact: an empty thread over a specification
 already under way says so.

@@ -191,6 +191,23 @@ export function suggestionsFor(view: View | null, label: Label): Suggestion[] {
       });
   }
 
+  // An offer issued: read it against what was asked, or against the one
+  // before it. Both are reads (`open_quote`, a comparison's address).
+  const standing = quotes.filter((q) => q.standing === "open");
+  const latest = standing.at(-1);
+  if (latest)
+    out.push({
+      title: `Does quote ${latest.number} answer what I asked?`,
+      message: `Read quote ${latest.number} against my requirements: which does it answer, and which does it leave unanswered?`,
+    });
+  if (quotes.length > 1) {
+    const [before, after] = quotes.slice(-2);
+    out.push({
+      title: `Compare quotes ${before.number} and ${after.number}`,
+      message: `What changed between quote ${before.number} and quote ${after.number}, and what did it do to the price?`,
+    });
+  }
+
   // Bring a hidden fact onto the canvas, rather than have it recited.
   const facet = view.showing.find((f) => !f.shown && SHOWABLE.has(f.facet));
   if (facet)

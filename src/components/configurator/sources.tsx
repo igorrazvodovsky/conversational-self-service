@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { address, addressable, targeted as targetedRing, To, useHash, useTargeted } from "./address";
+import { address, addressable, Said, targeted as targetedRing, To, useHash, useTargeted } from "./address";
 import { useConfigurator, type ReadItem, type Source } from "./provider";
 
 const BECAME: Record<NonNullable<ReadItem["became"]>, string> = {
@@ -33,9 +33,14 @@ const BECAME: Record<NonNullable<ReadItem["became"]>, string> = {
   struck: "struck",
 };
 
-function OneItem({ item }: { item: ReadItem }) {
+function OneItem({ source, item }: { source: Source; item: ReadItem }) {
+  const id = address.item(source.kind, source.id, item.item);
+  const isTarget = useTargeted(id);
   return (
-    <li className="flex flex-wrap items-baseline gap-x-2 text-xs">
+    <li
+      id={id}
+      className={cn(addressable, "flex flex-wrap items-baseline gap-x-2 text-xs", isTarget && targetedRing)}
+    >
       <span className={cn("text-sm", item.became === "struck" && "line-through")}>
         {item.clause && item.became !== "struck" ? (
           <To id={address.clause(item.clause)} title="The clause it became">
@@ -76,14 +81,18 @@ function OneSource({ source }: { source: Source }) {
           {file ? "document" : source.broughtBy === "browser" ? "your agent said" : "you said"}
         </CardDescription>
         <CardTitle className={cn(!file && "font-normal")}>
-          {file ? source.name : `“${source.text}”`}
+          {file ? (
+            source.name
+          ) : (
+            <Said utterance={source.id} text={source.text} />
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {source.items.length ? (
           <ul className="space-y-1">
             {source.items.map((item) => (
-              <OneItem key={item.item} item={item} />
+              <OneItem key={item.item} source={source} item={item} />
             ))}
           </ul>
         ) : (

@@ -24,7 +24,8 @@
  * anything being recorded.
  *
  * An item lives on one of `Moding`'s surfaces: a clause or a source on the
- * requirements, a variable or a section of the configuration on the canvas,
+ * requirements, a variable, a question, a turn or a section of the
+ * configuration on the canvas,
  * a quote's line on the quotes.
  * Following an address to the other surface performs `focus` on it — the one
  * thing here that is recorded, and it is what a link is for — and then
@@ -33,6 +34,7 @@
  * reconstructed from the log on its own.
  */
 
+import { useAgent, useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
 import { useEffect, useRef, useState } from "react";
 import { useConfigurator, type Surface } from "./provider";
 
@@ -40,6 +42,10 @@ export const address = {
   variable: (name: string) => `variable:${name}`,
   clause: (id: string) => `clause:${id}`,
   source: (kind: string, id: string) => `source:${kind}:${id}`,
+  item: (kind: string, id: string, item: string) => `source:${kind}:${id}:item:${item}`,
+  question: (about: string) => `question:${about}`,
+  turn: (flow: string) => `turn:${flow}`,
+  said: (utterance: string) => `said:${utterance}`,
   quote: (quote: string, kind: "variable" | "clause" | "event", id: string) =>
     `quote:${quote}:${kind}:${id}`,
   compare: (quote: string, other: string, kind?: "variable" | "clause", id?: string) =>
@@ -80,8 +86,9 @@ export function useTargeted(id: string): boolean {
   return useHash() === id;
 }
 
-/** The surface an address is on. */
-export function surfaceOf(id: string): Surface {
+/** The surface an address is on; none for the chat, which is always there. */
+export function surfaceOf(id: string): Surface | null {
+  if (id.startsWith("said:")) return null;
   if (id.startsWith("clause:") || id.startsWith("source:")) return "requirements";
   if (id === "required" || id === "read-from") return "requirements";
   if (id.startsWith("quote:") || id.startsWith("compare:")) return "quote";
@@ -110,7 +117,7 @@ export function useFollowAddress() {
     const id = pending.current;
     if (!ready || !id || !mode) return;
     const surface = surfaceOf(id);
-    if (mode !== surface) {
+    if (surface && mode !== surface) {
       void gesture({ act: "focus", surface });
       return;
     }
@@ -129,7 +136,7 @@ export function useFollowAddress() {
  * reader arrive where the eye does rather than staying on the link. An item
  * that is not itself a control takes focus by script only (`tabIndex = -1`),
  * which adds no stop to the tab order. */
-function arrive(el: HTMLElement) {
+export function arrive(el: HTMLElement) {
   el.scrollIntoView({ block: "start" });
   if (!el.matches("a[href], button, input, select, textarea, [tabindex]"))
     el.tabIndex = -1;
@@ -202,5 +209,41 @@ export function Moved({ by }: { by: string }) {
       />
       <span className="sr-only">Moved by {by} since you last acted: </span>
     </>
+  );
+}
+
+/** Words a person said, linked to where they are in the chat. Words said
+ * in another conversation are reached by opening it first, which changes
+ * only what the chat pane shows; the bubble goes to itself once it renders
+ * (`chat/index.tsx`). Words recorded with no conversation stay plain. A
+ * leaf of its own, because `useAgent` re-renders its caller on every
+ * streamed token. */
+export function Said({ utterance, text }: { utterance: string; text: string }) {
+  const { view } = useConfigurator();
+  const { agent } = useAgent();
+  const chat = useCopilotChatConfiguration();
+  const here = agent.messages.some((m) => view?.said[m.id] === utterance);
+  const thread = view?.saidIn[utterance];
+  const id = address.said(utterance);
+  if (here)
+    return (
+      <To id={id} title="The words, in the chat">
+        “{text}”
+      </To>
+    );
+  if (!thread || !chat) return <>“{text}”</>;
+  return (
+    <a
+      href={href(id)}
+      title="The words, in the conversation they were said in"
+      onClick={(event) => {
+        event.preventDefault();
+        chat.setActiveThreadId(thread, { explicit: true });
+        goTo(id);
+      }}
+      className="underline decoration-dotted underline-offset-2 hover:decoration-solid"
+    >
+      “{text}”
+    </a>
   );
 }

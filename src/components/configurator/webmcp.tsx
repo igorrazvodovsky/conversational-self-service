@@ -80,7 +80,9 @@ export function BrowserAgentTools() {
       "`open`); open conflicts (`questions`), with the assistant's question " +
       "and any reply under `asked` when it put one to the person; price, carbon, the addressee, " +
       "the job, and every quote issued, with its number, where it stands and " +
-      "which values have moved since (`quotes`); `open_quote` reads one. A " +
+      "which values have moved since (`quotes`); `open_quote` reads one. " +
+      "Every item carries its address on the page under `at`, and `struck` " +
+      "lists what the person struck from a reading. A " +
       "projection, accurate as of this call: the person may act on the canvas " +
       "between your calls.",
     {},

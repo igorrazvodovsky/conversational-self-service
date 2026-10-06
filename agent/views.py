@@ -100,6 +100,13 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
     words: dict[str, str] = {}
     # Who said the flow's words: the person, or their own agent as them.
     spoke: dict[str, str] = {}
+    # The chat message each utterance was said in: the id a typed message's
+    # `say` carries, or the flow itself for words said by gesture first.
+    message: dict[str, str] = {}
+    said: dict[str, str] = {}
+    # The conversation each utterance was said in, where the `say` says.
+    thread: dict[str, str] = {}
+    said_in: dict[str, str] = {}
     reads: dict[str, dict[str, Any]] = {}
     asserting: dict[str, dict[str, Any]] = {}
     how: dict[str, dict[str, Any]] = {}
@@ -113,10 +120,18 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
         output = record.output or {}
         if "error" in output:
             continue
-        if record.concept == "Conversing" and record.action == "say":
+        if record.concept == "Copiloting" and record.action == "gesture":
+            if output.get("act") == "say" and output.get("message"):
+                message[record.flow] = output["message"]
+            if output.get("act") == "say" and output.get("thread"):
+                thread[record.flow] = output["thread"]
+        elif record.concept == "Conversing" and record.action == "say":
             if output.get("party") == "person" and output.get("text"):
                 words[record.flow] = output["text"]
                 spoke[record.flow] = record.actor
+                said[message.get(record.flow, record.flow)] = output["utterance"]
+                if record.flow in thread:
+                    said_in[output["utterance"]] = thread[record.flow]
         elif record.concept == "Reading" and record.action == "read":
             reads[record.flow] = {
                 "item": output["item"],
@@ -162,6 +177,8 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
         "stated": stated,
         "displaced": displaced,
         "agentSaid": sorted(f for f, actor in spoke.items() if actor == BROWSER),
+        "said": said,
+        "saidIn": said_in,
     }
 
 
@@ -795,6 +812,11 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         # its message there carries the flow as its id, so the chat can say
         # whose words they were.
         "agentSaid": trace["agentSaid"],
+        # The utterance each chat message became, by the message's id, so
+        # the words in the chat carry the utterance's address.
+        "said": trace["said"],
+        # The conversation each utterance was said in, when it was recorded.
+        "saidIn": trace["saidIn"],
         # What the last turn changed while the person was not looking at the
         # canvas, for it to mark.  Null when the person's own gesture was the
         # last thing to move the specification.
@@ -838,14 +860,81 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             # the person struck are in `sources`, item by item.
             "read": sum(1 for c in clauses if c["source"]),
         },
-        # Behaviour only: the catalogue's arrival is a thousand records of
-        # Cataloguing and Pricing, and nobody wants to read it back.
-        "log": [
-            r.as_json()
-            for r in engine.log.records(since=engine.settled_at, limit=24)
-            if r.kind == "completion"
-        ],
+        # The latest turns, each whole.  Behaviour only: the catalogue's
+        # arrival is a thousand records of Cataloguing and Pricing, and
+        # nobody wants to read it back.
+        "turns": turns(engine),
     }
+
+
+def turns(engine: Engine, latest: int = 8) -> list[dict[str, Any]]:
+    """The log read by turn: `docs/ui.md`, "What a view is".
+
+    A flow is one occasion — the person's words and the calls the model made
+    in reply, or one gesture and what the rules did with it — so the turn is
+    the unit, opened by its first record, with every completion under it.
+    The latest turns, newest first, each whole; a turn that only brought a
+    surface forward is marked `moved` and not counted among them.
+    """
+    order: list[str] = []
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if record.kind == "completion" and (not order or order[-1] != record.flow):
+            if record.flow in order:
+                order.remove(record.flow)
+            order.append(record.flow)
+    out = []
+    shown = 0
+    for flow in reversed(order):
+        # A long run of surfaces brought forward is bounded too.
+        if shown == latest or len(out) == latest * 4:
+            break
+        records = [
+            r for r in engine.log.flow(flow)
+            if r.kind == "completion" and r.seq > engine.settled_at
+        ]
+        opened = records[0]
+        stimulus = opened.output or {}
+        words = next(
+            (
+                r.output
+                for r in records
+                if r.concept == "Conversing" and r.action == "say"
+                and "error" not in (r.output or {})
+            ),
+            None,
+        )
+        # A turn that only brought a surface forward: true, and about no fact
+        # of the specification, so it does not count among the latest.
+        moved = all(r.concept in {"Copiloting", "Moding"} for r in records)
+        shown += not moved
+        out.append(
+            {
+                "flow": flow,
+                "moved": moved,
+                "actor": opened.actor,
+                "at": opened.at,
+                # What started it: the words said, a gesture's act, or the
+                # tool the model called.
+                "opened": stimulus.get("act") or stimulus.get("tool") or opened.action,
+                "said": (
+                    {"utterance": words["utterance"], "text": words["text"]}
+                    if words
+                    else None
+                ),
+                "records": [
+                    {
+                        "seq": r.seq,
+                        "concept": r.concept,
+                        "action": r.action,
+                        "actor": r.actor,
+                        "via": r.via,
+                        "refused": "error" in (r.output or {}),
+                    }
+                    for r in records
+                ],
+            }
+        )
+    return out
 
 
 def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
@@ -1141,6 +1230,11 @@ def plain(text: str) -> str:
     return REFERENCE.sub(r"\1", text)
 
 
+def _item_at(kind: str, source: str, item: str) -> str:
+    """The address of an item read from a source, on the requirements."""
+    return f"#source:{kind}:{source}:item:{item}"
+
+
 def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
     """The same reading, small enough to hand a language model.
 
@@ -1160,6 +1254,9 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         value = variable["value"]
         return f"{variable['heading']}: {label.get(value, value)}" if value else ""
 
+    def at(variable: dict[str, Any]) -> dict[str, Any]:
+        return {"at": f"#variable:{variable['name']}"}
+
     return {
         # What is required, in the source's own words, with what answers
         # each: the person's clauses, and the ones the model read from their
@@ -1168,11 +1265,18 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         "required": [
             {
                 "clause": c["clause"],
+                "at": f"#clause:{c['clause']}",
                 "text": plain(c["text"]),
                 "negotiability": c["negotiability"],
                 "stated_by": c["statedBy"],
                 "read_from": (
                     c["source"]["name"] or "the person's message"
+                    if c["source"]
+                    else None
+                ),
+                # The item it was read as, under its source.
+                "read_at": (
+                    _item_at(c["source"]["kind"], c["source"]["id"], c["source"]["item"])
                     if c["source"]
                     else None
                 ),
@@ -1190,23 +1294,44 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         # The documents the person attached, to read with `open_file` and
         # cite in `read`.
         "files": [
-            {"file": s["id"], "name": s["name"], "read": len(s["items"])}
+            {
+                "file": s["id"],
+                "at": f"#source:file:{s['id']}",
+                "name": s["name"],
+                "read": len(s["items"]),
+            }
             for s in view["sources"]
             if s["kind"] == "file"
         ],
+        # Items the person struck: no clause is left to carry them, so their
+        # source is the only place they are.  Read from a document or from
+        # the person's words, each with its address there.
+        "struck": [
+            {
+                "words": i["words"],
+                "read_from": s["name"] or "the person's message",
+                "at": _item_at(s["kind"], s["id"], i["item"]),
+            }
+            for s in view["sources"]
+            for i in s["items"]
+            if i["became"] == "struck"
+        ],
         "asked": [
-            say(v)
-            + (" (negotiable)" if v["softly"] else "")
-            + (
-                f" — answers: {'; '.join(plain(a['text']) for a in v['answers'])}"
-                if v["answers"]
-                else " — answers no stated requirement"
-            )
-            + (
-                " — the person's requirement rests on it: you cannot change it; ask them"
-                if v["held"] and not agent
-                else ""
-            )
+            {
+                **at(v),
+                "says": say(v)
+                + (" (negotiable)" if v["softly"] else "")
+                + (
+                    f" — answers: {'; '.join(plain(a['text']) for a in v['answers'])}"
+                    if v["answers"]
+                    else " — answers no stated requirement"
+                )
+                + (
+                    " — the person's requirement rests on it: you cannot change it; ask them"
+                    if v["held"] and not agent
+                    else ""
+                ),
+            }
             for v in view["variables"]
             if v["standing"] == "asked"
         ],
@@ -1214,30 +1339,40 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         # asserted, still answering its clause, and no question asked, because
         # a preference is by the person's own account the thing to give up.
         "yielded": [
-            f"{v['heading']}: {label.get(v['asked'], v['asked'])} was negotiable and gave way"
-            + (f"; settled on {label.get(v['value'], v['value'])}" if v["value"] else "")
+            {
+                **at(v),
+                "says": f"{v['heading']}: {label.get(v['asked'], v['asked'])} was negotiable and gave way"
+                + (f"; settled on {label.get(v['value'], v['value'])}" if v["value"] else ""),
+            }
             for v in view["variables"]
             if v["standing"] == "yielded"
         ],
         "follows": [
-            f"{say(v)} — {', '.join(o['because'] for o in v['owing'])}"
-            + (
-                f" (from {', '.join(f['heading'] for f in v['following'])})"
-                if v["following"]
-                else ""
-            )
+            {
+                **at(v),
+                "says": f"{say(v)} — {', '.join(o['because'] for o in v['owing'])}"
+                + (
+                    f" (from {', '.join(f['heading'] for f in v['following'])})"
+                    if v["following"]
+                    else ""
+                ),
+            }
             for v in view["variables"]
             if v["standing"] == "follows"
         ],
         "unmet": [
-            f"{v['heading']}: {label.get(v['asked'], v['asked'])} cannot be met — "
-            + "; ".join(r["because"] for r in v["refused"])
+            {
+                **at(v),
+                "says": f"{v['heading']}: {label.get(v['asked'], v['asked'])} cannot be met — "
+                + "; ".join(r["because"] for r in v["refused"]),
+            }
             for v in view["variables"]
             if v["standing"] == "unmet"
         ],
         "open": [
             {
                 "variable": v["name"],
+                **at(v),
                 "heading": v["heading"],
                 "proposed": (
                     (
@@ -1265,7 +1400,18 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         "footprint": {
             k: view["footprint"][k] for k in ("made", "run", "total", "complete")
         },
-        "questions": view["questions"],
+        # A completion with nothing left proposed has no card on the canvas,
+        # and so no address.
+        "questions": [
+            q
+            | (
+                {"at": f"#question:{q['about']}"}
+                if q["about"] != "completion"
+                or any(v["proposed"] for v in view["variables"])
+                else {}
+            )
+            for q in view["questions"]
+        ],
         # What the canvas shows beside each item, and what else it could.
         # The model may change this with `show` and `hide`, and nothing else.
         "showing": view["showing"],
@@ -1290,7 +1436,11 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
                     "committed", "differs",
                 )
             }
-            | {"monthly": q["terms"]["recurring"], "months": q["terms"]["months"]}
+            | {
+                "at": f"#quote:{q['quote']}",
+                "monthly": q["terms"]["recurring"],
+                "months": q["terms"]["months"],
+            }
             for q in view["quotes"]
         ],
     }

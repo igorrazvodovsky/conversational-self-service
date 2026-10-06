@@ -577,6 +577,10 @@ def review() -> dict[str, Any]:
     `quotes` lists every quote issued, with its number, where it stands and
     which values have moved since; `open_quote` reads what one offers.
 
+    Every item comes with its address on the canvas under `at`: link it in
+    the reply rather than reciting it.  `struck` lists the items read from a
+    source that the person struck, which no clause carries any more.
+
     A projection rather than the state itself. It is accurate as of this call
     and says nothing about what the person has done since.
     """

@@ -118,7 +118,7 @@ export function ConverseTools() {
           said: null,
           refused: "the assistant is still answering; call `listen` to hear it",
         };
-      const outcome = await act({ act: "say", text });
+      const outcome = await act({ act: "say", text, thread: agent.threadId });
       if (!outcome.flow) return { said: null, did: outcome.did };
       agent.addMessage({ id: outcome.flow, role: "user", content: text });
       // The run's own promise says when the turn ended; `isRunning` clears

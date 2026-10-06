@@ -14,7 +14,14 @@
  * Inspector" button, which the dev inspector draws on a local run only.
  */
 
-import { forwardRef, useState, type ComponentProps, type MouseEvent } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type MouseEvent,
+} from "react";
 import {
   ArrowUpIcon,
   Building2Icon,
@@ -34,7 +41,14 @@ import {
   CopilotChatUserMessage,
 } from "@copilotkit/react-core/v2";
 
-import { goTo } from "@/components/configurator/address";
+import {
+  address,
+  addressable,
+  arrive,
+  goTo,
+  targeted,
+  useTargeted,
+} from "@/components/configurator/address";
 import { useConfigurator } from "@/components/configurator/provider";
 import { useStateSuggestions } from "./suggestions";
 import {
@@ -340,15 +354,28 @@ function AgentBubble({ content }: { content?: string }) {
   );
 }
 
+/** A message the person sent, at the address of the utterance it became
+ * (`#said:<utterance>`), which the trace and the sources link to. */
 function OneUserMessage(props: ComponentProps<typeof CopilotChatUserMessage>) {
   const { view } = useConfigurator();
   const agents = view?.agentSaid.includes(props.message.id) ?? false;
+  const utterance = view?.said[props.message.id];
+  const id = utterance ? address.said(utterance) : undefined;
+  const isTarget = useTargeted(id ?? "");
+  // Reached from the canvas while another conversation was open, the words
+  // render after the address was followed; they go to themselves then.
+  const self = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isTarget && self.current) arrive(self.current);
+  }, [isTarget]);
   return (
-    <CopilotChatUserMessage
-      {...props}
-      messageRenderer={agents ? AgentBubble : UserBubble}
-      copyButton={CopyYours}
-    />
+    <div ref={self} id={id} className={cn(addressable, isTarget && targeted)}>
+      <CopilotChatUserMessage
+        {...props}
+        messageRenderer={agents ? AgentBubble : UserBubble}
+        copyButton={CopyYours}
+      />
+    </div>
   );
 }
 

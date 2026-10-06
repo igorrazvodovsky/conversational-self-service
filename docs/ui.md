@@ -36,14 +36,32 @@ Three questions test a view:
 3. *Can they be reached?* Every unit has an address (`address.tsx`), so a link
    between items, a reply in the chat and the person's agent can each name it.
    Naming a unit needs knowing what it holds, so the readers off the page get
-   the same units: `review` reads the specification, and `open_quote` reads
-   an issued offer line by line, each line with its address.
+   the same units: `review` reads the specification and `open_quote` an
+   issued offer, and every unit either returns carries its address under
+   `at`; a requirement read from a source also carries the item it was read
+   as, under `read_at`.
 
 The same facts may be arranged more than once, one arrangement per question.
 The requirements are the example: the ledger holds the clauses in the order the
 person wrote them, and the sources beneath it hold the same clauses grouped by
 where they were read from. A second arrangement is a second question, not a
 duplicate.
+
+The log is read by turn. Every record carries the flow it ran in, and a flow
+is one occasion: the person's words and the calls the model made in reply,
+or one gesture and what the rules did with it. So the trace answers *what
+did this turn do, and on whose authority*, and its unit is the turn, at
+`#turn:<flow>`, opened by what started it. A single record is smaller than
+anything a person would point at, and the order records were written in is
+the arrangement the principle rules out. A turn that only brought a surface
+forward is still a turn, and true, but it answers nothing about the
+specification, so the trace folds a run of them into one line and does not
+count them among the latest turns it shows. The words that opened a turn are in
+the chat too, at `#said:<utterance>`, and the trace and the sources link to
+them. Words said in another conversation are reached by opening that
+conversation first, which is a viewer's convenience like the chat's
+geometry. The chat is no `Moding` surface, so following an address there
+records nothing.
 
 The quote document is the arrangement for leaving the app: the package that is
 sent, printed and signed, shaped like what a lift manufacturer sends. It

@@ -37,6 +37,7 @@ import {
 } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
+import { address, To } from "@/components/configurator/address";
 import { Answer } from "@/components/configurator/question";
 import { useConfigurator, type Question } from "@/components/configurator/provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -105,7 +106,12 @@ function WaitingQuestion({
       <MessageCircleQuestionIcon />
       <AlertTitle id="waiting-question" className="text-sm">The assistant is waiting on you</AlertTitle>
       <AlertDescription>
-        <p>{message ?? question.asked?.text}</p>
+        <p>
+          {message ?? question.asked?.text}{" "}
+          <To id={address.question(question.about)} className="text-xs">
+            The same question on the canvas
+          </To>
+        </p>
         <div className="mt-2 flex flex-col gap-2 text-foreground">
           {question.options.map((option, index) => (
             <Answer

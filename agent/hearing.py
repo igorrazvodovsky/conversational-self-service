@@ -261,8 +261,16 @@ def _hear(said: HumanMessage, thread: str | None) -> None:
     flow: str | None = None
     text = _text(said)
     if text:
+        # The message's id and the thread ride along for the view, which
+        # finds the utterance a chat message became by the one and the
+        # conversation to open by the other; no rule reads either.
+        stimulus = {
+            **({"message": said.id} if isinstance(said.id, str) else {}),
+            **({"thread": thread} if thread is not None else {}),
+        }
         record = engine.root(
-            "Copiloting", "gesture", actor="person", act="say", spec=SPEC, text=text
+            "Copiloting", "gesture", actor="person", act="say", spec=SPEC, text=text,
+            **stimulus,
         )
         flow = record.flow
         utterance = next(
