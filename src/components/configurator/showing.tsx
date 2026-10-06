@@ -17,8 +17,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useConfigurator } from "./provider";
@@ -62,8 +60,6 @@ export function ShowingMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuLabel>Beside each item, at a glance</DropdownMenuLabel>
-        <DropdownMenuSeparator />
         {view.showing.map((f) => (
           <DropdownMenuCheckboxItem
             key={f.facet}

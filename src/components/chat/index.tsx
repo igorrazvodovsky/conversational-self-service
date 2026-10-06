@@ -453,7 +453,7 @@ function WelcomeScreen({
           </EmptyTitle>
           <EmptyDescription className="text-sm">
             {underway
-              ? "It stands as the canvas shows. Ask about it, or add to it."
+              ? "Ask about it, or add to it."
               : "Describe the lift and what it has to carry, or start from a suggestion."}
           </EmptyDescription>
         </EmptyHeader>

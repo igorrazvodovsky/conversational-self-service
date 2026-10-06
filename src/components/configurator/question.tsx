@@ -156,7 +156,6 @@ function Asked({ question }: { question: Question }) {
     <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
       <p>
         The assistant asked: “{asked.text}”
-        {asked.status === "awaiting" && " It is waiting on the answer."}
       </p>
       {asked.replies.map((reply) => (
         <p key={reply.utterance}>

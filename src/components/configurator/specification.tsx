@@ -46,7 +46,7 @@ import {
   type Editor,
   type NodeViewProps,
 } from "@tiptap/react";
-import { ArrowDownIcon, ArrowUpIcon, EllipsisIcon, GripVerticalIcon, XIcon } from "lucide-react";
+import { EllipsisIcon, Maximize2Icon, Minimize2Icon, GripVerticalIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -303,11 +303,7 @@ function refocus(clause: string, control?: string, tries = 0) {
   // While the gesture settles, every control is disabled and the node views
   // are about to be replaced; wait for live, enabled ones.
   const wanted =
-    control &&
-    (at?.querySelector<HTMLElement>(`[data-control="${control}"]:not(:disabled)`) ??
-      // A clause moved to an end has that end's button disabled for good;
-      // the other one is the nearest control.
-      at?.querySelector<HTMLElement>(`[data-control^="move-"]:not(:disabled)`));
+    control && at?.querySelector<HTMLElement>(`[data-control="${control}"]:not(:disabled)`);
   const last = tries >= 40;
   const target = wanted || (last || !control ? at : null);
   if (!target) {
@@ -344,17 +340,8 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   // answers it.
   const lines = view ? ledger(view, framedAsserted(view)) : null;
   const outside = !!view?.frame && (!clause || !lines?.shown.has(clause.clause));
-  // Moving by button is the same `move` gesture a drag ends in, for the
-  // keyboard and for anyone who cannot drag.
   const order = view?.clauses.map((c) => c.clause) ?? [];
   const at = clause ? order.indexOf(clause.clause) : -1;
-  const move = (direction: "up" | "down") => {
-    if (!clause) return;
-    const before = direction === "up" ? order[at - 1] : (order[at + 2] ?? null);
-    void gesture({ act: "move", clause: clause.clause, before }).then(() =>
-      refocus(clause.clause, `move-${direction}`),
-    );
-  };
 
   return (
     <NodeViewWrapper
@@ -451,24 +438,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                 contentEditable={false}
                 className="flex flex-wrap items-center gap-1 select-none"
               >
-                {/* Frame the canvas on this clause: its answers, what they
-                    forced, what could still answer it — and while it is
-                    framed, a pick answers it. Pressed again, the frame comes
-                    off. The line's one way to answer it. */}
-                <Button
-                  size="xs"
-                  variant={active ? "default" : "outline"}
-                  disabled={busy}
-                  title={
-                    active
-                      ? "Show everything again"
-                      : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
-                  }
-                  onClick={() => setAnswering(active ? null : clause)}
-                >
-                  {active ? "Answering…" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}
-                  <span className="sr-only"> “{plain(clause.text)}”</span>
-                </Button>
                 {clause.negotiability === "negotiable" && !relaxing ? (
                   <Button
                     ref={relaxButton}
@@ -481,6 +450,25 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                   </Button>
                 ) : null}
                 <div className="ml-auto flex gap-0.5">
+                  {/* Frame the canvas on this clause: its answers, what they
+                      forced, what could still answer it — and while it is
+                      framed, a pick answers it. Pressed again, the frame
+                      comes off. The line's one way to answer it. */}
+                  <Button
+                    variant={active ? "default" : "ghost"}
+                    size="icon-xs"
+                    disabled={busy}
+                    aria-pressed={active}
+                    title={
+                      active
+                        ? "Show everything again"
+                        : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
+                    }
+                    aria-label={`${active ? "Show everything again" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}: ${plain(clause.text)}`}
+                    onClick={() => setAnswering(active ? null : clause)}
+                  >
+                    {active ? <Minimize2Icon /> : <Maximize2Icon />}
+                  </Button>
                   {/* How firmly the clause is meant: fixed until settled
                       otherwise. Out of the way, since it is asked only when
                       it matters. */}
@@ -513,28 +501,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                       </DropdownMenuRadioGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    disabled={busy || at <= 0}
-                    data-control="move-up"
-                    title="Move up"
-                    aria-label={`Move up: ${plain(clause.text)}`}
-                    onClick={() => move("up")}
-                  >
-                    <ArrowUpIcon />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    disabled={busy || at < 0 || at >= order.length - 1}
-                    data-control="move-down"
-                    title="Move down"
-                    aria-label={`Move down: ${plain(clause.text)}`}
-                    onClick={() => move("down")}
-                  >
-                    <ArrowDownIcon />
-                  </Button>
                   <Button
                     variant="ghost"
                     size="icon-xs"

@@ -10,6 +10,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { To } from "./address";
 import { money, tonnes } from "./format";
 import { useShown } from "./showing";
@@ -56,9 +57,7 @@ export function Standing() {
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <Badge variant={quotable.ok ? "default" : "outline"}>{state(view)}</Badge>
-          <span className="text-sm">
-            {quotable.ok ? "Everything is settled, priced and addressed." : `${capital(quotable.because)}.`}
-          </span>
+          {quotable.ok ? null : <span className="text-sm">{capital(quotable.because)}.</span>}
           <div className="ml-auto flex gap-2">
             {issued ? (
               <Button
@@ -157,21 +156,28 @@ export function Standing() {
                 </dl>
                 {/* Two states, both named, rather than one button whose
                     label is the state it is in. */}
-                <ToggleGroup
-                  type="single"
-                  variant="outline"
-                  size="sm"
-                  spacing={0}
-                  value={grid}
-                  onValueChange={(value) => value && setGrid(value as Grid)}
-                  aria-label="Electricity grid"
-                  aria-describedby="grid-why"
-                  className="mt-3"
-                >
-                  <ToggleGroupItem value="today">Grid today</ToggleGroupItem>
-                  <ToggleGroupItem value="decarbonising">Decarbonising</ToggleGroupItem>
-                </ToggleGroup>
-                <p id="grid-why" className="mt-1 text-xs text-muted-foreground">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      size="sm"
+                      spacing={0}
+                      value={grid}
+                      onValueChange={(value) => value && setGrid(value as Grid)}
+                      aria-label="Electricity grid"
+                      aria-describedby="grid-why"
+                      className="mt-3"
+                    >
+                      <ToggleGroupItem value="today">Grid today</ToggleGroupItem>
+                      <ToggleGroupItem value="decarbonising">Decarbonising</ToggleGroupItem>
+                    </ToggleGroup>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    The same lift ranks differently against a decarbonising grid.
+                  </TooltipContent>
+                </Tooltip>
+                <p id="grid-why" className="sr-only">
                   The same lift ranks differently against a decarbonising grid.
                 </p>
               </div>

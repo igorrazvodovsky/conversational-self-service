@@ -30,7 +30,7 @@ function Section({
 }: {
   id: string;
   title: string;
-  hint: string;
+  hint?: string;
   count: number;
   children: React.ReactNode;
 }) {
@@ -39,7 +39,7 @@ function Section({
       <header className="mb-2 flex items-baseline gap-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         <span className="text-xs text-muted-foreground">
-          {count} · {hint}
+          {hint ? `${count} · ${hint}` : count}
         </span>
       </header>
       {count ? (
@@ -224,7 +224,7 @@ export function ConfiguratorCanvas() {
 
   return (
     <div className="@container h-full">
-      <div className="h-full overflow-y-auto">
+      <div className="relative h-full overflow-y-auto">
         <div className="px-6 pb-6">
           <Header />
 
@@ -238,7 +238,6 @@ export function ConfiguratorCanvas() {
             <Section
               id="questions"
               title="Asked of you"
-              hint="waiting on your answer"
               count={questions.length}
             >
               <PendingQuestions />
@@ -253,7 +252,6 @@ export function ConfiguratorCanvas() {
           <Section
             id="follows"
             title="Follows from that"
-            hint="nobody chose these"
             count={follows.length}
           >
             <ItemGroup className="gap-1">
@@ -270,7 +268,7 @@ export function ConfiguratorCanvas() {
           <Section
             id="open"
             title="Still open"
-            hint={view.frame?.by === "clause" ? "a pick here answers the clause" : "yours to settle"}
+            hint={view.frame?.by === "clause" ? "a pick here answers the clause" : undefined}
             count={open.length}
           >
             <Card className="gap-0 py-0">

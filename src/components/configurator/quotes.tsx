@@ -437,7 +437,7 @@ export function QuoteSurface() {
         : undefined;
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="relative h-full overflow-y-auto">
       <div className="px-6 py-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted-foreground">
@@ -540,7 +540,7 @@ export function QuoteSurface() {
             <EmptyHeader>
               <EmptyDescription className="max-w-sm">
                 {view.quotable.ok
-                  ? "Everything is settled, priced and addressed. Request a quotation to freeze it into a proposal."
+                  ? "Request a quotation to freeze the specification into a proposal."
                   : `A quotation can be requested once everything is settled and addressed — ${view.quotable.because}.`}
               </EmptyDescription>
             </EmptyHeader>

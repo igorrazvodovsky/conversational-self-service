@@ -8,7 +8,7 @@
  * Stipulating's `programme` as it answered at issue, frozen into the terms
  * (`docs/syncs/gestures.md`, "A quote is requested"); a payment stage sits on
  * the milestone its `event` names, and its amount is its share of the sum.
- * Nothing here reckons a week: a quote that holds no programme says so, and
+ * Nothing here reckons a week: a quote that holds no programme shows none, and
  * nothing rebuilds one from the catalogue as it stands today.
  *
  * A chart for the works and one for the aftercare, because the works run in
@@ -141,14 +141,7 @@ function Row({ id, children }: { id: string; children: ReactNode }) {
 export function Timeline({ quote, view }: { quote: Quote; view: Pick<View, "currency"> }) {
   const { terms } = quote;
   const programme = terms.programme;
-  if (!programme || programme.milestones.length < 2) {
-    return (
-      <p className="py-6 text-sm text-muted-foreground">
-        This quotation holds no programme, so it says nothing about when the
-        work happens. A quotation requested now carries one.
-      </p>
-    );
-  }
+  if (!programme || programme.milestones.length < 2) return null;
 
   const at = new Map(programme.milestones.map((m) => [m.event as Event, m.week]));
   const week = (event: Event) => at.get(event) ?? 0;

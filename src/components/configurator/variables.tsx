@@ -16,6 +16,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { address, addressable, Moved, targeted as targetedRing, To, useTargeted } from "./address";
@@ -162,6 +163,29 @@ function Rules({ rules }: { rules: Variable["owing"] }) {
   );
 }
 
+/**
+ * A value held for a clause the person stated: a lock, and what it means on
+ * hover or focus. Focusable, so the sentence reaches a keyboard too.
+ */
+function Held({ children }: { children?: React.ReactNode }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          tabIndex={0}
+          role={children ? undefined : "img"}
+          aria-label={children ? undefined : "Yours: the assistant cannot change it"}
+          className="rounded-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <LockIcon aria-hidden className={cn("inline size-3 align-[-2px]", children && "mr-1")} />
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>Yours: the assistant cannot change it</TooltipContent>
+    </Tooltip>
+  );
+}
+
 /** A variable a party asserted a value for, or asserted an impossible one for. */
 export function AskedCard({
   variable,
@@ -207,6 +231,13 @@ export function AskedCard({
         <CardTitle className={cn(yielded && "text-muted-foreground line-through")}>
           {label(variable.asked)}
           {yielded ? <span className="sr-only"> (gave way)</span> : null}
+          {/* Held for the clause on this line, or for clauses the canvas
+              does not list here: the lock goes beside the value. */}
+          {heldHere || (held.size > 0 && !shown("answers")) ? (
+            <span className="ml-1.5 font-normal text-muted-foreground">
+              <Held />
+            </span>
+          ) : null}
         </CardTitle>
         <CardAction>
           <Button
@@ -238,12 +269,6 @@ export function AskedCard({
             repeating the clause. An assertion answering no clause is the
             slice 0 case and is said so, not hidden — unless the person hid
             the facet, which is theirs to do; the hold is said either way. */}
-        {heldHere ? (
-          <p className="text-xs text-muted-foreground">
-            <LockIcon className="mr-1 inline size-3 align-[-2px]" />
-            yours; the assistant cannot change it
-          </p>
-        ) : null}
         {shown("answers") ? (
           answers.length ? (
             <ul className="space-y-0.5 text-xs">
@@ -257,12 +282,8 @@ export function AskedCard({
                 >
                   {/* One line: the clause is a link, and the ledger has the words. */}
                   {held.has(answer.clause) ? (
-                    <span
-                      className="text-muted-foreground"
-                      title="Yours: the assistant cannot change it"
-                    >
-                      <LockIcon className="mr-1 inline size-3 align-[-2px]" />
-                      {inLedger ? "yours, also for:" : "yours, for:"}
+                    <span className="text-muted-foreground">
+                      <Held>{inLedger ? "yours, also for:" : "yours, for:"}</Held>
                     </span>
                   ) : (
                     <span className="text-muted-foreground">{inLedger ? "also for:" : "for:"}</span>
@@ -276,11 +297,6 @@ export function AskedCard({
           ) : inLedger ? null : (
             <p className="text-xs text-muted-foreground">answers no stated requirement</p>
           )
-        ) : held.size && !heldHere ? (
-          <p className="text-xs text-muted-foreground">
-            <LockIcon className="mr-1 inline size-3 align-[-2px]" />
-            yours; the assistant cannot change it
-          </p>
         ) : null}
         <Collapsible>
           <div className="-ml-2 flex flex-wrap items-center gap-1">

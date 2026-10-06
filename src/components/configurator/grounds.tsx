@@ -273,13 +273,7 @@ export function AsIssued({
         </Group>
       ) : null}
 
-      {grounds === null ? (
-        <p className="mt-6 text-xs text-muted-foreground">
-          This quote was issued before an offer kept why each of its values
-          held, so it cannot be read against what was asked. The proposal
-          lists what it supplies.
-        </p>
-      ) : (
+      {grounds === null ? null : (
         <>
           <Group title="Asserted" hint="what you, the assistant or your agent asked for">
             <Table>
@@ -325,7 +319,7 @@ export function AsIssued({
           </Group>
 
           {follows.length ? (
-            <Group title="Follows from that" hint="nobody chose these; a rule forced each">
+            <Group title="Follows from that" hint="a rule forced each">
               <Table>
                 <TableHeader>
                   <TableRow>

@@ -9,6 +9,12 @@ import {
 } from "@/components/configurator/provider";
 import { ledger } from "@/components/configurator/ledger";
 import { ShowingMenu } from "@/components/configurator/showing";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
 interface Place {
@@ -91,62 +97,53 @@ export function PanelNav() {
     // Beside the wordmark while there is room for it, on a line of its own
     // when there is not.
     <div className="flex min-w-0 flex-[1_1_16rem] flex-wrap items-center gap-2">
-      {/* Wraps rather than scrolling sideways: at a narrow width or a
-          large text size every place stays in view. */}
-      <nav
+      {/* One list, the groups divided by a rule. It wraps rather than
+          scrolling sideways: at a narrow width or a large text size every
+          place stays in view. Nothing drops down, so there is no viewport. */}
+      <NavigationMenu
         aria-label="Panel"
-        className="flex min-w-0 flex-wrap items-center text-xs whitespace-nowrap"
+        viewport={false}
+        className="max-w-none flex-none justify-start"
       >
-        {groups.map((places, i) => (
-          <Fragment key={i}>
-            {i > 0 ? (
-              <span
-                aria-hidden
-                className="mx-2 h-3.5 w-px shrink-0 bg-border"
-              />
-            ) : null}
-            <ul
-              className={cn(
-                "flex flex-wrap items-center gap-x-3",
-                places[0].surface === mode
-                  ? "text-foreground"
-                  : "text-muted-foreground",
-              )}
-            >
-              {places.map((place) => (
-                <li key={place.id}>
-                  <a
-                    href={`#${place.id}`}
-                    aria-current={
-                      place.surface === mode && place.surface !== "canvas"
-                        ? "page"
-                        : undefined
-                    }
-                    aria-disabled={busy && place.surface !== "canvas"}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      // `aria-disabled` says it; this makes it so.
-                      if (busy && place.surface !== "canvas") return;
-                      follow(place);
-                    }}
-                    // The row is tall and the words are small: the padding
-                    // gives the pointer a target the height of the row.
-                    className={cn(
-                      "inline-block py-2 hover:text-foreground",
-                      place.surface === mode &&
-                        place.surface !== "canvas" &&
-                        "font-medium",
-                    )}
-                  >
-                    {place.title}{" "}
-                    <span className="tabular-nums">{place.count}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </Fragment>
-        ))}
-      </nav>
+        <NavigationMenuList className="flex-wrap justify-start whitespace-nowrap">
+          {groups.map((places, i) => (
+            <Fragment key={i}>
+              {i > 0 ? (
+                <li aria-hidden className="mx-1 h-3.5 w-px shrink-0 bg-border" />
+              ) : null}
+              {places.map((place) => {
+                const current =
+                  place.surface === mode && place.surface !== "canvas";
+                return (
+                  <NavigationMenuItem key={place.id}>
+                    <NavigationMenuLink
+                      href={`#${place.id}`}
+                      active={current}
+                      aria-disabled={busy && place.surface !== "canvas"}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        // `aria-disabled` says it; this makes it so.
+                        if (busy && place.surface !== "canvas") return;
+                        follow(place);
+                      }}
+                      className={cn(
+                        "gap-1 hover:text-foreground",
+                        place.surface === mode
+                          ? "text-foreground"
+                          : "text-muted-foreground",
+                        current && "font-medium",
+                      )}
+                    >
+                      {place.title}{" "}
+                      <span className="tabular-nums">{place.count}</span>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                );
+              })}
+            </Fragment>
+          ))}
+        </NavigationMenuList>
+      </NavigationMenu>
       {mode === "canvas" ? (
         <div className="ml-auto shrink-0">
           <ShowingMenu />

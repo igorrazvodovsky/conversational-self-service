@@ -192,14 +192,9 @@ export function Comparison({
   // A quote issued before its item carried grounds says what differs and
   // nothing about why.
   if (!ga || !gb) {
-    const without = !ga ? left.name : right.name;
     return (
       <section id={address.compare(left.id, right.id)} className={cn("mb-6 border", addressable)}>
         {header}
-        <p className="border-b px-3 py-2 text-xs text-muted-foreground">
-          {without} was issued before a quote kept why each value held and what each
-          added to the sum, so this lists only what differs.
-        </p>
         <Table className="text-xs">
           <TableHeader>
             <TableRow>

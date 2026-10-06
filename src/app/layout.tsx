@@ -5,6 +5,7 @@ import "@copilotkit/react-core/v2/styles.css";
 
 import { CopilotKit } from "@copilotkit/react-core/v2";
 import Script from "next/script";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
 // A2UI catalog: definitions + renderers in ./declarative-generative-ui/
 import { demonstrationCatalog } from "./declarative-generative-ui/renderers";
@@ -56,7 +57,7 @@ export default function RootLayout({
             openGenerativeUI={{}}
             useSingleEndpoint={false}
           >
-            {children}
+            <TooltipProvider>{children}</TooltipProvider>
           </CopilotKit>
         </ThemeProvider>
       </body>

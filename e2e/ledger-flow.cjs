@@ -468,7 +468,9 @@ async function run(name, base) {
             texts.map((t) => [
               t,
               [...document.querySelectorAll("main button")].filter((b) => {
-                if (!/^(Answer|Change answer|Answering|Look)/.test(b.textContent.trim())) return false;
+                // The answering control is an icon on the new build, named by its label.
+                const name = b.getAttribute("aria-label") || b.textContent.trim();
+                if (!/^(Answer|Change answer|Answering|Look|Show everything again)/.test(name)) return false;
                 const line = b.closest("[data-node-view-wrapper], [role=listitem]");
                 return !!line && line.textContent.includes(t);
               }).length,

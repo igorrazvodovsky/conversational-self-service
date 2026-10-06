@@ -18,6 +18,7 @@
  * of it is drawn.
  */
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
 import { useConfigurator, type Answer, type Clause, type Variable, type View } from "./provider";
@@ -205,10 +206,17 @@ export function Unbound({ unbound }: { unbound: Variable[] }) {
       className="mt-2 grid scroll-mt-28 gap-2 border border-dashed p-3 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4"
     >
       <div className="min-w-0">
-        <p className="text-sm text-muted-foreground">Answering no stated requirement</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          asserted with nothing said about what for
-        </p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p
+              tabIndex={0}
+              className="w-fit text-sm text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Answering no stated requirement
+            </p>
+          </TooltipTrigger>
+          <TooltipContent>Asserted with nothing said about what for</TooltipContent>
+        </Tooltip>
       </div>
       <div className="grid min-w-0 gap-2 @5xl:grid-cols-2">
         {unbound.map((variable) => (

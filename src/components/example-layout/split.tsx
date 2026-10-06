@@ -101,8 +101,11 @@ export function Split({
         // cross axis, where a short viewport could not satisfy both.
         minSize={sideBySide ? "360px" : undefined}
         // min-h-0/min-w-0 so the artifact scrolls inside the panel rather
-        // than growing it.
-        className="relative flex min-h-0 min-w-0 flex-col bg-ground"
+        // than growing it. The library writes `overflow: auto` on this box;
+        // clipped, it is not a scroll container, so neither `scrollIntoView`,
+        // focus nor a wheel chained past the surface's own scroller can carry
+        // the header out of view.
+        className="relative flex min-h-0 min-w-0 flex-col bg-ground !overflow-clip"
       >
         {artifact}
       </ResizablePanel>
