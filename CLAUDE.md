@@ -210,6 +210,10 @@ The concept layer is mounted into the LangGraph server by `langgraph.json`'s
 `http.app`, so it runs in the same process as the graph and shares one engine
 with the model's tools. `AGENT_URL` points the frontend proxy at it.
 
+`e2e/ledger-flow.cjs` compares the page's information architecture on two
+builds side by side, driving the person's slice 1 task through each; see
+[`e2e/README.md`](e2e/README.md).
+
 The specification survives a restart: the action log is kept in
 `agent/.journal/actions.jsonl` (`AGENT_JOURNAL` moves it) and replayed at boot.
 `npm run reset:agent` deletes it, which starts over.

@@ -6,8 +6,9 @@
  * One of `Moding`'s three surfaces, beside the configuration and the offer.
  * It holds the ledger (`specification.tsx`) with the sources it was read
  * from beneath it (`sources.tsx`), at a width the words can be read at. What
- * answers each clause is shown on the clause; the value itself lives on the
- * configuration, and the clause's answer line links there. Framing a clause
+ * answers each clause is shown on the clause, and links to its choice on the
+ * configuration's ledger (`ledger.tsx`), where the value stands beside the
+ * clause and what it forced. Framing a clause
  * brings the configuration forward (`AFramedRequirementShowsTheConfiguration`),
  * and the frame strip there links back.
  */
