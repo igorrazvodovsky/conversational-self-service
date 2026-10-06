@@ -45,6 +45,7 @@
 
 import { useAgent, useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
 import { useEffect, useRef, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useConfigurator, type Surface } from "./provider";
 
 export const address = {
@@ -164,10 +165,12 @@ export function Lost({ id }: { id: string | null }) {
   return (
     <div role="status">
       {id ? (
-        <p className="border-b bg-muted px-3 py-1.5 text-xs text-foreground">
-          Nothing is at <code className="font-mono">#{id}</code> now: it may have
-          been struck, withdrawn or never issued.
-        </p>
+        <Alert>
+          <AlertDescription>
+            Nothing is at <code>#{id}</code> now: it may have been struck,
+            withdrawn or never issued.
+          </AlertDescription>
+        </Alert>
       ) : null}
     </div>
   );

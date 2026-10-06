@@ -15,11 +15,12 @@
  *   against  a quote's id, or `now`                          the quote surface
  *   thread   a conversation's id                             the chat
  *
- * The first three are facts every party shares, so opening a link performs
- * the gestures that bring the recorded view to what the query says, each
- * only where it differs, and an absent one leaves its part as it is. The
- * rest are the viewer's and are never recorded; an absent one is its
- * default. The page writes the view back as it changes, defaults left out:
+ * `on`, `frame` and `show` are facts every party shares, so opening a link
+ * performs the gestures that bring the recorded view to what the query
+ * says, each only where it differs, and an absent one leaves its part as it
+ * is; going back to an entry the page wrote reads an absent one as its
+ * default, since the page leaves out only defaults. The rest are the
+ * viewer's and are never recorded; an absent one is its default. The page writes the view back as it changes, defaults left out:
  * a navigation the person makes pushes an entry, a change anyone else makes
  * replaces it, so the address bar is always a link to what is on screen and
  * the back button returns to where the person was.
@@ -181,7 +182,12 @@ export function linked(value: unknown): unknown {
 
 /** Bring the view to what a query says: the recorded parts by gesture, each
  * only where it differs; the grid and the conversation directly. Resolves
- * once every gesture has. */
+ * once every gesture has.
+ *
+ * A link from elsewhere that leaves a recorded part out leaves it as it is.
+ * An entry in this tab's history was written by the page, which leaves out
+ * only defaults, so going back to one reads an absent part as its default
+ * (`written`). */
 function useBring() {
   const { view, gesture, grid, setGrid } = useConfigurator();
   const chat = useCopilotChatConfiguration();
@@ -189,10 +195,17 @@ function useBring() {
   latest.current = { view, grid, chat };
 
   return useCallback(
-    async (search: string) => {
+    async (search: string, written = false) => {
       const params = new URLSearchParams(search);
       let now = latest.current.view;
       if (!now) return;
+      if (written) {
+        if (!params.has("on")) params.set("on", SURFACE.canvas);
+        if (!params.has("frame")) params.set("frame", "none");
+        if (!params.has("show"))
+          params.set("show", now.showing.filter((f) => f.usual).map((f) => f.facet).join(","));
+        if (!params.has("grid")) params.set("grid", "today");
+      }
       const perform = async (stimulus: Stimulus) => {
         const next = await gesture(stimulus);
         if (next) now = next;
@@ -258,7 +271,7 @@ export function usePlace(): boolean {
     if (!arrived) return;
     const back = () => {
       bringing.current = true;
-      void bring(window.location.search).finally(() => {
+      void bring(window.location.search, true).finally(() => {
         bringing.current = false;
         settle((n) => n + 1);
       });

@@ -141,10 +141,12 @@ The URL has two parts, and they name different things:
 Opening a link performs the gestures that bring the recorded view to what
 the query says: `focus`, `frame` or `unframe`, `show` and `hide`, each only
 where the recorded view differs, so a reload records nothing. The same
-happens when the person goes back through the browser's history, and when a
-link to this page is followed from the chat. A parameter that is absent
-leaves its part of the view as it is: the view is a fact every party shares,
-and a link that says nothing about it does not change it. The rest are
+happens when a link to this page is followed from the chat. A parameter that
+is absent leaves its part of the view as it is: the view is a fact every
+party shares, and a link that says nothing about it does not change it.
+Going back through the browser's history follows the query too, but an
+entry in the history was written by the page, which leaves out only
+defaults, so there an absent parameter is its default. The rest are
 viewer conveniences and are not recorded; an absent one is its default — the
 latest quote, read against what was asked, compared with nothing, on
 today's grid.
