@@ -183,7 +183,7 @@ value between the strengths when the tag changes or the clause goes. See
 
 When an assumption cannot hold, nothing is dropped without an account. The
 rules that cannot hold together are recorded against the variable and reach the
-card; when two or more assertions took part they also become the options of a
+value where it is drawn; when two or more assertions took part they also become the options of a
 question, and the person answers it. A lone refusal has nothing to choose
 between and raises no question — the account appears, the banner does not. See
 [Propagation](propagation.md#when-assertions-cannot-hold-together).

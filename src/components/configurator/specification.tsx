@@ -6,12 +6,12 @@
  *
  * A Tiptap editor whose schema is a sequence of clause nodes and nothing
  * else. Each node carries the clause's identity from `Specifying` as an
- * attribute and is one line of the requirement ledger: the text is editable
- * in place on the left, and everything else about the clause — its
- * negotiability, its source, and on the right the values answering it with
- * what each forced (`ledger.tsx`) — is rendered by the node view and is not
- * text. The requirement and its answer are one line, on one surface. Nothing is asked of a line as it is
- * typed: it is a clause the moment it has words. The words may name the
+ * attribute and is one line of the requirement ledger, read as a question
+ * and its answer: the text is editable in place, and beneath it the values
+ * answering it with what each forced (`ledger.tsx`). Everything else about
+ * the clause — its source, its negotiability, how each answer came to be —
+ * is drawn while the line is open, which it is while the caret is in it.
+ * None of it is text. Nothing is asked of a line as it is typed: it is a clause the moment it has words. The words may name the
  * catalogue — `@` offers it — and a reference so placed is part of the text,
  * written as a token (`references.tsx`).
  *
@@ -26,7 +26,7 @@
  * While the person is typing it owns the text; the view from the server is
  * written back into it only when they are not, so that a refresh while the
  * model is working cannot overwrite what a person is in the middle of typing.
- * Focus on a control inside a line — a card's *Change*, *Take back* — is not
+ * Focus on a control inside a line — an answer's value, *Take back* — is not
  * typing. While a frame is on the document is read, not written: only the
  * lines in the frame are shown, and nothing can be typed into lines that are
  * not.
@@ -48,7 +48,7 @@ import {
   type NodeViewProps,
 } from "@tiptap/react";
 import { EllipsisIcon, Maximize2Icon, Minimize2Icon, GripVerticalIcon, XIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -79,7 +79,18 @@ import {
   type Negotiability,
   type View,
 } from "./provider";
-import { Answers, framedAsserted, ledger, Loose, Open, Unbound } from "./ledger";
+import {
+  Answers,
+  AnswersDetails,
+  Details,
+  framedAsserted,
+  ledger,
+  lineAddresses,
+  Loose,
+  Open,
+  Unbound,
+  useOpened,
+} from "./ledger";
 import { Sources } from "./sources";
 
 // -- the schema ---------------------------------------------------------------
@@ -321,9 +332,36 @@ function refocus(clause: string, control?: string, tries = 0) {
   }, 100);
 }
 
+/**
+ * The line the caret is in, which is the line being read: it opens, so
+ * walking the document with the caret reviews it a line at a time. Set from
+ * the editor's selection while the editor has focus, and kept when focus
+ * moves to a control set into that line.
+ */
+const Current = createContext<{
+  current: string | null;
+  setCurrent: (c: string | null) => void;
+  /** The lines opened from their value or an address. Held here rather than
+   * in the node view, which a write-back makes afresh. */
+  opened: Set<string>;
+  setOpened: (clause: string, open: boolean) => void;
+}>({
+  current: null,
+  setCurrent: () => {},
+  opened: new Set(),
+  setOpened: () => {},
+});
+
+/** The clause the selection is in, if it has an identity. */
+function clauseAt(editor: Editor): string | null {
+  const { $from } = editor.state.selection;
+  return $from.depth >= 1 ? ($from.node(1).attrs.clause ?? null) : null;
+}
+
 function ClauseView({ node, decorations }: NodeViewProps) {
   const { view, gesture, busy } = useConfigurator();
   const { answering, setAnswering } = useAnswering();
+  const { current, setCurrent, opened, setOpened } = useContext(Current);
   const [relaxing, setRelaxing] = useState(false);
   // Back to the Relax button when the form it opened closes.
   const relaxButton = useRef<HTMLButtonElement>(null);
@@ -345,6 +383,21 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const outside = !!view?.frame && (!clause || !lines?.shown.has(clause.clause));
   const order = view?.clauses.map((c) => c.clause) ?? [];
   const at = clause ? order.indexOf(clause.clause) : -1;
+  const drawn = (clause && lines?.lines.get(clause.clause)) || [];
+  // Open while the caret is in it, or once opened from its value or an
+  // address, until closed.
+  const [pinned, setPinned] = useOpened(
+    clause ? [address.clause(clause.clause), ...lineAddresses(drawn)] : [],
+    [!!id && opened.has(id), (open) => id && setOpened(id, open)],
+  );
+  const reading = !!clause && current === clause.clause;
+  const expanded = !!clause && (pinned || reading || relaxing);
+  const toggle = () => {
+    if (expanded) {
+      setPinned(false);
+      if (reading) setCurrent(null);
+    } else setPinned(true);
+  };
 
   return (
     <NodeViewWrapper
@@ -357,180 +410,180 @@ function ClauseView({ node, decorations }: NodeViewProps) {
         outside && "hidden",
       )}
     >
-      {/* One line of the ledger: the requirement on the left, in the
-          person's words; what answers it on the right. */}
-      <div className="grid gap-3 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4">
-        <div className="flex min-w-0 items-start gap-3">
-          {moved ? (
-            <div contentEditable={false} className="pt-1.5 select-none">
-              <Moved by={moved} />
+      {/* One line of the ledger, read as a question and its answer: the
+          requirement in the person's words, and beneath it what answers
+          it. Everything else is the open line's. */}
+      <div className="flex min-w-0 items-start gap-3">
+        {moved ? (
+          <div contentEditable={false} className="pt-1.5 select-none">
+            <Moved by={moved} />
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1">
+          {relaxing && clause ? (
+            <div contentEditable={false}>
+              <Relax clause={clause} onDone={() => setRelaxing(false)} />
             </div>
-          ) : null}
-          <div className="min-w-0 flex-1 space-y-1.5">
-            {relaxing && clause ? (
-              <div contentEditable={false}>
-                <Relax clause={clause} onDone={() => setRelaxing(false)} />
-              </div>
-            ) : (
-              <div className="relative">
-                {hint ? (
-                  <span
-                    contentEditable={false}
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 text-sm text-muted-foreground"
-                  >
-                    {hint}
-                  </span>
-                ) : null}
-                <NodeViewContent className="text-sm outline-none" />
-              </div>
-            )}
-            {clause?.formerly.length ? (
-              <p
-                contentEditable={false}
-                className="text-xs text-muted-foreground select-none"
-                title={clause.formerly.join(" → ")}
-              >
-                relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
-                {clause.formerly.length > 1 ? (
-                  <span className="sr-only">
-                    ; in full, {clause.formerly.join(", then ")}
-                  </span>
-                ) : null}
-              </p>
-            ) : null}
-            {/* Where the clause came from, when the model read it: the source
-                beside the words, so the reading is checked where it stands.
-                A clause the person typed says nothing here. */}
-            {clause?.source ? (
-              <p
-                contentEditable={false}
-                className="text-xs text-muted-foreground select-none"
-                title={clause.source.words}
-              >
-                {/* The assistant's reading until the person keeps or rewords
-                    it; keeping makes them the party who stated it. */}
-                {clause.statedBy === "model" ? "the assistant's reading of " : "read from "}
-                <To
-                  id={address.source(clause.source.kind, clause.source.id)}
-                  title="The source, with everything read from it"
-                  className={clause.source.kind === "file" ? "text-foreground" : undefined}
+          ) : (
+            <div className="relative">
+              {hint ? (
+                <span
+                  contentEditable={false}
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 text-sm text-muted-foreground"
                 >
-                  {clause.source.kind === "file"
-                    ? clause.source.name
-                    : clause.source.broughtBy === "browser"
-                      ? "what your agent said"
-                      : "what you said"}
-                </To>
-                {clause.statedBy === "model" ? (
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    disabled={busy}
-                    className="ml-1 h-5"
-                    title="Make this requirement yours, as the assistant read it"
-                    onClick={() => void gesture({ act: "keep", clause: clause.clause })}
-                  >
-                    Keep
-                  </Button>
-                ) : null}
-              </p>
-            ) : null}
-            {clause ? (
-              <div
-                contentEditable={false}
-                className="flex flex-wrap items-center gap-1 select-none"
+                  {hint}
+                </span>
+              ) : null}
+              <NodeViewContent className="text-sm outline-none" />
+            </div>
+          )}
+        </div>
+        {clause ? (
+          <div contentEditable={false} className="flex shrink-0 items-center gap-0.5 select-none">
+            {/* A reading still the assistant's is a decision waiting on the
+                person, so its Keep is always there. */}
+            {clause.statedBy === "model" ? (
+              <Button
+                size="xs"
+                variant="ghost"
+                disabled={busy}
+                className="h-5 text-muted-foreground"
+                title="The assistant read this; make it your requirement as it stands"
+                onClick={() => void gesture({ act: "keep", clause: clause.clause })}
               >
+                Keep
+                <span className="sr-only">: {plain(clause.text)}</span>
+              </Button>
+            ) : null}
+            {/* The line's controls show on hover, on focus and while the
+                line is open; they stay in the tab order throughout. */}
+            <div
+              className={cn(
+                "flex gap-0.5 opacity-0 transition-opacity group-hover/clause:opacity-100 focus-within:opacity-100",
+                (expanded || active) && "opacity-100",
+              )}
+            >
+              {/* Frame the canvas on this clause: its answers, what they
+                  forced, what could still answer it — and while it is
+                  framed, a pick answers it. Pressed again, the frame comes
+                  off. The line's one way to answer it. */}
+              <Button
+                variant={active ? "default" : "ghost"}
+                size="icon-xs"
+                disabled={busy}
+                aria-pressed={active}
+                title={
+                  active
+                    ? "Show everything again"
+                    : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
+                }
+                aria-label={`${active ? "Show everything again" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}: ${plain(clause.text)}`}
+                onClick={() => setAnswering(active ? null : clause)}
+              >
+                {active ? <Minimize2Icon /> : <Maximize2Icon />}
+              </Button>
+              {/* How firmly the clause is meant: fixed until settled
+                  otherwise. Out of the way, since it is asked only when it
+                  matters. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    disabled={busy}
+                    title={`${NEGOTIABILITY[clause.negotiability]} — how firmly this is meant`}
+                    aria-label={`How firmly this is meant: ${NEGOTIABILITY[clause.negotiability]}`}
+                  >
+                    <EllipsisIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>How firmly this is meant</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={clause.negotiability}
+                    onValueChange={(negotiability) => {
+                      if (negotiability !== clause.negotiability)
+                        void gesture({ act: "settle", clause: clause.clause, negotiability });
+                    }}
+                  >
+                    {(Object.keys(NEGOTIABILITY) as Negotiability[]).map((key) => (
+                      <DropdownMenuRadioItem key={key} value={key}>
+                        {NEGOTIABILITY[key]}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                disabled={busy}
+                title="Strike this clause"
+                aria-label={`Strike: ${plain(clause.text)}`}
+                onClick={() => {
+                  // The clause goes, and the keyboard goes on to the next.
+                  const next = order[at + 1] ?? order[at - 1];
+                  void gesture({ act: "strike", clause: clause.clause }).then(() => {
+                    if (next) refocus(next);
+                  });
+                }}
+              >
+                <XIcon />
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+      {clause && lines ? (
+        <div contentEditable={false} className="mt-1 min-w-0 pl-4">
+          <Answers clause={clause} drawn={drawn} open={expanded} onToggle={toggle} />
+          {expanded ? (
+            <Details>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                {/* Where the words came from, when the model read them. */}
+                {clause.source ? (
+                  <p title={clause.source.words}>
+                    {clause.statedBy === "model" ? "The assistant's reading of " : "Read from "}
+                    <To
+                      id={address.source(clause.source.kind, clause.source.id)}
+                      title="The source, with everything read from it"
+                    >
+                      {clause.source.kind === "file"
+                        ? clause.source.name
+                        : clause.source.broughtBy === "browser"
+                          ? "what your agent said"
+                          : "what you said"}
+                    </To>
+                  </p>
+                ) : null}
+                {clause.formerly.length ? (
+                  <p title={clause.formerly.join(" → ")}>
+                    Relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
+                    {clause.formerly.length > 1 ? (
+                      <span className="sr-only">; in full, {clause.formerly.join(", then ")}</span>
+                    ) : null}
+                  </p>
+                ) : null}
                 {clause.negotiability === "negotiable" && !relaxing ? (
                   <Button
                     ref={relaxButton}
                     size="xs"
                     variant="ghost"
                     disabled={busy}
+                    className="-ml-2 text-muted-foreground"
                     onClick={() => setRelaxing(true)}
                   >
                     Relax
+                    <span className="sr-only">: {plain(clause.text)}</span>
                   </Button>
                 ) : null}
-                <div className="ml-auto flex gap-0.5">
-                  {/* Frame the canvas on this clause: its answers, what they
-                      forced, what could still answer it — and while it is
-                      framed, a pick answers it. Pressed again, the frame
-                      comes off. The line's one way to answer it. */}
-                  <Button
-                    variant={active ? "default" : "ghost"}
-                    size="icon-xs"
-                    disabled={busy}
-                    aria-pressed={active}
-                    title={
-                      active
-                        ? "Show everything again"
-                        : "Narrow the canvas to this requirement; a value picked while it is narrowed answers it"
-                    }
-                    aria-label={`${active ? "Show everything again" : open ? "Look" : clause.answers.length ? "Change answer" : "Answer"}: ${plain(clause.text)}`}
-                    onClick={() => setAnswering(active ? null : clause)}
-                  >
-                    {active ? <Minimize2Icon /> : <Maximize2Icon />}
-                  </Button>
-                  {/* How firmly the clause is meant: fixed until settled
-                      otherwise. Out of the way, since it is asked only when
-                      it matters. */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        disabled={busy}
-                        title={`${NEGOTIABILITY[clause.negotiability]} — how firmly this is meant`}
-                        aria-label={`How firmly this is meant: ${NEGOTIABILITY[clause.negotiability]}`}
-                      >
-                        <EllipsisIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>How firmly this is meant</DropdownMenuLabel>
-                      <DropdownMenuRadioGroup
-                        value={clause.negotiability}
-                        onValueChange={(negotiability) => {
-                          if (negotiability !== clause.negotiability)
-                            void gesture({ act: "settle", clause: clause.clause, negotiability });
-                        }}
-                      >
-                        {(Object.keys(NEGOTIABILITY) as Negotiability[]).map((key) => (
-                          <DropdownMenuRadioItem key={key} value={key}>
-                            {NEGOTIABILITY[key]}
-                          </DropdownMenuRadioItem>
-                        ))}
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    disabled={busy}
-                    title="Strike this clause"
-                    aria-label={`Strike: ${plain(clause.text)}`}
-                    onClick={() => {
-                      // The clause goes, and the keyboard goes on to the next.
-                      const next = order[at + 1] ?? order[at - 1];
-                      void gesture({ act: "strike", clause: clause.clause }).then(() => {
-                        if (next) refocus(next);
-                      });
-                    }}
-                  >
-                    <XIcon />
-                  </Button>
-                </div>
               </div>
-            ) : null}
-          </div>
+              <AnswersDetails clause={clause.clause} drawn={drawn} sourced={!!clause.source} />
+            </Details>
+          ) : null}
         </div>
-        {clause && lines ? (
-          <div contentEditable={false} className="min-w-0">
-            <Answers clause={clause} drawn={lines.lines.get(clause.clause) ?? []} />
-          </div>
-        ) : null}
-      </div>
+      ) : null}
     </NodeViewWrapper>
   );
 }
@@ -562,6 +615,22 @@ export function Specification() {
   const given = useRef(new Set((view?.clauses ?? []).map((c) => c.clause)));
   // Made once: it reads the view through the ref when the popup opens.
   const [Referencing] = useState(() => referencing(viewRef));
+  // The line being read. Only a selection the person moved counts: a
+  // write-back from the server moves the selection too, and while it does
+  // the editor does not have focus.
+  const [current, setCurrent] = useState<string | null>(null);
+  const [opened, setOpenedSet] = useState<Set<string>>(() => new Set());
+  const setOpened = useCallback(
+    (clause: string, open: boolean) =>
+      setOpenedSet((was) => {
+        if (was.has(clause) === open) return was;
+        const next = new Set(was);
+        if (open) next.add(clause);
+        else next.delete(clause);
+        return next;
+      }),
+    [],
+  );
 
   const editor = useEditor({
     extensions: [ClauseDocument, Text, ClauseNode, ClausePlaceholder, Referencing],
@@ -578,6 +647,10 @@ export function Specification() {
     },
     onUpdate: () => schedule(),
     onBlur: () => void flush(),
+    onFocus: ({ editor }) => setCurrent(clauseAt(editor)),
+    onSelectionUpdate: ({ editor }) => {
+      if (editor.isFocused) setCurrent(clauseAt(editor));
+    },
   });
 
   const writeBack = useCallback(
@@ -686,7 +759,7 @@ export function Specification() {
   );
 
   return (
-    <>
+    <Current.Provider value={{ current, setCurrent, opened, setOpened }}>
       {editor ? (
         // Placed against the clause's left edge; the padding takes it out
         // of the card and level with the first line of words.
@@ -702,7 +775,7 @@ export function Specification() {
         </DragHandle>
       ) : null}
       <EditorContent editor={editor} />
-    </>
+    </Current.Provider>
   );
 }
 

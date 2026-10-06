@@ -372,7 +372,7 @@ canvas shows rather than which facts about each. The frame is a value the
 click passes and the read side interprets, and the rule carries it without
 looking inside. The values read are `[ by: "assertion" ; variable: ?v ]`,
 which the page offers no control for — what an assertion forced is beneath
-its card — and which the person's own agent may pass, `[ by: "clause" ; clause: ?c ]`,
+it on its line — and which the person's own agent may pass, `[ by: "clause" ; clause: ?c ]`,
 from a control on a clause, and `[ by: "gap" ; gap: ?g ]`, from the filters
 over the specification. Rules in
 [Propagation](propagation.md#a-frame-goes-with-what-it-framed) take a frame

@@ -1,26 +1,17 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon, LockIcon, SparklesIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, SparklesIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { address, addressable, Moved, targeted as targetedRing, To, useTargeted } from "./address";
-import { ClauseText, plain, useAnswering } from "./clauses";
+import { ClauseText, useAnswering } from "./clauses";
 import { Consequences } from "./question";
 import { adds, kilos } from "./format";
 import { useConfigurator, type Option, type Variable } from "./provider";
@@ -164,195 +155,229 @@ function Rules({ rules }: { rules: Variable["owing"] }) {
 }
 
 /**
- * A value held for a clause the person stated: a lock, and what it means on
- * hover or focus. Focusable, so the sentence reaches a keyboard too.
+ * A value a party asserted, on a line of the ledger: its heading and the
+ * value, and nothing else. The value is the line's way into the rest — who
+ * asserted it and from which words, what else it answers, its options, taking
+ * it back — which `AssertedDetails` draws while the line is open. What stands
+ * against the value is a fact about it, not a detail, so it stays: a
+ * yielded value is struck through and says what it gave way to, an unmet one
+ * says it cannot be built with the rest.
  */
-function Held({ children }: { children?: React.ReactNode }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          tabIndex={0}
-          role={children ? undefined : "img"}
-          aria-label={children ? undefined : "Yours: the assistant cannot change it"}
-          className="rounded-none outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <LockIcon aria-hidden className={cn("inline size-3 align-[-2px]", children && "mr-1")} />
-          {children}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>Yours: the assistant cannot change it</TooltipContent>
-    </Tooltip>
-  );
-}
-
-/** A variable a party asserted a value for, or asserted an impossible one for. */
-export function AskedCard({
+export function AssertedPair({
   variable,
-  under,
+  open,
+  onToggle,
 }: {
   variable: Variable;
-  /** The ledger line it is drawn on: the clause, or null for the line of
-   * values answering none. That clause, or the absence of one, is the line's
-   * own heading, so the card names only the other clauses it answers. */
-  under?: string | null;
+  open: boolean;
+  onToggle: () => void;
 }) {
-  const { gesture, busy, label, view } = useConfigurator();
-  const shown = useShown();
+  const { label, view } = useConfigurator();
   const unmet = variable.standing === "unmet";
   const yielded = variable.standing === "yielded";
   const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
   const isTarget = useTargeted(address.variable(variable.name));
-  const held = new Set(variable.held);
-  const inLedger = under !== undefined;
-  const answers = inLedger
-    ? variable.answers.filter((a) => a.clause !== under)
-    : variable.answers;
-  // On its own line, a value held for the clause it answers there says so
-  // once, without repeating the clause.
-  const heldHere = inLedger && under !== null && held.has(under);
   return (
-    <Card
+    <div
       id={address.variable(variable.name)}
-      size="sm"
-      className={cn(addressable, isTarget && targetedRing)}
+      className={cn(
+        "group/pair flex flex-wrap items-baseline gap-x-2 text-sm",
+        addressable,
+        isTarget && targetedRing,
+      )}
     >
-      <CardHeader>
-        <CardDescription className="uppercase tracking-wide">
-          {moved ? <Moved by={moved} /> : null}
-          {variable.heading}
-          {/* Held softly: the value answers only negotiable clauses, and
-              reached the rules as a preference rather than a requirement. */}
-          {variable.softly ? (
-            <span className="ml-2 normal-case tracking-normal">negotiable</span>
-          ) : null}
-        </CardDescription>
-        <CardTitle className={cn(yielded && "text-muted-foreground line-through")}>
+      <span className="text-muted-foreground">
+        {moved ? <Moved by={moved} /> : null}
+        {variable.heading}
+      </span>
+      <Button
+        variant="ghost"
+        size="xs"
+        data-control="answer"
+        aria-expanded={open}
+        onClick={onToggle}
+        className="-mx-1 h-auto px-1 py-0.5 text-left text-sm font-medium whitespace-normal"
+      >
+        <span className={cn(yielded && "text-muted-foreground line-through")}>
           {label(variable.asked)}
-          {yielded ? <span className="sr-only"> (gave way)</span> : null}
-          {/* Held for the clause on this line, or for clauses the canvas
-              does not list here: the lock goes beside the value. */}
-          {heldHere || (held.size > 0 && !shown("answers")) ? (
-            <span className="ml-1.5 font-normal text-muted-foreground">
-              <Held />
-            </span>
+        </span>
+        <span className="sr-only">
+          {yielded ? " (gave way)" : ""}, {variable.heading}: {open ? "hide" : "show"} how it
+          came to be and the other options
+        </span>
+        <ChevronDownIcon
+          aria-hidden
+          className={cn(
+            "text-muted-foreground opacity-0 transition group-hover/pair:opacity-100 group-focus-visible/button:opacity-100",
+            open && "rotate-180 opacity-100",
+          )}
+        />
+      </Button>
+      {unmet ? (
+        <span className="text-xs text-muted-foreground">not buildable with the rest</span>
+      ) : null}
+      {yielded ? (
+        <span className="text-xs text-muted-foreground">
+          gave way
+          {variable.value ? (
+            <>
+              {" "}
+              to <span className="text-foreground">{label(variable.value)}</span>
+            </>
           ) : null}
-        </CardTitle>
-        <CardAction>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            disabled={busy}
-            title="Take this back"
-            aria-label={`Take back ${variable.heading}`}
-            onClick={() =>
-              void gesture({ act: "withdraw", variable: variable.name })
-            }
-          >
-            <XIcon />
-          </Button>
-        </CardAction>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {/* Who asserted the value and, when the assistant asserted it in
-            reply to a message, the person's words: read off the flow the
-            message opened, so the reading stands where the value does. */}
-        {shown("how") && variable.how ? (
-          <p className="line-clamp-2 text-xs text-muted-foreground" title={variable.how}>
-            {variable.how}
-          </p>
-        ) : null}
-        {/* What the value is for, from `Binding`. A clause the person stated
-            holds the value for a reason, so the assistant cannot change it:
-            the line says so where the clause already stands, rather than
-            repeating the clause. An assertion answering no clause is the
-            slice 0 case and is said so, not hidden — unless the person hid
-            the facet, which is theirs to do; the hold is said either way. */}
-        {shown("answers") ? (
-          answers.length ? (
-            <ul className="space-y-0.5 text-xs">
-              {answers.map((answer) => (
-                <li
-                  key={answer.clause}
-                  // One line, until the link in it has keyboard focus: then the
-                  // clause shows in full and its focus ring is not clipped.
-                  className="truncate has-[a:focus-visible]:overflow-visible has-[a:focus-visible]:whitespace-normal"
-                  title={plain(answer.text)}
-                >
-                  {/* One line: the clause is a link, and the ledger has the words. */}
-                  {held.has(answer.clause) ? (
-                    <span className="text-muted-foreground">
-                      <Held>{inLedger ? "yours, also for:" : "yours, for:"}</Held>
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">{inLedger ? "also for:" : "for:"}</span>
-                  )}{" "}
-                  <To id={address.clause(answer.clause)} title="The clause, in the requirement ledger">
-                    <ClauseText text={answer.text} />
-                  </To>
-                </li>
-              ))}
-            </ul>
-          ) : inLedger ? null : (
-            <p className="text-xs text-muted-foreground">answers no stated requirement</p>
-          )
-        ) : null}
-        <Collapsible>
-          <div className="-ml-2 flex flex-wrap items-center gap-1">
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="xs" className="text-muted-foreground">
-                <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />
-                Change
-                <span className="sr-only"> {variable.heading}</span>
-              </Button>
-            </CollapsibleTrigger>
-          </div>
-          <CollapsibleContent className="pt-1">
-            <Options variable={variable} />
-          </CollapsibleContent>
-        </Collapsible>
-        {unmet ? (
-          <div className="space-y-1">
-            <p className="text-xs">
-              On record, and not buildable alongside the rest.
-            </p>
-            {/* The rules that refused it, kept by `Constraining.refused` rather
-                than only carried in the question — so the account survives the
-                banner being dismissed. */}
-            <Rules rules={variable.refused} />
-          </div>
-        ) : null}
-        {yielded ? (
-          <div className="space-y-1">
-            {/* A preference the rules could not honour. Muted, since it no
-                longer holds: by the person's own account this was the thing
-                to give up, so no question is asked and nothing is refused. `Constraining`
-                records nothing about it; the read is `settled` beside
-                `inclined`. */}
-            <p className="text-xs text-muted-foreground">
-              Negotiable, and gave way
-              {variable.value ? (
-                <>
-                  {" "}
-                  to <span className="text-foreground">{label(variable.value)}</span>
-                </>
-              ) : null}
-              .
-            </p>
-            {shown("rules") ? (
-              <>
-                <Rules rules={variable.owing} />
-                {variable.following.length ? (
-                  <p className="text-xs text-muted-foreground">
-                    from {variable.following.map((f) => f.heading).join(", ")}
-                  </p>
-                ) : null}
-              </>
-            ) : null}
-          </div>
-        ) : null}
-      </CardContent>
-    </Card>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Everything about an asserted value beyond the value itself, drawn while its
+ * line is open: who asserted it and from which words (the `how` facet), what
+ * it is held for and the other clauses it answers (`answers`), whether it
+ * reached the rules as a preference, the rules that refused it or that it gave
+ * way to, its options, and taking it back.
+ */
+export function AssertedDetails({
+  variable,
+  under,
+  sourced = false,
+}: {
+  variable: Variable;
+  /** The ledger line it is drawn on: the clause, or null for a value
+   * answering none. That clause is the line's own, so only the others are
+   * named. */
+  under: string | null;
+  /** Whether the line's clause names the source it was read from. */
+  sourced?: boolean;
+}) {
+  const { gesture, busy, label } = useConfigurator();
+  const shown = useShown();
+  const unmet = variable.standing === "unmet";
+  const yielded = variable.standing === "yielded";
+  const held = new Set(variable.held);
+  const others = variable.answers.filter((a) => a.clause !== under);
+  return (
+    <div className="space-y-1.5 text-xs text-muted-foreground">
+      {/* On a line whose clause was read from a source, the line already
+          says where; the read side's sentence for that case, *read this in
+          …*, would say it again. */}
+      {shown("how") && variable.how && !(sourced && / read this (in|from) /.test(variable.how)) ? (
+        <p>{variable.how[0].toUpperCase() + variable.how.slice(1)}</p>
+      ) : null}
+      {/* A clause the person stated holds the value for a reason, so the
+          assistant cannot change it. Said here, in words, for this line and
+          for the others it answers; the hold is said even with the
+          `answers` facet hidden, since it is about this value. */}
+      {under !== null && held.has(under) ? (
+        <p>Yours: the assistant cannot change it.</p>
+      ) : null}
+      {others.length && shown("answers") ? (
+        <ul className="space-y-0.5">
+          {others.map((answer) => (
+            <li key={answer.clause}>
+              {held.has(answer.clause) ? "Also held for " : "Also answers "}
+              <To id={address.clause(answer.clause)} title="The clause, in the requirement ledger">
+                <ClauseText text={answer.text} />
+              </To>
+            </li>
+          ))}
+        </ul>
+      ) : others.some((a) => held.has(a.clause)) ? (
+        <p>Yours: the assistant cannot change it.</p>
+      ) : null}
+      {/* Held softly: the value answers only negotiable clauses, and reached
+          the rules as a preference rather than a requirement. */}
+      {variable.softly ? <p>Negotiable: it reached the rules as a preference.</p> : null}
+      {unmet ? (
+        <div className="space-y-1">
+          <p className="text-foreground">On record, and not buildable alongside the rest.</p>
+          {/* The rules that refused it, kept by `Constraining.refused` rather
+              than only carried in the question — so the account survives the
+              banner being dismissed. */}
+          <Rules rules={variable.refused} />
+        </div>
+      ) : null}
+      {yielded && shown("rules") ? (
+        <>
+          {/* A preference the rules could not honour. By the person's own
+              account this was the thing to give up, so no question is asked
+              and nothing is refused; the read is `settled` beside `inclined`. */}
+          <Rules rules={variable.owing} />
+          {variable.following.length ? (
+            <p>from {variable.following.map((f) => f.heading).join(", ")}</p>
+          ) : null}
+        </>
+      ) : null}
+      <Options variable={variable} />
+      <Button
+        variant="ghost"
+        size="xs"
+        disabled={busy}
+        className="-ml-2 text-muted-foreground"
+        onClick={() => void gesture({ act: "withdraw", variable: variable.name })}
+      >
+        <XIcon />
+        Take back
+        <span className="sr-only">
+          {" "}
+          {variable.heading}: {label(variable.asked)}
+        </span>
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * A value that follows, beneath the assertion it rests on: heading and value,
+ * muted, so the line says what followed without opening. Addressed where it
+ * is first drawn. The rule behind it is a detail of the open line.
+ */
+export function FollowsPair({
+  variable,
+  addressed = true,
+}: {
+  variable: Variable;
+  addressed?: boolean;
+}) {
+  const { label, view } = useConfigurator();
+  const touched = view?.touched;
+  const moved =
+    touched && variable.following.some((f) => touched.variables.includes(f.variable))
+      ? touched.by
+      : null;
+  const isTarget = useTargeted(address.variable(variable.name));
+  return (
+    <li
+      id={addressed ? address.variable(variable.name) : undefined}
+      className={cn(
+        "flex flex-wrap items-baseline gap-x-2 text-xs text-muted-foreground",
+        addressable,
+        addressed && isTarget && targetedRing,
+      )}
+    >
+      <span aria-hidden>↳</span>
+      <span className="sr-only">forced: </span>
+      <span>
+        {moved ? <Moved by={moved} /> : null}
+        {variable.heading}
+      </span>
+      <span className="text-foreground">{label(variable.value)}</span>
+    </li>
+  );
+}
+
+/** The rules behind a value that follows, for the open line. */
+export function FollowsWhy({ variable }: { variable: Variable }) {
+  const shown = useShown();
+  if (!shown("rules") || !variable.owing.length) return null;
+  return (
+    <div className="space-y-0.5 text-xs text-muted-foreground">
+      <p>
+        <span className="text-foreground">{variable.heading}</span> follows:
+      </p>
+      <Rules rules={variable.owing} />
+    </div>
   );
 }
 
@@ -383,7 +408,7 @@ export function FollowsRow({
       size="xs"
       variant="muted"
       role="listitem"
-      // Set into the panel's ground, under the raised asserted cards. The
+      // Set into the panel's ground, on a line of its own. The
       // variant's own half-strength muted all but vanishes on that ground.
       className={cn("items-start bg-sunken", addressable, addressed && isTarget && targetedRing)}
     >

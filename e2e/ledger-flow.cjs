@@ -125,7 +125,8 @@ function findButton(page, label, within) {
   return page.evaluateHandle(
     ({ label, within }) => {
       const main = document.querySelector("main");
-      const match = (b) => !b.disabled && b.textContent.trim().startsWith(label);
+      const match = (b) =>
+        !b.disabled && (b.dataset.control === label || b.textContent.trim().startsWith(label));
       if (!within) return [...main.querySelectorAll("button")].find(match) ?? null;
       const holder = [...main.querySelectorAll("*")].find(
         (e) => e.children.length === 0 && e.textContent.includes(within) && e.offsetParent !== null,
@@ -398,10 +399,14 @@ async function run(name, base) {
     };
     await shot("linked");
 
-    // 7. The keyboard on a control set into the ledger: Enter on a card's
-    //    Change opens its options and adds no requirement.
+    // 7. The keyboard on a control set into the ledger: Enter on an
+    //    answer's value opens its line, options and all, and adds no
+    //    requirement.
     const clausesBefore = (await view(base)).clauses.length;
-    const change = await findButton(page, "Change", LOAD);
+    // The answer's value on a build that has one, a card's Change on one
+    // that does not.
+    let change = await findButton(page, "answer", LOAD);
+    if (!change.asElement()) change = await findButton(page, "Change", LOAD);
     await change.evaluate((b) => b.focus());
     await page.keyboard.press("Enter");
     await pause(800);
@@ -542,7 +547,7 @@ async function run(name, base) {
       `${yes(r.link.together)} (\`${r.link.link.replace(/:ch.*/, ":…")}\`)`,
     ),
     row("A reading, answered and unanswerable, on the surface it brings forward", (r) => yes(r.read.both)),
-    row("Enter on a card's Change opens it, and adds no requirement", (r) => yes(r.keyboard.ok)),
+    row("Enter on an answer's value opens it, and adds no requirement", (r) => yes(r.keyboard.ok)),
     row("A co-answer outside the frame reported truthfully", (r) => yes(r.framed.truthful)),
     row("Requirements a surface of their own", (r) => yes(r.shape.requirementsSurface)),
     row("Ways to answer each requirement", (r) => Object.values(r.shape.answerControls).join(", ")),

@@ -88,7 +88,7 @@ layer beside the agent.
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
 │   │   │   ├── address.tsx               # every item's address, and links between them
 │   │   │   ├── webmcp.tsx                # the person's gestures, registered for their own agent (WebMCP)
-│   │   │   └── variables.tsx             # an asserted card, a row that follows, an open row
+│   │   │   └── variables.tsx             # an answer and what it forced, a row that follows, an open row
 │   │   ├── example-layout/               # the artifact panel (the specification or the quotes, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features
 │   └── hooks/

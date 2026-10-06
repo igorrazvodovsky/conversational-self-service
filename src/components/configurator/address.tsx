@@ -8,7 +8,7 @@
  * to the clause it answers, on its ledger line — at `#choice:<id>`, a source at
  * `#source:<kind>:<id>`, the list at `#asserted`. The fragment is the id of
  * the element that renders the item, wherever the current state puts it — the
- * same variable is a card on a requirement's line today and an open row at
+ * same variable is an answer on a requirement's line today and an open row at
  * the list's tail after a withdrawal, and the address follows it. An item the
  * frame leaves out is not drawn, so following its address, once it is not
  * found, takes the frame off and looks again. A link between two items is

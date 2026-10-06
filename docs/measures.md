@@ -19,8 +19,8 @@ The measures are not on the canvas, not in the digest, and not among the
 model's tools or the person's own agent's. A model told its own disown rate reads
 more cautiously, and a person shown theirs strikes differently; either would
 change the thing being counted. The canvas already shows each fact the
-measures count — *answers nothing* beside an unbound value, *the assistant
-read this* beside a read clause — one at a time, where it is a fact to check
+measures count — *No stated requirement* above an unbound value, *Keep*
+beside a reading still the assistant's — one at a time, where it is a fact to check
 and not a score.
 
 ## The records, linked by the edge

@@ -292,7 +292,7 @@ offered alongside the candidates because the thing a person most often wants to
 give up is the assertion they just made, and it is not in `asserted` — it never
 got there. And a question needs at least two answers: with one candidate there
 is nothing to choose between, so no question is asked. The refusal is still
-recorded in `Constraining.refused` and still reaches the card, which is why the
+recorded in `Constraining.refused` and still reaches the value, which is why the
 person is not left without an account.
 
 The `where` clause discards `?why` and keeps the rules' own sentences. The
@@ -456,8 +456,8 @@ which is what the hardening was asking for.
 
 This is what makes *the assertion stays on record* mean something rather than
 merely look tidy. Give up the hospital and the 630 kg car you asked for
-half an hour ago becomes buildable — so it is assumed, and the red card turns
-into an ordinary one, without anybody asking for it a second time.
+half an hour ago becomes buildable — so it is assumed, and the unmet value becomes
+an ordinary one, without anybody asking for it a second time.
 
 It is the [§6.5 shape](../method/synchronization.md#form) again: one binding
 per unmet assertion, `then` once per binding. It cannot loop, because a
@@ -465,8 +465,8 @@ retry that succeeds invokes no `release` and a retry that fails invokes
 nothing at all; and it terminates, because the set of assertions only ever
 shrinks along that path.
 
-Without it, `refused` would go stale rather than transient — a card explaining
-a refusal by rules that no longer refuse anything, which is worse than no
+Without it, `refused` would go stale rather than transient — a value explained
+by rules that no longer refuse anything, which is worse than no
 explanation.
 
 ## An issued quote is shown

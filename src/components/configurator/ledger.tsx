@@ -3,10 +3,13 @@
 /**
  * What answers each requirement, on the requirement's own line.
  *
- * The specification is one list. Each clause is a line, its words on the
- * left, editable, and on the right the choices answering it — a value bound
- * to the clause, each at `#choice:<id>`, with the values it forced beneath
- * it. Then a line for each value answering no clause, with an empty
+ * The specification is one list. Each clause is a line that reads as a
+ * question and its answer: the words, editable, and beneath them the choices
+ * answering it — a value bound to the clause, each at `#choice:<id>`, drawn
+ * as its heading and value — with the values it forced beneath it, muted.
+ * Everything else about a line — where its words were read from, who
+ * asserted the value and from which words, what else it answers, the
+ * options, the rules — is drawn while the line is open. Then a line for each value answering no clause, with an empty
  * requirement, and the open variables at the tail. A clause nothing answers
  * is a line with a gap where its answer goes, so both of slice 1's gaps are
  * in one list, and with no clause stated the list is slice 0's: every value
@@ -25,12 +28,9 @@
 
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useHash, useTargeted } from "./address";
-import { ChevronRightIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useConfigurator, type Answer, type Clause, type Variable, type View } from "./provider";
-import { AskedCard, FollowsRow, OpenRow } from "./variables";
+import { AssertedDetails, AssertedPair, FollowsPair, FollowsRow, FollowsWhy, OpenRow } from "./variables";
 
 /** One choice on a line: its answer, the variable asserting it, and how it is drawn. */
 export interface Drawn {
@@ -128,58 +128,58 @@ export function ledger(view: View, asserted: Variable[]) {
   };
 }
 
+/** The values that follow and rest on an asserted value. */
+function forcedBy(rows: ReturnType<typeof ledger>, variable: Variable): Variable[] {
+  return rows.follows.filter((v) => v.following.some((f) => f.variable === variable.name));
+}
+
 /**
- * What an asserted value forced: the values that follow and rest on it,
- * beneath it, behind a disclosure. Closed, its trigger names each value with
- * what it is, so the line still says what followed; open, each is drawn in
- * full. Each is addressed where it is first drawn, and drawn again under
- * another assertion it rests on carries no address. Addressed from
- * elsewhere, the disclosure opens, since what was wanted is the value.
+ * What an asserted value forced, beneath it: each value that follows and
+ * rests on it, as its heading and value. Each is addressed where it is first
+ * drawn, and drawn again under another assertion it rests on carries no
+ * address.
  */
 function Forced({ variable }: { variable: Variable }) {
-  const { view, label } = useConfigurator();
-  const hash = useHash();
-  const [open, setOpen] = useState(false);
+  const { view } = useConfigurator();
   const rows = view ? ledger(view, framedAsserted(view)) : null;
-  const forced =
-    rows?.follows.filter((v) => v.following.some((f) => f.variable === variable.name)) ?? [];
-  const targeted = forced.some(
-    (v) => rows?.home.get(v.name) === variable.name && hash === address.variable(v.name),
-  );
-  useEffect(() => {
-    if (targeted) setOpen(true);
-  }, [targeted]);
-  if (!rows || !forced.length) return null;
+  if (!rows) return null;
+  const forced = forcedBy(rows, variable);
+  if (!forced.length) return null;
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <Button
-          variant="ghost"
-          size="xs"
-          className="h-auto w-full justify-start gap-1 py-1 text-left font-normal whitespace-normal text-muted-foreground"
-        >
-          <ChevronRightIcon className="mt-0.5 self-start transition-transform group-data-[state=open]/button:rotate-90" />
-          <span>
-            forced{" "}
-            {forced.map((v, i) => (
-              <span key={v.name}>
-                {i ? ", " : ""}
-                {v.heading.toLowerCase()}{" "}
-                <span className="text-foreground">{label(v.value)}</span>
-              </span>
-            ))}
-          </span>
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <div role="list" aria-label={`Forced by ${variable.heading}`} className="space-y-1 pt-1 pl-4">
-          {forced.map((v) => (
-            <FollowsRow key={v.name} variable={v} addressed={rows.home.get(v.name) === variable.name} />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    <ul aria-label={`Forced by ${variable.heading}`} className="space-y-0.5 pl-1">
+      {forced.map((v) => (
+        <FollowsPair key={v.name} variable={v} addressed={rows.home.get(v.name) === variable.name} />
+      ))}
+    </ul>
   );
+}
+
+/**
+ * Whether a line is open, and the way to open and close it. A line opens
+ * when the page is at one of its addresses — the clause, a choice, a value
+ * drawn on it — and stays open until it is closed.
+ */
+export function useOpened(
+  ids: string[],
+  held?: [boolean, (open: boolean) => void],
+): [boolean, (open: boolean) => void] {
+  const hash = useHash();
+  const own = useState(false);
+  const [open, setOpen] = held ?? own;
+  const hit = !!hash && ids.includes(hash);
+  useEffect(() => {
+    if (hit) setOpen(true);
+    // Only when the page arrives at the address.
+  }, [hit]);
+  return [open, setOpen];
+}
+
+/** The addresses that open a clause's line: its choices and the values drawn on it. */
+export function lineAddresses(drawn: Drawn[]): string[] {
+  return drawn.flatMap((d) => [
+    address.choice(d.answer.choice),
+    ...(d.whole && d.variable ? [address.variable(d.variable.name)] : []),
+  ]);
 }
 
 /** An answer with no asserted value: displaced or unrealisable. */
@@ -194,33 +194,32 @@ function Gone({ answer }: { answer: Answer }) {
 }
 
 /** One choice: the value answering the clause, and what it forced. */
-function Choice({ drawn, clause }: { drawn: Drawn; clause: string }) {
+function Choice({ drawn, open, onToggle }: { drawn: Drawn; open: boolean; onToggle: () => void }) {
   const { label } = useConfigurator();
   const { answer, variable, inFrame, whole } = drawn;
   const id = address.choice(answer.choice);
   const isTarget = useTargeted(id);
   return (
-    <div id={id} className={cn("min-w-0 space-y-1", addressable, isTarget && targetedRing)}>
+    <div id={id} className={cn("min-w-0 space-y-0.5", addressable, isTarget && targetedRing)}>
       {!variable ? (
         <Gone answer={answer} />
       ) : whole ? (
         <>
-          <AskedCard variable={variable} under={clause} />
+          <AssertedPair variable={variable} open={open} onToggle={onToggle} />
           <Forced variable={variable} />
         </>
       ) : (
         // A value answering more than one clause is drawn once, on the
         // first line it answers, and a value the frame leaves out is not
-        // drawn; either way it is named and linked here.
-        <p className="px-1 text-xs">
-          <span className="uppercase tracking-wide text-muted-foreground">
-            {variable.heading}
-          </span>{" "}
+        // drawn; either way it is the same pair here, its value a link to
+        // where it is drawn.
+        <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
+          <span className="text-muted-foreground">{variable.heading}</span>
           <To id={address.variable(variable.name)} title="The value, where it is drawn">
             {label(variable.asked)}
-          </To>{" "}
-          <span className="text-muted-foreground">
-            {inFrame ? "answers this too" : "answers this too, outside the frame"}
+          </To>
+          <span className="sr-only">
+            {inFrame ? ", answering this too" : ", answering this too, outside the frame"}
           </span>
         </p>
       )}
@@ -229,22 +228,32 @@ function Choice({ drawn, clause }: { drawn: Drawn; clause: string }) {
 }
 
 /**
- * The right-hand side of a clause's line: its choices, or the gap where they
- * go. The way to answer is the line's own control, beside its words.
+ * What answers a clause, beneath its words: its choices, or the gap where
+ * they go. The way to answer is the line's own control, beside its words.
  */
-export function Answers({ clause, drawn }: { clause: Clause; drawn: Drawn[] }) {
+export function Answers({
+  clause,
+  drawn,
+  open,
+  onToggle,
+}: {
+  clause: Clause;
+  drawn: Drawn[];
+  open: boolean;
+  onToggle: () => void;
+}) {
   if (drawn.length)
     return (
-      <div className="min-w-0 space-y-2">
+      <div className="min-w-0 space-y-1">
         {drawn.map((d) => (
-          <Choice key={d.answer.choice} drawn={d} clause={clause.clause} />
+          <Choice key={d.answer.choice} drawn={d} open={open} onToggle={onToggle} />
         ))}
       </div>
     );
   return (
     <p className="text-xs text-muted-foreground">
       {clause.negotiability === "open"
-        ? "Left open on purpose: nothing needs to answer this."
+        ? "Left open on purpose."
         : clause.displaced ? (
             <>
               <s>{clause.displaced.label}</s> displaced by{" "}
@@ -253,7 +262,7 @@ export function Answers({ clause, drawn }: { clause: Clause; drawn: Drawn[] }) {
               {clause.displaced.how}
             </>
           ) : clause.source?.unanswerable ? (
-            "The assistant found nothing in the catalogue for this."
+            "Nothing in the catalogue for this."
           ) : (
             "Not yet answered."
           )}
@@ -262,30 +271,79 @@ export function Answers({ clause, drawn }: { clause: Clause; drawn: Drawn[] }) {
 }
 
 /**
- * A line of the list with no requirement: the left-hand side empty, so the
- * absence reads where a requirement would be, and the right-hand side what
- * is there.
+ * The details of a line's answers, for the open line: for each value drawn
+ * whole on it, how it came to be, its options and the rules behind what it
+ * forced. Named by heading when the line has more than one.
  */
-function Line({ children }: { children: React.ReactNode }) {
+export function AnswersDetails({
+  clause,
+  drawn,
+  sourced,
+}: {
+  clause: string | null;
+  drawn: Drawn[];
+  sourced: boolean;
+}) {
+  const whole = drawn.filter((d) => d.whole && d.variable).map((d) => d.variable!);
+  if (!whole.length) return null;
+  return whole.map((variable) => (
+    <div key={variable.name} className="space-y-1.5">
+      {whole.length > 1 ? (
+        <p className="text-xs font-medium text-foreground">{variable.heading}</p>
+      ) : null}
+      <AssertedDetails variable={variable} under={clause} sourced={sourced} />
+      <ForcedWhy variable={variable} />
+    </div>
+  ));
+}
+
+/** Where a line's details go: beneath the answers, set in by a rule. */
+export function Details({ children }: { children: React.ReactNode }) {
+  return <div className="mt-2 space-y-2 border-l pl-3">{children}</div>;
+}
+
+/**
+ * A line of the list with no requirement: the question says there is none,
+ * so the absence reads where a requirement would be, and beneath it what is
+ * there.
+ */
+function Line({ question, children }: { question?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="grid gap-3 border-t py-3 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4">
-      <div aria-hidden className="hidden @2xl:block" />
-      <div className="min-w-0 space-y-1">
-        <span className="sr-only">No stated requirement. </span>
-        {children}
-      </div>
+    <div className="space-y-1 border-t py-3">
+      <p className="text-sm text-muted-foreground">{question ?? "No stated requirement"}</p>
+      <div className="min-w-0 space-y-1 pl-4">{children}</div>
     </div>
   );
 }
 
+/** A value asserted with nothing said about what for, on its own line. */
+function UnboundLine({ variable }: { variable: Variable }) {
+  const [open, setOpen] = useOpened([address.variable(variable.name)]);
+  return (
+    <Line>
+      <AssertedPair variable={variable} open={open} onToggle={() => setOpen(!open)} />
+      <Forced variable={variable} />
+      {open ? (
+        <Details>
+          <AssertedDetails variable={variable} under={null} />
+          <ForcedWhy variable={variable} />
+        </Details>
+      ) : null}
+    </Line>
+  );
+}
+
+/** The rules behind each value an assertion forced. */
+function ForcedWhy({ variable }: { variable: Variable }) {
+  const { view } = useConfigurator();
+  const rows = view ? ledger(view, framedAsserted(view)) : null;
+  if (!rows) return null;
+  return forcedBy(rows, variable).map((v) => <FollowsWhy key={v.name} variable={v} />);
+}
+
 /** The values asserted with nothing said about what for, a line each. */
 export function Unbound({ unbound }: { unbound: Variable[] }) {
-  return unbound.map((variable) => (
-    <Line key={variable.name}>
-      <AskedCard variable={variable} under={null} />
-      <Forced variable={variable} />
-    </Line>
-  ));
+  return unbound.map((variable) => <UnboundLine key={variable.name} variable={variable} />);
 }
 
 /** Values that follow from no assertion drawn: from the rules alone, or
@@ -319,10 +377,7 @@ function byFamily(open: Variable[]): [string, Variable[]][] {
  */
 export function Open({ open }: { open: Variable[] }) {
   return byFamily(open).map(([family, rows]) => (
-    <Line key={family}>
-      <p className="px-1 text-xs uppercase tracking-wide text-muted-foreground">
-        {family} · still open
-      </p>
+    <Line key={family} question={`${family}: still open`}>
       <div className="border">
         {rows.map((variable) => (
           <OpenRow key={variable.name} variable={variable} />
