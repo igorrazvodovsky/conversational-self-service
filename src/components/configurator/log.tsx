@@ -1,14 +1,10 @@
 "use client";
 
-import { BellIcon, ChevronDownIcon, ListFilterIcon, UsersIcon } from "lucide-react";
+import { BellIcon, ChevronDownIcon, ListFilterIcon, ScrollTextIcon, UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -258,27 +254,29 @@ export function Log() {
         </SheetHeader>
         <div className="flex-1 overflow-y-auto p-4">
           {shown.length ? (
-            <ol className="flex flex-col gap-4">
+            <ol className="relative flex flex-col gap-4 before:absolute before:inset-y-1 before:left-1 before:w-px before:bg-border">
               {runs(shown).map((run, i, all) => {
                 const first = run[0];
                 // Freshness runs newest first, so the rule goes once, above
                 // the first turn the person has seen.
                 const divides =
                   i > 0 && i === all.findIndex((r) => !r[0].fresh) && all[0][0].fresh;
+                // Who and when are said again below the rule.
+                const after = i && !divides ? all[i - 1][0] : undefined;
                 return (
                   <li key={first.flow} className="flex flex-col gap-4">
                     {divides ? (
-                      <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="relative flex items-center gap-2 bg-background text-muted-foreground">
                         <Separator className="flex-1" />
                         Before you last changed it
                         <Separator className="flex-1" />
                       </div>
                     ) : null}
-                    {run.length === 1 && !first.moved ? (
-                      <Entry turn={first} />
-                    ) : (
-                      <Moves turns={run} hash={hash} />
-                    )}
+                    <div className="relative pl-5">
+                      <Mark actor={first.actor} />
+                      <Head turn={first} after={after} />
+                      {run.length === 1 ? <Entry turn={first} /> : <Run turns={run} hash={hash} />}
+                    </div>
                   </li>
                 );
               })}
@@ -322,40 +320,119 @@ function Choice({
   );
 }
 
-/** The turns, with each run of surfaces brought forward kept together. */
+/** What a turn folds into a run with: surfaces brought forward, or values
+ * answered and withdrawn by gesture with no words behind them. */
+function foldOf(turn: Turn) {
+  if (turn.moved) return "moved";
+  const bare =
+    !turn.said &&
+    !turn.files.length &&
+    !turn.stated.length &&
+    !turn.reworded.length &&
+    !turn.struck.length;
+  return bare && (turn.asserted.length || turn.withdrawn.length) ? "values" : null;
+}
+
+/** The turns, with each run of one fold by the same parties, on one side
+ * of the rule, kept together. */
 function runs(turns: Turn[]): Turn[][] {
   const out: Turn[][] = [];
   for (const turn of turns) {
-    const last = out.at(-1);
-    if (turn.moved && last?.[0].moved) last.push(turn);
+    const run = out.at(-1);
+    const last = run?.[0];
+    const fold = foldOf(turn);
+    if (
+      run &&
+      last &&
+      fold &&
+      fold === foldOf(last) &&
+      turn.fresh === last.fresh &&
+      turn.parties.join() === last.parties.join()
+    )
+      run.push(turn);
     else out.push([turn]);
   }
   return out;
 }
 
-/** A run of turns that only brought a surface forward: one line, opened to
+/** A turn's mark on the rail: filled for the seller's side, a ring for the
+ * buyer's, as the actor's badge is. */
+function Mark({ actor }: { actor: string }) {
+  const { view } = useConfigurator();
+  const seller = view?.parties.find((p) => p.actor === actor)?.side === "seller";
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "absolute top-1.5 left-0 size-[9px] border border-foreground",
+        seller ? "bg-foreground" : "bg-background",
+      )}
+    />
+  );
+}
+
+/** Who took part and when, shown where either differs from the turn above
+ * and otherwise said only to a screen reader, which has no rail to follow. */
+function Head({ turn, after }: { turn: Turn; after?: Turn }) {
+  const name = useWho();
+  const who = turn.parties.join() !== after?.parties.join();
+  const when = !after || since(turn.at) !== since(after.at);
+  const at = new Date(turn.at * 1000);
+  return (
+    <p className={cn("mb-1.5 text-muted-foreground", !who && !when && "sr-only")}>
+      <span
+        className={cn(
+          isNotice(turn) && "font-medium text-foreground",
+          who || "sr-only",
+        )}
+      >
+        {listed(turn.parties.map(name))}
+      </span>
+      <span className={who && when ? undefined : "sr-only"}> · </span>
+      <time
+        dateTime={at.toISOString()}
+        title={at.toLocaleString()}
+        className={when ? undefined : "sr-only"}
+      >
+        {since(turn.at)}
+      </time>
+    </p>
+  );
+}
+
+/** A run of turns folded into one line that says what they did, opened to
  * show them, and opened by itself when one of them is addressed. */
-function Moves({ turns, hash }: { turns: Turn[]; hash: string }) {
+function Run({ turns, hash }: { turns: Turn[]; hash: string }) {
   const [open, setOpen] = useState(false);
   const addressed = turns.some((t) => hash === address.turn(t.flow));
   useEffect(() => {
     if (addressed) setOpen(true);
   }, [addressed]);
-  const name = useWho();
-  const who = new Set(turns.map((t) => name(t.actor)));
-  const times = turns.length === 1 ? "once" : `${turns.length} times`;
+  const answered = turns.reduce((n, t) => n + t.asserted.length, 0);
+  const withdrew = turns.reduce((n, t) => n + t.withdrawn.length, 0);
+  const values = (n: number) => (n === 1 ? "one value" : `${n} values`);
+  const what = turns[0].moved
+    ? `Switched surface ${turns.length === 1 ? "once" : `${turns.length} times`}`
+    : [
+        answered ? `answered ${values(answered)}` : "",
+        withdrew ? `withdrew ${values(withdrew)}` : "",
+      ]
+        .filter(Boolean)
+        .join(" and ")
+        .replace(/^./, (c) => c.toUpperCase());
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="xs" className="-ml-2 text-muted-foreground">
-          <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />
-          {[...who].join(" and ")} switched surface {times}
+        <Button variant="ghost" size="xs" className="-ml-2">
+          <ChevronDownIcon className="text-muted-foreground transition-transform group-data-[state=open]/button:rotate-180" />
+          {what}
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <ol className="mt-2 flex flex-col gap-4">
-          {turns.map((turn) => (
+        <ol className="mt-2 flex flex-col gap-3">
+          {turns.map((turn, i) => (
             <li key={turn.flow}>
+              <Head turn={turn} after={turns[i - 1] ?? turn} />
               <Entry turn={turn} />
             </li>
           ))}
@@ -365,8 +442,8 @@ function Moves({ turns, hash }: { turns: Turn[]; hash: string }) {
   );
 }
 
-/** One turn: who and when, what opened it, what it changed, and beneath
- * that the records it wrote. */
+/** One turn: the words or documents that opened it, what it changed or
+ * else what the gesture was, and the records it wrote. */
 function Entry({ turn }: { turn: Turn }) {
   const { view, label } = useConfigurator();
   const id = address.turn(turn.flow);
@@ -402,51 +479,64 @@ function Entry({ turn }: { turn: Turn }) {
     ],
   ];
   const name = useWho();
-  const who = turn.parties.map(name);
   const opener = name(turn.actor);
   const refused = turn.records.filter((r) => r.refused).length;
+  const changed = rows.some(([, items]) => items.length);
   return (
-    <article id={id} className={cn("flex flex-col gap-1.5", addressable, isTarget && targeted)}>
-      <p className="text-muted-foreground">
-        <span className={isNotice(turn) ? "font-medium text-foreground" : undefined}>
-          {listed(who)}
-        </span>{" "}
-        · <time dateTime={new Date(turn.at * 1000).toISOString()}>{since(turn.at)}</time>
-      </p>
-      <p className="line-clamp-2" title={turn.said?.text}>
-        {turn.said ? (
-          <>
-            {opener} said <Said utterance={turn.said.utterance} text={turn.said.text} />
-          </>
-        ) : (
-          <>
-            {opener}: <span className="font-mono">{turn.opened}</span>
-          </>
-        )}
-      </p>
+    <article
+      id={id}
+      className={cn(
+        "group/turn relative flex flex-col gap-1.5 pr-7",
+        addressable,
+        isTarget && targeted,
+      )}
+    >
+      {turn.said ? (
+        <p className="line-clamp-2" title={turn.said.text}>
+          {opener} said <Said utterance={turn.said.utterance} text={turn.said.text} />
+        </p>
+      ) : null}
       {turn.files.length ? <p>Read {turn.files.join(", ")}</p> : null}
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-        {rows
-          .filter(([, items]) => items.length)
-          .map(([verb, items]) => (
-            <div key={verb} className="contents">
-              <dt className="text-muted-foreground">{verb}</dt>
-              <dd>
-                <ul className="flex flex-col gap-0.5">
-                  {items.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </dd>
-            </div>
-          ))}
-      </dl>
-      <Collapsible open={open} onOpenChange={setOpen}>
+      {!turn.said && !turn.files.length && !changed ? <p>{turn.did}</p> : null}
+      {changed ? (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          {rows
+            .filter(([, items]) => items.length)
+            .map(([verb, items]) => (
+              <div key={verb} className="contents">
+                <dt className="text-muted-foreground">{verb}</dt>
+                <dd>
+                  <ul className="flex flex-col gap-0.5">
+                    {items.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            ))}
+        </dl>
+      ) : null}
+      {/* Contents, so the trigger sits on the turn and a closed record takes no room. */}
+      <Collapsible open={open} onOpenChange={setOpen} className="contents">
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="xs" className="-ml-2 text-muted-foreground">
-            <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />
-            On whose authority
-            {refused ? `, ${refused} refused` : null}
+          <Button
+            variant="ghost"
+            size={refused ? "xs" : "icon-xs"}
+            className={cn(
+              "text-muted-foreground",
+              // A refusal is said in the turn's own flow. Otherwise the trigger
+              // sits at the turn's corner, shown while the turn is pointed at
+              // or holds focus, while open, and always where nothing points.
+              refused ? "-ml-2 self-start" : "absolute top-0 right-0",
+              !open &&
+                !refused &&
+                "pointer-fine:opacity-0 pointer-fine:group-hover/turn:opacity-100 pointer-fine:group-focus-within/turn:opacity-100",
+            )}
+            aria-label={`On whose authority${refused ? `, ${refused} refused` : ""}`}
+            title="On whose authority"
+          >
+            <ScrollTextIcon />
+            {refused ? `${refused} refused` : null}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>

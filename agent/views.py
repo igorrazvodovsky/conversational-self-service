@@ -901,6 +901,46 @@ PARTIES = {
     "model": ("The assistant", "seller"),
 }
 
+# What opened a turn, as the log says it when the turn stated, answered or
+# withdrew nothing: a person's gesture or the tool the model called.  An act
+# not named here is shown by its name.
+ACTS = {
+    "start": "Started the specification",
+    "discard": "Discarded the specification",
+    "say": "Said something",
+    "file": "Attached a document",
+    "keep": "Kept a reading",
+    "choose": "Answered a question",
+    "decline": "Left a question",
+    "reply": "Replied to a question",
+    "answer": "Answered a question",
+    "settle": "Settled how firm a requirement is",
+    "move": "Moved a requirement",
+    "introduce": "Said who the buyer is",
+    "entitle": "Named the job and the site",
+    "quote": "Requested a quote",
+    "commit": "Accepted a quote",
+    "revoke": "Revoked a quote",
+    "focus": "Switched surface",
+    "show": "Showed a fact beside each item",
+    "hide": "Hid a fact beside each item",
+    "frame": "Narrowed the canvas",
+    "unframe": "Showed the whole canvas",
+    "read": "Read a requirement",
+    "open_file": "Opened a document",
+    "open_quote": "Opened a quote",
+    "propose": "Proposed a completion",
+    "ask": "Put a question",
+    "review": "Reviewed the specification",
+    # Seen only when nothing changed, so said as what was asked for.
+    "assert": "Asked to assert a value",
+    "assert_value": "Asked to assert a value",
+    "withdraw": "Asked to withdraw a value",
+    "require": "Asked to state a requirement",
+    "reword": "Asked to reword a requirement",
+    "relax": "Asked to relax a requirement",
+    "strike": "Asked to strike a requirement",
+}
 _KIND_OF = {
     "Specifying": "specification",
     "Asserting": "specification",
@@ -923,14 +963,15 @@ def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
 
     A flow is one occasion — the person's words and the calls the model made
     in reply, or one gesture and what the rules did with it — so the turn is
-    the unit, latest activity first.  Each says who opened it and who took
-    part, what it did (`kinds`), what it changed in the specification's
-    words — the clauses stated, reworded and struck, the values answered
-    and withdrawn, each as it was then — and every completion it wrote, with
-    the rule that authorised it.  A refused record is listed and changes
-    nothing.  A turn is `fresh` when it came after the person last changed
-    the specification themselves, whoever took it; a turn that only brought
-    a surface forward is marked `moved`.  Read off the log; held by nobody.
+    the unit, latest activity first.  Each says who opened it, what opened
+    it in a phrase (`did`), who took part, what it did (`kinds`), what it
+    changed in the specification's words — the clauses stated, reworded and
+    struck, the values answered and withdrawn, each as it was then — and
+    every completion it wrote, with the rule that authorised it.  A refused
+    record is listed and changes nothing.  A turn is `fresh` when it came
+    after the person last changed the specification themselves, whoever took
+    it; a turn that only brought a surface forward is marked `moved`.  Read
+    off the log; held by nobody.
     """
     flows: dict[str, dict[str, Any]] = {}
     order: list[str] = []
@@ -1033,6 +1074,7 @@ def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
 
 
 def _parties(log: list[dict[str, Any]]) -> list[dict[str, Any]]:
+                "did": ACTS.get(flow["opened"], flow["opened"]),
     """Every actor with a root action among the turns, the named ones first,
     each with its name and the side of the sale it acts for."""
     present = {p for turn in log for p in turn["parties"]}

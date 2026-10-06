@@ -404,6 +404,8 @@ export interface Turn {
   /** The words said in it, when it was opened by words. */
   said: { utterance: string; text: string } | null;
   /** The documents read in it. */
+  /** What started it, in a phrase, for a turn that changed no clause or value. */
+  did: string;
   files: string[];
   /** The clauses and values it changed, each as it was then. */
   stated: { clause: string; text: string }[];
