@@ -59,7 +59,9 @@ const OUT = process.env.OUT ?? path.join(__dirname, "out");
 const BED = "A bed must fit, with a porter beside it";
 const QUIET = "Quiet enough for night shifts on the ward";
 const LOAD = "1600 kg";
+const DRIVE = "Gearless traction, machine-room-less";
 const DOORS = "The doors must be brushed stainless steel.";
+const TWOFOLD = "Centre-opening doors, 1100 mm clear, for beds.";
 const SMOOTH = "The ride must feel smooth to a patient lying down.";
 
 async function api(base, route, body) {
@@ -138,6 +140,35 @@ async function click(page, label, within) {
   );
   if (!done) throw new Error(`no button "${label}"${within ? ` near "${within}"` : ""}`);
 }
+
+/** Go to a place in the panel's nav, as a person does. */
+async function go(page, place) {
+  const went = await page.evaluate((place) => {
+    const link = [
+      ...document.querySelectorAll('nav[aria-label="Panel"] a, nav[aria-label="Panel"] button'),
+    ].find((a) => a.textContent.trim().startsWith(place));
+    link?.click();
+    return !!link;
+  }, place);
+  if (!went) throw new Error(`no place "${place}" in the panel's nav`);
+  await new Promise((r) => setTimeout(r, 1500));
+}
+
+/** Whether a button starting with `label` is near the words `within` on the surface. */
+const offers = (page, label, within) =>
+  page.evaluate(
+    ({ label, within }) => {
+      const main = document.querySelector("main");
+      const holder = [...main.querySelectorAll("*")].find(
+        (e) => e.children.length === 0 && e.textContent.includes(within),
+      );
+      for (let e = holder; e && e !== main; e = e.parentElement)
+        if ([...e.querySelectorAll("button")].some((b) => b.textContent.trim().startsWith(label)))
+          return true;
+      return false;
+    },
+    { label, within },
+  );
 
 const surface = (page) => page.evaluate(() => document.title.split(" · ")[0]);
 
@@ -245,26 +276,91 @@ async function run(name, base) {
     // Then on each other surface, reached the way a person reaches it: by
     // the panel's nav.
     for (const place of ["Requirements", "Asserted"]) {
-      const went = await page.evaluate((place) => {
-        const link = [...document.querySelectorAll('nav[aria-label="Panel"] a, nav[aria-label="Panel"] button')].find(
-          (a) => a.textContent.trim().startsWith(place),
-        );
-        link?.click();
-        return !!link;
-      }, place);
-      if (!went) throw new Error(`no place "${place}" in the panel's nav`);
-      await new Promise((r) => setTimeout(r, 1500));
+      await go(page, place);
       const title = await surface(page);
       if (!gaps[title]) gaps[title] = await seen();
     }
     const together = Object.values(gaps).some((g) => g.unanswered && g.unbound);
+
+    // Task 5: answer the other requirement, starting where the person now
+    // is — on the configuration, having checked the gaps. They look for an
+    // Answer beside the requirement here, and go to the requirements only
+    // when there is none.
+    const answer2 = { clicks: 0, surfaces: [await surface(page)] };
+    const step2 = async (label, within) => {
+      await click(page, label, within);
+      answer2.clicks++;
+      await new Promise((r) => setTimeout(r, 400));
+      const s = await surface(page);
+      if (answer2.surfaces.at(-1) !== s) answer2.surfaces.push(s);
+    };
+    if (!(await offers(page, "Answer", QUIET))) {
+      await go(page, "Requirements");
+      answer2.clicks++;
+      answer2.surfaces.push(await surface(page));
+    }
+    await step2("Answer", QUIET);
+    await until(async () => (await view(base)).frame?.by === "clause", "the second clause frame");
+    await until(() => holds(page, "Drive type"), "the drive row");
+    await step2("Drive type");
+    await step2(DRIVE);
+    await until(async () => {
+      const v = await view(base);
+      return v.clauses.find((c) => c.text === QUIET)?.answers.length ? v : null;
+    }, "the second answer on record");
+    await step2("Show everything");
+    await until(async () => !(await view(base)).frame, "the frame off again");
+    answer2.surfaceChanges = answer2.surfaces.length - 1;
+
+    // Task 6: from the requirement, follow its answer to the value. The link
+    // is the requirement document's; where it lands is the address it names.
+    await go(page, "Requirements");
+    const followed = await page.evaluate((bed) => {
+      const main = document.querySelector("main");
+      const holder = [...main.querySelectorAll("*")].find(
+        (e) => e.children.length === 0 && e.textContent.includes(bed),
+      );
+      for (let e = holder; e && e !== main; e = e.parentElement) {
+        const link = [...e.querySelectorAll("a")].find((a) => a.textContent.trim() === "Rated load");
+        if (link) {
+          link.click();
+          return link.getAttribute("href");
+        }
+      }
+      return null;
+    }, BED);
+    if (!followed) throw new Error("no link from the requirement to its answer");
+    await new Promise((r) => setTimeout(r, 2500));
+    const landed = await page.evaluate((id) => {
+      const e = document.getElementById(id);
+      if (!e) return { found: false };
+      const box = e.getBoundingClientRect();
+      const line = e.closest('[role="listitem"]') ?? e;
+      return {
+        found: true,
+        inView: box.top >= 0 && box.top < window.innerHeight,
+        text: line.textContent,
+      };
+    }, followed.slice(1));
+    const follow = {
+      href: followed,
+      surface: await surface(page),
+      found: landed.found,
+      inView: !!landed.inView,
+      requirementBeside: !!landed.text?.includes(BED),
+      forcedBeside: !!landed.text?.includes("forced"),
+    };
 
     // Task 4: the assistant reads two requirements from a document the
     // person attached, one it finds an answer for and one it finds nothing
     // for. The read brings a surface forward; does that surface show what
     // was read? The call is the model's tool, made through `/invoke`, so no
     // model runs.
-    await gesture(base, { act: "file", name: "brief.txt", text: `${DOORS} ${SMOOTH}` });
+    await gesture(base, {
+      act: "file",
+      name: "brief.txt",
+      text: `${DOORS} ${SMOOTH} ${TWOFOLD}`,
+    });
     const file = (await api(base, "digest")).files.at(-1).file;
     await api(base, "invoke", { tool: "read", words: DOORS, answer: ["door_finish:brushed_ss"], file });
     await api(base, "invoke", { tool: "read", words: SMOOTH, answer: [], file });
@@ -283,6 +379,30 @@ async function run(name, base) {
     read.both = read.answered && read.unanswerable;
     await page.screenshot({ path: path.join(OUT, `${name}-read.png`) });
 
+    // Task 7: a requirement two values answer, with the canvas narrowed to
+    // what one of them forced. The other still stands; the page must not
+    // say otherwise.
+    await api(base, "invoke", {
+      tool: "read",
+      words: TWOFOLD,
+      answer: ["door_type:center_2", "door_width:d1100"],
+      file,
+    });
+    await gesture(base, { act: "frame", frame: { by: "assertion", variable: "door_width" } });
+    await page.reload({ waitUntil: "networkidle2" });
+    // Framed on the door width, the bed's line is narrowed away; the
+    // section is there either way.
+    await until(() => holds(page, "Follows from that"), "the page once more", 60000);
+    await new Promise((r) => setTimeout(r, 1000));
+    const v7 = await view(base);
+    const twofold = v7.clauses.find((c) => c.text === TWOFOLD);
+    const framed = {
+      answers: twofold?.answers.map((a) => `${a.heading}: ${a.standing}`) ?? [],
+      calledWithdrawn: await holds(page, "no longer asserted"),
+    };
+    framed.truthful = !!twofold && twofold.answers.every((a) => a.standing === "asked") && !framed.calledWithdrawn;
+    await gesture(base, { act: "unframe" });
+
     return {
       build: name,
       base,
@@ -296,6 +416,9 @@ async function run(name, base) {
       },
       task3: { gaps, together, surfaceChangesNeeded: together ? 0 : 1 },
       task4: read,
+      task7: framed,
+      task5: answer2,
+      task6: follow,
       errors,
     };
   } catch (e) {
@@ -330,10 +453,19 @@ async function run(name, base) {
       r.task3.together ? "yes" : "no",
     ),
     row("Surface changes to find both gaps", (r) => r.task3.surfaceChangesNeeded),
+    row("Clicks to answer the second requirement, from the configuration", (r) => r.task5.clicks),
+    row("Surface changes on the way", (r) => `${r.task5.surfaceChanges} (${r.task5.surfaces.join(" → ")})`),
+    row("A requirement's answer link lands on", (r) =>
+      `${r.task6.href} on ${r.task6.surface}, ${r.task6.inView ? "in view" : "out of view"}`,
+    ),
+    row("Requirement and what the answer forced beside the landing", (r) =>
+      r.task6.requirementBeside && r.task6.forcedBeside ? "yes" : "no",
+    ),
     row("Surface an assistant's reading brings forward", (r) => r.task4.surface),
     row("Both readings on it, the answered and the unanswerable", (r) =>
       r.task4.both ? "yes" : `no (answered ${r.task4.answered ? "shown" : "absent"}, unanswerable ${r.task4.unanswerable ? "shown" : "absent"})`,
     ),
+    row("A co-answer outside the frame reported truthfully", (r) => (r.task7.truthful ? "yes" : "no")),
     row("Page errors", (r) => r.errors.length),
   ].join("\n");
   fs.writeFileSync(path.join(OUT, "comparison.md"), table + "\n");
@@ -345,6 +477,10 @@ async function run(name, base) {
   if (after.ok) {
     if (!after.task2.oneUnit) failures.push("after: the choice is not one unit");
     if (!after.task3.together) failures.push("after: the two gaps are not on one surface");
+    if (after.task5.surfaceChanges) failures.push("after: answering from the configuration left it");
+    if (!after.task6.href.startsWith("#choice:") || !after.task6.inView)
+      failures.push("after: the answer link does not land on its choice");
+    if (!after.task7.truthful) failures.push("after: a co-answer outside the frame misreported");
     if (!after.task4.both) failures.push("after: a reading is not on the surface it brings forward");
   }
   if (failures.length) {

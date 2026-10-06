@@ -22,15 +22,16 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
-import { ClauseText, useAnswering } from "./clauses";
+import { ClauseText, plain, useAnswering } from "./clauses";
 import { useConfigurator, type Answer, type Clause, type Variable, type View } from "./provider";
 import { AskedCard } from "./variables";
 
 /** One line of the ledger: a clause and the asserted values answering it. */
 export interface Line {
   clause: Clause;
-  /** Each answer, with the asserted variable that holds it when one does. */
-  answers: { answer: Answer; variable: Variable | null }[];
+  /** Each answer, with the variable asserting it — none when the answer is
+   * displaced or unrealisable — and whether the frame leaves it in. */
+  answers: { answer: Answer; variable: Variable | null; inFrame: boolean }[];
 }
 
 /**
@@ -40,6 +41,7 @@ export interface Line {
  */
 export function ledger(view: View, asserted: Variable[]) {
   const byName = new Map(asserted.map((v) => [v.name, v]));
+  const every = new Map(view.variables.map((v) => [v.name, v]));
   const frame = view.frame;
   const clauses = view.clauses.filter((c) =>
     !frame
@@ -50,12 +52,12 @@ export function ledger(view: View, asserted: Variable[]) {
   );
   const lines: Line[] = clauses.map((clause) => ({
     clause,
+    // Whether an answer still stands is the server's read (`standing`);
+    // the frame decides only how much of it is drawn here.
     answers: clause.answers.map((answer) => {
-      const variable = answer.variable ? byName.get(answer.variable) ?? null : null;
-      return {
-        answer,
-        variable: variable && variable.asked === answer.value ? variable : null,
-      };
+      const stands = answer.standing !== "displaced" && answer.standing !== "unrealisable";
+      const variable = stands && answer.variable ? every.get(answer.variable) ?? null : null;
+      return { answer, variable, inFrame: !!variable && byName.has(variable.name) };
     }),
   }));
   const unbound = asserted.filter((v) => !v.answers.length);
@@ -111,11 +113,13 @@ function ChoiceCell({
   variable,
   clause,
   first,
+  inFrame,
 }: {
   answer: Answer;
   variable: Variable | null;
   clause: string;
   first: boolean;
+  inFrame: boolean;
 }) {
   const { label } = useConfigurator();
   const id = address.choice(answer.choice);
@@ -131,7 +135,8 @@ function ChoiceCell({
         </>
       ) : (
         // A value answering more than one clause is drawn once, on the
-        // first line it answers; here it is named and linked.
+        // first line it answers, and a value the frame leaves out is not
+        // drawn; either way it is named and linked here.
         <p className="px-1 text-xs">
           <span className="uppercase tracking-wide text-muted-foreground">
             {variable.heading}
@@ -139,7 +144,9 @@ function ChoiceCell({
           <To id={address.variable(variable.name)} title="The value, on the line it was drawn on">
             {label(variable.asked)}
           </To>{" "}
-          <span className="text-muted-foreground">answers this too</span>
+          <span className="text-muted-foreground">
+            {inFrame ? "answers this too" : "answers this too, outside the frame"}
+          </span>
         </p>
       )}
     </div>
@@ -199,7 +206,7 @@ function Unanswered({ clause }: { clause: Clause }) {
         onClick={() => setAnswering(active ? null : clause)}
       >
         {active ? "Answering…" : "Answer"}
-        <span className="sr-only"> this requirement</span>
+        <span className="sr-only"> “{plain(clause.text)}”</span>
       </Button>
     </div>
   );
@@ -219,9 +226,9 @@ export function Ledger({ asserted }: { asserted: Variable[] }) {
           <Requirement clause={clause} />
           <div className="min-w-0 space-y-2">
             {answers.length ? (
-              answers.map(({ answer, variable }) => {
-                const first = !!variable && !drawn.has(variable.name);
-                if (variable) drawn.add(variable.name);
+              answers.map(({ answer, variable, inFrame }) => {
+                const first = inFrame && !drawn.has(variable!.name);
+                if (first) drawn.add(variable!.name);
                 return (
                   <ChoiceCell
                     key={answer.choice}
@@ -229,6 +236,7 @@ export function Ledger({ asserted }: { asserted: Variable[] }) {
                     variable={variable}
                     clause={clause.clause}
                     first={first}
+                    inFrame={inFrame}
                   />
                 );
               })
