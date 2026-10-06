@@ -364,7 +364,7 @@ export function CopyLink({
 }: {
   url: () => string | null;
   label?: string;
-  size?: "icon-sm" | "sm";
+  size?: "icon-xs" | "icon-sm" | "sm";
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
@@ -404,6 +404,9 @@ export function CopyViewLink() {
   return (
     <CopyLink
       label="Copy link to this view"
+      // The header's other triggers, the bell and the Show menu, are `xs` and muted.
+      size="icon-xs"
+      className="text-muted-foreground"
       url={() => (view ? viewLink(view, true) : null)}
     />
   );
