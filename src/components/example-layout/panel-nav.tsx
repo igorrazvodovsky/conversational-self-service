@@ -7,7 +7,6 @@ import {
   useConfigurator,
   type Surface,
 } from "@/components/configurator/provider";
-import { ledger } from "@/components/configurator/ledger";
 import { ShowingMenu } from "@/components/configurator/showing";
 import {
   NavigationMenu,
@@ -20,19 +19,21 @@ import { cn } from "@/lib/utils";
 interface Place {
   id: string;
   title: string;
-  count: number;
+  count?: number;
   surface: Surface;
+  /** An address on the surface, rather than the surface itself. */
+  at?: boolean;
 }
 
 /**
  * The way around the panel, in one row: the two surfaces `Moding` offers,
- * the specification's sections in place of its name, then the quotes. A
- * surface is one place; the specification is several, and there is no level
- * between. Every place says how much is in it.
+ * the specification and the quotes, and before them, while a question waits
+ * on the person, the question. The specification is one list, and what it
+ * shows is chosen by the filters above the list, not here.
  *
- * The quotes are reached by `focus`. A section is an address on the
+ * A surface is reached by `focus`. The question is an address on the
  * specification (`address.tsx`): following it brings the specification
- * forward if it is not, then scrolls to the section.
+ * forward if it is not, then scrolls to it.
  *
  * At the row's end, while the specification is showing, the `Showing` menu:
  * which facts it shows beside each item. It has nothing to say about the
@@ -42,8 +43,7 @@ export function PanelNav() {
   const { view, gesture, busy } = useConfigurator();
   if (!view) return null;
   const mode = view.mode;
-  const { asserted, follows, open, questions } = sections(view);
-  const lines = ledger(view, asserted);
+  const { questions } = sections(view);
   const groups: Place[][] = [
     [
       ...(questions.length
@@ -53,37 +53,17 @@ export function PanelNav() {
               title: "Asked of you",
               count: questions.length,
               surface: "canvas" as const,
+              at: true,
             },
           ]
         : []),
-      {
-        // Every line of the ledger the frame leaves: each requirement, and
-        // the line of values answering none when there are any.
-        id: "asserted",
-        title: "Asked for",
-        count: lines.shown.size + (lines.unbound.length ? 1 : 0),
-        surface: "canvas",
-      },
-      {
-        id: "follows",
-        title: "Follows",
-        count: follows.length,
-        surface: "canvas",
-      },
-      { id: "open", title: "Open", count: open.length, surface: "canvas" },
+      { id: "asserted", title: "Specification", surface: "canvas" },
     ],
-    [
-      {
-        id: "quotes",
-        title: "Quotes",
-        count: view.quotes.length,
-        surface: "quote",
-      },
-    ],
+    [{ id: "quotes", title: "Quote", surface: "quote" }],
   ];
 
   const follow = (place: Place) => {
-    if (place.surface === "canvas") goTo(place.id);
+    if (place.at) goTo(place.id);
     else if (mode !== place.surface)
       // Focus follows the person to the surface they asked for, so the keyboard does not stay behind in the header. A surface
       // a rule brings forward takes no focus: nobody asked to go there.
@@ -112,18 +92,17 @@ export function PanelNav() {
                 <li aria-hidden className="mx-1 h-3.5 w-px shrink-0 bg-border" />
               ) : null}
               {places.map((place) => {
-                const current =
-                  place.surface === mode && place.surface !== "canvas";
+                const current = !place.at && place.surface === mode;
                 return (
                   <NavigationMenuItem key={place.id}>
                     <NavigationMenuLink
                       href={`#${place.id}`}
                       active={current}
-                      aria-disabled={busy && place.surface !== "canvas"}
+                      aria-disabled={busy && !place.at}
                       onClick={(event) => {
                         event.preventDefault();
                         // `aria-disabled` says it; this makes it so.
-                        if (busy && place.surface !== "canvas") return;
+                        if (busy && !place.at) return;
                         follow(place);
                       }}
                       className={cn(
@@ -134,8 +113,10 @@ export function PanelNav() {
                         current && "font-medium",
                       )}
                     >
-                      {place.title}{" "}
-                      <span className="tabular-nums">{place.count}</span>
+                      {place.title}
+                      {place.count === undefined ? null : (
+                        <span className="tabular-nums">{place.count}</span>
+                      )}
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 );

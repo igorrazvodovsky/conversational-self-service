@@ -84,7 +84,9 @@ it.
 | `TheConcededAssertionIsWithdrawn` | [Propagation](propagation.md) |
 | `AResolvedConflictWithdrawsItsQuestion` | [Propagation](propagation.md) |
 | `AnIssuedQuoteIsShown` | [Propagation](propagation.md) |
+| `ANewQuoteSupersedesTheOpenOnes` | [Propagation](propagation.md) |
 | `AFramedRequirementShowsTheConfiguration` | [Propagation](propagation.md) |
+| `AFramedGapShowsTheConfiguration` | [Propagation](propagation.md) |
 | `AWithdrawnAssertionUnframesTheCanvas` | [Propagation](propagation.md) |
 | `AStruckClauseUnframesTheCanvas` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationUnframesTheCanvas` | [Propagation](propagation.md) |
@@ -159,8 +161,10 @@ A quote is another kind of fact beside the asserted and the entailed: a
 snapshot with a price and its terms, which the specification can move away
 from without changing. One rule issues it, to the person, when every variable
 is settled, nothing asserted is unmet, the person is named and the job has a
-site; one lets the person accept it; one lets them revoke it; and one gives
-the quote surface the viewer's attention when a quote is issued. Others let
+site; one lets the person accept it; one lets them revoke it; one revokes the
+quotes still open to the same party for the same job when a new one is
+issued, so a new quote is a revision rather than an alternative; and one
+gives the quote surface the viewer's attention when a quote is issued. Others let
 the person say who they are and where the lift is going, which is what makes
 the proposal addressed. The model may ask for one and may not accept it, which is one of the things
 [only a person may do](gestures.md#the-two-asymmetries).
@@ -191,10 +195,11 @@ rule that struck one through, the requirement a value answers — lives in
 [Showing](../concepts/showing.md), and both actors may change it on the same
 terms: gestures, tool permissions, and no fact of the specification
 touched by any of them. Which items it shows — narrowed to what followed
-from one assertion, to one requirement, or everything — is
+from one assertion, to one requirement, to one gap, or everything — is
 [Framing](../concepts/framing.md), reached the same way, plus rules that
 take a frame away when the assertion it framed is withdrawn, the clause it
-framed struck, or the specification discarded. See
+framed struck, or the specification discarded, and that bring the
+specification forward when a requirement or a gap is framed. See
 [Gestures](gestures.md#what-the-canvas-shows-is-chosen),
 [Conduct](conduct.md#what-the-canvas-shows) and
 [Propagation](propagation.md#a-frame-goes-with-what-it-framed).

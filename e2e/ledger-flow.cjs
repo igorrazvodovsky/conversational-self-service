@@ -270,7 +270,7 @@ function person(page) {
 }
 
 /** The place in the nav for the part of the specification values are on. */
-const valuesPlace = (surfaces) => surfaces.find((p) => p !== "Requirements" && p !== "Quotes");
+const valuesPlace = (surfaces) => surfaces.find((p) => p !== "Requirements" && p !== "Quotes" && p !== "Quote");
 
 // -- the run -------------------------------------------------------------------
 
@@ -297,12 +297,12 @@ async function run(name, base) {
 
   try {
     await page.goto(base, { waitUntil: "networkidle2", timeout: 120000 });
-    await until(() => holds(page, "Follows from that"), "the page", 120000);
+    await until(() => holds(page, "follow from that"), "the page", 120000);
     result.startsOn = await surface(page);
     result.surfaces = await page.evaluate(() =>
       [...document.querySelectorAll('nav[aria-label="Panel"] a')]
         .map((a) => a.textContent.replace(/\s*\d+$/, "").trim())
-        .filter((p) => p === "Requirements" || p === "Quotes" || p.startsWith("Asserted") || p.startsWith("Asked for")),
+        .filter((p) => p === "Requirements" || p === "Quotes" || p === "Quote" || p === "Specification" || p.startsWith("Asserted") || p.startsWith("Asked for")),
     );
 
     // 1. Answer the bed requirement with 1600 kg.
@@ -323,16 +323,18 @@ async function run(name, base) {
     // 3. What is still unanswered, and what answers nothing? On the surface
     //    the person is on, then on each other place in the nav.
     const seen = async () => ({
-      unanswered: (await holds(page, QUIET)) && (await holds(page, "Not yet answered")),
+      // With the period: the line's own words, not the filter's label.
+      unanswered: (await holds(page, QUIET)) && (await holds(page, "Not yet answered.")),
       unbound:
         (await holds(page, "Hospital")) &&
         ((await holds(page, "answers no stated requirement")) ||
-          (await holds(page, "Answering no stated requirement"))),
+          (await holds(page, "Answering no stated requirement")) ||
+          (await holds(page, "No stated requirement"))),
     });
     const gaps = { [await surface(page)]: await seen() };
     await shot("gaps");
     await me.begin();
-    for (const place of result.surfaces.filter((p) => p !== "Quotes")) {
+    for (const place of result.surfaces.filter((p) => p !== "Quotes" && p !== "Quote")) {
       await me.go(place);
       const title = await surface(page);
       if (!gaps[title]) gaps[title] = await seen();
@@ -424,7 +426,7 @@ async function run(name, base) {
     await api(base, "invoke", { tool: "read", words: SMOOTH, answer: [], file });
     await until(async () => (await view(base)).clauses.length === clausesBefore + 2, "the readings as clauses");
     await page.reload({ waitUntil: "networkidle2" });
-    await until(() => holds(page, "Follows from that"), "the page again", 60000);
+    await until(() => holds(page, "follow from that"), "the page again", 60000);
     await pause(1000);
     result.read = {
       surface: await surface(page),
@@ -444,7 +446,7 @@ async function run(name, base) {
     });
     await gesture(base, { act: "frame", frame: { by: "assertion", variable: "door_width" } });
     await page.reload({ waitUntil: "networkidle2" });
-    await until(() => holds(page, "Follows from that"), "the page once more", 60000);
+    await until(() => holds(page, "follow from that"), "the page once more", 60000);
     await pause(1000);
     const twofold = (await view(base)).clauses.find((c) => c.text === TWOFOLD);
     const calledWithdrawn = await holds(page, "no longer asserted");
@@ -454,7 +456,7 @@ async function run(name, base) {
     await shot("framed");
     await gesture(base, { act: "unframe" });
     await page.reload({ waitUntil: "networkidle2" });
-    await until(() => holds(page, "Follows from that"), "the page unframed", 60000);
+    await until(() => holds(page, "follow from that"), "the page unframed", 60000);
     await pause(1000);
 
     // What the build is: whether the requirements are a surface, how many

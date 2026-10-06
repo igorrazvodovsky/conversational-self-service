@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * The ledger, edited as a document: the canvas's *asked for* section.
+ * The ledger, edited as a document: the requirements of the specification's
+ * one list.
  *
  * A Tiptap editor whose schema is a sequence of clause nodes and nothing
  * else. Each node carries the clause's identity from `Specifying` as an
@@ -59,6 +60,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { address, addressable, Moved, To, useTargeted } from "./address";
 import {
@@ -73,10 +75,11 @@ import { referencing } from "./references";
 import {
   useConfigurator,
   type Clause,
+  type Gap,
   type Negotiability,
   type View,
 } from "./provider";
-import { Answers, framedAsserted, ledger, Unbound } from "./ledger";
+import { Answers, framedAsserted, ledger, Loose, Open, Unbound } from "./ledger";
 import { Sources } from "./sources";
 
 // -- the schema ---------------------------------------------------------------
@@ -703,54 +706,99 @@ export function Specification() {
   );
 }
 
+/** The gaps a person can narrow the list to, in the order they are offered. */
+const GAPS: { gap: Gap; title: string; count: (view: View) => number }[] = [
+  { gap: "open", title: "Still open", count: (view) => view.counts.open },
+  { gap: "unanswered", title: "Not yet answered", count: (view) => view.counts.unanswered },
+  { gap: "unbound", title: "Answering nothing", count: (view) => view.counts.unbound },
+];
+
+const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
+
 /**
- * The section: what is asked for — the ledger as a document, a requirement
- * and what answers it on each line, then the values answering none, then the
- * sources the assistant read requirements from. Its id is `asserted`, and
- * the document's is `required`, the two places the chat links to.
+ * Which kind of fact the list shows: everything, or one gap. Choosing one is
+ * `frame` by gap and choosing everything is `unframe`, so the filter is a
+ * fact of `Framing`, the same whichever party set it. While an assertion or
+ * a clause frames the canvas, no filter is pressed, and the sticky strip
+ * names the frame. A gap with nothing in it cannot be chosen.
+ */
+function Filters() {
+  const { view, gesture, busy } = useConfigurator();
+  if (!view) return null;
+  const frame = view.frame;
+  const value = !frame ? "all" : frame.by === "gap" ? frame.gap : "";
+  return (
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      size="sm"
+      spacing={0}
+      value={value}
+      disabled={busy}
+      aria-label="Show"
+      onValueChange={(next) => {
+        if (!next || next === value) return;
+        void gesture(
+          next === "all" ? { act: "unframe" } : { act: "frame", frame: { by: "gap", gap: next } },
+        );
+      }}
+    >
+      {/* Pressed is solid: the primitive's muted fill all but vanishes on
+          the panel's ground, and which filter is on is the list's meaning. */}
+      <ToggleGroupItem value="all" className={PRESSED}>
+        All
+      </ToggleGroupItem>
+      {GAPS.map(({ gap, title, count }) => (
+        <ToggleGroupItem
+          key={gap}
+          value={gap}
+          disabled={!count(view) && value !== gap}
+          className={cn("gap-1.5", PRESSED)}
+        >
+          {title}
+          <span className="tabular-nums text-muted-foreground group-data-[state=on]/toggle:text-background/70">
+            {count(view)}
+          </span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  );
+}
+
+/**
+ * The specification as one list: a line per requirement with what answers
+ * it and, beneath each answer, what it forced; then a line per value
+ * answering none, with an empty requirement; then what is still open. Then
+ * the sources the assistant read requirements from. Its id is `asserted`,
+ * and the document's is `required`, the two places the chat links to.
  */
 export function AskedFor() {
   const { view } = useConfigurator();
   if (!view) return null;
   const asserted = framedAsserted(view);
-  const { unbound, unanswered, shown } = ledger(view, asserted);
-  const read = view.counts.read;
+  const { unbound, loose, open, shown } = ledger(view, asserted);
+  const empty = !shown.size && !unbound.length && !loose.length && !open.length;
   return (
-    <section id="asserted" className="mt-6 scroll-mt-28">
-      <header className="mb-2 flex flex-wrap items-baseline gap-x-2">
-        <h2 className="text-sm font-semibold">Asked for</h2>
-        <span className="text-xs text-muted-foreground">
-          {[
-            `${shown.size} required, in your words`,
-            `${asserted.length} asserted`,
-            read ? `${read} read by the assistant` : "",
-            unanswered ? `${unanswered} not yet answered` : "",
-            unbound.length ? `${unbound.length} answering nothing` : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </span>
-        {/* What the keys do, which the editor points at: while a frame is
-            on, that nothing can be typed. */}
-        <span id="required-keys" className="basis-full text-xs text-muted-foreground">
-          {view.frame
-            ? "Narrowed: show everything to write or reword a requirement"
-            : "Enter for another, Backspace on an empty line to strike, @ to name the catalogue"}
-        </span>
+    <section id="asserted" className="mt-6 scroll-mt-28" aria-labelledby="asserted-title">
+      <h2 id="asserted-title" className="sr-only">
+        The specification
+      </h2>
+      <header className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Filters />
       </header>
       {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
-          it is read, and a frame that leaves no line says so. */}
+          it is read, and a frame that leaves nothing says so. */}
       <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-(--field)">
-        <CardContent className="px-3 py-1">
+        <CardContent className={cn("px-3 py-1", view.frame && !shown.size && "[&_.tiptap]:hidden")}>
           <Specification />
-          {view.frame && !shown.size ? (
-            <p className="py-3 text-xs text-muted-foreground">
-              No requirement bears on this.
-            </p>
+          <Unbound unbound={unbound} />
+          <Loose loose={loose} />
+          <Open open={open} />
+          {view.frame && empty ? (
+            <p className="py-3 text-xs text-muted-foreground">Nothing here.</p>
           ) : null}
         </CardContent>
       </Card>
-      <Unbound unbound={unbound} />
       <Sources />
     </section>
   );

@@ -1,16 +1,13 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { ItemGroup } from "@/components/ui/item";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
-import { useConfigurator, type Variable, type View } from "./provider";
+import { useConfigurator, type View } from "./provider";
 import { Button } from "@/components/ui/button";
 import { address, To } from "./address";
 import { ClauseText } from "./clauses";
@@ -19,18 +16,15 @@ import { Standing } from "./standing";
 import { Trace } from "./trace";
 import { framedAsserted } from "./ledger";
 import { AskedFor } from "./specification";
-import { FollowsRow, OpenRow } from "./variables";
 
 function Section({
   id,
   title,
-  hint,
   count,
   children,
 }: {
   id: string;
   title: string;
-  hint?: string;
   count: number;
   children: React.ReactNode;
 }) {
@@ -39,7 +33,7 @@ function Section({
       <header className="mb-2 flex items-baseline gap-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         <span className="text-xs text-muted-foreground">
-          {hint ? `${count} · ${hint}` : count}
+          {count}
         </span>
       </header>
       {count ? (
@@ -54,14 +48,15 @@ function Section({
 }
 
 /**
- * What the canvas is narrowed to, and the way out. Shown only while a frame
- * is on; the counts are of the slice, so the three sections still read as
- * three kinds of fact inside it. A frame on a clause is also the answering
- * mode, and the strip says so.
+ * What the canvas is narrowed to, and the way out. Shown while an assertion
+ * or a clause frames it — an assertion only by the assistant or the person's
+ * own agent, since the page's own way to what one forced is the card itself; the counts are of the slice, by kind of fact. A
+ * frame on a clause is also the answering mode, and the strip says so. A gap
+ * frame is a filter, shown pressed above the list it filters.
  */
 function FrameBanner() {
   const { view, gesture, busy, label } = useConfigurator();
-  if (!view?.frame) return null;
+  if (!view?.frame || view.frame.by === "gap") return null;
   const { frame } = view;
   const inside = view.variables.filter((v) => v.framed);
   const count = (standing: string) =>
@@ -74,7 +69,7 @@ function FrameBanner() {
       {frame.by === "assertion" ? (
         <>
           <span>
-            <span className="text-muted-foreground">What followed from </span>
+            <span className="text-muted-foreground">Narrowed to </span>
             <To id={address.variable(frame.variable)} className="font-medium uppercase tracking-wide">
               {frame.heading}
             </To>
@@ -86,7 +81,8 @@ function FrameBanner() {
             ) : null}
           </span>
           <span className="text-muted-foreground">
-            · {count("follows")} follow · {count("open")} narrowed
+            · forced {count("follows")}
+            {count("open") ? ` · narrowed ${count("open")} still open` : ""}
             {yielded ? ` · ${yielded} gave way` : ""}
             {unmet ? ` · ${unmet} unmet` : ""}
           </span>
@@ -130,7 +126,8 @@ function Header() {
   if (!view) return null;
   const touched = view.touched;
   const moved = touched ? touched.variables.length + touched.clauses.length : 0;
-  if (!moved && !view.frame) return null;
+  const framed = view.frame && view.frame.by !== "gap";
+  if (!moved && !framed) return null;
   return (
     <div className="sticky top-0 z-10 -mx-6 space-y-2 border-b bg-ground/95 px-6 py-2 backdrop-blur">
       {moved ? (
@@ -145,12 +142,11 @@ function Header() {
 }
 
 /**
- * The configuration's sections as the current state fills them. A frame
- * narrows every section to the items that bear on one question and leaves
- * the sections themselves alone — `Framing`; with no frame, `framed` is true
- * of everything. A yielded or unmet value is asserted: it sits with what was
- * asked for, not with what followed, because nothing about the person's
- * requirement changed.
+ * What the current state and frame leave on the canvas, by kind of fact. A
+ * frame narrows it to the items that bear on one question — `Framing`; with
+ * no frame, `framed` is true of everything. A yielded or unmet value is
+ * asserted, not followed, because nothing about the person's requirement
+ * changed.
  */
 export function sections(view: View) {
   const framed = view.variables.filter((v) => v.framed);
@@ -162,35 +158,19 @@ export function sections(view: View) {
   };
 }
 
-/** The open variables, by the catalogue's family, in the catalogue's order. */
-function byFamily(open: Variable[]): [string, Variable[]][] {
-  const groups = new Map<string, Variable[]>();
-  for (const v of open) {
-    const rows = groups.get(v.family);
-    if (rows) rows.push(v);
-    else groups.set(v.family, [v]);
-  }
-  return [...groups.entries()];
-}
-
-const family = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
-
 /**
  * The specification: what is the case.
  *
- * The three sections are the design's whole claim made visible: what a party
- * asked for, what follows from it, and what is still open are three different
- * kinds of fact, and a configurator that keeps them in one field cannot show
- * you this. The grouping is a property of the current state — it changes on
- * every action and cuts across the catalogue's own families.
- *
- * The first section is the requirement ledger written as a document
- * (`specification.tsx`, `ledger.tsx`): each requirement on its own line, in
- * the person's words and edited there, beside the values asserted to answer
- * it and what each forced, with a last line of values answering none, and
- * the sources the assistant read from beneath. Its unit is the choice, the
- * relation the case's design is about, so a requirement and its answer are
- * one line on one surface. The only other surface is the quotes.
+ * One list, the requirement ledger written as a document (`specification.tsx`,
+ * `ledger.tsx`): each requirement on its own line, in the person's words and
+ * edited there, beside the values asserted to answer it, each with what it
+ * forced beneath it; then a line for each value answering none, its
+ * requirement empty; then what is still open, by the catalogue's family; and
+ * the sources the assistant read from beneath. Asked for, follows from that
+ * and still open are three kinds of fact, and each item says which it is
+ * where it stands — a value that follows sits under the assertions it rests
+ * on, with the rule — rather than in a section of its own. The gaps are
+ * filters over the list. The only other surface is the quotes.
  */
 export function ConfiguratorCanvas() {
   const { view, error } = useConfigurator();
@@ -219,8 +199,7 @@ export function ConfiguratorCanvas() {
     );
   }
 
-  const { follows, open, questions } = sections(view);
-  const families = byFamily(open);
+  const { questions } = sections(view);
 
   return (
     <div className="@container h-full">
@@ -244,56 +223,9 @@ export function ConfiguratorCanvas() {
             </Section>
           ) : null}
 
-          {/* What is asked for: the requirement ledger, written as a
-              document, each requirement beside what answers it, and the
-              values answering none. */}
+          {/* The one list: each requirement beside what answers it and
+              what that forced, the values answering none, what is open. */}
           <AskedFor />
-
-          <Section
-            id="follows"
-            title="Follows from that"
-            count={follows.length}
-          >
-            <ItemGroup className="gap-1">
-              {follows.map((variable) => (
-                <FollowsRow key={variable.name} variable={variable} />
-              ))}
-            </ItemGroup>
-          </Section>
-
-          {/* Grouped by the catalogue's family, so the scan a person brings
-              here — what kind of thing is left — has an answer. The grouping
-              is the catalogue's, not the state's, which is why it is only
-              inside this section and not across the three. */}
-          <Section
-            id="open"
-            title="Still open"
-            hint={view.frame?.by === "clause" ? "a pick here answers the clause" : undefined}
-            count={open.length}
-          >
-            <Card className="gap-0 py-0">
-              {families.map(([name, rows], i) => (
-                <div key={name}>
-                  {families.length > 1 ? (
-                    <div
-                      className={cn(
-                        "flex items-baseline gap-2 border-b bg-muted/40 px-3 py-1 text-xs",
-                        i > 0 && "border-t",
-                      )}
-                    >
-                      <span className="uppercase tracking-wide text-muted-foreground">
-                        {family(name)}
-                      </span>
-                      <span className="text-muted-foreground">{rows.length}</span>
-                    </div>
-                  ) : null}
-                  {rows.map((variable) => (
-                    <OpenRow key={variable.name} variable={variable} />
-                  ))}
-                </div>
-              ))}
-            </Card>
-          </Section>
 
           <Trace />
 

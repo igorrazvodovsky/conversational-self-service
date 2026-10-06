@@ -15,6 +15,7 @@ or the clause is struck.
 from __future__ import annotations
 
 import json
+from datetime import date
 from typing import Any
 
 from engine import Completion, Invocation, States, Sync
@@ -34,6 +35,35 @@ def _an_issued_quote_is_shown(c: Completion, _: States) -> list[Invocation]:
     return [Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "quote"})]
 
 
+def _a_new_quote_supersedes_the_open_ones(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """A quote issued to a party for a job is a revision, not an alternative.
+
+    The `where`: every other quote issued to the same party for the same
+    specification, neither committed nor revoked nor lapsed.  Each is
+    revoked, so the newest is the only one the party can accept.
+    """
+    if c.failed:
+        return []
+    item = c.input.get("item")
+    if not isinstance(item, dict):
+        return []
+    quoting = states["Quoting"].state()
+    now = date.today().isoformat()
+    return [
+        Invocation("Quoting", "revoke", {"quote": earlier})
+        for earlier in quoting["quotes"]
+        if earlier != c.output["quote"]
+        and quoting["issuedTo"][earlier] == c.output["to"]
+        and isinstance(quoting["from"][earlier], dict)
+        and quoting["from"][earlier].get("spec") == item.get("spec")
+        and earlier not in quoting["committed"]
+        and earlier not in quoting["revoked"]
+        and quoting["until"][earlier] >= now
+    ]
+
+
 def _a_framed_requirement_shows_the_configuration(
     c: Completion, _: States
 ) -> list[Invocation]:
@@ -44,6 +74,21 @@ def _a_framed_requirement_shows_the_configuration(
         return []
     frame = c.output.get("frame")
     if not isinstance(frame, dict) or frame.get("by") != "clause":
+        return []
+    return [
+        Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
+    ]
+
+
+def _a_framed_gap_shows_the_configuration(
+    c: Completion, _: States
+) -> list[Invocation]:
+    """What a gap frame selects is on the specification; framing one from
+    the quotes brings the specification forward, whichever party did it."""
+    if c.failed:
+        return []
+    frame = c.output.get("frame")
+    if not isinstance(frame, dict) or frame.get("by") != "gap":
         return []
     return [
         Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
@@ -547,9 +592,19 @@ rules = [
     ),
     Sync("AnIssuedQuoteIsShown", ("Quoting", "quote"), _an_issued_quote_is_shown),
     Sync(
+        "ANewQuoteSupersedesTheOpenOnes",
+        ("Quoting", "quote"),
+        _a_new_quote_supersedes_the_open_ones,
+    ),
+    Sync(
         "AFramedRequirementShowsTheConfiguration",
         ("Framing", "frame"),
         _a_framed_requirement_shows_the_configuration,
+    ),
+    Sync(
+        "AFramedGapShowsTheConfiguration",
+        ("Framing", "frame"),
+        _a_framed_gap_shows_the_configuration,
     ),
     Sync(
         "AWithdrawnAssertionUnframesTheCanvas",

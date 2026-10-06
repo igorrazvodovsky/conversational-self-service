@@ -6,10 +6,12 @@
  * Every item worth returning to has a fragment: a variable at
  * `#variable:<name>`, a clause at `#clause:<id>`, a choice — a value bound
  * to the clause it answers, on its ledger line — at `#choice:<id>`, a source at
- * `#source:<kind>:<id>`, a section at `#<section>`. The fragment is the id of
+ * `#source:<kind>:<id>`, the list at `#asserted`. The fragment is the id of
  * the element that renders the item, wherever the current state puts it — the
- * same variable is a card under asserted today and a row under still open
- * after a withdrawal, and the address follows it. A link between two items is
+ * same variable is a card on a requirement's line today and an open row at
+ * the list's tail after a withdrawal, and the address follows it. An item the
+ * frame leaves out is not drawn, so following its address, once it is not
+ * found, takes the frame off and looks again. A link between two items is
  * a plain anchor to one of these, and so is a link from the chat.
  *
  * A quote's lines are items too: `#quote:<id>:variable:<name>` and
@@ -27,9 +29,9 @@
  * An item lives on one of `Moding`'s two surfaces: a clause, a choice, a
  * source, a variable, a question, a turn or a section on the specification,
  * a quote's line on the quotes.
- * Following an address to the other surface performs `focus` on it — the one
- * thing here that is recorded, and it is what a link is for — and then
- * scrolls to the item once it has rendered. The address itself records
+ * Following an address to the other surface performs `focus` on it — what a
+ * link is for — and then scrolls to the item once it has rendered; following
+ * one the frame leaves out performs `unframe`. Those two are recorded. The address itself records
  * nothing: it names a place on a view, and the state the view shows is
  * reconstructed from the log on its own.
  */
@@ -109,6 +111,11 @@ export function useFollowAddress() {
   const mode = view?.mode ?? null;
   const ready = view !== null;
   const pending = useRef<string | null>(null);
+  const framed = useRef(false);
+  const isFramed = !!view?.frame;
+  useEffect(() => {
+    framed.current = isFramed;
+  }, [isFramed]);
   useEffect(() => {
     pending.current = hash || null;
   }, [hash]);
@@ -122,10 +129,17 @@ export function useFollowAddress() {
     }
     pending.current = null;
     let tries = 0;
+    let widened = false;
     const find = () => {
       const el = document.getElementById(id);
       if (el) arrive(el);
       else if (tries++ < 10) setTimeout(find, 50);
+      else if (framed.current && !widened) {
+        // Not drawn: the frame leaves it out. Show everything, and look again.
+        widened = true;
+        tries = 0;
+        void gesture({ act: "unframe" }).then(() => setTimeout(find, 50));
+      }
     };
     find();
   }, [ready, hash, mode, gesture]);

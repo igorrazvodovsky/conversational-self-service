@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { To } from "./address";
+import { goTo, To } from "./address";
 import { money, tonnes } from "./format";
 import { useShown } from "./showing";
 import { useConfigurator, type Grid, type View } from "./provider";
@@ -85,10 +85,27 @@ export function Standing() {
           </div>
         </div>
 
+        {/* What is open is a filter over the list, so the count of it
+            narrows the list to it. */}
         <p className="text-xs text-muted-foreground">
-          <To id="asserted">{asked} asked</To> ·{" "}
-          <To id="follows">{counts.follows} follow from that</To> ·{" "}
-          <To id="open">{counts.open} still open</To>
+          <To id="asserted">{asked} asked</To> · {counts.follows} follow from that ·{" "}
+          {counts.open ? (
+            <a
+              href="#asserted"
+              className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+              onClick={(event) => {
+                event.preventDefault();
+                if (busy) return;
+                void gesture({ act: "frame", frame: { by: "gap", gap: "open" } }).then(() =>
+                  goTo("asserted"),
+                );
+              }}
+            >
+              {counts.open} still open
+            </a>
+          ) : (
+            `${counts.open} still open`
+          )}
         </p>
 
         <Collapsible>

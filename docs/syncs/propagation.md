@@ -225,7 +225,7 @@ then  { Constraining/consider: [ spec: ?s ] }
 A specification is started in `Asserting`, with nothing asserted of it, and
 the solver begins tracking it, with nothing assumed. From then on every
 variable has a set of possible options before anybody has asked for anything,
-which is what the canvas's *still open* section reads.
+which is what the canvas reads as still open.
 
 ## A discarded specification leaves the solver
 
@@ -486,6 +486,36 @@ it lives here rather than in [Conduct](conduct.md) because its `when` is a
 concept's completion and not a tool call: it fires the same way for a click
 and for the model.
 
+## A new quote supersedes the open ones
+
+```
+sync ANewQuoteSupersedesTheOpenOnes
+when  { Quoting/quote: [ item: ?item ; to: ?p ] => [ quote: ?q ] }
+where { Quoting: { ?e issuedTo: ?p }
+        ?e is not ?q
+        Quoting: { ?e from: ?earlier } and ?earlier's spec is ?item's spec
+        ?e is in neither Quoting.committed nor Quoting.revoked
+        Quoting: { ?e until: ?until } and ?until is not before today }
+then  { Quoting/revoke: [ quote: ?e ] }
+```
+
+A quote issued to a party for a job is a revision of whatever that party was
+already offered for it, not an alternative beside it. Each earlier quote still
+open to the same party for the same specification is revoked, once for each,
+so the newest is the only one the party can accept. Otherwise a person who
+asked again after changing the specification could still accept an offer
+for what they have since moved away from.
+
+The job is the specification's identity in the frozen item. A quote already
+accepted is left alone, as `Quoting.revoke` would refuse it anyway. A lapsed
+quote is left alone too: nobody can accept it, so revoking it would change
+nothing except the word beside it.
+
+Who asked for the new quote does not matter, since the rule's `when` is a
+concept's completion. A quote the model requests revokes the open ones as
+well. That is the only way the model's conduct reaches `Quoting/revoke`, and
+it withdraws the seller's offer, never the person's acceptance.
+
 ```
 sync AFramedRequirementShowsTheConfiguration
 when  { Framing/frame: [ lens: workspace ; frame: [ by: "clause" ; clause: ?c ] ]
@@ -502,6 +532,17 @@ pick that answers it
 ([Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement)), so
 framing a requirement brings the specification forward, whichever party did
 it.
+
+```
+sync AFramedGapShowsTheConfiguration
+when  { Framing/frame: [ lens: workspace ; frame: [ by: "gap" ; gap: ?g ] ]
+          => [ lens: workspace ; frame: ?f ] }
+then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
+```
+
+The same for a [gap](gestures.md#the-canvas-is-narrowed-to-one-gap): what is
+still open, unanswered or answering nothing is on the specification, so the
+model asked what is left to do brings it forward when it narrows to it.
 
 ## A frame goes with what it framed
 

@@ -144,14 +144,18 @@ back.
 same grant to which *items* the canvas shows
 ([Framing](../concepts/framing.md)). *What did asking for a hospital cost
 me?* is answered by narrowing the canvas to what followed from that
-assertion, with the sections kept, and saying so in a sentence — rather
+assertion and saying so in a sentence — rather
 than by a list of values in a chat bubble. The tool passes the same frame value
 a person's click passes, and the rule carries it without looking inside. The
 other frame value, `[ by: "clause" ; clause: ?c ]`, narrows the canvas to one
 requirement — what answers it, what those answers forced, and what is still
 open to answer it — for when the conversation is about that requirement; the
 model may frame a clause and may not answer one, as
-[Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement) says.
+[Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement) says. The
+third, `[ by: "gap" ; gap: ?g ]`, narrows it to one
+[gap](gestures.md#the-canvas-is-narrowed-to-one-gap) — what is still open,
+the requirements nothing answers, or the values answering none — for when
+the person asks what is left to do.
 
 ## Proposing, and not adopting
 
@@ -280,14 +284,14 @@ actions listed together in a `when` must all occur in the same flow
 A completion is one answer from the solver: an assignment of every variable
 that honours every rule and every assumption at the least cost. What it
 contains is two kinds of value. Some are settled by the rules given what has
-been asserted, and the canvas already shows those under *follows from that*;
+been asserted, and the canvas already shows those beneath the assertions they rest on;
 adopting them would turn an entailment into a demand, and no rule here does
 that. The rest are choices the rules leave open, and they are the only thing
 the person is being asked about. `AProposedValueIsPutToThePerson` puts each of
 those to them separately, as a request naming the variable, with the
 proposal's value as its one option: *the assistant proposes 1000 kg for the
-rated load; take it or not*. On the canvas that is a line beside each variable
-in *still open*.
+rated load; take it or not*. On the canvas that is a line beside each open
+variable.
 
 Nothing about the solver's answer requires the open values to be taken
 together. Assert any one of them and the rest of the assignment still holds:

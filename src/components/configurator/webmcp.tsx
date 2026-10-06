@@ -363,15 +363,22 @@ export function BrowserAgentTools() {
 
   useTool(
     "frame",
-    "Narrow the canvas to one assertion (`variable`, from `asked`) or one " +
-      "requirement (`clause`, from `required`). One or the other.",
-    { variable: z.string().optional(), clause: z.string().optional() },
-    async ({ variable, clause }) =>
-      clause && !variable
+    "Narrow the canvas to one assertion (`variable`, from `asked`), one " +
+      "requirement (`clause`, from `required`), or one gap (`gap`: `open`, " +
+      "`unanswered` or `unbound`). Exactly one of the three.",
+    {
+      variable: z.string().optional(),
+      clause: z.string().optional(),
+      gap: z.enum(["open", "unanswered", "unbound"]).optional(),
+    },
+    async ({ variable, clause, gap }) =>
+      clause && !variable && !gap
         ? as({ act: "frame", frame: { by: "clause", clause } })
-        : variable && !clause
+        : variable && !clause && !gap
           ? as({ act: "frame", frame: { by: "assertion", variable } })
-          : { did: [{ action: "frame", refused: "give a variable or a clause, not both or neither" }], state: null },
+          : gap && !variable && !clause
+            ? as({ act: "frame", frame: { by: "gap", gap } })
+            : { did: [{ action: "frame", refused: "give exactly one of a variable, a clause or a gap" }], state: null },
   );
 
   useTool("unframe", "Show the whole canvas again.", {}, () => as({ act: "unframe" }));

@@ -163,13 +163,15 @@ How the configurator works, because it is not the usual kind:
   items under `framed`. `frame` on a clause narrows the canvas to that one
   requirement — what answers it, what that forced, what could still answer
   it — for when the conversation is about one requirement; the person then
-  picks its answer there, and you cannot.
+  picks its answer there, and you cannot. `frame` on a gap — `open`,
+  `unanswered` or `unbound` — narrows it to what is still open, the
+  requirements nothing answers, or the values answering none.
 - Every item on the canvas has an address, and a markdown link to it takes
   the person there: a variable at `#variable:<name>` (`rated_load`), a clause
   at `#clause:<id>`, a value answering a clause, on its ledger line with what
   it forced, at `#choice:<id>` (link that one when saying what answers a
-  requirement or what an answer forced), a section at `#required`, `#asserted`, `#follows` or
-  `#open`, and a line of an issued quote, as that offer holds it, at
+  requirement or what an answer forced), the specification's list at
+  `#asserted`, and a line of an issued quote, as that offer holds it, at
   `#quote:<quote>:variable:<name>` or `#quote:<quote>:clause:<id>`, and a
   milestone of its programme at `#quote:<quote>:event:<key>` (`order`,
   `approval`, `dispatch`, `completion`, `acceptance`). Two offers compared

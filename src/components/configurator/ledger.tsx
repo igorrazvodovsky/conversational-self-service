@@ -3,14 +3,19 @@
 /**
  * What answers each requirement, on the requirement's own line.
  *
- * The ledger is the requirement document (`specification.tsx`): each clause
- * is a line, its words on the left, editable, and on the right the choices
- * answering it — a value bound to the clause, with what the value forced —
- * each at `#choice:<id>`. This module draws the right-hand side, and the last
- * line, the values answering no clause. A clause nothing answers is a line
- * with a gap where its answer goes, so both of slice 1's gaps are on one
- * view, and with no clause stated the section is slice 0's: every value on
- * the last line.
+ * The specification is one list. Each clause is a line, its words on the
+ * left, editable, and on the right the choices answering it — a value bound
+ * to the clause, each at `#choice:<id>`, with the values it forced beneath
+ * it. Then a line for each value answering no clause, with an empty
+ * requirement, and the open variables at the tail. A clause nothing answers
+ * is a line with a gap where its answer goes, so both of slice 1's gaps are
+ * in one list, and with no clause stated the list is slice 0's: every value
+ * on a line of its own.
+ *
+ * What was asked for, what follows and what is open are three kinds of fact,
+ * and each item says which it is where it stands; they are not three places.
+ * A value that follows sits under each assertion it rests on, addressed under
+ * the first. Which kind of fact is shown is a frame (`Framing`, by gap).
  *
  * The question is a read over `Specifying`, `Binding`, `Asserting` and
  * `Constraining` together (`ledger` in `agent/views.py`); whether an answer
@@ -18,11 +23,14 @@
  * of it is drawn.
  */
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
+import { address, addressable, targeted as targetedRing, To, useHash, useTargeted } from "./address";
+import { ChevronRightIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useConfigurator, type Answer, type Clause, type Variable, type View } from "./provider";
-import { AskedCard } from "./variables";
+import { AskedCard, FollowsRow, OpenRow } from "./variables";
 
 /** One choice on a line: its answer, the variable asserting it, and how it is drawn. */
 export interface Drawn {
@@ -48,15 +56,19 @@ export function framedAsserted(view: View): Variable[] {
 }
 
 /**
- * The ledger as the current state and frame fill it: which lines are in the
- * frame, each line's choices, and the values answering none. A frame on a
- * clause leaves its line; a frame on an assertion leaves the lines its value
- * answers. `asserted` is already narrowed by the frame.
+ * The list as the current state and frame fill it: which lines are in the
+ * frame, each line's choices, the values answering none, where each value
+ * that follows is addressed, and the open variables at the tail. A frame on
+ * a clause leaves its line; a frame on an assertion leaves the lines its
+ * value answers; a frame on the unanswered gap leaves the lines nothing
+ * answers, and the other gaps leave none. `asserted` is already narrowed by
+ * the frame.
  */
 export function ledger(view: View, asserted: Variable[]) {
   const byName = new Map(asserted.map((v) => [v.name, v]));
   const every = new Map(view.variables.map((v) => [v.name, v]));
   const frame = view.frame;
+  const unanswered = (c: Clause) => !c.answers.length && c.negotiability !== "open";
   const shown = new Set(
     view.clauses
       .filter((c) =>
@@ -64,11 +76,15 @@ export function ledger(view: View, asserted: Variable[]) {
           ? true
           : frame.by === "clause"
             ? c.clause === frame.clause
-            : c.answers.some((a) => a.variable && byName.has(a.variable)),
+            : frame.by === "gap"
+              ? frame.gap === "unanswered" && unanswered(c)
+              : c.answers.some((a) => a.variable && byName.has(a.variable)),
       )
       .map((c) => c.clause),
   );
   const whole = new Set<string>();
+  // The assertions drawn whole, in the order they are drawn.
+  const parents: string[] = [];
   const lines = new Map<string, Drawn[]>();
   for (const clause of view.clauses) {
     lines.set(
@@ -79,42 +95,90 @@ export function ledger(view: View, asserted: Variable[]) {
         const inFrame = !!variable && byName.has(variable.name);
         // Drawn whole once, on the first line in the frame that it answers.
         const first = inFrame && shown.has(clause.clause) && !whole.has(variable!.name);
-        if (first) whole.add(variable!.name);
+        if (first) {
+          whole.add(variable!.name);
+          parents.push(variable!.name);
+        }
         return { answer, variable, inFrame, whole: first };
       }),
     );
   }
   const unbound = asserted.filter((v) => !v.answers.length);
-  const unanswered = view.clauses.filter(
-    (c) => shown.has(c.clause) && !c.answers.length && c.negotiability !== "open",
-  ).length;
-  return { shown, lines, unbound, unanswered };
+  parents.push(...unbound.map((v) => v.name));
+  // A value that follows is drawn under every assertion it rests on, and
+  // addressed under the first drawn; one resting on nothing drawn has a
+  // line of its own.
+  const follows = view.variables.filter((v) => v.framed && v.standing === "follows");
+  const home = new Map<string, string>();
+  for (const v of follows) {
+    const parent = parents.find((p) => v.following.some((f) => f.variable === p));
+    if (parent) home.set(v.name, parent);
+  }
+  const loose = follows.filter((v) => !home.has(v.name));
+  const open = view.variables.filter((v) => v.framed && v.standing === "open");
+  return {
+    shown,
+    lines,
+    unbound,
+    follows,
+    home,
+    loose,
+    open,
+    unanswered: view.clauses.filter((c) => shown.has(c.clause) && unanswered(c)).length,
+  };
 }
 
 /**
- * What an asserted value forced: the values that follow and rest on it.
- * The other half of the choice, read off `following`, so the line holds the
- * consequence beside the value rather than a section away.
+ * What an asserted value forced: the values that follow and rest on it,
+ * beneath it, behind a disclosure. Closed, its trigger names each value with
+ * what it is, so the line still says what followed; open, each is drawn in
+ * full. Each is addressed where it is first drawn, and drawn again under
+ * another assertion it rests on carries no address. Addressed from
+ * elsewhere, the disclosure opens, since what was wanted is the value.
  */
 function Forced({ variable }: { variable: Variable }) {
   const { view, label } = useConfigurator();
-  if (!view) return null;
-  const forced = view.variables.filter(
-    (v) => v.standing === "follows" && v.following.some((f) => f.variable === variable.name),
+  const hash = useHash();
+  const [open, setOpen] = useState(false);
+  const rows = view ? ledger(view, framedAsserted(view)) : null;
+  const forced =
+    rows?.follows.filter((v) => v.following.some((f) => f.variable === variable.name)) ?? [];
+  const targeted = forced.some(
+    (v) => rows?.home.get(v.name) === variable.name && hash === address.variable(v.name),
   );
-  if (!forced.length) return null;
+  useEffect(() => {
+    if (targeted) setOpen(true);
+  }, [targeted]);
+  if (!rows || !forced.length) return null;
   return (
-    <p className="px-1 text-xs text-muted-foreground">
-      forced{" "}
-      {forced.map((v, i) => (
-        <span key={v.name}>
-          {i ? ", " : ""}
-          <To id={address.variable(v.name)} title="Where it follows, on this surface">
-            {v.heading.toLowerCase()} {label(v.value)}
-          </To>
-        </span>
-      ))}
-    </p>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          size="xs"
+          className="h-auto w-full justify-start gap-1 py-1 text-left font-normal whitespace-normal text-muted-foreground"
+        >
+          <ChevronRightIcon className="mt-0.5 self-start transition-transform group-data-[state=open]/button:rotate-90" />
+          <span>
+            forced{" "}
+            {forced.map((v, i) => (
+              <span key={v.name}>
+                {i ? ", " : ""}
+                {v.heading.toLowerCase()}{" "}
+                <span className="text-foreground">{label(v.value)}</span>
+              </span>
+            ))}
+          </span>
+        </Button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div role="list" aria-label={`Forced by ${variable.heading}`} className="space-y-1 pt-1 pl-4">
+          {forced.map((v) => (
+            <FollowsRow key={v.name} variable={v} addressed={rows.home.get(v.name) === variable.name} />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -197,35 +261,73 @@ export function Answers({ clause, drawn }: { clause: Clause; drawn: Drawn[] }) {
   );
 }
 
-/** The last line: the values asserted with nothing said about what for. */
-export function Unbound({ unbound }: { unbound: Variable[] }) {
-  if (!unbound.length) return null;
+/**
+ * A line of the list with no requirement: the left-hand side empty, so the
+ * absence reads where a requirement would be, and the right-hand side what
+ * is there.
+ */
+function Line({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      id="unbound"
-      className="mt-2 grid scroll-mt-28 gap-2 border border-dashed p-3 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4"
-    >
-      <div className="min-w-0">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <p
-              tabIndex={0}
-              className="w-fit text-sm text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Answering no stated requirement
-            </p>
-          </TooltipTrigger>
-          <TooltipContent>Asserted with nothing said about what for</TooltipContent>
-        </Tooltip>
-      </div>
-      <div className="grid min-w-0 gap-2 @5xl:grid-cols-2">
-        {unbound.map((variable) => (
-          <div key={variable.name} className="min-w-0 space-y-1">
-            <AskedCard variable={variable} under={null} />
-            <Forced variable={variable} />
-          </div>
-        ))}
+    <div className="grid gap-3 border-t py-3 @2xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @2xl:gap-4">
+      <div aria-hidden className="hidden @2xl:block" />
+      <div className="min-w-0 space-y-1">
+        <span className="sr-only">No stated requirement. </span>
+        {children}
       </div>
     </div>
   );
+}
+
+/** The values asserted with nothing said about what for, a line each. */
+export function Unbound({ unbound }: { unbound: Variable[] }) {
+  return unbound.map((variable) => (
+    <Line key={variable.name}>
+      <AskedCard variable={variable} under={null} />
+      <Forced variable={variable} />
+    </Line>
+  ));
+}
+
+/** Values that follow from no assertion drawn: from the rules alone, or
+ * from assertions the frame leaves out. */
+export function Loose({ loose }: { loose: Variable[] }) {
+  return loose.map((variable) => (
+    <Line key={variable.name}>
+      <div role="list">
+        <FollowsRow variable={variable} />
+      </div>
+    </Line>
+  ));
+}
+
+/** The open variables, by the catalogue's family, in the catalogue's order. */
+function byFamily(open: Variable[]): [string, Variable[]][] {
+  const groups = new Map<string, Variable[]>();
+  for (const v of open) {
+    const rows = groups.get(v.family);
+    if (rows) rows.push(v);
+    else groups.set(v.family, [v]);
+  }
+  return [...groups.entries()];
+}
+
+/**
+ * The tail: what is still open, a line per catalogue family. Grouped by the
+ * catalogue's family, so the scan a person brings here — what kind of thing
+ * is left — has an answer; the grouping is the catalogue's, so it is only
+ * here.
+ */
+export function Open({ open }: { open: Variable[] }) {
+  return byFamily(open).map(([family, rows]) => (
+    <Line key={family}>
+      <p className="px-1 text-xs uppercase tracking-wide text-muted-foreground">
+        {family} · still open
+      </p>
+      <div className="border">
+        {rows.map((variable) => (
+          <OpenRow key={variable.name} variable={variable} />
+        ))}
+      </div>
+    </Line>
+  ));
 }

@@ -101,14 +101,19 @@ export interface Variable {
 }
 
 /**
- * The canvas narrowed to what followed from one assertion, or to one
- * requirement, from `Framing`. The membership test is the read side's; each
- * variable carries `framed`. A clause frame is also the answering mode: a
- * pick made while it is on answers the clause.
+ * The canvas narrowed to what followed from one assertion, to one
+ * requirement, or to one gap, from `Framing`. The membership test is the
+ * read side's; each variable carries `framed`. A clause frame is also the
+ * answering mode: a pick made while it is on answers the clause. A gap frame
+ * is a filter over the one list: what is still open, the requirements
+ * nothing answers, or the values answering none.
  */
+export type Gap = "open" | "unanswered" | "unbound";
+
 export type Frame =
   | { by: "assertion"; variable: string; heading: string; asked: string | null }
-  | { by: "clause"; clause: string; text: string };
+  | { by: "clause"; clause: string; text: string }
+  | { by: "gap"; gap: Gap };
 
 export type Negotiability = "fixed" | "negotiable" | "open";
 

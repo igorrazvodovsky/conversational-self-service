@@ -434,11 +434,11 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     refused = constraining["refused"].get(spec, {})
     heading = catalogue["heading"]
 
-    # The frame, from `Framing`: which items the canvas shows.  Two kinds —
-    # what followed from one assertion, and one requirement — and the
-    # membership test is this read's, not the concept's.  See
+    # The frame, from `Framing`: which items the canvas shows.  Three kinds —
+    # what followed from one assertion, one requirement, and one gap — and
+    # the membership test is this read's, not the concept's.  See
     # docs/concepts/framing.md and docs/syncs/gestures.md, "The canvas is
-    # narrowed to one requirement".
+    # narrowed to one requirement" and "… to one gap".
     frame = engine.state("Framing")["framed"].get(WORKSPACE)
     framed_on = (
         frame.get("variable")
@@ -450,11 +450,33 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         if isinstance(frame, dict) and frame.get("by") == "clause"
         else None
     )
+    framed_gap = (
+        frame.get("gap")
+        if isinstance(frame, dict)
+        and frame.get("by") == "gap"
+        and frame.get("gap") in ("open", "unanswered", "unbound")
+        else None
+    )
     # The variables whose asserted value answers the framed clause, read
     # from the ledger below once it exists; filled before `variables` is built.
     answering_clause: set[str] = set()
 
+    def unbound(name: str) -> bool:
+        return name in asserted and not answering.get(asserted[name])
+
     def in_frame(name: str, offered: list[str], allowed: set[str]) -> bool:
+        if framed_gap == "open":
+            return name not in asserted and name not in settled
+        if framed_gap == "unanswered":
+            # The gap is clauses; no variable is in it.
+            return False
+        if framed_gap == "unbound":
+            # The values answering no clause, and what they forced.
+            if unbound(name):
+                return True
+            return name not in asserted and any(
+                unbound(v) for v in following.get(name, [])
+            )
         if framed_clause is not None:
             # Its answers, what they forced, and anything still open.
             if name in answering_clause:
@@ -802,6 +824,8 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "text": next(c["text"] for c in clauses if c["clause"] == framed_clause),
             }
             if framed_clause is not None
+            else {"by": "gap", "gap": framed_gap}
+            if framed_gap is not None
             else None
         ),
         "variables": variables,
@@ -1422,7 +1446,14 @@ def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
         # `unframe` change it.  `framed` lists what the frame selects.
         "frame": view["frame"],
         "framed": (
-            [f"{v['heading']} ({v['standing']})" for v in view["variables"] if v["framed"]]
+            # The unanswered gap selects clauses, not variables.
+            [
+                f"{c['clause']}: {c['text']} (unanswered)"
+                for c in view["clauses"]
+                if not c["answers"] and c["negotiability"] != "open"
+            ]
+            if view["frame"] and view["frame"].get("gap") == "unanswered"
+            else [f"{v['heading']} ({v['standing']})" for v in view["variables"] if v["framed"]]
             if view["frame"]
             else None
         ),

@@ -6,8 +6,8 @@
  *
  * The menu is the person's half of the concept; the model's half is the
  * `show` and `hide` tools, and both land in the same state and the same log.
- * The sections are not in the menu: what a party asserted, what follows and
- * what is open is the canvas's claim, not a facet of it.
+ * Which kind of fact an item is — asserted, follows, open — is not in the
+ * menu: that is the canvas's claim, not a facet of it.
  */
 
 import { EyeIcon } from "lucide-react";

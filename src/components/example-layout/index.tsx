@@ -18,7 +18,7 @@ import {
 
 const TITLE: Record<Surface, string> = {
   canvas: "Specification",
-  quote: "Quotes",
+  quote: "Quote",
 };
 
 interface ExampleLayoutProps {

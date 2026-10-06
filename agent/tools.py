@@ -391,13 +391,15 @@ def hide(facet: str) -> dict[str, Any]:
 
 
 @tool
-def frame(variable: str | None = None, clause: str | None = None) -> dict[str, Any]:
-    """Narrow the canvas to one assertion or to one requirement.
+def frame(
+    variable: str | None = None, clause: str | None = None, gap: str | None = None
+) -> dict[str, Any]:
+    """Narrow the canvas to one assertion, one requirement, or one gap.
 
     With `variable`, an asserted variable's name from the `asked` list
     `review` returns: the canvas shows that assertion, every value that
     follows from it and the rule, every open variable whose options it ruled
-    out, and any assertion it made unmet — with the three sections kept. Use
+    out, and any assertion it made unmet. Use
     it when the person asks what one choice cost them or what it changed,
     rather than listing the consequences in the chat.
 
@@ -406,16 +408,24 @@ def frame(variable: str | None = None, clause: str | None = None) -> dict[str, A
     still open that could answer it. Use it when the conversation is about
     one requirement. You cannot answer the clause; the person picks.
 
-    One or the other. `review` reports the frame under `frame` and the items
-    in it under `framed`. The canvas narrows only when this is called; saying
-    it has been narrowed without calling it would be false.
+    With `gap`, one of `open` (the variables nothing has settled),
+    `unanswered` (the requirements nothing answers) or `unbound` (the values
+    answering no requirement, with what they forced): the canvas shows only
+    that. Use it when the person asks what is left to do.
+
+    Exactly one of the three. `review` reports the frame under `frame` and
+    the items in it under `framed`. The canvas narrows only when this is
+    called; saying it has been narrowed without calling it would be false.
     """
-    if clause and not variable:
+    given = [k for k, v in (("variable", variable), ("clause", clause), ("gap", gap)) if v]
+    if given == ["clause"]:
         value: dict[str, Any] = {"by": "clause", "clause": clause}
-    elif variable and not clause:
+    elif given == ["variable"]:
         value = {"by": "assertion", "variable": variable}
+    elif given == ["gap"] and gap in ("open", "unanswered", "unbound"):
+        value = {"by": "gap", "gap": gap}
     else:
-        return {"did": [{"action": "frame", "refused": "give a variable or a clause, not both or neither"}]}
+        return {"did": [{"action": "frame", "refused": "give exactly one of a variable, a clause or a gap (open, unanswered, unbound)"}]}
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="frame", frame=value,
     )

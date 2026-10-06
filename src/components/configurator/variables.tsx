@@ -201,7 +201,6 @@ export function AskedCard({
   const shown = useShown();
   const unmet = variable.standing === "unmet";
   const yielded = variable.standing === "yielded";
-  const framedOnThis = view?.frame?.by === "assertion" && view.frame.variable === variable.name;
   const moved = view?.touched?.variables.includes(variable.name) ? view.touched.by : null;
   const isTarget = useTargeted(address.variable(variable.name));
   const held = new Set(variable.held);
@@ -307,25 +306,6 @@ export function AskedCard({
                 <span className="sr-only"> {variable.heading}</span>
               </Button>
             </CollapsibleTrigger>
-            {/* The requirement slice: narrow the canvas to what this
-                assertion forced, ruled out or refused — `Framing`. */}
-            {!framedOnThis && !unmet && !yielded ? (
-              <Button
-                variant="ghost"
-                size="xs"
-                className="text-muted-foreground"
-                disabled={busy}
-                onClick={() =>
-                  void gesture({
-                    act: "frame",
-                    frame: { by: "assertion", variable: variable.name },
-                  })
-                }
-              >
-                What followed from this
-                <span className="sr-only"> {variable.heading}</span>
-              </Button>
-            ) : null}
           </div>
           <CollapsibleContent className="pt-1">
             <Options variable={variable} />
@@ -376,8 +356,18 @@ export function AskedCard({
   );
 }
 
-/** A variable nobody chose, whose value the rules leave no room to argue with. */
-export function FollowsRow({ variable }: { variable: Variable }) {
+/**
+ * A variable nobody chose, whose value the rules leave no room to argue with,
+ * drawn beneath an assertion it rests on. It is drawn under each, and
+ * `addressed` under one, so its address is on the page once.
+ */
+export function FollowsRow({
+  variable,
+  addressed = true,
+}: {
+  variable: Variable;
+  addressed?: boolean;
+}) {
   const { label, view } = useConfigurator();
   const shown = useShown();
   // Moved with an assertion the last turn made: the value rests on it.
@@ -389,13 +379,13 @@ export function FollowsRow({ variable }: { variable: Variable }) {
   const isTarget = useTargeted(address.variable(variable.name));
   return (
     <Item
-      id={address.variable(variable.name)}
+      id={addressed ? address.variable(variable.name) : undefined}
       size="xs"
       variant="muted"
       role="listitem"
       // Set into the panel's ground, under the raised asserted cards. The
       // variant's own half-strength muted all but vanishes on that ground.
-      className={cn("items-start bg-sunken", addressable, isTarget && targetedRing)}
+      className={cn("items-start bg-sunken", addressable, addressed && isTarget && targetedRing)}
     >
       <ItemContent className="gap-1">
         {/* Not `ItemTitle`: it clamps to one line, and undoing the clamp

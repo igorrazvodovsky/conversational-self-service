@@ -40,14 +40,16 @@ used here — see [`docs/method/synchronization.md`](docs/method/synchronization
 
 Ask for a hospital lift and the usage profile becomes near-continuous, the
 rescue system becomes a full battery backup, and most of the rated loads
-disappear. None of that was chosen. The canvas therefore has three sections —
-**asked for**, **follows from that** (with the rule that forces it), and
-**still open** — and that grouping is a property of the current state, not of
-the catalogue.
+disappear. None of that was chosen. The canvas therefore tells three kinds of
+fact apart — **asked for**, **follows from that** (with the rule that forces
+it), and **still open** — and which kind an item is, is a property of the
+current state, not of the catalogue. Each item says which it is where it
+stands, rather than in a section of its own: a value that follows sits under
+each assertion it rests on, and a kind of fact is a filter over one list.
 
 Everything else in the design follows from taking that seriously:
 
-- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the canvas's first section, *asked for*, is the requirement ledger written as a document — each requirement on its own line in the person's words, edited there, beside the values asserted to answer it and what each forced, with the values answering nothing on a last line — and the proposal's basis of design renders from the same read. The requirement and its answer are one line on one surface, because the relation between them is the one the case is about. The person does the mapping by picking an option while answering a clause; the model states and answers a clause only by reading it from a source, and only the person makes its reading theirs.
+- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the specification is one list, the requirement ledger written as a document — each requirement on its own line in the person's words, edited there, beside the values asserted to answer it with what each forced beneath it, then a line with an empty requirement for each value answering nothing, then what is still open — and the proposal's basis of design renders from the same read. The requirement and its answer are one line on one surface, because the relation between them is the one the case is about. The person does the mapping by picking an option while answering a clause; the model states and answers a clause only by reading it from a source, and only the person makes its reading theirs.
 - [`Asserting`](docs/concepts/asserting.md) records assertions a party made, in the model's vocabulary — the case's name for it. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
 - [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. The log's first entry for a turn is the person's words rather than the model's tool call, and the model's calls in reply run in the flow those words opened, so the canvas can say *the assistant read "hospital, six storeys" as this* from the flow token alone. When the model's turn runs into a conflict it puts the question to the person and its run waits, an AG-UI interrupt carrying the floor; the answer is always the person's gesture — a choice, leaving it, or a reply in words, which leaves the question open for whoever holds the decision. No rule reads the concept; the view does.
 - [`Filing`](docs/concepts/filing.md) keeps a document the person attached, as text, so a passage can be cited; [`Reading`](docs/concepts/reading.md) holds what the model read from it or from the person's words, with the options it took to answer each item. A reading becomes a clause stated by the model and an answer asserted by it ([Reading](docs/syncs/reading.md)), at once and visibly, and the person corrects it by striking, re-answering or withdrawing, or keeps it as their own. A reading with no answer is the model's claim that the catalogue holds nothing for it, shown as such. A later requirement on the same variable displaces the earlier answer while that answer is the assistant's reading, and the canvas says what displaced it; a value answering a requirement the person stated or kept is theirs, and the model cannot change it.
@@ -74,10 +76,10 @@ layer beside the agent.
 │   │   ├── chat/                         # CopilotChat, composed from them through slots
 │   │   ├── configurator/                 # the canvas
 │   │   │   ├── provider.tsx              # reads /view, performs gestures
-│   │   │   ├── index.tsx                 # the specification surface: the three sections
-│   │   │   ├── ledger.tsx                # what answers each clause, on its line: the choices and what they forced; and the values answering none
+│   │   │   ├── index.tsx                 # the specification surface: one list, filtered by gap
+│   │   │   ├── ledger.tsx                # what answers each clause, on its line: the choices and what they forced; the values answering none; what is open
 │   │   │   ├── standing.tsx              # where the specification stands: quotable or not, and the running price and carbon
-│   │   │   ├── specification.tsx         # the asked-for section: the ledger as a Tiptap document, a clause and its answers per line; edits become gestures
+│   │   │   ├── specification.tsx         # the one list and its filters: the ledger as a Tiptap document, a clause and its answers per line; edits become gestures
 │   │   │   ├── sources.tsx               # the documents and words the model read from, item by item, under the ledger
 │   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode (the clause frame)
 │   │   │   ├── question.tsx              # the open Deciding questions
@@ -86,7 +88,7 @@ layer beside the agent.
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
 │   │   │   ├── address.tsx               # every item's address, and links between them
 │   │   │   ├── webmcp.tsx                # the person's gestures, registered for their own agent (WebMCP)
-│   │   │   └── variables.tsx             # asked / follows / open rows
+│   │   │   └── variables.tsx             # an asserted card, a row that follows, an open row
 │   │   ├── example-layout/               # the artifact panel (the specification or the quotes, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features
 │   └── hooks/
@@ -159,7 +161,7 @@ follows. How much the person delegates is theirs to set, in their own agent.
 | request a quote | yes | yes | yes |
 | **accept or revoke one** | **yes** | **no** | **yes** |
 | choose which facts the canvas shows beside each item | yes | yes | yes |
-| narrow the canvas to what followed from one assertion | yes | yes | yes |
+| narrow the canvas to what followed from one assertion, or to one gap | yes | yes | yes |
 | change a price, the catalogue, or the seller's terms | no | no | no |
 
 Every `no` is the absence of a rule, not a prohibition — the DSL has no way to

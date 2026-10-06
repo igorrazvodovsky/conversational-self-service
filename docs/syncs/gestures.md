@@ -370,11 +370,14 @@ terms, which makes them permissions both actors hold alike.
 one concept over, into [Framing](../concepts/framing.md): which *items* the
 canvas shows rather than which facts about each. The frame is a value the
 click passes and the read side interprets, and the rule carries it without
-looking inside. Two values are read: `[ by: "assertion" ; variable: ?v ]`,
-from a control on an asserted card, and `[ by: "clause" ; clause: ?c ]`,
-from a control on a clause. Rules in
+looking inside. The values read are `[ by: "assertion" ; variable: ?v ]`,
+which the page offers no control for — what an assertion forced is beneath
+its card — and which the person's own agent may pass, `[ by: "clause" ; clause: ?c ]`,
+from a control on a clause, and `[ by: "gap" ; gap: ?g ]`, from the filters
+over the specification. Rules in
 [Propagation](propagation.md#a-frame-goes-with-what-it-framed) take a frame
-away when what it framed goes.
+away when what it framed goes; a gap frame names no item, so nothing takes it
+away, and once the gap closes it selects nothing and the canvas says so.
 
 <a id="the-canvas-is-narrowed-to-one-requirement"></a>
 ### The canvas is narrowed to one requirement
@@ -382,9 +385,9 @@ away when what it framed goes.
 A frame on a clause selects the variables whose asserted value answers it,
 the values that follow from those, and every variable still open, since any
 of them could answer it next. The read is `agent/views.py`'s, as the
-assertion frame's is, and the sections are kept: the requirement's answers
-under *asserted*, what they forced under *follows from that*, what could
-still answer it under *still open*.
+assertion frame's is: the requirement's line with its answers and what they
+forced beneath each, and the open variables that could still answer it at the
+list's tail.
 
 The same frame is the answering mode. While a clause frames the canvas, a
 pick on an open variable is `APersonAnswersAClause` with that clause, and a
@@ -396,6 +399,26 @@ put it there. The model may frame a clause
 ([Conduct](conduct.md#what-the-canvas-shows)) to bring one requirement in
 front of the person; it cannot answer one, because no rule carries its
 `invoke` into `Binding`, and framing does not change that.
+
+<a id="the-canvas-is-narrowed-to-one-gap"></a>
+### The canvas is narrowed to one gap
+
+A gap is what the specification still lacks, and each kind is a frame value:
+`open`, the variables nothing has settled; `unanswered`, the
+clauses nothing answers, those left open on purpose excepted; and `unbound`,
+the values asserted with no clause behind them, with what they forced. Each
+is a rule over the current state, read in `agent/views.py`, so a frame on a
+gap follows the state as it moves: answer the last unanswered clause and the
+frame selects nothing.
+
+What was asked for, what follows from it and what is still open are kinds
+of fact, not places on the canvas. Each item says which it is where it
+stands — a value that follows sits under the assertions it
+rests on, with the rule — but they are not three places. The specification
+is one list: a line per requirement with what answers it, a line per value
+answering none, and the open variables at its tail. A kind of fact is a
+filter over that list, and a filter is a frame because it is a choice about
+which items are shown, recorded, and the same for both parties.
 
 ## A clause is stated in the person's words
 
