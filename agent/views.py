@@ -585,6 +585,14 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                     if asked and name in how
                     else None
                 ),
+                # Who performed the root action the assertion followed from,
+                # when it is a party: the same fact `how` puts in words, for
+                # the mark beside the value.
+                "by": (
+                    how[name]["actor"]
+                    if asked and name in how and how[name]["actor"] in PARTIES
+                    else None
+                ),
                 "answers": answering.get(asked, []) if asked else [],
                 "value": value,
                 "owing": [
@@ -893,14 +901,6 @@ KINDS = [
     ("view", "The view"),
     ("nothing", "Nothing"),
 ]
-# Who takes a turn, by the side of the sale they act for.  `person` is
-# whoever is looking; an actor not named here is listed by its name.
-PARTIES = {
-    "person": ("You", "buyer"),
-    "browser": ("Your agent", "buyer"),
-    "model": ("The assistant", "seller"),
-}
-
 # What opened a turn, as the log says it when the turn stated, answered or
 # withdrew nothing: a person's gesture or the tool the model called.  An act
 # not named here is shown by its name.
@@ -941,6 +941,14 @@ ACTS = {
     "relax": "Asked to relax a requirement",
     "strike": "Asked to strike a requirement",
 }
+# Who takes a turn, by the side of the sale they act for.  `person` is
+# whoever is looking; an actor not named here is listed by its name.
+PARTIES = {
+    "person": ("You", "buyer"),
+    "browser": ("Your agent", "buyer"),
+    "model": ("The assistant", "seller"),
+}
+
 _KIND_OF = {
     "Specifying": "specification",
     "Asserting": "specification",
@@ -1066,6 +1074,7 @@ def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
         out.append(
             {
                 **flow,
+                "did": ACTS.get(flow["opened"], flow["opened"]),
                 "parties": sorted(parties),
                 "kinds": [k for k, _ in KINDS if k in flow["kinds"]] or ["nothing"],
             }
@@ -1074,7 +1083,6 @@ def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
 
 
 def _parties(log: list[dict[str, Any]]) -> list[dict[str, Any]]:
-                "did": ACTS.get(flow["opened"], flow["opened"]),
     """Every actor with a root action among the turns, the named ones first,
     each with its name and the side of the sale it acts for."""
     present = {p for turn in log for p in turn["parties"]}

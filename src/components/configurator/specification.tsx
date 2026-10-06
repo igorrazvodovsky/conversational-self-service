@@ -47,7 +47,7 @@ import {
   type Editor,
   type NodeViewProps,
 } from "@tiptap/react";
-import { EllipsisIcon, Maximize2Icon, Minimize2Icon, GripVerticalIcon, XIcon } from "lucide-react";
+import { CheckIcon, EllipsisIcon, Maximize2Icon, Minimize2Icon, GripVerticalIcon, Trash2Icon } from "lucide-react";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -435,21 +435,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
         </div>
         {clause ? (
           <div contentEditable={false} className="flex shrink-0 items-center gap-0.5 select-none">
-            {/* A reading still the assistant's is a decision waiting on the
-                person, so its Keep is always there. */}
-            {clause.statedBy === "model" ? (
-              <Button
-                size="xs"
-                variant="ghost"
-                disabled={busy}
-                className="h-5 text-muted-foreground"
-                title="The assistant read this; make it your requirement as it stands"
-                onClick={() => void gesture({ act: "keep", clause: clause.clause })}
-              >
-                Keep
-                <span className="sr-only">: {plain(clause.text)}</span>
-              </Button>
-            ) : null}
             {/* The line's controls show on hover, on focus and while the
                 line is open; they stay in the tab order throughout. */}
             <div
@@ -523,9 +508,23 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                   });
                 }}
               >
-                <XIcon />
+                <Trash2Icon />
               </Button>
             </div>
+            {/* A reading still the assistant's is a decision waiting on the
+                person, so its keep button is always there. */}
+            {clause.statedBy === "model" ? (
+              <Button
+                size="icon-xs"
+                variant="ghost"
+                disabled={busy}
+                title="The assistant read this; make it your requirement as it stands"
+                aria-label={`Keep: ${plain(clause.text)}`}
+                onClick={() => void gesture({ act: "keep", clause: clause.clause })}
+              >
+                <CheckIcon />
+              </Button>
+            ) : null}
           </div>
         ) : null}
       </div>

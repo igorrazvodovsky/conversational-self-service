@@ -157,11 +157,15 @@ function Price({ ground, currency }: { ground: Ground; currency: string }) {
 }
 
 function Moved({ moved }: { moved: boolean }) {
-  return moved ? (
-    <Badge variant="outline" className="ml-2 font-normal">
-      changed since
-    </Badge>
-  ) : null;
+  return (
+    <TableCell className="align-top">
+      {moved ? (
+        <Badge variant="outline" className="font-normal">
+          changed since
+        </Badge>
+      ) : null}
+    </TableCell>
+  );
 }
 
 function Group({
@@ -217,12 +221,14 @@ export function AsIssued({
   const asserted = rows((g) => g.standing !== "follows");
   const follows = rows((g) => g.standing === "follows");
 
+  // The badge has a column of its own, so the values stay aligned.
   const valueCell = (h: Held) => (
-    <TableCell className="align-top whitespace-normal">
-      {h.label}
-      <Moved moved={moved.has(h.name)} />
-    </TableCell>
+    <>
+      <TableCell className="align-top whitespace-normal">{h.label}</TableCell>
+      {moved.size ? <Moved moved={moved.has(h.name)} /> : null}
+    </>
   );
+  const movedHead = moved.size ? <TableHead className="w-px" /> : null;
 
   return (
     <div className="text-sm">
@@ -281,6 +287,7 @@ export function AsIssued({
                 <TableRow>
                   <TableHead className="w-1/4">Item</TableHead>
                   <TableHead className="w-1/4">Value</TableHead>
+                  {movedHead}
                   <TableHead>Why</TableHead>
                   <TableHead className="w-28 text-right">Adds</TableHead>
                 </TableRow>
@@ -325,6 +332,7 @@ export function AsIssued({
                   <TableRow>
                     <TableHead className="w-1/4">Item</TableHead>
                     <TableHead className="w-1/4">Value</TableHead>
+                    {movedHead}
                     <TableHead>Because</TableHead>
                     <TableHead className="w-28 text-right">Adds</TableHead>
                   </TableRow>

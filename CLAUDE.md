@@ -29,6 +29,10 @@ you want to change behaviour, edit the specification and regenerate — do not
 patch the generated code. Project skills carry the procedures:
 `concept-spec`, `concept-sync`, `concept-generate`, `concept-audit`, `concept-coverage`.
 
+The UI is the exception: its code is the source, with the reasons in
+comments beside it. [`docs/ui.md`](docs/ui.md) holds only what no one
+component can say, and never re-describes the code or another note.
+
 General-purpose concept-design material predates the synchronization scheme
 used here — see [`docs/method/synchronization.md`](docs/method/synchronization.md#this-scheme-replaced-an-earlier-one).
 

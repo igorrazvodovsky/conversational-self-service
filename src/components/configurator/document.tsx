@@ -42,6 +42,7 @@ import type { Party, Quote, View } from "./provider";
 
 import { day, money, tonnes as tonnesOf } from "./format";
 import { LIFE } from "./life";
+import { LiftDrawing } from "./drawing";
 
 const tonnes = (kg: number) => `${tonnesOf(kg)} CO₂e`;
 
@@ -355,6 +356,9 @@ export function QuoteDocument({
             })}
           </TableBody>
         </Table>
+        <div className="mt-6">
+          <LiftDrawing holds={quote.holds} id={`quote-${quote.quote}`} />
+        </div>
       </section>
 
       <Separator className="my-6" />

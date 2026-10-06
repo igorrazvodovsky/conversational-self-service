@@ -5,8 +5,10 @@ components in `src/components/ui/`, installed with the shadcn CLI rather than
 written by hand: shadcn's zinc palette in oklch, and the Lyra style, which is
 square, dense and sharp.
 
-This is presentation only. No concept, action or rule changed, and nothing here
-belongs in `docs/concepts/` or `docs/syncs/`.
+For the UI the code is the source: what each surface is made of, its labels
+and its classes are read there, with the reasons beside them in comments. This
+note holds what no one component can say — why the views are arranged as they
+are, and the decisions that run across them.
 
 ## What a view is
 
@@ -35,13 +37,10 @@ Three questions test a view:
    component is arranged by extension.
 2. *What are its units?* A variable, a clause, a source, a quote line: the
    smallest thing a person would point at.
-3. *Can they be reached?* Every unit has an address (`address.tsx`), so a link
-   between items, a reply in the chat and the person's agent can each name it.
-   Naming a unit needs knowing what it holds, so the readers off the page get
-   the same units: `review` reads the specification and `open_quote` an
-   issued offer, and every unit either returns carries its address under
-   `at`; a requirement read from a source also carries the item it was read
-   as, under `read_at`.
+3. *Can they be reached?* Every unit has an address, so a link between
+   items, a reply in the chat and the person's agent can each name it. Naming
+   a unit needs knowing what it holds, so the readers off the page get the
+   same units, each with its address.
 
 The same facts may be arranged more than once, one arrangement per question.
 The requirements are the example: the ledger holds the clauses in the order
@@ -81,9 +80,7 @@ answers nothing about the specification, so a run of them folds into one
 line. So does a run of gestures by the same party with no words behind them:
 a person working down the open variables answers them a turn at a time, and
 the run is one occasion to whoever reads it later, so its line says what the
-run did and opens onto each turn. The log is a timeline, so it says each
-thing once: who and when head a turn only where they change, and the record
-behind a turn waits until the turn is pointed at. The words that opened a
+run did and opens onto each turn. The words that opened a
 turn are in the chat too, at `#said:<utterance>`, and the log and the sources
 link to them. Words said in another conversation are reached by opening that
 conversation first, which is a viewer's convenience like the chat's geometry.
@@ -100,9 +97,8 @@ therefore reads a quote in more ways than the document does. *Against what was
 asked* is the canvas's question put to the specification as it stood when the
 offer was made: the requirements, then the values asserted and those that
 followed, each with its reason and what it added to the sum, every line
-addressed as the offer holds it (`grounds.tsx`). *As the proposal* is the
-document. Above the readings, the offer as a decision: what it costs over its
-term, what the person provides, and how long it stays open.
+addressed as the offer holds it. *As the proposal* is the document. Above
+the readings, the offer as a decision.
 
 Two things the principle leaves open:
 
@@ -142,141 +138,10 @@ drop things it knows nothing about. Some of them fail silently:
   `rounded-md` can't bring a corner back. Literal classes such as `rounded-full`
   bypass the ramp and have to be left out at the call site.
 
-The stylesheet also carries the CopilotKit font override, the inspector's
-position, a `dark` variant broad enough to match the
-`<html>` element `ThemeProvider` stamps, and one app-wide `:focus-visible`
-outline that replaces the primitives' own focus rings.
-
-`--ring` is one zinc step darker than stock in both themes. Stock zinc's ring is
-2.63:1 against white, and a focus indicator needs 3:1. `--muted-foreground` is
-darker than stock in the light theme, so the 12px labels keep 4.5:1 on the
-darkest level they sit on.
-
-A text field's edge is `--field`, 80% of `--muted-foreground`, which keeps 3:1
-against every level in both themes; `--input` stays the hairline for
-everything else, where the words say what the thing is. Under
-`prefers-reduced-motion: reduce` every animation and transition settles at
-once, in one rule rather than a `motion-safe:` per utility, because the
-primitives carry their own animations.
-
-### Levels
-
-Contrast between surfaces comes from neutral levels, not colour, so a thing's
-place in the scale reads before its words do. The stylesheet adds three tokens
-to shadcn's, outermost first:
-
-| Level | Token | What sits on it |
-|---|---|---|
-| Frame | `--frame` | Both panels' header rows, one band across the split |
-| Ground | `--ground` | The artifact panel and its sticky strips |
-| Raised | `--card` | A thing on the ground: the standing, the requirement document, the open variables, the proposal. An answer on a line of the requirement document is text on the document's card, not a card of its own |
-| Sunken | `--sunken` | A thing set into the ground: a value that follows from no assertion drawn |
-| Band | `--muted` | A band inside a card: a family heading, the frame strip, a source's text, a quote's figures |
-
-The chat stays on `--background`, so the two panels alternate. The dark theme
-keeps the order: the frame darkest, the ground a step above the chat, a card a
-step above the ground, and a sunken thing back down at the chat's level.
-
-### `cn`
-
-Since shadcn 4.19 the registry's components import `cn` from shadcn's own `cn`
-package instead of from `@/lib/utils`. The installed files keep that import, so
-they stay identical to what `add` writes, and `src/lib/utils.ts` re-exports the
-same function, so app code and primitives merge classes with one engine.
-`clsx` and `tailwind-merge` are not dependencies.
-
-## What each surface is made of
-
-| Surface | Primitives |
-|---|---|
-| The question section, empty and loading states | `Empty`, `Spinner` |
-| The artifact panel | One of `Moding`'s two surfaces at a time — the specification, the quotes — switched from the panel's header, or by following a link to an item on the other surface |
-| The way around the panel | One `nav` row in the panel's header, wrapping onto further lines when the panel is narrow or the text large, a `NavigationMenuLink` per place, one `NavigationMenuList` with no viewport since nothing drops down: *asked of you* with its count while a question waits, an address on the specification; then the two surfaces, *Specification* and *Quote*, divided by a rule, each performing `focus`. What the specification shows is chosen by the filters above its list, not here. At the row's end, while the specification is showing, the `Showing` menu (`panel-nav.tsx`) |
-| The specification's strip | Sticky at the top of its scroll while a frame is on an assertion or a clause, so one begun anywhere is visible and its way out reachable from anywhere |
-| The filters | A `ToggleGroup` above the list: *All*, then each gap with its count — *open*, *unanswered*, *answering nothing*. A gap is `frame` by gap and *All* is `unframe`, so the filter is a fact of `Framing` the model can set too. The pressed item is solid, as the primitive's muted fill all but vanishes on the ground; a gap with nothing in it is disabled. While an assertion or a clause frames the canvas none is pressed |
-| An address | Every variable, clause, source and quote line, and the list, carries an `id` (`variable:<name>`, `clause:<id>`, `choice:<id>`, `source:<kind>:<id>`, `quote:<id>:variable:<name>`, `quote:<id>:event:<key>`, `compare:<id>:<other>:variable:<name>`, `required`, `asserted`, …) and `scroll-margin` for the sticky strip; the target of the page's fragment gets a ring; an open row, and a ledger line, addressed from elsewhere opens; an item the frame leaves out is not drawn, so following its address takes the frame off. An address is on one surface, and following one to the other surface performs `focus` on it first. A link between two items is a plain anchor with a dotted underline (`address.tsx`). The chat's replies may link to them too |
-| The log | A bell at the end of the panel's header, on either surface, opening a `Sheet`: the turns on a rail, latest activity first. Each turn has a mark on the rail, filled for the seller's side and a ring for the buyer's, as the actor `Badge` is; who took part and when head it only where they differ from the turn above, the time relative, with the moment in its `title`. Then the words or documents it read; what it stated, reworded, struck, answered or withdrew, each clause or value still on the canvas a link to its address; and for a gesture that did none of those, what the gesture was, in a phrase read with the turn (`ACTS` in `agent/views.py`). Beneath, a `Collapsible` of the records it wrote, each with its actor, its concept's action and the rule that authorised it; its trigger shows while the turn is pointed at or holds focus and while it is open, and always on a screen that cannot point or when a record was refused. A run of turns by the same parties with no words or documents behind them, on the same side of the rule, folds into one line on the rail that says what the run did and how often — answered, withdrew, switched surface — and opens onto its turns, by itself when one of them is addressed. Above the list, a ghost `Button` for who took part and one for what the turn did, each opening a `DropdownMenu` of checkbox items with their counts, which stays open while several are chosen; the parties are every one that has taken a turn, grouped by the side of the sale it acts for. A turn shows when one of its parties and one of the things it did are checked, and the last item checked in a menu cannot be unchecked. The triggers are labelled *People* and *Activity*; what is chosen is in the menus. Who is filtered by the parties hidden, not those shown, so a party that takes its first turn is shown without anyone choosing it. Everyone but the viewer, and changes to the specification, are chosen at first, which is the notification center. The bell counts the turns by anyone else that changed the specification since the person last changed it themselves, whatever is chosen, and a rule divides those from the ones before. What is chosen is a viewer's convenience kept in the browser, not `Framing`: the log is about no fact of the configuration. Following a `#turn:` address opens the sheet, on either surface, and chooses what shows that turn; it records nothing. Read off the log (`turns` in `agent/views.py`); nothing records that the sheet was opened |
-| The ledger | The specification's one list: the requirement document, a line per clause, read as a question and its answer. A line shows the clause's words, editable, and beneath them each choice answering it as its heading and value, addressed (`choice:<id>`), with the values it forced beneath it as muted heading-and-value pairs. Everything else is the open line's: where the words were read from, whether they were relaxed, who asserted the value, what else it answers and whether it is held, its options, taking it back, and the rules behind what it forced, set in under a rule. A line opens while the caret is in it, so reading the document with the caret reviews it a line at a time; from its value, a `Button` that says whether it is expanded; and when the page is at one of its addresses. Opened from its value or an address, it stays open until closed there. A clause with no answer says so beneath its words. After the document, a line per value answering nothing, its question *No stated requirement*; a line per value that follows from no assertion drawn; and the open variables, a line per catalogue family. A value answering two clauses is drawn on the first line and named on the second as the same pair, its value a link, and so is one the frame leaves out; whether an answer still stands is the read's `standing`, never the frame. While a frame is on, the document is read-only and shows only the lines in the frame |
-| Asserted value | Its heading, muted, and its value as a ghost `Button` that opens the line; what stands against it stays beside the value in words — *gave way to*, struck through, or *not buildable with the rest*, which the question links to. Open, the line shows who asserted it, *Also answers* or *Also held for* each other clause it answers as a link, its options and a ghost *Take back* `Button` |
-| A value that follows | Beneath each asserted value it rests on, a muted heading-and-value pair, addressed under the first; the rules behind it are the open line's. One resting on no assertion drawn has a line of its own, an `Item` on `--sunken` rather than the variant's half-strength muted, which all but vanishes on the ground, where *from* names the assertions it rests on, each a link |
-| An open variable | `Collapsible` whose trigger is a ghost `Button`, at the list's tail in a bordered group per catalogue family; options are `Button size="xs"`, a ruled-out one `secondary` and struck through; a shown price or carbon figure sits inside the button, notes and exclusions are lists beneath |
-| Which facts are shown (`Showing`) | `DropdownMenu` of checkbox items, from a ghost `Button` |
-| The requirement document (`Specifying`) | The ledger's lines, as a Tiptap editor in a `Card`; each clause a node view with `Button`s to frame the canvas on it (answer) and strike it and a `DropdownMenu` of radio items for how firmly it is meant, beside its words, shown on hover, on focus and while the line is open, and in the tab order throughout; *Relax* is the open line's. The line the caret is in is read off the editor's selection while it has focus, and kept when focus moves to a control set into that line. The empty-clause hint is from Tiptap's `Placeholder`, placed by the node view. Focus on a control inside a line is not editing, and does not hold back the view's write-back |
-| A reference in a clause | `Badge` (`outline` for an individual, `secondary` for a value, `default` once the value answers the clause); the `@` list is `Command` with grouped `CommandItem`s |
-| The offers issued | `Table`, one row per quote, the selected row `data-state=selected`; a ghost `Button` per row to compare it with the one selected, and on the selected row one to compare it with the specification now |
-| The quote shown | A `Card` on the ground: the decision — standing, days left, the sum, the maintenance charge and both over the term, each a `--muted` band, what the person provides, and the controls to accept, revoke and print — over `Tabs`, one per reading |
-| A quote against what was asked | `Table`s under *Required*, *Asserted* and *Follows from that*; each row addressed (`quote:<id>:variable:<name>`, `quote:<id>:clause:<id>`) and ringed when targeted, with its reason, its line price at issue, and an `outline` `Badge` where the canvas has since moved |
-| A quote along time | A chart of labelled lanes for the works and one for the aftercare, because the works run in weeks and the aftercare in years and one axis cannot carry both: the seller's work, the person's and the payment marks over weeks from order, then warranty and maintenance over years from acceptance. Spans are `bg-muted` or `bg-foreground/80`, marks a rule with a direct label, so no lane depends on colour. Below them a `Table` of the milestones in order, which is the charts' table view; each row addressed (`quote:<id>:event:<key>`) with what falls due and what the person must have done by then. Positions come from the programme frozen at issue, never from the catalogue |
-| A proposal | The quote document under its tab; the printable page draws it alone |
-| A quote compared | With another quote, or with the specification now (`now`, read as a quote requested now would freeze it). One `Table` of the values that differ, a `tbody` per group headed by the requirements its values answer on either side (a requirement gained, lost, reworded or left unanswered on one side says so), then the values answering none. Each side says whether its value was asserted, gave way or follows, with who asserted it; a value that follows on both sides is dimmed and called a consequence, linked to the assertions it rests on. Each line carries its change in the sum and the monthly charge, and a sentence says whether the lines account for the whole difference; a value held on both sides but priced differently has a group of its own. The comparison and each line are addressed (`compare:<id>:<other>`, `…:variable:<name>`, `…:clause:<id>`); the sums, the term and the programme are reached through the comparison's own address. Against a quote issued before quotes kept their grounds, only the values that differ, with the reason (`comparison.tsx`) |
-| The frame (`Framing`) | On an assertion or a clause, a bordered strip in the sticky nav with the counts of the slice and a ghost `Button` to show everything; the way in is the `Button` on a clause. An answer has no way in of its own, since what it forced is beneath it and what it ruled out is on the options; the assistant or the person's own agent may still frame an assertion. On a gap, the filters |
-| The answering mode | The frame on a clause: the strip names the clause and says that a value picked now answers it; the clause's expand icon `Button` shows pressed, as a collapse icon, and takes the frame off |
-| The sources (`Filing`, `Conversing`) | A `Collapsible` under the ledger, closed by default, opened by a link from a clause's source line; inside, a `Card` per source with the items read from it |
-| Where the specification stands | A `Card` first on the specification: a `Badge` naming the state (`default` when ready to quote, `outline` otherwise), the reason a quote cannot be requested yet, *Request a quote* and the quotes issued as `Button`s, the counts asked, followed and open, and one line with the one-off price (*so far* until it is ready) and the modelled carbon; in a `Collapsible`, the price and the carbon by stage of the lift's life (making, installing, maintaining and running it, and the end of its life, named once in `life.ts`), the monthly and lifetime figures, and the grid's `ToggleGroup` |
-| An open question | A section, *asked of you*, first on the specification while one waits; in it an `Alert` naming the assertions it is between, each linked to where it is drawn, with `Button`s |
-| A value held for a reason | Said in words on the open line: *Yours: the assistant cannot change it* for the line's own clause, *Also held for* for another |
-| A reading still the assistant's | *Keep* beside its words, shown whether or not the line is open, since it waits on the person; the open line says whose reading it is and of what |
-| The action log | `Collapsible`, `Card`, `Badge` for the actor and for a refusal |
-| Artifact panel and chat split | `ResizablePanelGroup`, `ResizablePanel`, `ResizableHandle` |
-| Conversation list and new-conversation control | `DropdownMenu` of radio items grouped under `DropdownMenuLabel` days, `Button` |
-| Chat layout menu and hide control | `DropdownMenu` of radio items, `Button` |
-| Restore-the-chat control | `Button` with a mark for unseen replies |
-| Chat composer | `InputGroup`, `InputGroupTextarea`, `Button` |
-| Suggestions | `Button variant="outline" size="xs"` |
-| A person's turn | `Bubble` |
-| Welcome screen | `Empty` |
-| Copy and scroll-to-latest | `Button` |
-| Tool-call row | `Collapsible` |
-| Charts, controlled and A2UI | `chart` (`ChartContainer`) over Recharts, coloured by `--chart-1` to `--chart-5` |
-| Meeting picker | `Card`, `Item`, `Badge`, `Empty` |
-| A2UI catalog | `Card`, `Badge`, `Button`, `Table`, `Separator`, and the two charts |
-
-The chat keeps CopilotKit's layout and swaps pieces in through `CopilotChat`'s
-slots (`src/components/chat/index.tsx`). CopilotKit still owns the
-stick-to-bottom scroller, the overlay the composer sits in, the attachment queue,
-and the markdown body of an assistant turn, which is set at 14px to match.
-
-## The chat against the artifact panel
-
-The layout is in `src/components/example-layout/`: an artifact panel
-that is always mounted, and a chat whose geometry is sidebar, floating, full screen or hidden,
-switched from one menu in its header. The chat is
-mounted once and the modes change its container's classes only, because the
-transcript's scroll offset belongs to a DOM node and re-parenting it loses the
-place. Hidden is `inert` and transparent rather than `display:none` for the
-same reason. Floating is a positioned panel, not a `Dialog`: nothing dims and
-no focus is trapped, so the canvas under it stays live.
-
-The geometry is React state, reset on every load; the split's division is a
-cookie the server reads (`src/lib/split-layout.ts`), because the panel group
-writes it inline and a value the server did not know would hydrate as a
-mismatch. Both menus mount a tick after hydration, since a Radix menu present
-during the hydration pass shifts the `useId` values of the whole page.
-
-The conversation list is a menu at the left of the chat's header (`conversation-menu.tsx`), rows labelled by start
-time and grouped by day, with no navigation column beside the split. It is
-used instead of `CopilotThreadsDrawer`, which does not fetch until the runtime
-reports a license status. Only CopilotKit Intelligence reports one, so without
-`CPK_INTELLIGENCE_API_KEY` the drawer shows *Loading threads…* forever. The
-menu reads the same `GET /threads` through `useThreads`, which needs no
-license. Without Intelligence that list is the in-memory runner's: it ends
-with the Next.js process, and nothing pushes changes to the client, so the page
-refetches it when a run ends and when the menu opens. A conversation joins it
-on its first run. Switching conversations changes the transcript only; the
-configurator is one engine, not one per thread.
-
 ## Decisions a reader might trip over
 
-- `InputGroup` fades itself whole with `has-disabled:opacity-50`, which is
-  meant for a disabled field. In the composer the disabled element is the send
-  button on an empty field, or the attach button while dictating, and the
-  whole composer would grey out. The composer takes the fade back on the group
-  (`has-disabled:opacity-100`), and both buttons keep the library's plain
-  `disabled`.
-- The A2UI schema still accepts colours from the agent (`PieChart`'s and
-  `BarChart`'s `color`, `FlightCard`'s `statusColor`), and the renderers ignore
-  them. The chart tokens and badge variants stand in, so an agent-drawn
-  dashboard doesn't bring its own palette.
+- Contrast between surfaces comes from neutral levels, not colour, so a
+  thing's place in the scale reads before its words do.
 - Status has no colour of its own — no amber for a question, red for an unmet
   assertion, violet for the model in the log or green for a trend going up —
   because zinc has no equivalent. Nothing on the canvas is an error: a conflict
@@ -284,50 +149,17 @@ configurator is one engine, not one per thread.
   for that answer. Neither is styled: the words say it, and the question links
   to the assertions it is between, so finding one is following a link rather
   than scanning for a mark. A refusal in the log is an `outline` `Badge`, a
-  permission working rather than a fault. A yielded value is muted and struck
-  through, because it no longer holds. `destructive` is kept for an action that
-  destroys and for a request that failed; `Badge` variants carry actor, trend
-  and status.
-- Nothing is smaller than 12px: the canvas's labels are `text-xs`.
+  permission working rather than a fault. `destructive` is kept for an action
+  that destroys and for a request that failed.
+- Nothing is smaller than 12px.
 
 ## Accessibility
 
 The target is WCAG 2.2 AA, held to the rules in
-[A11Y.md](https://github.com/fecarrico/A11Y.md). The evidence — what was
-checked, how, and what still needs a person — is in `REPORT.md` at the
-repository's root, with the choices between equally conformant patterns in
-`A11Y-DECISIONS.md` beside it.
-
-- *Landmarks.* The panel's header row is a `header`, the surface a `main`, the
-  chat a `section` named *Chat*. Skip links come first in the tab order, to
-  the panel and to the composer; they move focus by script, because a
-  fragment on this page is an item's address.
-- *Headings.* The panel's `main` holds one visually hidden `h1` naming the
-  surface, rendered by the layout so it is there while a surface loads or is
-  empty, and naming the `main`; the eye has the nav. The surfaces' own
-  headings start at `h2`. The proposal's headings start at
-  the level `QuoteDocument` is given: `h1` on the printable page, `h3` under a
-  quote's `h2` on the surface. The window's title names the surface.
-- *Focus follows the person, never the model.* Changing surface from the nav,
-  or skipping to the panel, takes focus to the panel's `main`, named by the
-  surface's `h1` and ringed inside its edge; following an address takes it to
-  the item. A link in a one-line row unclips the row while it has keyboard
-  focus, so its ring and the clause show whole. A surface a rule brings forward takes nothing. When a gesture removes
-  the control that made it — a struck clause, an answered question, a moved
-  clause redrawn — focus goes to the nearest thing that is still there.
-- *What changed is said once.* `example-layout/announcer.tsx` holds the polite
-  status regions: a turn by the other party landing under the bell and a question arriving, and the
-  assistant's run starting and ending. The transcript is a `log`, `aria-busy`
-  while a reply is written, so a reply is never read token by token. A refused
-  gesture is shown and announced as an alert. The question cards are labelled
-  regions, not alerts, because the canvas and the chat show the same question.
-- *State in words.* Strikethrough, dimming and a badge's variant are for
-  the eye; each carries visually hidden words beside it — *ruled out*, *the
-  current value*, *answers this clause*. A tooltip holds nothing that is not
-  also on the page.
-- *Repeated controls say which.* An answer's value, *Take back*, *Keep* and
-  *Relax* carry the variable or the clause, hidden, after the visible words,
-  so the name still begins with what is read on screen.
+[A11Y.md](https://github.com/fecarrico/A11Y.md). What was checked, how, and
+what still needs a person is in `REPORT.md` at the repository's root; the
+choices between equally conformant patterns are in `A11Y-DECISIONS.md` beside
+it.
 
 ## What is not shadcn, and why
 

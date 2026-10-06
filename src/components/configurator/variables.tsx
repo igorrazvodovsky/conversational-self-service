@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, ChevronDownIcon, SparklesIcon, XIcon } from "lucide-react";
+import { BotIcon, CheckIcon, ChevronDownIcon, SparklesIcon, UserIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -156,6 +156,33 @@ function Rules({ rules }: { rules: Variable["owing"] }) {
 }
 
 /**
+ * Who put an asserted value there, as a mark before it: the person, their
+ * own agent, or the assistant, whose proposals carry the same sparkles. The
+ * `how` sentence is its title, and the words are there for a screen reader;
+ * the open line still says it in full. Shown with the `how` facet.
+ */
+const MARKS = {
+  person: { Icon: UserIcon, who: "you" },
+  browser: { Icon: BotIcon, who: "your agent" },
+  model: { Icon: SparklesIcon, who: "the assistant" },
+} as const;
+
+function ByMark({ variable }: { variable: Variable }) {
+  const shown = useShown();
+  if (!shown("how") || !variable.by) return null;
+  const { Icon, who } = MARKS[variable.by];
+  return (
+    <span
+      title={variable.how ? variable.how[0].toUpperCase() + variable.how.slice(1) : undefined}
+      className="self-center text-muted-foreground"
+    >
+      <Icon aria-hidden className="size-3" />
+      <span className="sr-only">put there by {who}: </span>
+    </span>
+  );
+}
+
+/**
  * A value a party asserted, on a line of the ledger: its heading and the
  * value, and nothing else. The value is the line's way into the rest — who
  * asserted it and from which words, what else it answers, its options, taking
@@ -189,6 +216,7 @@ export function AssertedPair({
       <span className="text-muted-foreground">
         {variable.heading}
       </span>
+      <ByMark variable={variable} />
       <Button
         variant="ghost"
         size="xs"
@@ -431,16 +459,14 @@ export function FollowsRow({
   );
 }
 
-/** A variable still open, with what the rules have left of its range, and
- * what the assistant proposed for it, if anything. The proposal is a
+/** A variable still open, with what the rules have left of its range behind
+ * the heading, and what the assistant proposed for it, if anything. The proposal is a
  * `Deciding` request of its own: taking it is `choose`, and it becomes the
  * person's assertion; *not this one* is `decline`, and the whole then adopts
  * the rest. Neither is a pick from the options, which would be the person's
  * own value and read that way. */
 export function OpenRow({ variable }: { variable: Variable }) {
   const { gesture, busy } = useConfigurator();
-  const live = variable.options.filter((option) => option.possible);
-  const gone = variable.options.length - live.length;
   const proposed = variable.proposed;
   const id = address.variable(variable.name);
   // Addressed from elsewhere — a clause's answer line, a link in the chat —
@@ -466,10 +492,7 @@ export function OpenRow({ variable }: { variable: Variable }) {
           <span>
             {variable.heading}
           </span>
-          <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-            {live.length} left{gone ? ` · ${gone} ruled out` : ""}
-            <ChevronDownIcon className="transition-transform group-data-[state=open]/button:rotate-180" />
-          </span>
+          <ChevronDownIcon className="shrink-0 text-muted-foreground transition-transform group-data-[state=open]/button:rotate-180" />
         </Button>
       </CollapsibleTrigger>
       {proposed ? (

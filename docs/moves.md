@@ -228,4 +228,4 @@ already under way says so.
 - [Conduct](syncs/conduct.md) — which of the model's moves reach state, and which do not exist
 - [Gestures](syncs/gestures.md) — the person's moves, as root actions
 - [Propagation](syncs/propagation.md#when-assertions-cannot-hold-together) — how a conflict becomes a question
-- [The UI vocabulary](ui.md) — what the surfaces are built from
+- [The UI vocabulary](ui.md) — why the views are arranged as they are, and the decisions that run across them

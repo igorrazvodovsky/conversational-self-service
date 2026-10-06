@@ -77,6 +77,9 @@ export interface Variable {
   /** The value reached the solver softly: every clause it answers is negotiable. */
   softly: boolean;
   how: string | null;
+  /** The party whose root action the assertion followed from — the person,
+   * their own agent, or the assistant — read off the same edge as `how`. */
+  by: "person" | "browser" | "model" | null;
   /** The clauses the asserted value answers, from `Binding`. Empty is a finding. */
   answers: { clause: string; text: string }[];
   value: string | null;
@@ -401,11 +404,11 @@ export interface Turn {
   at: number;
   /** What started it: a gesture's act, the tool the model called, or the action. */
   opened: string;
+  /** What started it, in a phrase, for a turn that changed no clause or value. */
+  did: string;
   /** The words said in it, when it was opened by words. */
   said: { utterance: string; text: string } | null;
   /** The documents read in it. */
-  /** What started it, in a phrase, for a turn that changed no clause or value. */
-  did: string;
   files: string[];
   /** The clauses and values it changed, each as it was then. */
   stated: { clause: string; text: string }[];
