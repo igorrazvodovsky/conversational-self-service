@@ -270,6 +270,9 @@ PLAIN: list[tuple[Any, dict[str, Any]]] = []
 SPECIFICATION = "ui://configurator/specification.html"
 OFFER = "ui://configurator/quote.html"
 READ_ONLY = ToolAnnotations(readOnlyHint=True)
+# The view's URI under the key MCP Apps first used, which hosts still read
+# beside `_meta.ui.resourceUri`; the extension's own server helper writes both.
+LEGACY = {uri: {"ui/resourceUri": uri} for uri in (SPECIFICATION, OFFER)}
 
 Clause = Annotated[str, Field(description="A clause's id, from `required` in `review`")]
 Quote = Annotated[str, Field(description="A quote's id, from `quotes` in `review`")]
@@ -292,6 +295,7 @@ def tool(name: str, description: str):
 
 @apps.tool(
     resource_uri=SPECIFICATION,
+    meta=LEGACY[SPECIFICATION],
     name="review",
     annotations=READ_ONLY,
     description=(
@@ -323,6 +327,7 @@ def review() -> CallToolResult:
 
 @apps.tool(
     resource_uri=OFFER,
+    meta=LEGACY[OFFER],
     name="open_quote",
     annotations=READ_ONLY,
     description=(
@@ -673,6 +678,7 @@ def _specification() -> CallToolResult:
 
 @apps.tool(
     resource_uri=SPECIFICATION,
+    meta=LEGACY[SPECIFICATION],
     visibility=BY_HAND,
     name="person_keep",
     description=(
@@ -686,6 +692,7 @@ def person_keep(clause: Clause) -> CallToolResult:
 
 @apps.tool(
     resource_uri=SPECIFICATION,
+    meta=LEGACY[SPECIFICATION],
     visibility=BY_HAND,
     name="person_strike",
     description=(
@@ -699,6 +706,7 @@ def person_strike(clause: Clause) -> CallToolResult:
 
 @apps.tool(
     resource_uri=SPECIFICATION,
+    meta=LEGACY[SPECIFICATION],
     visibility=BY_HAND,
     name="person_choose",
     description=(
@@ -712,6 +720,7 @@ def person_choose(request: dict[str, Any], option: Any) -> CallToolResult:
 
 @apps.tool(
     resource_uri=OFFER,
+    meta=LEGACY[OFFER],
     visibility=BY_HAND,
     name="person_commit",
     description=(
@@ -725,6 +734,7 @@ def person_commit(quote: Quote) -> CallToolResult:
 
 @apps.tool(
     resource_uri=OFFER,
+    meta=LEGACY[OFFER],
     visibility=BY_HAND,
     name="person_revoke",
     description=(
