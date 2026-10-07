@@ -42,8 +42,8 @@ HOW = {
     "APersonAssertsAValue": "you asked for this",
     "TheModelMayAssertAValue": "the assistant asked for this",
     "AnAdoptedValueBecomesAnAssertion": "adopted from a proposal",
-    "AChoiceReachesTheAssertions": "answers a requirement",
-    "ASubstituteReachesTheAssertions": "answers a requirement, in place of an earlier value",
+    "AChoiceReachesTheAssertions": "you chose this",
+    "ASubstituteReachesTheAssertions": "you chose this, in place of an earlier value",
     "APersonRequestsAQuote": "you asked for this",
     "TheModelMayRequestAQuote": "the assistant asked for this",
 }
@@ -58,6 +58,8 @@ SAID = {
     ("APersonAssertsAValue", BROWSER): "your agent asked for this",
     ("AnAdoptedValueBecomesAnAssertion", BROWSER): "adopted from a proposal by your agent",
     ("APersonRequestsAQuote", BROWSER): "your agent asked for this",
+    ("AChoiceReachesTheAssertions", BROWSER): "your agent chose this",
+    ("ASubstituteReachesTheAssertions", BROWSER): "your agent chose this, in place of an earlier value",
 }
 
 

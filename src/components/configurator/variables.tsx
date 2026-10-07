@@ -261,7 +261,7 @@ export function AssertedPair({
 
 /**
  * Everything about an asserted value beyond the value itself, drawn while its
- * line is open: who asserted it and from which words (the `how` facet), what
+ * line is open: what the assistant read it from (the `how` facet), what
  * it is held for and the other clauses it answers (`answers`), whether it
  * reached the rules as a preference, the rules that refused it or that it gave
  * way to, its options, and taking it back.
@@ -287,10 +287,17 @@ export function AssertedDetails({
   const others = variable.answers.filter((a) => a.clause !== under);
   return (
     <div className="space-y-1.5 text-xs text-muted-foreground">
-      {/* On a line whose clause was read from a source, the line already
-          says where; the read side's sentence for that case, *read this in
-          …*, would say it again. */}
-      {shown("how") && variable.how && !(sourced && / read this (in|from) /.test(variable.how)) ? (
+      {/* Only the assistant's part is said here: what it read and from which
+          words is what the person checks and corrects. A value the person or
+          their agent chose has the mark beside it, and the log says the
+          rest; said here, it would sit against the hold below as two
+          claims of ownership. On a line whose clause was read from a source,
+          the line already says where; the read side's sentence for that
+          case, *read this in …*, would say it again. */}
+      {shown("how") &&
+      variable.by === "model" &&
+      variable.how &&
+      !(sourced && / read this (in|from) /.test(variable.how)) ? (
         <p>{variable.how[0].toUpperCase() + variable.how.slice(1)}</p>
       ) : null}
       {/* A clause the person stated holds the value for a reason, so the

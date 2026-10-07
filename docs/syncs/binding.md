@@ -107,7 +107,9 @@ negotiable, and which is read from the clause
 back through `Deciding`, and the canvas reads the provenance edge. The edge
 for a value that answers a clause is `AChoiceReachesTheAssertions`, which is
 another sentence beside *you asked for this*, *the assistant asked for this*
-and *adopted from a proposal*: *answers a requirement*.
+and *adopted from a proposal*: *you chose this*. It says who, not what for:
+the value is drawn under the requirement it answers, so naming the
+requirement again would only repeat the line.
 
 ## What takes a choice away
 
