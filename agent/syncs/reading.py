@@ -111,7 +111,9 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
     neither a file nor an utterance reads nothing: there is no source to
     check it against.  Nor does one whose words the source does not bear
     out — `Filing: { ?f text: ?t }` or `Conversing: { ?u text: ?t }`, and
-    `?w occurs in ?t` — or whose answer names two options on one variable."""
+    `?w occurs in ?t` — or whose answer names two options on one variable.
+    An utterance said about something, a reply to a question, is not a
+    source: `Conversing: { ?u about: _ }` does not bind."""
     if c.output.get("tool") != "read":
         return []
     words = c.output.get("words", "")
@@ -120,7 +122,10 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
         text = states["Filing"].state()["text"].get(c.output["file"])
     elif c.output.get("utterance"):
         source = {"utterance": c.output["utterance"]}
-        text = states["Conversing"].state()["text"].get(c.output["utterance"])
+        conversing = states["Conversing"].state()
+        if c.output["utterance"] in conversing["about"]:
+            return []
+        text = conversing["text"].get(c.output["utterance"])
     else:
         return []
     if text is None or not _occurs_in(words, text):

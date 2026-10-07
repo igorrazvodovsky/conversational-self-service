@@ -369,6 +369,22 @@ Modani, Mahapatra and Agarwal give (*Dialogue to Discovery*, 2026,
 [arXiv:2606.24194](https://arxiv.org/abs/2606.24194)): given the same
 state, a language model deciding for itself did worse than the arithmetic.
 
+### Words that accept a proposal are the person's adoption
+
+*The other proposals are fine* accepts what waits. The model could carry it
+out: `TheModelMayAssertAValue` lets it assert any value no clause of the person's
+holds, and an assertion made in reply to words is a legal one. It does not.
+The log would then say *the assistant asked for this in reply to "the other
+proposals are fine"* where the person adopted a proposal, and the `via` that
+tells an adopted value from a requested one is the record this section
+exists to keep. So the model links the proposal, the person takes it there,
+in one act for the whole or one per value, and the values arrive as adopted.
+
+This is conduct and not a rule. Narrowing `TheModelMayAssertAValue` to values that
+do not wait as proposals would also refuse a value the person names in
+words that happens to be the proposed one, and that is a requirement, which
+the model reads. The prompt says it instead.
+
 ### What taking a value would do is a read
 
 A person deciding whether to take a proposed value wants the same thing a
@@ -609,6 +625,28 @@ the question, which the model then carries out with the withdraw it is
 already permitted ([Propagation](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)).
 Declining is not that act. *Leave it for now* takes the question off the
 canvas; *I will ask facilities* leaves it there for the person who will.
+
+The turn a reply resumes is the model's to answer in words. Whatever the
+reply asked, the model answers it before anything else. *What else is in
+the way?* is answered with the other values that cannot be met, because
+only one conflict is a question at a time and the rest wait under `unmet`.
+It does not put the question again in that turn. The question is still on
+the canvas with the reply beside it, and asking it again would treat the
+reply as a failure to answer. So `ask` refuses while the latest question
+put was replied to or passed over and the person has not spoken since
+about something else. That is the same reading `review` makes when it says
+a conflict is waiting to be put, and in the next turn the person opens, the
+model may put it.
+
+What a reply gives way is the model's to withdraw only where the value
+answers no clause the person stated. A clause's negotiability says how
+firmly it is meant, not whose it is: a clause read from a document is fixed
+until the person relaxes it, and it is still the model's reading. So the
+result `ask` returns names, of the options the question offered, those the
+model may withdraw and those that are the person's. It reads the same *held
+for a reason* the withdraw rule reads
+([the permissions](#the-permissions)),
+so the model learns before it tries what its withdraw would do.
 
 Nothing is answered by the model. No rule carries `Copiloting/invoke` to
 `Deciding/choose`, `Deciding/decline` or a reply, so the model can put the

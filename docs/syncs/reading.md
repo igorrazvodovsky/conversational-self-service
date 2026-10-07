@@ -56,6 +56,7 @@ sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; utterance: ?u ;
           words: ?w ; answer: ?a ] => [] }
 where { Conversing: { ?u text: ?t }
+        Conversing: { ?u about: _ } does not bind
         ?w occurs in ?t
         ?a names at most one option per variable, read from Cataloguing
         bind a fresh identity as ?i }
@@ -83,9 +84,24 @@ run of whitespace becomes one space, and case is ignored. The words may be cut s
 the middle, since a passage with a gap in it says something the source does
 not.
 
+Words said *about* something are not a source. A reply to the model's
+question is recorded against that question
+([Conduct](conduct.md#asking-and-waiting-for-the-answer)), and it answers it:
+*drop the no-mirror line* says which assertion gives way, and *EN 81-70 is
+non-negotiable for us* says which one holds. Read as requirements, those
+words become clauses of their own, beside the clause the document already
+states, answered by values the reply was about, and a later concession then
+has a second clause to stand against. So a reply reads nothing. What it says
+gives way is carried out by the withdraw the model is already permitted, and
+a requirement the person means to add is stated in a message of its own,
+which the model reads as any other. The utterance a reading cites is the
+turn's own, and a reply becomes the turn's words when it resumes the turn
+(`agent/hearing.py`'s `follow`), so the check is on the utterance and not on
+the tool.
+
 A call the rule declines records only the `invoke`, and the tool says so to
 the model, from the absence of a `Reading/read` after it: nothing was read,
-because the words are not in the cited source. The check stays in the rule;
+because the words are not in the cited source, or they are a reply. The check stays in the rule;
 the tool reports what the rules did, as it does for every call.
 
 `answer` is the set of catalogue options the model took to answer the words,

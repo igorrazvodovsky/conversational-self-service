@@ -159,7 +159,14 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
             if record.action == "withdraw":
                 how.pop(output["variable"], None)
                 continue
-            read = reads.get(record.flow) if record.actor != "person" else None
+            # Only an assertion answering a clause the model read carries the
+            # reading's words; one asserted in reply carries the utterance's,
+            # though a reading was made in the same flow.
+            read = (
+                reads.get(record.flow)
+                if record.actor != "person" and record.via == "AChoiceReachesTheAssertions"
+                else None
+            )
             entry = {
                 "via": record.via or "recorded at boot",
                 "actor": record.actor,

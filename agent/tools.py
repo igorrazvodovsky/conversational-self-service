@@ -269,7 +269,14 @@ def read(items: list[Requirement]) -> dict[str, Any]:
     # Each item is its own invocation, in the turn's flow, so the rules, the
     # log and the measures see one reading per requirement; what an item did
     # is read before the next is performed, or it would claim the next's.
-    return _standing({"read": [_read(item) for item in items]})
+    outcome: dict[str, Any] = {"read": [_read(item) for item in items]}
+    if any("refused" not in item for item in outcome["read"]):
+        # Whose the clause is, said where the model learns it was stated.
+        outcome["yours"] = (
+            "each clause read is your reading of their words, not their "
+            "requirement: call it that until they keep it on the canvas"
+        )
+    return _standing(outcome)
 
 
 def _read(item: Requirement) -> dict[str, Any]:
@@ -278,22 +285,29 @@ def _read(item: Requirement) -> dict[str, Any]:
     variable_of = {o: v for v, options in offers.items() for o in options}
     asserted = engine.state("Asserting")["asserted"].get(SPEC, {})
     held = {o: _held(variable_of[o]) for o in answer if o in variable_of}
+    utterance = None if file else heard()
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
         spec=SPEC, words=words, answer=answer, file=file,
-        utterance=None if file else heard(),
+        utterance=utterance,
     )
     outcome: dict[str, Any] = {"words": words, "did": _did(completion)}
     named = Counter(variable_of[o] for o in dict.fromkeys(answer) if o in variable_of)
     twice = sorted(v for v, times in named.items() if times > 1)
     if not any(entry["action"] == "Reading/read" for entry in outcome["did"]):
         # The rule declined: an answer naming two options on one variable,
-        # or words that are not in the cited source.
+        # words that are a reply to a question, or words that are not in the
+        # cited source.
+        reply = utterance is not None and utterance in engine.state("Conversing")["about"]
         outcome["refused"] = (
             "nothing was read: the answer names more than one option for "
             + ", ".join(twice)
             + "; read the item again with the one option the words ask for"
             if twice
+            else "nothing was read: these words are a reply to your question, "
+            "and a reply is not a requirement. If it says which assertion gives "
+            "way, withdraw that one; otherwise answer it in words"
+            if reply
             else "nothing was read: the words are not in the cited source; "
             "copy them as one passage, and pass `file` if they are from the document"
         )
@@ -592,12 +606,23 @@ def _answered(put: dict[str, Any]) -> dict[str, Any]:
         follow(flow, reply["utterance"])
         if actor == "browser":
             by = "the person's own agent"
+    # Whose each offered value is, by who stated the clause it answers, not
+    # by how firmly that clause is meant.
+    yours, theirs = [], []
+    for offered in (put.get("about") or {}).get("offered") or []:
+        (theirs if _held(offered["variable"]) else yours).append(offered["option"])
     return {
         "replied": reply["text"],
         "by": by,
-        "answered": f"{by} replied in words and the question is still open. If the "
-        "reply says which assertion gives way, withdraw it; otherwise say you "
-        "leave it with them",
+        "answered": f"{by} replied in words and the question is still open, on the "
+        "canvas beside the reply. Answer the reply in words first: if it asks what "
+        "else is in the way, name the values under `unmet`. If it says which "
+        "assertion gives way and that one is under `yours_to_withdraw`, withdraw it, "
+        "whether or not its clause is fixed; if it is under `theirs`, point them to "
+        "the question. If it hands the decision to someone else, say you leave it "
+        "with them. Do not ask the question again in this turn",
+        "yours_to_withdraw": yours,
+        "theirs": theirs,
     }
 
 
@@ -634,6 +659,16 @@ def ask(
         before = _asked()
         if before is not None and before["status"] == "awaiting":
             return {"refused": "already asked, and still waiting on the person"}
+        if before is not None and before["status"] in {"replied", "passed"} and not _unasked():
+            # The question is on the canvas with the reply beside it; it is
+            # put again in a turn the person opens, not in the one the reply
+            # resumed.  See `docs/syncs/conduct.md`, "Asking, and waiting for
+            # the answer".
+            return {
+                "refused": "the person answered this question in words in this "
+                "turn, and it stays on the canvas beside their reply: answer what "
+                "they said in words instead of asking again",
+            }
         offers = engine.state("Cataloguing")["offers"]
         variable_of = {o: v for v, options_ in offers.items() for o in options_}
         named = [
