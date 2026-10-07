@@ -12,6 +12,7 @@ state
   family:  Variable -> string
   label:   Option -> string
   note:    Option -> string
+  covers:  Option -> (above: Real, upTo: Real)
 
 actions
   describe [ variable: Variable ; heading: string ; family: string ]
@@ -33,6 +34,16 @@ actions
     => [ option: Option ]
     record a remark about what the option means in practice
 
+  bound [ option: Option ; above: Real ; upTo: Real ]
+    => [ option: Option ]
+    record the range of a quantity the option is offered for:
+    more than above, and at most upTo
+
+  bound [ option: Option ; above: Real ; upTo: Real ]
+    => [ error: string ]
+    if above is not less than upTo
+    return the error description
+
   delist [ variable: Variable ; option: Option ]
     => [ variable: Variable ; option: Option ]
     remove the option from those the variable offers
@@ -44,6 +55,8 @@ operational principle
     => [ variable: rated_load ; option: kg1000 ]
   and annotate [ option: kg1000 ; note: "a stretcher fits" ] => [ option: kg1000 ]
   then offers of rated_load contains kg1000
+  and after bound [ option: s2_6 ; above: 1 ; upTo: 6 ] => [ option: s2_6 ]
+  then covers of s2_6 contains 6 and not 7
   and label of kg1000 reads "1000 kg / 13 persons"
   and after delist [ variable: rated_load ; option: kg1000 ]
     => [ variable: rated_load ; option: kg1000 ]

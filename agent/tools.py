@@ -63,7 +63,17 @@ from hearing import follow, heard, turn
 from instance import SPEC, engine
 from syncs import readings
 from syncs.gestures import unaddressed
-from views import detailed, digest, filed, put_addressee, put_question, quoted
+from syncs.reading import worked_out_by
+from views import (
+    detailed,
+    digest,
+    filed,
+    put_addressee,
+    put_question,
+    quoted,
+    said_worked_out,
+    worked_out,
+)
 
 
 def _did(completion: Record) -> list[dict[str, Any]]:
@@ -209,6 +219,7 @@ class Requirement(TypedDict):
 
     words: str
     answer: NotRequired[list[str]]
+    states: NotRequired[dict[str, float]]
     file: NotRequired[str]
 
 
@@ -249,8 +260,18 @@ def read(items: list[Requirement]) -> dict[str, Any]:
     person stated is not asserted, and comes back under `not_asserted`: the
     clause stays unanswered, and answering it is the person's, even with the
     value it already has.
-    A count is answered by the option whose range
-    contains it: six stops is `stops:s2_6`. A value that cannot be met is
+    A count or a measure is never answered with an option: it goes in
+    `states`, as the words state it, under a name from `quantities` in
+    `review`, such as `{"upper_floors": 5}` for "ground plus five upper
+    floors" or `{"storeys": 6}` for "a six-storey building". Quantities
+    worked out together, such as the floors, the basements and the
+    floor-to-floor height, go in one item, its words the passage that states
+    them all. Do no
+    arithmetic on it: the catalogue's methods work out the stops and the
+    travel from it, and each result comes back under `worked_out`, with the
+    option it falls in and what was assumed, such as the storey height. Leave
+    out of `answer` any option of a variable the stated quantities are worked
+    out into. A value that cannot be met is
     still recorded and comes back under `unmet` with the rules that refuse it; keep reading
     the rest of the source before raising it. Use `assert_value` for context
     that is not a requirement, such as the region a city implies.
@@ -270,6 +291,7 @@ def read(items: list[Requirement]) -> dict[str, Any]:
 
 def _read(item: Requirement) -> dict[str, Any]:
     words, answer, file = item["words"], list(item.get("answer") or []), item.get("file")
+    stated = dict(item.get("states") or {})
     offers = engine.state("Cataloguing")["offers"]
     variable_of = {o: v for v, options in offers.items() for o in options}
     asserted = engine.state("Asserting")["asserted"].get(SPEC, {})
@@ -277,7 +299,7 @@ def _read(item: Requirement) -> dict[str, Any]:
     utterance = None if file else heard()
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
-        spec=SPEC, words=words, answer=answer, file=file,
+        spec=SPEC, words=words, answer=answer, states=stated, file=file,
         utterance=utterance,
     )
     outcome: dict[str, Any] = {"words": words, "did": _did(completion)}
@@ -288,11 +310,25 @@ def _read(item: Requirement) -> dict[str, Any]:
         # words that are a reply to a question, or words the cited source does
         # not bear out, which includes there being no source to check.
         reply = utterance is not None and utterance in engine.state("Conversing")["about"]
+        deriving = engine.state("Deriving")
+        needed = {q for needs in deriving["needs"].values() for q in needs}
+        unknown = sorted(q for q in stated if q not in needed)
+        into = worked_out_by(deriving, stated)
+        doubled = sorted(o for o in answer if variable_of.get(o) in into)
         outcome["refused"] = (
             "nothing was read: the answer names more than one option for "
             + ", ".join(twice)
             + "; read the item again with the one option the words ask for"
             if twice
+            else "nothing was read: no method works from "
+            + ", ".join(unknown)
+            + "; name the quantities as `quantities` in `review` lists them"
+            if unknown
+            else "nothing was read: "
+            + ", ".join(doubled)
+            + " is worked out from the quantities stated; read the item again "
+            "without it in `answer`"
+            if doubled
             else "nothing was read: these words are a reply to your question, "
             "and a reply is not a requirement. If it says which assertion gives "
             "way, withdraw that one; otherwise answer it in words"
@@ -316,6 +352,29 @@ def _read(item: Requirement) -> dict[str, Any]:
                 )
                 for o, texts in kept.items()
             ]
+        if stated:
+            item = next(
+                record.output["item"]
+                for record in engine.log.flow(completion.flow)
+                if record.seq > completion.seq
+                and record.kind == "completion"
+                and record.concept == "Reading"
+                and record.action == "read"
+            )
+            outcome["worked_out"] = [
+                said_worked_out(w)
+                + (
+                    "; not asserted, since its variable answers "
+                    + "; ".join(f"“{t}”" for t in texts)
+                    + ", which the person stated"
+                    if w["option"] and (texts := _held(w["quantity"]))
+                    else ""
+                )
+                for w in worked_out(engine, item)
+            ] or (
+                "nothing was worked out: the quantities stated are not enough for "
+                "any method; `quantities` in `review` says what each method works from"
+            )
     not_offered = [o for o in answer if o not in variable_of]
     if not_offered:
         outcome["not_offered"] = not_offered

@@ -189,11 +189,11 @@
       "label": "Travel height",
       "group": "performance",
       "options": [
-        { "value": "low_0_15", "label": "Up to 15 m", "co2": 1300, "co2_installed": 150, "co2_ended": 120 },
-        { "value": "mid_15_30", "label": "15–30 m", "co2": 2600, "co2_installed": 300, "co2_ended": 220 },
-        { "value": "high_30_50", "label": "30–50 m", "co2": 4300, "co2_installed": 500, "co2_ended": 350 },
-        { "value": "very_high_50_75", "label": "50–75 m", "co2": 6400, "co2_installed": 750, "co2_ended": 500 },
-        { "value": "tower_75_100", "label": "75–100 m", "co2": 8500, "co2_installed": 1000, "co2_ended": 650 }
+        { "value": "low_0_15", "label": "Up to 15 m", "range": [0, 15], "co2": 1300, "co2_installed": 150, "co2_ended": 120 },
+        { "value": "mid_15_30", "label": "15–30 m", "range": [15, 30], "co2": 2600, "co2_installed": 300, "co2_ended": 220 },
+        { "value": "high_30_50", "label": "30–50 m", "range": [30, 50], "co2": 4300, "co2_installed": 500, "co2_ended": 350 },
+        { "value": "very_high_50_75", "label": "50–75 m", "range": [50, 75], "co2": 6400, "co2_installed": 750, "co2_ended": 500 },
+        { "value": "tower_75_100", "label": "75–100 m", "range": [75, 100], "co2": 8500, "co2_installed": 1000, "co2_ended": 650 }
       ]
     },
     {
@@ -201,9 +201,9 @@
       "label": "Number of stops",
       "group": "performance",
       "options": [
-        { "value": "s2_6", "label": "2–6 stops", "co2": 550 },
-        { "value": "s7_12", "label": "7–12 stops", "co2": 1350 },
-        { "value": "s13_24", "label": "13–24 stops", "co2": 2600 }
+        { "value": "s2_6", "label": "2–6 stops", "range": [1, 6], "co2": 550 },
+        { "value": "s7_12", "label": "7–12 stops", "range": [6, 12], "co2": 1350 },
+        { "value": "s13_24", "label": "13–24 stops", "range": [12, 24], "co2": 2600 }
       ]
     },
     {
@@ -821,6 +821,24 @@
         }
       ]
     }
+  ],
+  "quantities": [
+    { "name": "stop_count", "meaning": "stops, counted outright", "unit": "" },
+    { "name": "storeys", "meaning": "storeys from the ground floor up", "unit": "" },
+    { "name": "upper_floors", "meaning": "floors above the ground floor", "unit": "" },
+    { "name": "basements", "meaning": "basement levels served", "unit": "" },
+    { "name": "storey_height", "meaning": "floor-to-floor height", "unit": "m" },
+    { "name": "travel_m", "meaning": "travel from the lowest stop to the highest", "unit": "m" },
+    { "name": "stops", "meaning": "number of stops", "unit": "" },
+    { "name": "travel", "meaning": "travel height", "unit": "m" }
+  ],
+  "methods": [
+    { "method": "stops_counted", "yields": "stops", "formula": "stop_count", "needs": ["stop_count"] },
+    { "method": "stops_from_storeys", "yields": "stops", "formula": "storeys + basements", "needs": ["storeys", "basements"], "presumes": { "basements": 0 } },
+    { "method": "stops_from_upper_floors", "yields": "stops", "formula": "upper_floors + 1 + basements", "needs": ["upper_floors", "basements"], "presumes": { "basements": 0 } },
+    { "method": "travel_measured", "yields": "travel", "formula": "travel_m", "needs": ["travel_m"] },
+    { "method": "travel_from_storeys", "yields": "travel", "formula": "(storeys - 1 + basements) * storey_height", "needs": ["storeys", "basements", "storey_height"], "presumes": { "basements": 0, "storey_height": 3.5 } },
+    { "method": "travel_from_upper_floors", "yields": "travel", "formula": "(upper_floors + basements) * storey_height", "needs": ["upper_floors", "basements", "storey_height"], "presumes": { "basements": 0, "storey_height": 3.5 } }
   ],
   "constraints": [
     {

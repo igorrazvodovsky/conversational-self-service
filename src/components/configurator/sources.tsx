@@ -47,9 +47,21 @@ function OneItem({ source, item }: { source: Source; item: ReadItem }) {
           <>“{item.words}”</>
         )}
       </span>
-      {item.answer.length ? (
+      {item.answer.length || item.workedOut.length ? (
         <span className="text-muted-foreground">
-          read as {item.answer.map((a) => a.label).join(", ")}
+          {/* A count or a measure is read as a quantity, and what it came
+              to is worked out, not read: said apart, so neither is taken
+              for the other. */}
+          {[
+            item.answer.length ? `read as ${item.answer.map((a) => a.label).join(", ")}` : null,
+            item.workedOut.length
+              ? `worked out as ${item.workedOut
+                  .map((w) => w.label ?? `${w.value}${w.unit ? ` ${w.unit}` : ""}, beyond any option`)
+                  .join(", ")}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join("; ")}
         </span>
       ) : (
         <span className="text-muted-foreground">nothing in the catalogue for this</span>

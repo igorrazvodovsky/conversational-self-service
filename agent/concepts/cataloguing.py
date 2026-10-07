@@ -9,6 +9,7 @@ state
   family:  Variable -> string
   label:   Option -> string
   note:    Option -> string
+  covers:  Option -> (above: Real, upTo: Real)
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ class Cataloguing:
         self._family: dict[str, str] = {}
         self._label: dict[str, str] = {}
         self._note: dict[str, str] = {}
+        self._covers: dict[str, tuple[float, float]] = {}
 
     def state(self) -> dict[str, Any]:
         return {
@@ -33,6 +35,7 @@ class Cataloguing:
             "family": dict(self._family),
             "label": dict(self._label),
             "note": dict(self._note),
+            "covers": {o: list(r) for o, r in self._covers.items()},
         }
 
     # -- actions ------------------------------------------------------------
@@ -53,6 +56,12 @@ class Cataloguing:
 
     def annotate(self, option: str, note: str) -> dict[str, Any]:
         self._note[option] = note
+        return {"option": option}
+
+    def bound(self, option: str, above: float, upTo: float) -> dict[str, Any]:  # noqa: N803 — the specification's name
+        if not above < upTo:
+            return {"error": f"{option}'s range is empty: {above} is not less than {upTo}"}
+        self._covers[option] = (above, upTo)
         return {"option": option}
 
     def delist(self, variable: str, option: str) -> dict[str, Any]:

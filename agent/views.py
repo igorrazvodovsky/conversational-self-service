@@ -384,6 +384,78 @@ def detailed(engine: Engine, spec: str, variable: str | None = None) -> dict[str
     }
 
 
+def worked_out(engine: Engine, item: str) -> list[dict[str, Any]]:
+    """What the quantities read from an item were worked out into, by which
+    method, from what was stated and what was assumed, and the option whose
+    range holds the result, if one does.  Off `Deriving`, `Cataloguing` and
+    `Binding`; see docs/syncs/reading.md, "A quantity read is worked out"."""
+    deriving = engine.state("Deriving")
+    cataloguing = engine.state("Cataloguing")
+
+    def quantity(name: str, value: Any) -> dict[str, Any]:
+        return {
+            "quantity": name,
+            "meaning": deriving["meaning"].get(name, name),
+            # A count reads as 5, though a tool's schema may have carried it as 5.0.
+            "value": int(value) if float(value).is_integer() else value,
+            "unit": deriving["unit"].get(name, ""),
+        }
+
+    out = []
+    for derivation, target in deriving["for"].items():
+        if target != item:
+            continue
+        method = deriving["method"][derivation]
+        yields = deriving["yields"][method]
+        result = deriving["result"][derivation]
+        option = next(
+            (
+                o
+                for o in cataloguing["offers"].get(yields, [])
+                if o in cataloguing["covers"]
+                and cataloguing["covers"][o][0] < result <= cataloguing["covers"][o][1]
+            ),
+            None,
+        )
+        out.append(
+            {
+                "derivation": derivation,
+                "method": method,
+                "formula": deriving["formula"][method],
+                **quantity(yields, result),
+                "stated": [quantity(q, v) for q, v in deriving["stated"][derivation].items()],
+                "assumed": [quantity(q, v) for q, v in deriving["assumed"][derivation].items()],
+                "option": option,
+                "label": cataloguing["label"].get(option) if option else None,
+            }
+        )
+    return out
+
+
+def _amount(q: dict[str, Any]) -> str:
+    return f"{q['value']} {q['unit']}".strip() if q["unit"] else str(q["value"])
+
+
+def said_worked_out(w: dict[str, Any], answers: set[str] | None = None) -> str:
+    """One derivation in a sentence, for a language model.  With `answers`,
+    the option is named as the clause's answer only while it is one of them:
+    a later assertion may have displaced it, or the person's requirement may
+    hold the variable."""
+    def given(q: dict[str, Any]) -> str:
+        return f"{q['meaning']} {_amount(q)}" if q["unit"] else f"{_amount(q)} {q['meaning']}"
+
+    sentence = f"{w['meaning']} worked out as {_amount(w)} from " + ", ".join(
+        given(q) for q in w["stated"]
+    )
+    if w["assumed"]:
+        sentence += ", assuming " + ", ".join(given(q) for q in w["assumed"])
+    if not w["label"]:
+        return sentence + ": no option is offered for that"
+    if answers is not None and w["option"] not in answers:
+        return sentence + f", which is {w['label']}, not this clause's answer"
+    return sentence + f": {w['label']}"
+
+
 def _sources(
     engine: Engine, clauses: list[dict[str, Any]], stated: set[str]
 ) -> list[dict[str, Any]]:
@@ -411,6 +483,9 @@ def _sources(
                         {"option": o, "label": catalogue["label"].get(o, o)}
                         for o in reading["answer"].get(item, [])
                     ],
+                    # The quantities the words were read as stating, and
+                    # what each was worked out into.
+                    "workedOut": worked_out(engine, item),
                     "clause": clause,
                     # What became of it: answered, unanswered, or struck by
                     # the person, which is the disowning the case counts.
@@ -614,7 +689,10 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "words": origin["words"],
                 # The model's claim that nothing in the catalogue answers it:
                 # an empty answer on the item, read as such and not judged.
-                "unanswerable": not engine.state("Reading")["answer"].get(origin["item"]),
+                # A quantity it stated is a claim too, answered by a method.
+                "unanswerable": not engine.state("Reading")["answer"].get(origin["item"])
+                and not reading["states"].get(origin["item"]),
+                "workedOut": worked_out(engine, origin["item"]),
             }
             if origin
             else None
@@ -1484,6 +1562,16 @@ def _item_at(kind: str, source: str, item: str) -> str:
     return f"#source:{kind}:{source}:item:{item}"
 
 
+def _quantities(engine: Engine) -> dict[str, str]:
+    deriving = engine.state("Deriving")
+    needed = dict.fromkeys(q for m in deriving["methods"] for q in deriving["needs"][m])
+    return {
+        q: deriving["meaning"].get(q, q)
+        + (f", in {deriving['unit'][q]}" if deriving["unit"].get(q) else "")
+        for q in needed
+    }
+
+
 def digest(
     engine: Engine, spec: str, actor: str = "model", view: dict[str, Any] | None = None
 ) -> dict[str, Any]:
@@ -1543,9 +1631,22 @@ def digest(
                     if c.get("displaced")
                     else None
                 ),
+                # What the quantities read from it came to, by the
+                # catalogue's methods.
+                "worked_out": (
+                    [
+                        said_worked_out(w, {a["value"] for a in c["answers"]})
+                        for w in c["source"]["workedOut"]
+                    ]
+                    if c["source"] and c["source"]["workedOut"]
+                    else None
+                ),
             }
             for c in view["clauses"]
         ],
+        # What a count or a measure in the words is read as, under `states`
+        # in `read`: the quantities the catalogue's methods work from.
+        "quantities": _quantities(engine),
         # The documents the person attached, to read with `open_file` and
         # cite in `read`.
         "files": [

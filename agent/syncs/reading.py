@@ -4,7 +4,9 @@ How a source becomes requirements.  A person files a document beside what
 they said; the model reads a requirement from either and records the reading
 with its source; a rule states the reading as a clause, and another proposes
 the catalogue option the model took to answer it, from where the chain in
-`binding.py` asserts it and hands it to the solver.
+`binding.py` asserts it and hands it to the solver.  A quantity the model
+read is worked out by the catalogue's methods, and the option whose range
+contains the result is proposed the same way.
 
 Nothing here waits for the person.  The gate the case's `Suggesting`
 supplies is, in this composition, visibility and reversibility: every clause
@@ -106,6 +108,29 @@ def _named_twice(states: States, answer: list[Any]) -> list[str]:
     return twice
 
 
+def _enough(deriving: dict[str, Any], method: str, stated: dict[str, Any]) -> bool:
+    """`?q is enough for ?m`: the method needs at least one quantity the
+    reading states, and every other it needs is presumed."""
+    needs = deriving["needs"][method]
+    presumes = deriving["presumes"][method]
+    return any(q in stated for q in needs) and all(
+        q in stated or q in presumes for q in needs
+    )
+
+
+def worked_out_by(deriving: dict[str, Any], stated: dict[str, Any]) -> dict[str, str]:
+    """For each quantity the stated ones can be worked out into, the first
+    method yielding it that they are enough for, in the catalogue's order."""
+    chosen: dict[str, str] = {}
+    if not stated:
+        return chosen
+    for method in deriving["methods"]:
+        yields = deriving["yields"][method]
+        if yields not in chosen and _enough(deriving, method, stated):
+            chosen[yields] = method
+    return chosen
+
+
 def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Invocation]:
     """One rule, two triggers, on the shape of the source.  A call naming
     neither a file nor an utterance reads nothing: there is no source to
@@ -130,7 +155,18 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
         return []
     if text is None or not _occurs_in(words, text):
         return []
-    if _named_twice(states, c.output.get("answer") or []):
+    answer = list(c.output.get("answer") or [])
+    if _named_twice(states, answer):
+        return []
+    # `?q names only quantities some method in Deriving needs`, and `?a names
+    # no option of a variable ?q is worked out into`.
+    stated = dict(c.output.get("states") or {})
+    deriving = states["Deriving"].state()
+    needed = {q for needs in deriving["needs"].values() for q in needs}
+    if any(q not in needed for q in stated):
+        return []
+    into = worked_out_by(deriving, stated)
+    if any(_variable_offering(states, option) in into for option in answer):
         return []
     return [
         Invocation(
@@ -139,7 +175,8 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
             {
                 "source": source,
                 "words": words,
-                "answer": list(c.output.get("answer") or []),
+                "answer": answer,
+                "states": stated,
                 "item": readings.fresh("r"),
             },
         )
@@ -200,6 +237,67 @@ def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation
     return out
 
 
+def _a_read_quantity_is_worked_out(c: Completion, states: States) -> list[Invocation]:
+    """`Reading: { ?c states: ?q }`, and for each quantity ?q can be worked
+    out into, the first method yielding it that ?q is enough for."""
+    if c.failed or c.input.get("party") != MODEL:
+        return []
+    clause = c.output["clause"]
+    stated = states["Reading"].state()["states"].get(clause) or {}
+    into = worked_out_by(states["Deriving"].state(), stated)
+    return [
+        Invocation(
+            "Deriving",
+            "derive",
+            {
+                "method": method,
+                "for": clause,
+                "stated": dict(stated),
+                "derivation": readings.fresh("d"),
+            },
+        )
+        for method in into.values()
+    ]
+
+
+def _a_worked_out_quantity_is_proposed(c: Completion, states: States) -> list[Invocation]:
+    """`Specifying: { ?s clauses: ?c }`, `Binding: { ?sel for: ?s }`, and the
+    option of the variable the method yields whose range contains the
+    result: `?n in ?r` is more than `above` and at most `upTo`.  A result no
+    range contains proposes nothing, and nor does a variable held for a
+    reason."""
+    if c.failed:
+        return []
+    clause, variable, result = c.output["for"], c.output["yields"], c.output["result"]
+    spec = next(
+        (s for s, clauses in states["Specifying"].state()["clauses"].items() if clause in clauses),
+        None,
+    )
+    if spec is None:
+        return []
+    selection = _selection_for(states, spec)
+    if selection is None or _held(states, spec, variable):
+        return []
+    cataloguing = states["Cataloguing"].state()
+    for option in cataloguing["offers"].get(variable, []):
+        covers = cataloguing["covers"].get(option)
+        if covers and covers[0] < result <= covers[1]:
+            return [
+                Invocation(
+                    "Binding",
+                    "propose",
+                    {
+                        "party": MODEL,
+                        "selection": selection,
+                        "requirement": clause,
+                        "value": option,
+                        "choice": readings.fresh("ch"),
+                    },
+                )
+            ]
+    return []
+
+
 def _a_person_keeps_a_reading(c: Completion, _: States) -> list[Invocation]:
     if c.output.get("act") != "keep":
         return []
@@ -226,6 +324,12 @@ rules = [
     ),
     Sync("AReadItemBecomesAClause", ("Reading", "read"), _a_read_item_becomes_a_clause),
     Sync("AReadAnswerIsProposed", ("Specifying", "require"), _a_read_answer_is_proposed),
+    Sync(
+        "AReadQuantityIsWorkedOut", ("Specifying", "require"), _a_read_quantity_is_worked_out
+    ),
+    Sync(
+        "AWorkedOutQuantityIsProposed", ("Deriving", "derive"), _a_worked_out_quantity_is_proposed
+    ),
     Sync("APersonKeepsAReading", ("Copiloting", "gesture"), _a_person_keeps_a_reading),
     Sync("ARewordedReadingIsKept", ("Specifying", "reword"), _a_reworded_reading_is_kept),
 ]

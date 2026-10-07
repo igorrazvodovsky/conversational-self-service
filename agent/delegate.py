@@ -397,16 +397,24 @@ def file(
     "document as one unbroken passage: trim either end, never cut the "
     "middle, never paraphrase; words the document does not contain read "
     "nothing. `answer` is the option ids that answer it, possibly none. A "
-    "count is answered by the option whose range contains it: thirteen "
-    "stops is `stops:s13_24`. The clause is stated as a reading, cited to "
-    "the document; `keep` makes it the person's own.",
+    "count or a measure goes in `states` instead, as the words give it, "
+    "under a name from `quantities` in `review`, such as `{\"storeys\": 13}`: "
+    "the configurator works out the stops and the travel from it. Quantities "
+    "worked out together, such as the floors and the basements, go in one "
+    "item. The clause "
+    "is stated as a reading, cited to the document; `keep` makes it the "
+    "person's own.",
 )
 def read(
     file: Annotated[str, Field(description="A document's id, from `files` in `review`")],
     words: Annotated[str, Field(description="The requirement, copied from the document")],
     answer: list[Option] = [],  # noqa: B006 — a schema default, never mutated
+    states: Annotated[
+        dict[str, float],
+        Field(description="The counts and measures the words state, by quantity name"),
+    ] = {},  # noqa: B006 — a schema default, never mutated
 ) -> dict[str, Any]:
-    return invoke("read", file=file, words=words, answer=answer)
+    return invoke("read", file=file, words=words, answer=answer, states=states)
 
 
 @tool(

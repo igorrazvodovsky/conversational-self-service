@@ -55,7 +55,9 @@ then  { Cataloguing/describe: [ variable ; heading ; family ]
         Cataloguing/list: [ variable ; option ; label ]
           for each option of each variable ;
         Cataloguing/annotate: [ option ; note ]
-          for each option with a note }
+          for each option with a note ;
+        Cataloguing/bound: [ option ; above ; upTo ]
+          for each option offered for a range of a quantity }
 
 sync TheCatalogueIsDetailed
 when  { Copiloting/boot: [] => [ catalogue: ?c ] }
@@ -92,6 +94,13 @@ then  { Constraining/tabulate: [ rule ; over ; allows ; because ]
           for each table constraint ;
         Constraining/imply: [ rule ; given ; entails ; because ]
           for each implication }
+
+sync TheCatalogueSaysHowToWorkThingsOut
+when  { Copiloting/boot: [] => [ catalogue: ?c ] }
+then  { Deriving/describe: [ quantity ; meaning ; unit ]
+          for each quantity of ?c ;
+        Deriving/define: [ method ; yields ; formula ; needs ; presumes ]
+          for each method of ?c, in the order the catalogue prefers them }
 
 sync TheWorkspaceIsLaidOut
 when  { Copiloting/boot: [] => [ workspace: ?w ; surfaces: ?s ; facets: ?f ] }
@@ -157,6 +166,15 @@ the very thing the split exists to take apart. Off the boot stimulus, each
 concept takes only its own facts from the file. The file is a unit of
 shipping; the concepts are units of meaning. That the two do not coincide is
 MSM §5.2.2's point, on a scale small enough to check by eye.
+
+A range follows from nothing either. `Cataloguing/bound` is the seller
+saying which counts or measures an option is offered for (2–6 stops, up to
+15 m of travel), and it rides with the listing in one rule only because both
+are read from the same option record. The methods by which a quantity is
+worked out are the seller's in the same way a price is: the storey height a
+method presumes is a convention of the seller's, not a fact of any building,
+and it reaches [Deriving](../concepts/deriving.md) from the file, where a
+derivation shows it as assumed until a source states another.
 
 ## The seller's side
 

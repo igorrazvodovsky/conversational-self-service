@@ -26,6 +26,7 @@ from concepts.cataloguing import Cataloguing
 from concepts.constraining import Constraining
 from concepts.conversing import Conversing
 from concepts.deciding import Deciding
+from concepts.deriving import Deriving
 from concepts.detailing import Detailing
 from concepts.filing import Filing
 from concepts.footprinting import Footprinting
@@ -88,6 +89,9 @@ def build(path: Path = CATALOGUE) -> Engine:
         # their words.  Neither is seeded: both start empty.
         Filing(),
         Reading(),
+        # How a quantity read from the words is worked out, seeded with the
+        # catalogue's methods.
+        Deriving(),
         Deciding(),
         Quoting(),
         Profiling(),

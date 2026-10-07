@@ -28,6 +28,7 @@ it.
 | `TheCatalogueIsPriced` | [Seeding](seeding.md) |
 | `TheCatalogueIsFootprinted` | [Seeding](seeding.md) |
 | `TheCatalogueSetsTheRules` | [Seeding](seeding.md) |
+| `TheCatalogueSaysHowToWorkThingsOut` | [Seeding](seeding.md) |
 | `TheWorkspaceIsLaidOut` | [Seeding](seeding.md) |
 | `ASpecificationIsStartedAtBoot` | [Seeding](seeding.md) |
 | `TheCatalogueSeedsTheSolver` | [Seeding](seeding.md) |
@@ -68,6 +69,8 @@ it.
 | `TheModelMayReadARequirement` | [Reading](reading.md) |
 | `AReadItemBecomesAClause` | [Reading](reading.md) |
 | `AReadAnswerIsProposed` | [Reading](reading.md) |
+| `AReadQuantityIsWorkedOut` | [Reading](reading.md) |
+| `AWorkedOutQuantityIsProposed` | [Reading](reading.md) |
 | `APersonKeepsAReading` | [Reading](reading.md) |
 | `ARewordedReadingIsKept` | [Reading](reading.md) |
 | `ANewSpecificationIsGivenToTheSolver` | [Propagation](propagation.md) |
@@ -148,7 +151,10 @@ their words live in [Conversing](../concepts/conversing.md), and what the
 model read from either lives in [Reading](../concepts/reading.md): the words,
 their source, and the options it took to answer them. One rule lets the model
 record a reading; one states the reading as a clause, with the model as its
-stater; one proposes its answer, from where the binding rules assert it. The
+stater; one proposes its answer, from where the binding rules assert it. A count or
+a measure the words state is read as a quantity, and two more rules work it
+out by the catalogue's methods and answer the clause with the option whose
+range contains the result, so the model never does the arithmetic. The
 reading lands at once and the person corrects it with the gestures they
 already have, which is the gate in this composition; the gated form is the
 same rules with one trigger moved. A reading is the assistant's until the

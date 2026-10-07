@@ -24,6 +24,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Conversing](conversing.md) | to keep a record of what each party said, to whom and about what, in the order it was said |
 | [Filing](filing.md) | to keep a document a party brought, as it was brought, so that a passage of it can be cited |
 | [Reading](reading.md) | to hold what a source was read as, so that the reading can be checked against the source and corrected |
+| [Deriving](deriving.md) | to work a quantity out from stated ones by a method a person can inspect, so that they can see what the number rests on and what was assumed |
 | [Constraining](constraining.md) | to work out what a specification can still become under the rules that say what can be built, given what is asked of it firmly and what only as a preference |
 | [Cataloguing](cataloguing.md) | to say what may be ordered, in terms a person can recognise |
 | [Detailing](detailing.md) | to keep what the seller publishes about what an item is and does, so that a question about it is answered from the seller's record |
@@ -97,7 +98,9 @@ document a person brought, and what the model read from it or from their
 words, held as a reading so that it can be checked against its source. A
 reading becomes a clause and an answer by the rules in
 [Reading](../syncs/reading.md), and the person corrects it with the gestures
-they already have.
+they already have. [Deriving](deriving.md) works out what a quantity
+read from the words comes to, by a method the catalogue publishes, so the
+number and what it assumed are on record rather than in the model's head.
 
 [Quoting](quoting.md) is where the configuration stops being the point: an
 offer, frozen as issued, that the specification can move away from without
@@ -145,9 +148,13 @@ _Mapping._ The case's concept for how a statement in one vocabulary
 corresponds to values in another. Here a value is a catalogue option, so the
 correspondence is [Binding](binding.md)'s `answers` and the option itself,
 and the model's version of it is the `answer` on a [Reading](reading.md)
-item; a concept holding it again would be `answers` under a second name. It
-becomes a concept the day a clause carries a quantity or a standard's class
-that has to be translated into an option.
+item; a concept holding it again would be `answers` under a second name. A
+quantity is not translated either: the model reads it from the words, and
+which option's range contains it is worked out by
+[Deriving](deriving.md) and the range [Cataloguing](cataloguing.md)
+publishes. It becomes a concept the day a clause carries a standard's class,
+or a quantity no option publishes a range for, that has to be translated
+into an option.
 
 _Installing, Servicing, Decommissioning._ Each is a stage of the lift's
 life, not a concept. What the specification commits to at each stage is a

@@ -33,6 +33,25 @@ import {
   type ReactNode,
 } from "react";
 
+/** A quantity, with what it is and the unit it is counted or measured in. */
+export type Quantity = {
+  quantity: string;
+  meaning: string;
+  value: number;
+  unit: string;
+};
+
+/** One derivation (Deriving): a quantity worked out from stated ones. */
+export type WorkedOut = Quantity & {
+  derivation: string;
+  method: string;
+  formula: string;
+  stated: Quantity[];
+  assumed: Quantity[];
+  option: string | null;
+  label: string | null;
+};
+
 /** `yielded`: asked for softly, and the rules could not honour it. Still
  * asserted, still answering its clause; the solver's answer is what moved. */
 export type Standing = "asked" | "yielded" | "unmet" | "follows" | "open";
@@ -164,6 +183,10 @@ export interface Clause {
     /** The model recorded no option as answering the words: its claim that
      * nothing in the catalogue does, shown as such and not judged. */
     unanswerable: boolean;
+    /** What the quantities read from the words were worked out into, by the
+     * catalogue's methods: the result, what was stated, what was assumed,
+     * and the option whose range holds the result, if one does. */
+    workedOut: WorkedOut[];
   } | null;
   /** The answer this clause had, and the later assertion for the same
    * variable that displaced it. Only while the clause is unanswered. */
@@ -180,6 +203,8 @@ export interface ReadItem {
   item: string;
   words: string;
   answer: { option: string; label: string }[];
+  /** What the quantities the words were read as stating came to. */
+  workedOut: WorkedOut[];
   clause: string | null;
   /** Who the clause it became is stated by now: the assistant's reading
    * until the person keeps or rewords it. */

@@ -78,6 +78,7 @@ import {
   type Clause,
   type Gap,
   type Negotiability,
+  type Quantity,
   type View,
 } from "./provider";
 import { useNavigate } from "./link";
@@ -542,6 +543,21 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                     </To>
                   </p>
                 ) : null}
+                {/* A count or a measure in the words was not answered by
+                    the assistant but worked out by the catalogue's method,
+                    so what it rests on, and what it assumed, is said here. */}
+                {clause.source?.workedOut.map((w) => (
+                  <p key={w.derivation} title={`${w.method}: ${w.formula}`}>
+                    {sentence(w.meaning)} {amount(w)}, from{" "}
+                    {w.stated.map(given).join(", ")}
+                    {w.assumed.length ? (
+                      <>
+                        ; assumed {w.assumed.map(given).join(", ")}
+                      </>
+                    ) : null}
+                    {w.label ? null : "; no option is offered for that"}
+                  </p>
+                ))}
                 {clause.formerly.length ? (
                   <p title={clause.formerly.join(" → ")}>
                     Relaxed from <s>{clause.formerly[clause.formerly.length - 1]}</s>
@@ -571,6 +587,19 @@ function ClauseView({ node, decorations }: NodeViewProps) {
       ) : null}
     </NodeViewWrapper>
   );
+}
+
+/** A quantity with its unit, as it reads in a sentence. */
+function amount(q: Quantity): string {
+  return q.unit ? `${q.value} ${q.unit}` : String(q.value);
+}
+
+function given(q: Quantity): string {
+  return q.unit ? `${q.meaning} ${amount(q)}` : `${amount(q)} ${q.meaning}`;
+}
+
+function sentence(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 // -- the editor, and the mapping from transactions to gestures ---------------

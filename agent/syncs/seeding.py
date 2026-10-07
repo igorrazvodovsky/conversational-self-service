@@ -160,6 +160,45 @@ def _the_catalogue_is_listed(c: Completion, _: States) -> list[Invocation]:
                         "Cataloguing", "annotate", {"option": identity, "note": option["note"]}
                     )
                 )
+            if option.get("range"):
+                above, up_to = option["range"]
+                out.append(
+                    Invocation(
+                        "Cataloguing",
+                        "bound",
+                        {"option": identity, "above": above, "upTo": up_to},
+                    )
+                )
+    return out
+
+
+def _the_catalogue_says_how_to_work_things_out(c: Completion, _: States) -> list[Invocation]:
+    """The quantities first, then the methods over them, in the order the
+    catalogue prefers the methods: where two yield the same quantity, the
+    rules run the first one a reading is enough for."""
+    catalogue = _catalogue(c)
+    out = [
+        Invocation(
+            "Deriving",
+            "describe",
+            {"quantity": q["name"], "meaning": q["meaning"], "unit": q.get("unit", "")},
+        )
+        for q in catalogue.get("quantities", [])
+    ]
+    for method in catalogue.get("methods", []):
+        out.append(
+            Invocation(
+                "Deriving",
+                "define",
+                {
+                    "method": method["method"],
+                    "yields": method["yields"],
+                    "formula": method["formula"],
+                    "needs": list(method["needs"]),
+                    "presumes": dict(method.get("presumes", {})),
+                },
+            )
+        )
     return out
 
 
@@ -399,6 +438,11 @@ rules = [
     Sync("TheCatalogueIsPriced", BOOT, _the_catalogue_is_priced),
     Sync("TheCatalogueIsFootprinted", BOOT, _the_catalogue_is_footprinted),
     Sync("TheCatalogueSetsTheRules", BOOT, _the_catalogue_sets_the_rules),
+    Sync(
+        "TheCatalogueSaysHowToWorkThingsOut",
+        BOOT,
+        _the_catalogue_says_how_to_work_things_out,
+    ),
     Sync("TheWorkspaceIsLaidOut", BOOT, _the_workspace_is_laid_out),
     Sync("ASpecificationIsStartedAtBoot", BOOT, _a_specification_is_started),
     Sync("TheCatalogueSeedsTheSolver", ("Cataloguing", "list"), _seeds_the_solver),

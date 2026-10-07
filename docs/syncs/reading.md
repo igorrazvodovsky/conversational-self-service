@@ -45,22 +45,28 @@ fail the turn once the document is filed.
 ```
 sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; file: ?f ;
-          words: ?w ; answer: ?a ] => [] }
+          words: ?w ; answer: ?a ; states: ?q ] => [] }
 where { Filing: { ?f text: ?t }
         ?w occurs in ?t
         ?a names at most one option per variable, read from Cataloguing
+        ?q names only quantities some method in Deriving needs
+        ?a names no option of a variable ?q is worked out into
         bind a fresh identity as ?i }
-then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ; item: ?i ] }
+then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ;
+          states: ?q ; item: ?i ] }
 
 sync TheModelMayReadARequirement
 when  { Copiloting/invoke: [ tool: "read" ; utterance: ?u ;
-          words: ?w ; answer: ?a ] => [] }
+          words: ?w ; answer: ?a ; states: ?q ] => [] }
 where { Conversing: { ?u text: ?t }
         Conversing: { ?u about: _ } does not bind
         ?w occurs in ?t
         ?a names at most one option per variable, read from Cataloguing
+        ?q names only quantities some method in Deriving needs
+        ?a names no option of a variable ?q is worked out into
         bind a fresh identity as ?i }
-then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ; item: ?i ] }
+then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ;
+          states: ?q ; item: ?i ] }
 ```
 
 One rule with two triggers, on the shape of the source. The utterance is the
@@ -169,6 +175,77 @@ clause is stated and stays unanswered, its answer on record in `Reading`
 beside it, and the tool tells the model which option it did not assert, so
 it can say so and leave the choice to the person.
 
+## A quantity read is worked out
+
+```
+sync AReadQuantityIsWorkedOut
+when  { Specifying/require: [ party: model ] => [ clause: ?c ] }
+where { Reading: { ?c states: ?q }
+        Deriving: { ?m in methods ; ?m yields: ?y }
+        ?m is the first method yielding ?y that ?q is enough for
+        bind a fresh identity as ?d }
+then  { Deriving/derive: [ method: ?m ; for: ?c ; stated: ?q ; derivation: ?d ] }
+
+sync AWorkedOutQuantityIsProposed
+when  { Deriving/derive: [] => [ for: ?c ; yields: ?v ; result: ?n ] }
+where { Specifying: { ?s clauses: ?c }
+        Binding: { ?sel for: ?s }
+        Cataloguing: { ?v offers: ?o ; ?o covers: ?r }
+        ?n in ?r
+        ?v is not held for a reason in ?s
+        bind a fresh identity as ?ch }
+then  { Binding/propose: [ party: model ; selection: ?sel ;
+          requirement: ?c ; value: ?o ; choice: ?ch ] }
+```
+
+Principle 3 of the case: the model may say what words mean and may never
+compute a quantity. *Ground plus five upper floors* means five upper floors,
+and saying so is reading; that it makes six stops and about 17.5 m of travel
+is arithmetic, and the model is not asked to do it. It reads the counts and
+measures the words state under `states`, in the quantities
+[Deriving](../concepts/deriving.md) names, and the rules work out the rest:
+the first rule runs every method the stated quantities are enough for, and
+the second answers the clause with the option whose range contains the
+result. The number and what it rests on are then on record, and the canvas
+shows them beside the answer: *5 upper floors × 3.5 m, assumed*.
+
+A method is enough when it needs at least one quantity the reading states and
+every other it needs is presumed. Without the first condition a method that
+presumes everything would run on every reading. Where several methods yield
+the same quantity, the catalogue lists them in the order it prefers, and the
+first that is enough runs: a stop count stated outright is worked out from
+that, not from floors stated beside it.
+
+`?n in ?r` is a calculation, as `occurs in` is: a range is the seller's own
+statement of what an option is offered for, and whether a number falls in it
+is not a judgment about anyone's words. That is why this is not
+[the case's `Mapping`](../concepts/README.md#not-concepts). Mapping is the
+translation of what words mean into the catalogue's terms, and here the model
+still does it, choosing options in `answer` and naming quantities in
+`states`. What has left the model is only the arithmetic between a stated
+quantity and the option whose range contains it.
+
+An answer may not name an option of a variable the stated quantities are
+worked out into. The two would answer the clause twice on one variable, and
+the second would displace the first for no reason the source gives, so the
+first rule reads nothing, as it does for an answer naming two options on one
+variable, and the tool says which.
+
+Quantities are worked out together only when one reading states them all.
+The words are one unbroken passage, so a document that gives the floors in
+one item and the floor-to-floor height in another yields two readings, and
+the travel worked out from the first presumes the method's storey height
+while the second states another. The second is recorded as a clause like
+any other, so the difference is on the canvas for the person to see; no rule
+brings the two together.
+
+A result no option's range contains answers nothing: twenty-six stops, for a
+product offered for at most twenty-four, leaves the clause stated and
+unanswered, with the derivation on record beside it, and the tool says so.
+That is the wall, not a gap in the reading. Rewording the clause later works
+nothing out again, as rewording re-reads nothing: the clause becomes the
+person's, and its answers stand until they change them.
+
 ## The person keeps a reading
 
 ```
@@ -265,4 +342,4 @@ checked against its source whole.
 - [Conduct](conduct.md) — the model's other permissions, and the absences this note narrows
 - [Gestures](gestures.md) — the `file` act beside `say`
 - [Binding](binding.md) — where a proposed answer goes, and what takes it away
-- [Reading](../concepts/reading.md) · [Filing](../concepts/filing.md)
+- [Reading](../concepts/reading.md) · [Filing](../concepts/filing.md) · [Deriving](../concepts/deriving.md)
