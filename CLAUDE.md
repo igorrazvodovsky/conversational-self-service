@@ -235,14 +235,20 @@ The person's own agent's tools are an MCP server at
 `agent/delegate.py`). Results link back to the page at `CONFIGURATOR_URL`
 (by default `http://localhost:3000`). Claude Code adds it with
 `claude mcp add --transport http configurator http://localhost:8123/configurator/mcp`;
-a client that speaks only stdio reaches it through `mcp-remote`:
+a client that speaks only stdio, such as Claude Desktop, reaches it through
+`mcp-remote`. Desktop's `PATH` has no Node, so the entry names `npx` by its
+absolute path and gives it Node's directory:
 
 ```json
 "configurator": {
-  "command": "<npx>",
-  "args": ["mcp-remote", "http://localhost:8123/configurator/mcp"]
+  "command": "<node-bin>/npx",
+  "args": ["-y", "mcp-remote", "http://localhost:8123/configurator/mcp"],
+  "env": { "PATH": "<node-bin>:/usr/bin:/bin" }
 }
 ```
+
+With the relay's entry beside it, Desktop lists the same tools twice when the
+page is open, once from each.
 
 `review` and `open_quote` carry MCP Apps views, built from `src/apps/` into
 `agent/apps/` by `npm run build:apps` (which `npm run dev` and `npm run build`
