@@ -32,6 +32,7 @@ import { SplitIcon } from "lucide-react";
 import { useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
 
 import { Answer, useAnswerName } from "@/components/configurator/question";
+import { useAskedHere } from "./question";
 import {
   useConfigurator,
   type Question,
@@ -157,9 +158,10 @@ export function useOpensOnConflict(): boolean {
 }
 
 /**
- * The question at the head of a conversation opened for a conflict. While
- * the assistant has put the same question and waits, its card in the turn
- * is the one to answer, and this one steps back. Once the conflict is gone
+ * The question at the head of a conversation opened for a conflict. Once
+ * the assistant has put the same question in this conversation and waits,
+ * its card in the turn is the one to answer, and this one steps back; until
+ * that card is on screen, this one stays. Once the conflict is gone
  * it says how it ended: given way, or left for now with the values still
  * refused.
  */
@@ -167,6 +169,7 @@ export function DiscussedConflict() {
   const discussed = useDiscussed();
   const { view, gesture, busy } = useConfigurator();
   const answerName = useAnswerName();
+  const askedHere = useAskedHere();
   if (!discussed || !view) return null;
 
   const question = openConflict(view);
@@ -187,7 +190,7 @@ export function DiscussedConflict() {
       </div>
     );
   }
-  if (question.asked?.status === "awaiting") return null;
+  if (question.asked?.status === "awaiting" && askedHere) return null;
 
   const answer = (stimulus: Parameters<typeof gesture>[0]) =>
     void gesture(stimulus).then(() =>

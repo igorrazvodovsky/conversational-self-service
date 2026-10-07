@@ -232,8 +232,10 @@ produce them, for two reasons. A read is the same on every reload and costs no
 turn. And a pill written by the model could offer a move the chat does not
 carry — *adopt the proposal*, *accept the quote* — which the model would then
 have to decline; a read draws only from the rows of the table above where the
-chat is a surface. So a conflict offers *why can't these hold together*, and
-not the answers, which the question beside it already carries; a proposal offers *what did it assume*, never *take it*;
+chat is a surface. So a conflict offers *why can't these hold together*
+until the assistant has put the question or the person has replied to it,
+and never the answers, which the question beside it already carries; a
+proposal offers *what did it assume*, never *take it*;
 a displaced or unanswered requirement offers to look at it; a settled value
 offers its argument; an incomplete specification offers a completion; a
 complete one offers a quote, and an issued one asks what has moved since,

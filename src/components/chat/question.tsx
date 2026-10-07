@@ -24,14 +24,17 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
+  useState,
   type ComponentProps,
   type ReactNode,
 } from "react";
 import { MessageCircleQuestionIcon } from "lucide-react";
 import {
   CopilotChatView,
+  useCopilotChatConfiguration,
   useInterrupt,
   useRenderTool,
 } from "@copilotkit/react-core/v2";
@@ -48,14 +51,35 @@ function useConflict(): Question | undefined {
   return view?.questions.find((q) => q.about === "conflict");
 }
 
-/** Whether an interrupt card is mounted, so a reply typed in the composer
- * knows whether a waiting run will pick it up. */
-const Waiting = createContext<{ mounted: React.MutableRefObject<boolean> } | null>(null);
+/**
+ * Whether an interrupt card is mounted, so a reply typed in the composer
+ * knows whether a waiting run will pick it up; and which conversation the
+ * card has shown in, so the question at the head of a conversation opened
+ * for the conflict steps back only once this card stands in its place, and
+ * not during a remount while the question still waits (`discussing.tsx`).
+ */
+const Waiting = createContext<{
+  mounted: React.MutableRefObject<boolean>;
+  shownIn: string | null;
+  show: (thread: string) => void;
+} | null>(null);
 
 export function WaitingProvider({ children }: { children: ReactNode }) {
   const mounted = useRef(false);
-  const value = useMemo(() => ({ mounted }), []);
+  const status = useConflict()?.asked?.status;
+  const [shownIn, setShownIn] = useState<string | null>(null);
+  useEffect(() => {
+    if (status !== "awaiting") setShownIn(null);
+  }, [status]);
+  const value = useMemo(() => ({ mounted, shownIn, show: setShownIn }), [shownIn]);
   return <Waiting.Provider value={value}>{children}</Waiting.Provider>;
+}
+
+/** Whether the assistant's question waits in this conversation's turn. */
+export function useAskedHere(): boolean {
+  const waiting = useContext(Waiting);
+  const thread = useCopilotChatConfiguration()?.threadId;
+  return !!thread && waiting?.shownIn === thread;
 }
 
 function WaitingQuestion({
@@ -72,6 +96,7 @@ function WaitingQuestion({
   const answerName = useAnswerName();
   const question = useConflict();
   const status = question?.asked?.status ?? "withdrawn";
+  const thread = useCopilotChatConfiguration()?.threadId;
   const resumed = useRef(false);
 
   useEffect(() => {
@@ -81,6 +106,11 @@ function WaitingQuestion({
       waiting.mounted.current = false;
     };
   }, [waiting]);
+
+  // Before paint, so the two cards never show together.
+  useLayoutEffect(() => {
+    if (status === "awaiting" && thread) waiting?.show(thread);
+  }, [status, thread, waiting]);
 
   // The question no longer awaits an answer: let the turn go on. A later
   // conflict that displaced the options is not an answer to this one, so

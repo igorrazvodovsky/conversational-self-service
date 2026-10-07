@@ -86,9 +86,10 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
-/** The column CopilotKit's own transcript is laid out in, so the composer and
- * the suggestions line up with it. */
-const CHAT_COLUMN = "mx-auto w-full max-w-3xl px-4";
+/** The column CopilotKit's own transcript is laid out in, so the composer,
+ * the suggestions and the welcome line up with it. Its gutter goes once the
+ * chat is as wide as the column; `copilotKitChat` is the container. */
+const CHAT_COLUMN = "mx-auto w-full max-w-3xl px-4 @3xl:px-0";
 
 // ─── Composer ───────────────────────────────────────────────────────
 
@@ -518,8 +519,10 @@ function WelcomeScreen({
       view.clauses.length > 0);
   return (
     <div className="flex h-full flex-col">
+      {/* No top padding: the question stays where it is when the first
+          message turns the welcome into the transcript. */}
       {onConflict ? (
-        <div className={cn(CHAT_COLUMN, "flex-1 overflow-y-auto pt-4")}>
+        <div className={cn(CHAT_COLUMN, "flex-1 overflow-y-auto")}>
           <DiscussedConflict />
         </div>
       ) : (
