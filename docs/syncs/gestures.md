@@ -461,7 +461,7 @@ named, and shows when it holds.
 One more act on this side, `answer`, is the one that reaches
 [Binding](../concepts/binding.md), and it is written up with its consequences
 in [Binding](binding.md#a-person-answers-a-clause) because which rule
-it fires is a fact of that concept's state. It is the slice 1 counterpart of
+it fires is a fact of that concept's state. It is the counterpart of
 `assert`: the same click on the same option, carrying the clause it answers.
 
 ## The gesture vocabulary is ours

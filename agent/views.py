@@ -968,9 +968,8 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             "open": sum(1 for v in variables if v["standing"] == "open"),
             "unmet": sum(1 for v in variables if v["standing"] == "unmet"),
             "yielded": sum(1 for v in variables if v["standing"] == "yielded"),
-            # The plan's two numbers for slice 1: clauses nobody has answered
-            # (the ones left open on purpose excluded), and values asserted
-            # with no clause behind them — the control, inside the same build.
+            # Clauses nobody has answered (the ones left open on purpose
+            # excluded), and values asserted with no clause behind them.
             "unanswered": sum(
                 1
                 for c in clauses
@@ -979,8 +978,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             "unbound": sum(
                 1 for v in variables if v["asked"] and not v["answers"]
             ),
-            # The plan's number for slice 2: clauses the model read.  Those
-            # the person struck are in `sources`, item by item.
+            # Clauses the model read.  Those the person struck are in `sources`, item by item.
             "read": sum(1 for c in clauses if c["source"]),
         },
         # The log, read by turn, latest activity first.  Behaviour only: the

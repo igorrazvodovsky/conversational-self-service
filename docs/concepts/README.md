@@ -75,7 +75,7 @@ real claim — that what a person asked for and what follows from it are two
 kinds of fact, and that a configurator storing them in one field cannot answer
 the question a person most often has.
 
-[Specifying](specifying.md) and [Binding](binding.md) are the case's slice 1:
+[Specifying](specifying.md) and [Binding](binding.md) hold
 the requirement in the buyer's words, and the relation from a value to the
 clause it answers. Between them and Asserting the same value appears twice,
 once as a choice and once as an assertion.
@@ -92,7 +92,7 @@ to the person, and the person's reply to it, are utterances about the
 question; whether it still awaits an answer is read by the canvas, the chat
 and the model's tool, and by no rule.
 
-[Filing](filing.md) and [Reading](reading.md) are the case's slice 2: a
+[Filing](filing.md) and [Reading](reading.md) hold a
 document a person brought, and what the model read from it or from their
 words, held as a reading so that it can be checked against its source. A
 reading becomes a clause and an answer by the rules in

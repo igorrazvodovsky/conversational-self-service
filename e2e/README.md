@@ -1,7 +1,7 @@
 # End to end
 
 `ledger-flow.cjs` runs one person's task through the page on two builds side
-by side and compares what the page lets them see. The task is slice 1's:
+by side and compares what the page lets them see. The task is to
 answer a requirement, check what the answer is for and what it forced, find
 what is still unanswered and what answers nothing, and see where an
 assistant's reading of a document lands.

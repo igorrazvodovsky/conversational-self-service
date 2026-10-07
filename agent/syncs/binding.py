@@ -1,10 +1,10 @@
 """Binding — `docs/syncs/binding.md`.
 
 How a clause comes to be answered, how an answer reaches the solver, and what
-takes an answer away.  The case's slice 1, for a build in which the person
-does the mapping: a pick on the canvas names the option, the variable that
-offers it is a read of `Cataloguing`, and the chain from `Binding/propose` to
-`Asserting/assert` is one rule where the catalogue's has three.
+takes an answer away, in a build in which the person does the mapping: a pick
+on the canvas names the option, the variable that offers it is a read of
+`Cataloguing`, and the chain from `Binding/propose` to `Asserting/assert` is
+one rule where the catalogue's has three.
 
 Nothing here carries a `Binding/retract` back into `Asserting`.  A retraction
 is a consequence of an assertion changing, never a cause of one.

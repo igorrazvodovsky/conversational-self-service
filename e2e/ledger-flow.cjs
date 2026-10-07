@@ -3,9 +3,8 @@
  *
  * The same person's task is run through the page against each build, from
  * the same state: two requirements in the person's words and one value
- * asserted with nothing said about what for. The task is the one the case's
- * slice 1 is about — answer a requirement, check what the answer is for and
- * what it forced, find what is still unanswered and what answers nothing,
+ * asserted with nothing said about what for. The task is to answer a
+ * requirement, check what the answer is for and what it forced, find what is still unanswered and what answers nothing,
  * write a new requirement and answer it — and each step is a click or a
  * keystroke on the page, not a call to the API. Neither build is told where
  * to start: both begin where the app boots, and the person looks for each

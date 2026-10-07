@@ -7,7 +7,7 @@
  * that the model read a requirement from is an utterance in `Conversing`.
  * Beside each, every item the model read from it — the words, the options it
  * took to answer them, and what became of the clause: answered, unanswered,
- * or struck by the person, which is the disowning the case's plan counts.
+ * or struck by the person, which is the reading disowned.
  * The reading is checked against its source whole here, where the ledger
  * shows it clause by clause. See docs/syncs/reading.md, "What the canvas
  * reads".

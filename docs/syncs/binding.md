@@ -3,8 +3,7 @@
 How a clause comes to be answered, how an answer reaches the solver, and what
 takes an answer away. See [the index](README.md).
 
-These are the rules of the case's slice 1, written for a build in which the
-person does the mapping. The case catalogue's chain for the same move is
+These rules are written for a build in which the person does the mapping. The case catalogue's chain for the same move is
 `ProposeFromClause → MapProposed → ApplyMapping → AssertionReachesTheSolver`,
 with a language model inside `Mapping.map`; here there is no `Mapping`, the
 person's pick names the option, and the chain is shorter.
@@ -96,7 +95,7 @@ it is a read of [Cataloguing](../concepts/cataloguing.md), and the mapping is
 the identity — which is what *mapping is done by the person* means in code.
 That is a finding and not a shortcut: a choice whose value is already in
 the model's vocabulary restates the value, and whether `answers` is worth a
-relation on its own is what slice 1 measures.
+relation on its own is what the `unbound` read below shows.
 
 From `Asserting/assert` on, one thing is new: the value reaches
 [Constraining](../concepts/constraining.md) hard through
@@ -190,20 +189,16 @@ ledger(s)   =  for each clause c in Specifying.clauses(s), in order:
 unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
 ```
 
-`unbound` is the plan's control number. A variable asserted with no clause
-behind it is a value in the model's vocabulary that answers nothing — which
-is every value in slice 0. [The measures](../measures.md#slice-1--whether-a-value-answers-a-requirement)
-count it, split by who stated the clause, and keep the history a withdrawal
-erases. The canvas renders the read whole, as the specification's one list:
-the requirement document, a line per clause in the person's words, with the
+A variable asserted with no clause behind it is a value in the model's
+vocabulary that answers nothing. The canvas renders the read whole, as the
+specification's one list: the requirement document, a line per clause in the person's words, with the
 choices answering it beside the words, each at `#choice:<id>` with what its
 value forced beneath it, and then a line for each unbound value, its
 requirement empty. A clause nothing answers and a value answering nothing
 are in the same list, each with a filter of its own
 ([Gestures](gestures.md#the-canvas-is-narrowed-to-one-gap)), so the share is
 something a person can see rather than something a script has to count, and
-with no clause stated the list is slice 0's, every value on a line with no
-requirement.
+with no clause stated every value is on a line with no requirement.
 
 The same read, frozen, goes into a quote. The item a quote holds gains the
 clauses as they stood at issue, each with the option that answered it, and

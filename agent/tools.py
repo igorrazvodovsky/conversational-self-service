@@ -267,8 +267,8 @@ def read(items: list[Requirement]) -> dict[str, Any]:
     the rest of the source before raising it. Use `assert_value` for context
     that is not a requirement, such as the region a city implies.
     """
-    # Each item is its own invocation, in the turn's flow, so the rules, the
-    # log and the measures see one reading per requirement; what an item did
+    # Each item is its own invocation, in the turn's flow, so the rules and
+    # the log see one reading per requirement; what an item did
     # is read before the next is performed, or it would claim the next's.
     outcome: dict[str, Any] = {"read": [_read(item) for item in items]}
     if any("refused" not in item for item in outcome["read"]):

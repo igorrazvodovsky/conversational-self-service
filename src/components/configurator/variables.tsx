@@ -32,7 +32,7 @@ import { useShown } from "./showing";
  * In answering mode the pick names the clause it answers and goes to
  * `Binding` (the `answer` gesture); a variable whose value already answers
  * exactly one clause keeps answering it when changed, which is a substitution;
- * otherwise the pick is the slice 0 gesture, a bare `assert`. Which of the
+ * otherwise the pick is a bare `assert`. Which of the
  * three happened is on the log, not here.
  */
 function usePick(variable: Variable) {

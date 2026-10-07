@@ -4,12 +4,12 @@ How a source becomes requirements: the model's reading of a document or of
 the person's words, recorded as a reading, then stated as clauses and
 answered from the catalogue. See [the index](README.md).
 
-These are the rules of the case's slice 2, written for the composition this
-repository keeps: the model is a root actor, and its reading is a tool call
-that records what it perceived. The case's `Hear` invokes `Reading/read` from
-a rule with a language model inside the action; here the model calls `read`
-with an item per requirement it perceives, every item invoked on its own,
-and the rules take the reading from there.
+These rules are written for the composition this repository keeps: the model
+is a root actor, and its reading is a tool call that records what it
+perceived. The case's `Hear` invokes `Reading/read` from a rule with a
+language model inside the action; here the model calls `read` with an item per
+requirement it perceives, every item invoked on its own, and the rules take
+the reading from there.
 A document is the case's *foreign document* row: the same rules, with a file
 as the source instead of an utterance.
 
@@ -204,11 +204,10 @@ case's `Suggesting` supplies is here supplied by visibility and reversibility.
 The gated form is the same rules with one trigger moved. `AReadItemBecomesAClause`
 would fire on `Deciding/choose` of a request naming the item, exactly as a
 proposed completion is put to the person in
-[Conduct](conduct.md#proposing-and-not-adopting). The case's plan asks for
-the ungated form first, so that how often a read clause is disowned can be
-counted before a gate is paid for. That count is a read over the log, in
-[the measures](../measures.md#slice-2--what-became-of-a-reading): disowned at
-the clause or at the answer, which argue for different gates.
+[Conduct](conduct.md#proposing-and-not-adopting). The ungated form comes
+first, so that how often a read clause is disowned can be counted before a
+gate is paid for. That count is a read over the log: a clause disowned at its
+words or at its answer, which argue for different gates.
 
 ## What the reading cannot say, and what is read instead
 

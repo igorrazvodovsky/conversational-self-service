@@ -184,8 +184,7 @@ completion honour preferences before cost.
 
 ### What this does not answer
 
-Whether a configurator's solver accepts a soft constraint at all is one of
-the **[unknown]**s in step 1 of the case's `Prototype plan`, and it is not
+Whether a configurator's solver accepts a soft constraint at all is not
 this repository's to answer: the prototype is configurator-agnostic, and z3
 stands in for whichever configurator a solution built on it adopts. That z3
 supports one is evidence about z3 and not about that configurator. What the

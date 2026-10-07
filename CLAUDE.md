@@ -21,7 +21,6 @@ _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 - [`docs/concepts/`](docs/concepts/README.md) — the concepts, specified
 - [`docs/syncs/`](docs/syncs/README.md) — the rules, the only way two concepts interact
 - [`docs/moves.md`](docs/moves.md) — what either party can do in a turn, and which surface carries it: the canvas holds what is the case, the chat is where the parties address each other
-- [`docs/measures.md`](docs/measures.md) — what the case's plan counts to judge slices 1 and 2, as reads over the log
 
 **The notes are the source, and the code is generated from them.** WYSIWID
 §7.3: the prompt for the implementation is exactly the concept design spec. If
@@ -50,16 +49,6 @@ it), and **open** — and which kind an item is, is a property of the
 current state, not of the catalogue. Each item says which it is where it
 stands, rather than in a section of its own: a value that follows sits under
 each assertion it rests on, and a kind of fact is a filter over one list.
-
-Everything else in the design follows from taking that seriously:
-
-- [`Specifying`](docs/concepts/specifying.md) records what a party requires, in their own words, one clause at a time; [`Binding`](docs/concepts/binding.md) records which value answers which clause. Together they are the case's slice 1: the specification is one list, the requirement ledger written as a document — each requirement on its own line in the person's words, edited there, beside the values asserted to answer it with what each forced beneath it, then a line with an empty requirement for each value answering nothing, then what is open — and the proposal's basis of design renders from the same read. The requirement and its answer are one line on one surface, because the relation between them is the one the case is about. The person does the mapping by picking an option while answering a clause; the model states and answers a clause only by reading it from a source, and only the person makes its reading theirs.
-- [`Asserting`](docs/concepts/asserting.md) records assertions a party made, in the model's vocabulary — the case's name for it. It validates nothing and solves nothing. An assertion with no clause behind it is still recorded, and shown as answering nothing.
-- [`Conversing`](docs/concepts/conversing.md) records what a party said, in order. The log's first entry for a turn is the person's words rather than the model's tool call, and the model's calls in reply run in the flow those words opened, so the canvas can say *the assistant asked for this in reply to "hospital, six storeys"* from the flow token alone; only a reading says the value was read from them. When the model's turn runs into a conflict it puts the question to the person and its run waits, an AG-UI interrupt carrying the floor; the answer is always the person's gesture — a choice, leaving it, or a reply in words, which leaves the question open for whoever holds the decision. A quote that lacks only the person's name or the job's site is asked the same way, and recording them ends the wait. No rule reads the concept; the view does.
-- [`Filing`](docs/concepts/filing.md) keeps a document the person attached, as text, so a passage can be cited; [`Reading`](docs/concepts/reading.md) holds what the model read from it or from the person's words, with the options it took to answer each item. A reading becomes a clause stated by the model and an answer asserted by it ([Reading](docs/syncs/reading.md)), at once and visibly, and the person corrects it by striking, re-answering or withdrawing, or keeps it as their own. A reading with no answer is the model's claim that the catalogue holds nothing for it, shown as such. A later requirement on the same variable displaces the earlier answer while that answer is the assistant's reading, and the canvas says what displaced it; a value answering a requirement the person stated or kept is theirs, and the model cannot change it.
-- [`Constraining`](docs/concepts/constraining.md) holds the rules and answers what they still allow. z3 lives here, standing in for whichever configurator a solution built on this adopts; the prototype is configurator-agnostic, and nothing above this concept knows which solver answers.
-- An assertion that cannot be met is **still recorded**, and the conflict is put to the person through [`Deciding`](docs/concepts/deciding.md) rather than resolved by the last write winning.
-- [`Quoting`](docs/concepts/quoting.md) holds the end of a configuration: an offer, frozen as issued, that the specification can move away from without changing. It is another kind of fact on the canvas, and the person accepts it or nobody does. The offer is rendered as a commercial proposal on the seller's terms ([`Stipulating`](docs/concepts/stipulating.md), seeded), addressed to a party ([`Profiling`](docs/concepts/profiling.md)) for a named job at a site ([`Naming`](docs/concepts/naming.md)).
 
 ## Architecture
 
@@ -106,8 +95,7 @@ layer beside the agent.
 │   ├── catalogue/         # elevator.json
 │   ├── wiring.py          # discovers concepts, wires rules, boots with the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
-│   ├── measures.py        # what the case's plan counts, read off the log — shown to neither party
-│   ├── webapp.py          # POST /gesture, GET /view, GET /at, GET /digest, GET /measures, and /mcp — mounted by langgraph.json
+│   ├── webapp.py          # POST /gesture, GET /view, GET /at, GET /digest, and /mcp — mounted by langgraph.json
 │   ├── delegate.py        # the person's own agent's tools, as an MCP server, with the MCP Apps views
 │   ├── apps/              # the views, built from src/apps/ by `npm run build:apps`
 │   ├── tools.py           # the model's tools
@@ -223,7 +211,7 @@ The concept layer is mounted into the LangGraph server by `langgraph.json`'s
 with the model's tools. `AGENT_URL` points the frontend proxy at it.
 
 `e2e/ledger-flow.cjs` compares the page's information architecture on two
-builds side by side, driving the person's slice 1 task through each; see
+builds side by side, driving one person's task through each; see
 [`e2e/README.md`](e2e/README.md).
 
 The specification survives a restart: the action log is kept in

@@ -11,9 +11,8 @@
  * asserted the value and from which words, what else it answers, the
  * options, the rules — is drawn while the line is open. Then a line for each value answering no clause, with an empty
  * requirement, and the open variables at the tail. A clause nothing answers
- * is a line with a gap where its answer goes, so both of slice 1's gaps are
- * in one list, and with no clause stated the list is slice 0's: every value
- * on a line of its own.
+ * is a line with a gap where its answer goes, so both gaps are in one list,
+ * and with no clause stated every value is on a line of its own.
  *
  * What was asked for, what follows and what is open are three kinds of fact,
  * and each item says which it is where it stands; they are not three places.

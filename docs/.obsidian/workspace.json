@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "ui.md",
+                "file": "syncs/binding.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ui"
+              "title": "binding"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "ui.md",
+                "file": "syncs/binding.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -189,9 +189,11 @@
   },
   "active": "83ee5d50279fef92",
   "lastOpenFiles": [
+    "measures.md",
+    "syncs/binding.md",
+    "ui.md",
     "concepts/detailing.md",
     "concepts/deciding.md",
-    "ui.md",
     "visit.md",
     "conceptual-model.md",
     "method/synchronization.md",
@@ -210,11 +212,9 @@
     "method/concept.md",
     "method/boundaries.md",
     "concepts/binding.md",
-    "syncs/binding.md",
     "concepts/framing.md",
     "concepts/showing.md",
     "concepts/stipulating.md",
-    "method/objects.md",
     "concept-relations.canvas",
     "syncs",
     "concepts",

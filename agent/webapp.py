@@ -6,8 +6,7 @@ in the same process as the graph and shares one engine with the model's tools.
 Two kinds of route and no more, because there are only two things to do:
 perform a root action, or read.  This is WYSIWID §6.4's split at the level of
 the wire — `POST /gesture` is the action API, `GET /view`, `GET /at` and `GET /digest`
-are the querying capability, and nothing writes through a read.  `GET /measures` is a read too, for whoever studies the sessions rather
-than either party in them (`docs/measures.md`).
+are the querying capability, and nothing writes through a read.
 
 The person's own agent reaches the engine through one more route,
 `/configurator/mcp`: the MCP server in `delegate.py`, each of whose tools is
@@ -37,7 +36,6 @@ from fastapi import Body, FastAPI, HTTPException  # noqa: E402
 
 from delegate import BROWSER, done, server  # noqa: E402
 from instance import SPEC, engine  # noqa: E402
-from measures import measures  # noqa: E402
 from views import canvas, digest  # noqa: E402
 
 # The person's own agent's tools, over streamable HTTP.  Stateless and
@@ -79,14 +77,6 @@ def review() -> dict[str, Any]:
     returns it without the links: what `converse` reads to see whether a
     question waits on the person."""
     return digest(engine, SPEC, actor=BROWSER)
-
-
-@app.get("/configurator/measures")
-def measured() -> dict[str, Any]:
-    """What the case's plan counts, read off the log.  Reachable through the
-    frontend's proxy like any read, and read by nothing on the page, in the
-    digest or among the tools: a party shown the count would change it."""
-    return measures(engine)
 
 
 ACTORS = {"person", BROWSER}
