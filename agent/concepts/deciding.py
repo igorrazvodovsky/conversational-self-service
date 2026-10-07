@@ -92,8 +92,7 @@ class Deciding:
         """The matter no longer needs settling — not the same as declining it.
 
         Declining is a person saying *not now*, and the request stays.  This is
-        whoever asked taking the question off the record, and until now nothing
-        could: `ask` put a matter on and nothing took one off.
+        whoever asked taking the question off the record.
         """
         key = _key(request)
         offered = self._offered.pop(key, [])

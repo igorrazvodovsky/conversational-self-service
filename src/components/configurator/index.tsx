@@ -47,10 +47,9 @@ function Section({
 }
 
 /**
- * What the canvas is narrowed to, and the way out. Shown while an assertion
- * or a clause frames it — an assertion only by the assistant or the person's
- * own agent, since the page's own way to what one forced is the card itself; the counts are of the slice, by kind of fact. A
- * frame on a clause is also the answering mode, and the strip says so. A gap
+ * Shown while an assertion or a clause frames the canvas — an assertion only
+ * by the assistant or the person's own agent, since the page's own way to
+ * what one forced is the card itself. A frame on a clause is also the answering mode, and the strip says so. A gap
  * frame is a filter, shown pressed above the list it filters.
  */
 function FrameBanner() {
@@ -114,9 +113,8 @@ function FrameBanner() {
 }
 
 /**
- * The strip kept at the top of the configuration's scroll: the frame, if
- * any, so a mode begun anywhere is visible, and its way out reachable, from
- * anywhere. What the other party changed is in the log, behind the bell in
+ * Sticky, so a mode begun anywhere is visible, and its way out reachable,
+ * from anywhere. What the other party changed is in the log, behind the bell in
  * the panel's header (`log.tsx`).
  */
 function Header() {
@@ -130,11 +128,8 @@ function Header() {
 }
 
 /**
- * What the current state and frame leave on the canvas, by kind of fact. A
- * frame narrows it to the items that bear on one question — `Framing`; with
- * no frame, `framed` is true of everything. A yielded or unmet value is
- * asserted, not followed, because nothing about the person's requirement
- * changed.
+ * A frame narrows the canvas to the items that bear on one question —
+ * `Framing`; with no frame, `framed` is true of everything.
  */
 export function sections(view: View) {
   const framed = view.variables.filter((v) => v.framed);
@@ -147,18 +142,8 @@ export function sections(view: View) {
 }
 
 /**
- * The specification: what is the case.
- *
- * One list, the requirement ledger written as a document (`specification.tsx`,
- * `ledger.tsx`): each requirement on its own line, in the person's words and
- * edited there, beside the values asserted to answer it, each with what it
- * forced beneath it; then a line for each value answering none, its
- * requirement empty; then what is still open, by the catalogue's family; and
- * the sources the assistant read from beneath. Asked for, follows from that
- * and still open are three kinds of fact, and each item says which it is
- * where it stands — a value that follows sits under the assertions it rests
- * on, with the rule — rather than in a section of its own. The gaps are
- * filters over the list. The only other surface is the quotes.
+ * The specification: what is the case (`ledger.tsx`). The only other surface
+ * is the quotes.
  */
 export function ConfiguratorCanvas() {
   const { view, error } = useConfigurator();
@@ -211,8 +196,6 @@ export function ConfiguratorCanvas() {
             </Section>
           ) : null}
 
-          {/* The one list: each requirement beside what answers it and
-              what that forced, the values answering none, what is open. */}
           <AskedFor />
 
           <p className="mt-6 text-xs/relaxed text-muted-foreground">

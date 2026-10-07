@@ -56,12 +56,10 @@ GRIDS = {"grid_factor": "today", "grid_factor_decarbonising": "decarbonising"}
 # `Pricing` and `Footprinting` can hold a second, and this file seeds one.
 BASIS = "catalogue"
 
-# The facets the canvas can show beside an item, with what each is in words
-# and whether it is shown before anybody has touched the menu.  The defaults
-# are the canvas as it was before `Showing` existed — see
-# docs/concepts/showing.md, "What the canvas reads".  Seeded at boot like
+# What is on by default is where a value comes from, which is what the canvas
+# exists to tell apart; the rest waits to be asked for.  Seeded at boot like
 # `Moding`'s surfaces: what a lens *can* show is the application's, what it
-# *does* show is the viewer's.
+# *does* show is the viewer's.  See docs/concepts/showing.md.
 FACETS: list[tuple[str, str, bool]] = [
     ("price", "what each option adds to the price, beside its label", False),
     ("carbon", "what each option adds to the carbon over the lift's life", False),

@@ -39,8 +39,6 @@ function named(message: RunAgentInput["messages"][number]) {
 }
 
 /**
- * Builds this starter's agent.
- *
  * Extracted from the runtime route so both mounts share one definition: the
  * route serves the web app over HTTP, and `channel-host.mts` serves a Channel.
  * A fresh instance per call — the channel host sets `threadId` per

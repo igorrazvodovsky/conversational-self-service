@@ -2,11 +2,8 @@
  * The specification, in the person's own chat: the view `review` carries.
  *
  * The canvas's one list, set beside the agent's reply so that what the agent
- * says about the specification sits next to what is the case. Each
- * requirement is a line in its own words, with the values asserted to answer
- * it and, beneath each, what that value forced and the rule that forced it;
- * then the values answering nothing; then what is open. A value that follows
- * is never shown as one that was asked for, which is the distinction an
+ * says about the specification sits next to what is the case. A value that
+ * follows is never shown as one that was asked for, which is the distinction an
  * agent's retelling can lose (`docs/syncs/conduct.md`, "In the person's own
  * chat, the facts stay facts").
  *

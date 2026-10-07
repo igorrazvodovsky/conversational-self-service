@@ -54,8 +54,7 @@ const GEOMETRIES = [
 }>;
 
 /** Not persisted: restoring it from localStorage would bring back the
- * hydration mismatch `split.tsx` refuses, and sidebar on every load is what
- * keeps the app from opening anyone in a transcript. */
+ * hydration mismatch `split.tsx` refuses. */
 export function useChatSurface() {
   const [mode, setMode] = useState<ChatSurfaceMode>("sidebar");
   const lastVisible = useRef<VisibleMode>("sidebar");
@@ -217,7 +216,7 @@ function useHydrated() {
   return hydrated;
 }
 
-/** The one affordance while hidden. It restores the mode the person last had. */
+/** The one affordance while hidden. */
 export function ChatRestoreButton({
   unseenReplies,
   onClick,

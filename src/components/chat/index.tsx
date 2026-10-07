@@ -7,10 +7,7 @@
  * CopilotKit keeps the layout it owns — the stick-to-bottom scroller, the
  * overlay the composer sits in, the attachment queue above it, the markdown
  * body of an assistant turn — and every control a person touches is a
- * primitive from `src/components/ui/`: the composer is an `InputGroup`, a
- * suggestion is a `Button`, the welcome screen is `Empty`, a person's turn is
- * a `Bubble`, and the copy and scroll-to-latest controls are `Button`s. The
- * one piece of CopilotKit chrome left in the transcript is its "View in
+ * primitive from `src/components/ui/`. The one piece of CopilotKit chrome left in the transcript is its "View in
  * Inspector" button, which the dev inspector draws on a local run only.
  */
 
@@ -481,7 +478,6 @@ function OneTranscript(props: ComponentProps<typeof CopilotChatMessageView>) {
   // group of tool calls sees the calls that join it (`tool-calls.tsx`).
   return (
     <ToolCallGroups messages={props.messages ?? []} isRunning={props.isRunning}>
-      {/* A conversation opened for a conflict starts with its question. */}
       <DiscussedConflict />
       <CopilotChatMessageView
         {...props}

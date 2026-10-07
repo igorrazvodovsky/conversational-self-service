@@ -4,8 +4,7 @@
  * One quote, on its own page, for printing.
  *
  * The same document the quote surface shows, rendered without the chat
- * session behind it: it reads the view once, picks one offer, and lays it out
- * with a print control and nothing else.
+ * session behind it.
  */
 
 import { ArrowLeftIcon, PrinterIcon } from "lucide-react";

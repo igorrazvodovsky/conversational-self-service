@@ -35,9 +35,8 @@ interface ExampleLayoutProps {
  * Two surfaces: the artifact panel and the chat.
  *
  * Which artifact is on the panel — the specification or the offers — is a
- * fact
- * of `Moding`, held behind the concept layer, and this component renders it
- * rather than owning it. Both the person's navigation and the model's tool call
+ * fact of `Moding`, held behind the concept layer, and this component renders
+ * it rather than owning it. Both the person's navigation and the model's tool call
  * reach it through `Moding/focus`, by a rule; the one that fires when the
  * assistant is about to change the canvas is `TheCanvasIsShownBeforeItChanges`,
  * which the starter wrote as a sentence in a system prompt.
@@ -72,7 +71,6 @@ export function ExampleLayout({
   useEffect(() => {
     document.title = `${TITLE[mode]} · Northline Lifts`;
   }, [mode]);
-  // The chat's geometry is the person's and only the person's.
   const chatSurface = useChatSurface();
   const conversations = useConversations();
 

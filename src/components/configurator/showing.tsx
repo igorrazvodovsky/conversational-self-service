@@ -31,7 +31,6 @@ const LABEL: Record<string, string> = {
   how: "Who asserted a value, and from which words",
 };
 
-/** Whether a facet is shown, for the components that draw one. */
 export function useShown(): (facet: string) => boolean {
   const { view } = useConfigurator();
   const shown = useMemo(

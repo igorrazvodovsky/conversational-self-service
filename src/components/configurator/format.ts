@@ -7,11 +7,10 @@ export const money = (amount: number, currency: string) =>
     maximumFractionDigits: 0,
   }).format(amount);
 
-/** A per-option amount, signed, as an option's contribution reads. */
 export const adds = (amount: number, currency: string) =>
   amount === 0 ? "included" : `+${money(amount, currency)}`;
 
-/** A change between two amounts, signed with a true minus; none is a dash. */
+/** Signed with a true minus; no change is a dash. */
 export const change = (amount: number, currency: string) =>
   Math.round(amount) === 0
     ? "—"

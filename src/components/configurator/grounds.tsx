@@ -4,17 +4,14 @@
  * A quote read against what was asked: the canvas's question, put to the
  * specification as it stood when the offer was made.
  *
- * Every line is the offer's own. The requirements, each value, whether it
- * was asserted, gave way or follows, the rules and assertions behind it and
- * what it added to the price were frozen into the quote's item at issue
+ * Every line is the offer's own, frozen into the quote's item at issue
  * (`docs/syncs/gestures.md`, "A quote is requested"); who asserted each one
  * is the log's, read as it stood at the record that issued it. Nothing here
  * reads the live specification except `differs`, which marks a line the
  * canvas has since moved away from.
  *
- * Above it, the offer as a decision: what it costs over its term, what the
- * person provides, and how long it stays open — figures from the frozen
- * terms, arranged for the question a person brings before accepting.
+ * Above it, the offer as a decision, arranged for the question a person
+ * brings before accepting.
  *
  * Every line has an address (`address.quote`), so the chat, a link between
  * two lines and the person's agent can name a frozen value apart from the
@@ -57,7 +54,7 @@ function Figure({ label, value, note }: { label: string; value: string; note: st
 }
 
 /**
- * The offer as a decision. The total is the sum plus the maintenance charge
+ * The total is the sum plus the maintenance charge
  * over the term, both as issued; financing is the person's business and is
  * not reckoned here.
  */
@@ -189,11 +186,6 @@ function Group({
   );
 }
 
-/**
- * The offer against what was asked: the requirements as they stood, then
- * the values asserted and those that followed, each with its reason and
- * what it added to the sum.
- */
 export function AsIssued({
   quote,
   view,

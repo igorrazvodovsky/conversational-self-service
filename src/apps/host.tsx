@@ -96,7 +96,6 @@ export function Link({ host, href, children }: { host: Host; href: string; child
   );
 }
 
-/** Mount a view, rendering it once the first result has arrived. */
 export function mount(View: (props: { host: Host; result: Result }) => ReactNode) {
   function Root() {
     const host = useHost();

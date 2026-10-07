@@ -3,16 +3,8 @@
 /**
  * What answers each requirement, on the requirement's own line.
  *
- * The specification is one list. Each clause is a line that reads as a
- * question and its answer: the words, editable, and beneath them the choices
- * answering it — a value bound to the clause, each at `#choice:<id>`, drawn
- * as its heading and value — with the values it forced beneath it, muted.
- * Everything else about a line — where its words were read from, who
- * asserted the value and from which words, what else it answers, the
- * options, the rules — is drawn while the line is open. Then a line for each value answering no clause, with an empty
- * requirement, and the open variables at the tail. A clause nothing answers
- * is a line with a gap where its answer goes, so both gaps are in one list,
- * and with no clause stated every value is on a line of its own.
+ * A clause nothing answers is a line with a gap where its answer goes, so
+ * both gaps are in one list.
  *
  * What was asked for, what follows and what is open are three kinds of fact,
  * and each item says which it is where it stands; they are not three places.
@@ -31,20 +23,17 @@ import { useEffect, useState } from "react";
 import { useConfigurator, type Answer, type Clause, type Variable, type View } from "./provider";
 import { AssertedDetails, AssertedPair, FollowsPair, FollowsRow, FollowsWhy, OpenRow } from "./variables";
 
-/** One choice on a line: its answer, the variable asserting it, and how it is drawn. */
 export interface Drawn {
   answer: Answer;
   /** None when the answer is displaced or unrealisable. */
   variable: Variable | null;
-  /** Whether the frame leaves the variable in. */
   inFrame: boolean;
   /** Drawn whole here: the first line it answers, inside the frame. */
   whole: boolean;
 }
 
 /**
- * The values a party asserted, as the frame narrows them. A yielded or unmet
- * value is asserted: it sits with what was asked for, not with what followed,
+ * A yielded or unmet value is asserted: it sits with what was asked for, not with what followed,
  * because nothing about the person's requirement changed.
  */
 export function framedAsserted(view: View): Variable[] {
@@ -55,10 +44,7 @@ export function framedAsserted(view: View): Variable[] {
 }
 
 /**
- * The list as the current state and frame fill it: which lines are in the
- * frame, each line's choices, the values answering none, where each value
- * that follows is addressed, and the open variables at the tail. A frame on
- * a clause leaves its line; a frame on an assertion leaves the lines its
+ * A frame on a clause leaves its line; a frame on an assertion leaves the lines its
  * value answers; a frame on the unanswered gap leaves the lines nothing
  * answers, and the other gaps leave none. `asserted` is already narrowed by
  * the frame.
@@ -92,7 +78,6 @@ export function ledger(view: View, asserted: Variable[]) {
         const stands = answer.standing !== "displaced" && answer.standing !== "unrealisable";
         const variable = stands && answer.variable ? every.get(answer.variable) ?? null : null;
         const inFrame = !!variable && byName.has(variable.name);
-        // Drawn whole once, on the first line in the frame that it answers.
         const first = inFrame && shown.has(clause.clause) && !whole.has(variable!.name);
         if (first) {
           whole.add(variable!.name);
@@ -127,16 +112,13 @@ export function ledger(view: View, asserted: Variable[]) {
   };
 }
 
-/** The values that follow and rest on an asserted value. */
 function forcedBy(rows: ReturnType<typeof ledger>, variable: Variable): Variable[] {
   return rows.follows.filter((v) => v.following.some((f) => f.variable === variable.name));
 }
 
 /**
- * What an asserted value forced, beneath it: each value that follows and
- * rests on it, as its heading and value. Each is addressed where it is first
- * drawn, and drawn again under another assertion it rests on carries no
- * address.
+ * Each forced value is addressed where it is first drawn; drawn again under
+ * another assertion it rests on, it carries no address.
  */
 function Forced({ variable }: { variable: Variable }) {
   const { view } = useConfigurator();
@@ -154,8 +136,7 @@ function Forced({ variable }: { variable: Variable }) {
 }
 
 /**
- * Whether a line is open, and the way to open and close it. A line opens
- * when the page is at one of its addresses — the clause, a choice, a value
+ * A line opens when the page is at one of its addresses — the clause, a choice, a value
  * drawn on it — and stays open until it is closed.
  */
 export function useOpened(
@@ -173,7 +154,6 @@ export function useOpened(
   return [open, setOpen];
 }
 
-/** The addresses that open a clause's line: its choices and the values drawn on it. */
 export function lineAddresses(drawn: Drawn[]): string[] {
   return drawn.flatMap((d) => [
     address.choice(d.answer.choice),
@@ -181,7 +161,6 @@ export function lineAddresses(drawn: Drawn[]): string[] {
   ]);
 }
 
-/** An answer with no asserted value: displaced or unrealisable. */
 function Gone({ answer }: { answer: Answer }) {
   return (
     <p className="text-xs text-muted-foreground">
@@ -192,7 +171,6 @@ function Gone({ answer }: { answer: Answer }) {
   );
 }
 
-/** One choice: the value answering the clause, and what it forced. */
 function Choice({ drawn, open, onToggle }: { drawn: Drawn; open: boolean; onToggle: () => void }) {
   const { label } = useConfigurator();
   const { answer, variable, inFrame, whole } = drawn;
@@ -226,10 +204,7 @@ function Choice({ drawn, open, onToggle }: { drawn: Drawn; open: boolean; onTogg
   );
 }
 
-/**
- * What answers a clause, beneath its words: its choices, or the gap where
- * they go. The way to answer is the line's own control, beside its words.
- */
+/** The way to answer is the line's own control, beside its words, not here. */
 export function Answers({
   clause,
   drawn,
@@ -269,11 +244,7 @@ export function Answers({
   );
 }
 
-/**
- * The details of a line's answers, for the open line: for each value drawn
- * whole on it, how it came to be, its options and the rules behind what it
- * forced. Named by heading when the line has more than one.
- */
+/** Drawn only while the line is open. */
 export function AnswersDetails({
   clause,
   drawn,
@@ -296,16 +267,11 @@ export function AnswersDetails({
   ));
 }
 
-/** Where a line's details go: beneath the answers, set in by a rule. */
 export function Details({ children }: { children: React.ReactNode }) {
   return <div className="mt-2 space-y-2 border-l pl-3">{children}</div>;
 }
 
-/**
- * A line of the list with no requirement: the question says there is none,
- * so the absence reads where a requirement would be, and beneath it what is
- * there.
- */
+/** The absence of a requirement reads where a requirement would be. */
 function Line({ question, children }: { question?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="space-y-1 border-t py-3">
@@ -315,7 +281,6 @@ function Line({ question, children }: { question?: React.ReactNode; children: Re
   );
 }
 
-/** A value asserted with nothing said about what for, on its own line. */
 function UnboundLine({ variable }: { variable: Variable }) {
   const [open, setOpen] = useOpened([address.variable(variable.name)]);
   return (
@@ -332,7 +297,6 @@ function UnboundLine({ variable }: { variable: Variable }) {
   );
 }
 
-/** The rules behind each value an assertion forced. */
 function ForcedWhy({ variable }: { variable: Variable }) {
   const { view } = useConfigurator();
   const rows = view ? ledger(view, framedAsserted(view)) : null;
@@ -357,7 +321,6 @@ export function Loose({ loose }: { loose: Variable[] }) {
   ));
 }
 
-/** The open variables, by the catalogue's family, in the catalogue's order. */
 function byFamily(open: Variable[]): [string, Variable[]][] {
   const groups = new Map<string, Variable[]>();
   for (const v of open) {
@@ -369,8 +332,7 @@ function byFamily(open: Variable[]): [string, Variable[]][] {
 }
 
 /**
- * The tail: what is still open, a line per catalogue family. Grouped by the
- * catalogue's family, so the scan a person brings here — what kind of thing
+ * Grouped by the catalogue's family, so the scan a person brings here — what kind of thing
  * is left — has an answer; the grouping is the catalogue's, so it is only
  * here.
  */

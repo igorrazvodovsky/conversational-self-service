@@ -6,12 +6,11 @@ and nothing more: the tool records that the model called it, and the rules in
 person's message opened (`hearing.turn()`), so the log joins the words to the
 call made in reply and the canvas can show which words a value was read from.  A tool body that changed state
 directly would make the model a second initiator, which is the thing WYSIWID
-§7.2's fourth design rule exists to prevent and the thing the starter this
-replaces did in every frontend tool it defined.
+§7.2's fourth design rule exists to prevent.
 
-The names are ours, and so is the granularity: `assert_value`, `withdraw`,
-`read`, `propose`, `introduce`, `entitle`, `quote`, `show`, `hide`, `frame`,
-`unframe`.  A log of those says what happened.
+The names are ours, and so is the granularity: a log of those says what
+happened, where a single `configure(spec)` taking the whole assignment would
+say only that something did.
 
 `read` is the one that carries a source.  A requirement the model perceives
 in the person's words or in a document they attached is recorded with the
@@ -19,9 +18,7 @@ words it was read from and the options the model took to answer it, and the
 rules in `syncs/reading.py` state it as a clause and assert the answer.  The
 utterance it names is the turn's own, handed over by `hearing.py` as the
 flow token is; a document is named by its id, and `open_file` returns its
-text from the log, so what the model read is what is on record.  A single `configure(spec)`
-taking the whole assignment — the shape this repository used to have — says
-only that something did.
+text from the log, so what the model read is what is on record.
 
 A verb returns what it did, never the specification: each result stays in
 the conversation and goes back to the model at every later step, so a
@@ -30,7 +27,7 @@ of their number.  `read` takes every requirement a source states in one
 call and performs one invocation per item, so the log is the same as for
 separate calls.
 
-`review`, `open_file` and `open_quote` are readings: each returns a
+`review`, `look_up`, `open_file` and `open_quote` are readings: each returns a
 projection of state and records nothing, so the model asking what an offer
 holds is not an action anybody performed.  `open_quote` is the offer as it
 was frozen at issue, the record the quote surface lays out and the person's
@@ -70,9 +67,7 @@ from views import detailed, digest, filed, put_addressee, put_question, quoted
 
 
 def _did(completion: Record) -> list[dict[str, Any]]:
-    """What the rules did with the stimulus, in the vocabulary they did it in.
-
-    Read from the completion onward rather than from the start of the flow:
+    """Read from the completion onward rather than from the start of the flow:
     a tool call made in reply to a message runs in the flow the message
     opened, alongside the words themselves and any earlier calls of the turn.
     """
@@ -93,13 +88,6 @@ def _did(completion: Record) -> list[dict[str, Any]]:
 
 
 def _outcome(completion: Record) -> dict[str, Any]:
-    """What a call did, and the conflicts and yielded values that stand after it.
-
-    Not the specification: every result stays in the conversation and is
-    sent to the model again at each later step, so a result carrying the
-    whole digest makes a document of many requirements cost the square of
-    their number.  `review` is the reading, called when the model needs it.
-    """
     return _standing({"did": _did(completion)})
 
 
@@ -297,8 +285,8 @@ def _read(item: Requirement) -> dict[str, Any]:
     twice = sorted(v for v, times in named.items() if times > 1)
     if not any(entry["action"] == "Reading/read" for entry in outcome["did"]):
         # The rule declined: an answer naming two options on one variable,
-        # words that are a reply to a question, or words that are not in the
-        # cited source.
+        # words that are a reply to a question, or words the cited source does
+        # not bear out, which includes there being no source to check.
         reply = utterance is not None and utterance in engine.state("Conversing")["about"]
         outcome["refused"] = (
             "nothing was read: the answer names more than one option for "
@@ -562,13 +550,11 @@ CONFLICT = {"spec": SPEC, "about": "conflict"}
 
 
 def _asked() -> dict[str, Any] | None:
-    """The conflict question as the model last put it, and where it stands."""
     return put_question(engine, CONFLICT)
 
 
 def _already_asked(call: str) -> bool:
-    """Whether this tool call has asked already.  LangGraph runs a tool's
-    body again from the top when its run resumes, so the question is
+    """LangGraph runs a tool's body again from the top when its run resumes, so the question is
     recorded only once per call; read from the log, so a run resumed after
     a restart asks nothing twice either."""
     return any(
@@ -582,7 +568,6 @@ def _already_asked(call: str) -> bool:
 
 
 def _reply(utterance: str) -> tuple[str, str] | None:
-    """The flow a reply opened and the actor who made it, from the log."""
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if (
             record.kind == "completion"
@@ -645,8 +630,8 @@ def _answered(put: dict[str, Any]) -> dict[str, Any]:
 
 
 def _quoted_since(utterance: str) -> bool:
-    """Whether a quote was issued after the question was put: the person may
-    have requested it themselves once the name was in."""
+    """The person may have requested a quote themselves once the name and
+    the site were in."""
     said = None
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if record.kind != "completion" or "error" in (record.output or {}):

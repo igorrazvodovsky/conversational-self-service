@@ -145,7 +145,6 @@ const surface = (page) => page.evaluate(() => document.title.split(" · ")[0]);
 const holds = (page, text) =>
   page.evaluate((t) => document.querySelector("main").textContent.includes(t), text);
 
-/** Whether each of `texts` is on screen, inside the viewport. */
 const inView = (page, texts) =>
   page.evaluate((texts) => {
     const main = document.querySelector("main");
@@ -218,7 +217,6 @@ function person(page) {
     await pause(400);
     await note();
   };
-  /** Go to a place in the panel's nav, as a person does. */
   me.go = async (place) => {
     const went = await page.evaluate((place) => {
       const link = [...document.querySelectorAll('nav[aria-label="Panel"] a')].find((a) =>
@@ -251,7 +249,6 @@ function person(page) {
     await me.go("Requirements");
     if (!(await here())) throw new Error(`"${words ?? "the requirements"}" not on the requirements`);
   };
-  /** Answer a requirement with an option of a variable, from where the person is. */
   me.answer = async (base, words, row, option, value) => {
     await me.find(words);
     await me.click("Answer", words);

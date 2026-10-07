@@ -278,10 +278,6 @@ agent = create_agent(
     tools=[*configurator_tools, query_data, generate_a2ui, search_flights],
     # `hearing` first: the person's words reach the log before the model is
     # asked what to do about them.  See `docs/syncs/gestures.md`.
-    # `unattaching` hands the model each document as a line naming it; the
-    # text is read from the log.  See `docs/syncs/reading.md`.
-    # `attributing` tells the model which words were the person's own
-    # agent's.  See `docs/syncs/gestures.md`.
     # `forgetting` empties older tool results once the request grows: a
     # reading is out of date once the next is made, and what a call did is
     # on the log.  A document's text is kept, since `read` copies from it.

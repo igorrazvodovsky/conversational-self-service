@@ -30,7 +30,7 @@ def _selection_for(states: States, spec: str) -> str | None:
 
 
 def _variable_offering(states: States, option: Any) -> str | None:
-    """`Cataloguing: { ?v offers: ?o }` — which variable the option belongs to."""
+    """`Cataloguing: { ?v offers: ?o }`."""
     for variable, offered in states["Cataloguing"].state()["offers"].items():
         if option in offered:
             return variable
@@ -57,7 +57,7 @@ def _a_started_specification_is_opened(c: Completion, _: States) -> list[Invocat
 
     The catalogue's `BeginConfiguring` runs the other way, from the selection
     to the configuration; here the boot's one root action is `Asserting/start`
-    and the two newer concepts hang off it.  See `docs/syncs/binding.md`.
+    and `Specifying` and `Binding` hang off it.  See `docs/syncs/binding.md`.
     """
     if c.failed:
         return []
@@ -237,7 +237,7 @@ def _a_struck_clause_releases_its_choices(
     """The choice goes; the value it held stays asserted.
 
     Striking a requirement is not taking back a value — see
-    `docs/concepts/specifying.md`, "Why there is a `strike`".
+    `docs/syncs/binding.md`, "What takes a choice away".
     """
     if c.failed:
         return []

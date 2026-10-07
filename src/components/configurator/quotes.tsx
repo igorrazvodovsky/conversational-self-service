@@ -1,39 +1,24 @@
 "use client";
 
 /**
- * The quote surface: the second of `Moding`'s surfaces, beside the canvas,
- * and the one a configuration ends on.
+ * The quote surface: the second of `Moding`'s surfaces, beside the canvas.
  *
  * The end of a configuration is not the configuration; it is an offer
  * somebody can accept. Quotes are a third kind of fact beside the asserted
- * and the entailed — snapshots with a price — and this surface shows one at a
- * time, under an overview of every offer issued. The one shown opens as a
- * decision — what it costs over its term, what the person provides, how long
- * it stays open — and is read in several ways: against what was asked, which is the
- * canvas's question put to the specification as it stood (`grounds.tsx`);
- * along time, what happens when and what the person owes or must have done
- * by then (`timeline.tsx`); and as the proposal sent and signed
- * (`document.tsx`). The overview gives
- * each offer its standing, its sum, when it runs out, and which of its frozen
- * values the canvas has since moved away from. That last column is the question a
- * person brings to two quotes, and it is `differs`, a read nobody maintains.
- * A quote can also be compared outright, with another or with the
- * specification as it stands (`comparison.tsx`): only the values that
- * differ, under the requirements they answer, each with whether it was
- * asserted or follows and what it changed in the sum — what the difference
- * buys, and whether anybody chose it, which two proposals read side by side
- * cannot tell you.
+ * and the entailed — snapshots with a price. The overview's column of frozen
+ * values the canvas has since moved away from is the question a person
+ * brings to two quotes, and it is `differs`, a read nobody maintains. A
+ * comparison (`comparison.tsx`) says what the difference buys and whether
+ * anybody chose it, which two proposals read side by side cannot tell you.
  * The request control is disabled with the reason whenever the rule that
  * issues a quote would decline to fire, so that nobody presses a button that
  * goes nowhere. Two of those reasons are about the addressee, so the surface
  * also carries the form that writes `Profiling` and `Naming`.
  *
  * Which quote is being looked at, which way it is read, and which pair is
- * being compared are a viewer's convenience, held in the page's URL —
- * `quote`, `reading` and `against` (`link.tsx`) — so a link to an offer
- * read one way opens it read that way, and the back button undoes a
- * choice. An address on one of a quote's lines sets the first two, and a
- * comparison's address the pair.
+ * being compared are a viewer's convenience, held in the page's URL
+ * (`link.tsx`), so a link to an offer read one way opens it read that way,
+ * and the back button undoes a choice.
  * That a quote exists, and its standing, is `Quoting`'s.
  */
 
@@ -110,10 +95,8 @@ const CUSTOMER: {
 ];
 
 /**
- * Who the proposal is for, and where the lift is going. Two gestures, one
- * per concept: the customer's details are `introduce`, the job's title and
- * site are `entitle`. Each field is sent only when it changed, because both
- * actions are partial and a field left alone should stay as it was.
+ * Each field is sent only when it changed, because `introduce` and
+ * `entitle` are partial and a field left alone should stay as it was.
  */
 function Addressee() {
   const { view, gesture, busy } = useConfigurator();
@@ -254,12 +237,6 @@ function Addressee() {
   );
 }
 
-/**
- * Every offer issued, one row each, with what a person compares them by.
- * `differs` is the read that answers "what changed since" — the headings of
- * the frozen values the canvas no longer holds — and it is the one column
- * two proposals read side by side cannot give you.
- */
 function Issued({
   quotes,
   view,
@@ -411,10 +388,7 @@ export function QuoteSurface() {
   const latest = quotes[quotes.length - 1]?.quote ?? null;
   const params = useSearchParams();
   const selected = params.get("quote");
-  // The second quote of a comparison, when one is being made.
   const against = params.get("against");
-  // How the quote is read: against what was asked, along time, or as the
-  // proposal sent.
   const asked = params.get("reading") as Reading | null;
   const reading: Reading = asked && READINGS.includes(asked) ? asked : "asked";
   // Each choice is the person going somewhere, so a new history entry.
@@ -438,7 +412,6 @@ export function QuoteSurface() {
   // against what was asked. Following it made the history entry already.
   const hash = useHash();
   useEffect(() => {
-    // A comparison's address names its pair, and a line in it.
     const pair = compareOf(hash);
     if (pair) {
       setQuery({ quote: pair[0], against: pair[1] });
@@ -584,7 +557,6 @@ export function QuoteSurface() {
               <TabsContent value="timeline">
                 <Timeline quote={quote} view={view} />
               </TabsContent>
-              {/* The sheet as it will print. */}
               <TabsContent value="proposal" className="pt-4">
                 <QuoteDocument quote={quote} view={view} level={3} />
               </TabsContent>

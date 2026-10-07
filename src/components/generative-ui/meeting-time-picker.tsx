@@ -95,7 +95,6 @@ export function MeetingTimePicker({
     );
   };
 
-  // Confirmed state
   if (selectedSlot) {
     return (
       <Outcome
@@ -113,7 +112,6 @@ export function MeetingTimePicker({
     );
   }
 
-  // Declined state
   if (declined) {
     return (
       <Outcome
@@ -124,7 +122,6 @@ export function MeetingTimePicker({
     );
   }
 
-  // Selection state
   return (
     <Outcome
       icon={<Clock />}

@@ -228,7 +228,6 @@ def _the_catalogue_is_priced(c: Completion, _: States) -> list[Invocation]:
 def _the_catalogue_is_footprinted(c: Completion, _: States) -> list[Invocation]:
     catalogue = _catalogue(c)
     out: list[Invocation] = []
-    # The catalogue's key for each stage, and the case of the action it seeds.
     stages = (
         ("co2", "attribute", "embodied"),
         ("co2_installed", "attribute", "installed"),

@@ -47,7 +47,6 @@ const MILESTONE: Record<Event, string> = {
 
 const weeks = (n: number) => `${n} ${n === 1 ? "week" : "weeks"}`;
 
-/** The date a number of weeks, and then months, after the order. */
 const dateOf = (committed: string, week: number, months = 0) => {
   // In UTC throughout, as `day` reads an ISO date.
   const d = new Date(`${committed}T00:00:00Z`);
@@ -56,7 +55,6 @@ const dateOf = (committed: string, week: number, months = 0) => {
   return d.toISOString().slice(0, 10);
 };
 
-/** A lane of a chart: a label, and marks placed along it in percent. */
 function Lane({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid grid-cols-[7rem_1fr] items-center gap-3 pr-4">
@@ -108,7 +106,6 @@ function Mark({ at, of, label }: { at: number; of: number; label: string }) {
   );
 }
 
-/** The axis under a chart: ticks at a step, labelled. */
 function Axis({ of, step, label }: { of: number; step: number; label: (n: number) => string }) {
   const ticks = Array.from({ length: Math.floor(of / step) + 1 }, (_, i) => i * step);
   return (
@@ -196,7 +193,6 @@ export function Timeline({ quote, view }: { quote: Quote; view: Pick<View, "curr
           </Lane>
           <div className="h-3" />
           <Lane label="Payments">
-            {/* Stages falling in the same week share a mark. */}
             {[...Map.groupBy(stages, (s) => week(s.event as Event))].map(([w, due]) => (
               <Mark
                 key={w}

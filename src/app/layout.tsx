@@ -7,7 +7,6 @@ import { CopilotKit } from "@copilotkit/react-core/v2";
 import Script from "next/script";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/hooks/use-theme";
-// A2UI catalog: definitions + renderers in ./declarative-generative-ui/
 import { demonstrationCatalog } from "./declarative-generative-ui/renderers";
 
 export default function RootLayout({
@@ -37,7 +36,7 @@ export default function RootLayout({
         />
       </head>
       {/*
-        suppressHydrationWarning: browser extensions (e.g. Grammarly) inject
+        suppressHydrationWarning: browser extensions such as Grammarly inject
         attributes like data-gr-ext-installed onto <body> before React hydrates,
         which would otherwise surface as a hydration mismatch on first load.
         This only relaxes the check for <body>'s own attributes (one level deep);

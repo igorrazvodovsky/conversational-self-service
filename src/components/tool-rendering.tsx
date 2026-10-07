@@ -36,7 +36,6 @@ export function ToolReasoning({ name, args, status }: ToolReasoningProps) {
   const isRunning = status === "executing" || status === "inProgress";
   const [open, setOpen] = useState(isRunning);
 
-  // Auto-open while executing, auto-close when complete
   useEffect(() => setOpen(isRunning), [isRunning]);
 
   const heading = (

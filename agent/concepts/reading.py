@@ -23,7 +23,6 @@ from typing import Any
 
 
 def _key(source: Any) -> str:
-    """A source value as a dictionary key: the same value, the same key."""
     if isinstance(source, dict):
         return json.dumps(source, sort_keys=True)
     return json.dumps(source)

@@ -15,7 +15,6 @@ export const DEFAULT_CANVAS_PERCENT = 62;
 const MIN_CANVAS_PERCENT = 15;
 const MAX_CANVAS_PERCENT = 85;
 
-/** Missing, unparseable and out of range all read as the default. */
 export function canvasPercentFrom(raw: string | undefined): number {
   if (raw === undefined) return DEFAULT_CANVAS_PERCENT;
   const value = Number(raw);

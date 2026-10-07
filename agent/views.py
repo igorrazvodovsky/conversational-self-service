@@ -34,8 +34,8 @@ from wiring import BASIS, FACETS, WORKSPACE
 from syncs import readings
 from syncs.gestures import unaddressed
 
-# Which rule put an assertion on record, in words.  Three sentences, three
-# rules, and no field anywhere recording which: the difference between them is
+# Which rule put an assertion on record, in words, with no field anywhere
+# recording which: the difference between them is
 # a provenance edge.  `Asserting.assertedBy` answers a different question —
 # *whose value is this* — and `APersonAssertsAValue` and
 # `AnAdoptedValueBecomesAnAssertion` both answer it with the same party.
@@ -65,7 +65,6 @@ SAID = {
 
 
 def said(via: str | None, actor: str | None, default: str | None = None) -> str | None:
-    """The sentence for a provenance edge, read with the actor beside it."""
     return SAID.get((via or "", actor or "")) or HOW.get(via or "", default)
 
 
@@ -80,8 +79,9 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
     a `Reading/read` in the same flow carries that reading's words and source
     instead, since the chain from `read` to `assert` runs inside one root
     action and the read most recently recorded in the flow is the one.  A
-    gesture's flow and the person's own agent's hold no utterance, and those
-    assertions carry none.
+    gesture's flow holds no utterance, and its assertions carry none.  Words
+    the person's own agent says as the person are kept with their speaker
+    (`agentSaid`), so the sentence can say whose they were.
 
     `stated` — every clause ever stated, struck ones included, so that a
     reading can say it became a clause that is gone.  Which reading a clause
@@ -90,7 +90,7 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
     `displaced` — for each clause whose answer was retracted because a
     different value was asserted for its variable, what displaced it: the
     assertion in that flow, with its words.  Cleared when the clause is
-    answered again.
+    answered again or struck.
 
     `asOf` — `how` as it stood at each sequence number in `at`, the records
     that issued quotes, so that an offer can say who asserted each of its
@@ -292,7 +292,6 @@ def _by(engine: Engine, put: dict[str, Any] | None) -> dict[str, Any] | None:
 
 
 def _speakers(engine: Engine, utterances: set[str]) -> dict[str, str]:
-    """The actor behind each utterance, read off the log."""
     if not utterances:
         return {}
     out: dict[str, str] = {}
@@ -307,7 +306,6 @@ def _speakers(engine: Engine, utterances: set[str]) -> dict[str, str]:
 
 
 def filed(engine: Engine, file: str) -> dict[str, Any]:
-    """A document as it is on record, for the model to read from."""
     filing = engine.state("Filing")
     if file not in filing["name"]:
         return {"error": f"there is no file {file}; `review` lists the files under `files`"}
@@ -316,16 +314,8 @@ def filed(engine: Engine, file: str) -> dict[str, Any]:
 
 def detailed(engine: Engine, spec: str, variable: str | None = None) -> dict[str, Any]:
     """What the seller publishes about one variable and its options, for a
-    question the canvas does not answer: what an option is and does
-    (`Detailing`), what the seller supplies with it, leaves out and asks the
-    customer to provide (`Stipulating`'s clauses that hold where it is
-    chosen), what it adds to the price, and the rules that mention the
-    variable.  Each part is read from its own concept, and nothing here
-    records anything.
-
-    With no variable, the seller's terms as an offer issued now would carry
-    them: the periods, the payment schedule, what the customer provides and
-    the clauses that hold for the options settled.
+    question the canvas does not answer.  With no variable, the seller's terms
+    as an offer issued now would carry them.
     """
     if variable is None:
         settled = engine.state("Constraining")["settled"].get(spec, {})
@@ -398,12 +388,8 @@ def _sources(
     engine: Engine, clauses: list[dict[str, Any]], stated: set[str]
 ) -> list[dict[str, Any]]:
     """Every source, with what was read from it and what became of each item.
-
-    The files from `Filing` and the person's utterances from `Conversing`;
-    the items from `Reading`; the clause each item became, which is the item
-    itself where it was ever stated; and the clause's standing from the
-    ledger.  A reading is checked against its source whole, which is what this
-    list is for.
+    A reading is checked against its source whole, which is what this list is
+    for.
     """
     reading = engine.state("Reading")
     filing = engine.state("Filing")
@@ -740,8 +726,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 ],
                 "framed": in_frame(name, offered, allowed),
                 "proposed": proposed.get(name),
-                # Held for a reason: the requirements the person stated that
-                # rest on this value, which the model cannot change.
                 "held": held.get(name, []),
                 "refused": [
                     {"rule": rule, "because": constraining["because"].get(rule, rule)}
@@ -774,8 +758,8 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
 
     chosen = list(settled.values())
     # Every open question, not one.  A conflict and a proposed completion are
-    # two requests about the same specification and can be pending together;
-    # they used to share a request key, so asking either erased the other.
+    # two requests about the same specification and can be pending together,
+    # each under its own request key, so asking one leaves the other standing.
     # A proposed value is a question too, and rides beside its variable
     # above rather than here.
     questions = [q for q in pending if "variable" not in q["request"]]
@@ -801,8 +785,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     footprint_now = footprinting.footprint(chosen, grid, BASIS)
 
     def foresee(would: dict[str, str], softly_would: dict[str, str]) -> dict[str, Any]:
-        """What the specification would settle under these assumptions in
-        place of its own, and what that would cost against now."""
         seen = solver.foreseeing(spec, would, softly_would)
         after = seen["settled"]
         follows = [
@@ -930,7 +912,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         ),
         "variables": variables,
         "clauses": clauses,
-        # What was brought and said, with what was read from each.
         "sources": _sources(engine, clauses, trace["stated"]),
         # The flows the person's own agent opened by speaking in the chat;
         # its message there carries the flow as its id, so the chat can say
@@ -939,7 +920,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         # The utterance each chat message became, by the message's id, so
         # the words in the chat carry the utterance's address.
         "said": trace["said"],
-        # The conversation each utterance was said in, when it was recorded.
         "saidIn": trace["saidIn"],
         "price": price,
         "footprint": footprinting.footprint(chosen, grid, BASIS),
@@ -997,9 +977,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
 def _stages(
     catalogue: dict[str, Any], pricing: Any, chosen: list[str]
 ) -> list[dict[str, Any]]:
-    """The settled values' prices, summed by the catalogue's family, in the
-    catalogue's order.  A join of two concepts' exposed state, as a `where`
-    would make it: Pricing knows amounts, Cataloguing knows families, and
+    """A join of two concepts' exposed state, as a `where` would make it: Pricing knows amounts, Cataloguing knows families, and
     neither knows the other."""
     state = pricing.state()
     family_of = catalogue["family"]
@@ -1099,15 +1077,9 @@ def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
 
     A flow is one occasion — the person's words and the calls the model made
     in reply, or one gesture and what the rules did with it — so the turn is
-    the unit, latest activity first.  Each says who opened it, what opened
-    it in a phrase (`did`), who took part, what it did (`kinds`), what it
-    changed in the specification's words — the clauses stated, reworded and
-    struck, the values answered and withdrawn, each as it was then — and
-    every completion it wrote, with the rule that authorised it.  A refused
-    record is listed and changes nothing.  A turn is `fresh` when it came
-    after the person last changed the specification themselves, whoever took
-    it; a turn that only brought a surface forward is marked `moved`.  Read
-    off the log; held by nobody.
+    the unit.  A refused record is listed and changes nothing.  A turn is
+    `fresh` when it came after the person last changed the specification
+    themselves, whoever took it.  Read off the log; held by nobody.
     """
     flows: dict[str, dict[str, Any]] = {}
     order: list[str] = []
@@ -1122,8 +1094,6 @@ def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
                 "flow": record.flow,
                 "actor": record.actor,
                 "at": record.at,
-                # What started it: a gesture's act, the tool the model
-                # called, or the action itself.
                 "opened": output.get("act") or output.get("tool") or record.action,
                 "parties": set(),
                 "kinds": set(),
@@ -1228,12 +1198,8 @@ def _parties(log: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
     """The requirement ledger: `docs/syncs/binding.md`, "The ledger is a read".
 
-    For each clause of the specification, in the order stated: its text,
-    negotiability, who stated it and what it formerly said, and
-    the choices currently answering it — each with its value, the variable
-    the catalogue says offers it, who decided it, what it replaced and why,
-    and a standing read against Asserting and Constraining.  Four concepts'
-    exposed state, composed here and maintained by nobody.
+    Exposed state from Specifying, Binding, Cataloguing, Asserting and
+    Constraining, composed here and maintained by nobody.
     """
     specifying = engine.state("Specifying")
     binding = engine.state("Binding")
@@ -1310,10 +1276,7 @@ def _quotes(
     issued: dict[str, tuple[str, str, str, int]],
     as_of: dict[int, dict[str, dict[str, Any]]],
 ) -> list[dict[str, Any]]:
-    """The three reads in `docs/concepts/quoting.md`: standing, differs, and
-    the quotes themselves.
-
-    A quote holds the assignment as it stood.  The amount and terms are what
+    """A quote holds the assignment as it stood.  The amount and terms are what
     the offer *is* and come back as recorded; the footprint is an estimate,
     recomputed from the frozen item against whichever grid the person is
     looking at.  `differs` is the comparison between the frozen item and the
@@ -1484,7 +1447,7 @@ def _issued(engine: Engine) -> dict[str, tuple[str, str, str, int]]:
     """For each quote, the rule that issued it, the actor whose call it
     followed from, the day it was issued, and the record's place in the log.
 
-    Both come off the log rather than the concept.  The rule is a provenance
+    All of it comes off the log rather than the concept.  The rule is a provenance
     edge, as for assertions; the date is the completion's timestamp, which the
     concept does not hold because it holds no clock.
     """
@@ -1514,12 +1477,10 @@ REFERENCE = re.compile(r"\[\[[a-z0-9_:]+\|([^\]]*)\]\]", re.I)
 
 
 def plain(text: str) -> str:
-    """A clause's words with each reference read as its label."""
     return REFERENCE.sub(r"\1", text)
 
 
 def _item_at(kind: str, source: str, item: str) -> str:
-    """The address of an item read from a source, on the requirements."""
     return f"#source:{kind}:{source}:item:{item}"
 
 
@@ -1551,8 +1512,8 @@ def digest(
     return {
         # What is required, in the source's own words, with what answers
         # each: the person's clauses, and the ones the model read from their
-        # words or a document, marked as such.  `read` is the one tool that
-        # adds to this list.
+        # words or a document, marked as such.  Of the model's tools, `read` is
+        # the one that adds to this list.
         "required": [
             {
                 "clause": c["clause"],
@@ -1838,9 +1799,7 @@ def quoted(engine: Engine, spec: str, quote: str) -> dict[str, Any]:
         # quote surface shows it.
         "over_term": q["amount"] + terms["recurring"] * terms["months"],
         "currency": engine.catalogue.get("currency", ""),
-        # The values the offer holds that have moved in the specification since.
         "differs": q["differs"],
-        # The requirements as they stood at issue, with what answered each.
         "required": (
             [
                 {

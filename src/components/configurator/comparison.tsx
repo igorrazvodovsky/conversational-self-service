@@ -45,7 +45,6 @@ import type { Ground, Quote, Side, View } from "./provider";
 type Held = Side["holds"][number];
 type Clause = Side["requires"][number];
 
-/** One side as the comparison names it: a quote, or the specification now. */
 interface Named {
   /** The address token: a quote's id, or `now`. */
   id: string;

@@ -11,7 +11,7 @@
  * Polling covers only the other root actor. While the model is working, its
  * actions land in the same log and the same state, and nothing in the
  * CopilotKit state channel would tell us — by design: state lives behind the
- * actions now, not in the channel.
+ * actions, not in the channel.
  *
  * The person's own agent is a third caller, and may act with no page
  * involved: its tools are the MCP server's (`agent/delegate.py`), called
@@ -36,8 +36,9 @@ import {
 /** `yielded`: asked for softly, and the rules could not honour it. Still
  * asserted, still answering its clause; the solver's answer is what moved. */
 export type Standing = "asked" | "yielded" | "unmet" | "follows" | "open";
-/** The surfaces `Moding` offers: the configuration (`canvas`), the
- * requirements, and the offer. The chat is not one — where it sits is the
+/** The surfaces `Moding` offers: the specification (`canvas`), where the
+ * requirements and the values that answer them share one list, and the
+ * offers (`quote`). The chat is not one — where it sits is the
  * person's view state (`example-layout/chat-surface.tsx`), which no rule
  * reaches. */
 export type Surface = "canvas" | "quote";
@@ -59,10 +60,7 @@ export interface Option {
   excluded: { rule: string; because: string }[];
 }
 
-/**
- * One facet the canvas can show beside an item, from `Showing`: its name,
- * what it is in words, and whether it is shown through the workspace's lens.
- */
+/** From `Showing`; `shown` is through the workspace's lens. */
 export interface Facet {
   facet: string;
   about: string;
@@ -140,7 +138,7 @@ export interface Answer {
 
 /**
  * One line of the requirement ledger: a clause from `Specifying` in the
- * person's words, with the choices from `Binding` that answer it. Four
+ * person's words, with the choices from `Binding` that answer it. Several
  * concepts' state composed by a read, and maintained by nobody.
  */
 export interface Clause {
@@ -178,7 +176,6 @@ export interface Clause {
   } | null;
 }
 
-/** One item the model read from a source, and what became of it. */
 export interface ReadItem {
   item: string;
   words: string;
@@ -191,10 +188,8 @@ export interface ReadItem {
 }
 
 /**
- * A source, from `Filing` or `Conversing`, with what was read from it: a
- * document the person attached, or something they said that the model read
- * a requirement from. Checking a reading against its source whole is what
- * this is for.
+ * From `Filing` or `Conversing`. Checking a reading against its source whole
+ * is what this is for.
  */
 export interface Source {
   kind: "file" | "utterance";
@@ -273,7 +268,7 @@ export interface Foreseen {
 
 export type QuoteStanding = "open" | "committed" | "revoked" | "lapsed";
 
-/** What a party has said of who they are, from `Profiling`. Every field optional. */
+/** What a party has said of who they are, from `Profiling`. */
 export interface Party {
   name?: string;
   organisation?: string;
@@ -283,8 +278,7 @@ export interface Party {
 }
 
 /**
- * The terms an offer was issued on, copied into the quote at issue: the
- * seller's stipulations, both parties' profiles and the job's name as they
+ * The terms an offer was issued on, copied into the quote at issue as they
  * stood. The document renders from these alone.
  */
 export interface Terms {
@@ -331,7 +325,6 @@ export interface Side {
     label: string;
     note: string | null;
   }[];
-  /** The clauses, each with the option that answers it. */
   requires: {
     clause: string;
     text: string;
@@ -340,16 +333,14 @@ export interface Side {
   }[];
   /**
    * Why each value holds, by variable: asserted, gave way, or follows, with
-   * the rules and assertions behind it and what it adds to the price. Absent
-   * on a quote issued before the item carried grounds.
+   * the rules and assertions behind it and what it adds to the price. Null
+   * on a quote whose frozen item carries none.
    */
   grounds: Record<string, Ground> | null;
 }
 
 /**
- * A quote, from `Quoting`, read with the three calculations its note names:
- * its standing today, which of its frozen values the specification has since
- * moved away from, and a footprint recomputed from the frozen item. Its side
+ * From `Quoting`, with what the read side works out from it today. Its side
  * is as it stood at issue.
  */
 export interface Quote extends Side {
@@ -366,11 +357,8 @@ export interface Quote extends Side {
   footprint: Carbon;
 }
 
-/**
- * Footprinting's estimate, stage by stage of the lift's life: making it,
- * installing it, maintaining it and running it over the service life, and
- * taking it out at the end. `complete` when the energy in use is known.
- */
+/** Footprinting's estimate, by stage of the lift's life. `complete` when
+ * the energy in use is known. */
 export interface Carbon {
   made: number;
   installed: number;
@@ -411,7 +399,7 @@ export interface Turn {
   actor: string;
   /** Every party with a root action in it. */
   parties: string[];
-  /** What it did, by the concepts it reached: keys of `View.kinds`. */
+  /** What it did, by the concepts it reached: each a `kind` in `View.kinds`. */
   kinds: string[];
   /** Whether it only brought a surface forward. */
   moved: boolean;
@@ -535,8 +523,7 @@ export interface DelegatedTool {
   _meta?: { ui?: { resourceUri?: string; visibility?: ("model" | "app")[] } };
 }
 
-/** One JSON-RPC request to the MCP server, through the proxy. Stateless, so
- * no session is opened first. */
+/** Stateless, so no session is opened first. */
 async function rpc(method: string, params: Record<string, unknown> = {}) {
   const response = await fetch("/api/configurator/mcp", {
     method: "POST",
@@ -564,7 +551,6 @@ interface Configurator {
    * Resolves to what the rules did and the digest it reads; rejects when the
    * request fails, so the agent hears it rather than a silent nothing. */
   act: (stimulus: Stimulus) => Promise<Outcome>;
-  /** The person's own agent's tools, as the MCP server lists them. */
   tools: () => Promise<DelegatedTool[]>;
   /** Call one of them; resolves to what it returns once the canvas shows
    * what it did, and rejects when the call fails. */
@@ -646,7 +632,6 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [running, refresh]);
 
-  // While the model is idle, the person's own agent may still act.
   useEffect(() => {
     if (running) return;
     const timer = setInterval(async () => {

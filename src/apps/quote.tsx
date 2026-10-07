@@ -2,9 +2,7 @@
  * An offer, in the person's own chat: the view `open_quote` carries.
  *
  * The offer as it was frozen when it was issued, laid out so the person can
- * check it against what they asked for before accepting it: each requirement
- * with what answered it, then each value in its kind, what was asked for
- * apart from what follows from it, with what each adds to the price.
+ * check it against what they asked for before accepting it.
  *
  * Accepting commits the person to the offer, so the button is theirs: a tool
  * only this view can call, recorded under the person, beside the agent's own

@@ -28,21 +28,14 @@ interface Place {
 }
 
 /**
- * The way around the panel, in one row: the two surfaces `Moding` offers,
- * the specification and the quotes, and before them, while a question waits
- * on the person, the question. The specification is one list, and what it
- * shows is chosen by the filters above the list, not here.
+ * The way around the panel, in one row. The specification is one list, and
+ * what it shows is chosen by the filters above the list, not here.
  *
  * A surface is reached by `focus`. The question is an address on the
- * specification (`address.tsx`): following it brings the specification
- * forward if it is not, then scrolls to it.
+ * specification (`address.tsx`), not a surface.
  *
- * At the row's end, while the specification is showing, the `Showing` menu:
- * which facts it shows beside each item. It has nothing to say about the
- * quotes. Then, on either surface, the bell: the log, read by turn, opening
- * on what the other party changed (`log.tsx`). Last, *Copy link*: the URL of
- * the view as it stands, every part spelled out, to send to someone
- * (`link.tsx`).
+ * The `Showing` menu is there only while the specification is showing: it
+ * has nothing to say about the quotes.
  *
  * A surface's link is its URL, `?on=quotes`, so it can be opened in another
  * tab or copied as any link can; followed here, it is a new entry in the

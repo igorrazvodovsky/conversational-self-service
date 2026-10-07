@@ -48,8 +48,6 @@ type Digest = {
   };
 };
 
-/** The question the assistant put and waits on, as the agent answers it: a
- * conflict, or who the quote is for. */
 function waitingIn(state: unknown) {
   const digest = state as Digest;
   const question = digest.questions?.find((q) => q.asked?.status === "awaiting");
@@ -74,7 +72,6 @@ function waitingIn(state: unknown) {
   return null;
 }
 
-/** What the assistant said after a message, in order. */
 function saidAfter(messages: Message[], id: string): string {
   const at = messages.findIndex((m) => m.id === id);
   if (at < 0) return "";
@@ -98,8 +95,6 @@ export function ConverseTools() {
   const kit = useRef(copilotkit);
   kit.current = copilotkit;
 
-  /** What the agent hears back: the reply so far, any question waiting on
-   * the person, and whether the assistant is still answering. */
   const heard = async (after: string, running: boolean) => ({
     said: after,
     reply: saidAfter(chat.current.messages as Message[], after),

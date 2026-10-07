@@ -56,13 +56,11 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-/** The conflict question as the view reads it, with where it stands. */
 function useConflict(): Question | undefined {
   const { view } = useConfigurator();
   return view?.questions.find((q) => q.about === "conflict");
 }
 
-/** The question of who the quote is for, as the assistant last put it. */
 function useAddressee(): AskedAddressee | null | undefined {
   const { view } = useConfigurator();
   return view?.quotable.asked;
@@ -92,7 +90,6 @@ export function WaitingProvider({ children }: { children: ReactNode }) {
   return <Waiting.Provider value={value}>{children}</Waiting.Provider>;
 }
 
-/** Whether the assistant's question waits in this conversation's turn. */
 export function useAskedHere(): boolean {
   const waiting = useContext(Waiting);
   const thread = useCopilotChatConfiguration()?.threadId;
@@ -191,9 +188,8 @@ function WaitingQuestion({
 
 const FIELD = { name: "your name", site: "the site" } as const;
 
-/** Who the quote is for, waiting in the chat. The fields are on the quote
- * surface, where they are edited whether or not anybody asked; the card
- * links there. */
+/** The fields are on the quote surface, where they are edited whether or
+ * not anybody asked; the card links there. */
 function WaitingAddressee({
   message,
   resolve,
@@ -289,8 +285,6 @@ function AskedRecord({
   );
 }
 
-/** Renders the waiting question in the chat, for a conflict the model asked,
- * and the question with its answer once it has one. */
 export function useWaitingQuestion() {
   useRenderTool(
     {

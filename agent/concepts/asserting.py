@@ -22,7 +22,7 @@ reads this relation.
 
 There is no `prefer` and no strength.  Hard-or-soft is a fact of a clause in
 the buyer's vocabulary, and this concept holds no clauses — see
-`docs/concepts/asserting.md`, "Why `prefer` left the specification".
+`docs/syncs/conduct.md`, "The permissions".
 """
 
 from __future__ import annotations
@@ -58,13 +58,8 @@ class Asserting:
     def assert_(
         self, spec: str, variable: str, option: str, party: str
     ) -> dict[str, Any]:
-        """Python reserves `assert`, so the method carries a trailing underscore.
-
-        The engine dispatches by name and is not edited for this: `wiring.py`
-        registers the alias `assert` after discovery, and every rule invokes
-        that name.  The log therefore reads `Asserting/assert`, which is what
-        the specification's operational principle says.
-        """
+        """Python reserves `assert`; `wiring.py` registers the alias, and the
+        log reads `Asserting/assert`, as the operational principle says."""
         if spec not in self._open:
             return {"error": f"{spec} is not open"}
         self._asserted[spec][variable] = option

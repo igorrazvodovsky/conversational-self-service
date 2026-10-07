@@ -59,7 +59,6 @@ type FrameAsked =
   | { by: "clause"; clause: string }
   | { by: "gap"; gap: string };
 
-/** A frame in the query's words. */
 export function frameWord(frame: Frame | FrameAsked | null): string {
   if (!frame) return "none";
   if (frame.by === "gap") return `gap:${frame.gap}`;
@@ -100,9 +99,8 @@ function queryOf(params: URLSearchParams): string {
   return parts.length ? `?${parts.join("&")}` : "";
 }
 
-/** Set parameters on the current URL — a null removes one — keeping the
- * fragment unless `leave`. `push` makes it a new entry in the history. Through the native
- * history API, which the router keeps `useSearchParams` in step with; a
+/** A null removes a parameter, and the fragment is kept unless `leave`.
+ * Through the native history API, which the router keeps `useSearchParams` in step with; a
  * router navigation would fetch the page's server half again. */
 export function setQuery(
   update: Record<string, string | null>,
@@ -137,7 +135,6 @@ function viewParams(view: View, complete: boolean): Record<string, string | null
   };
 }
 
-/** The parameters a gesture navigates to, for the history entry it makes. */
 function paramsOf(stimulus: Stimulus): Record<string, string | null> | null {
   if (stimulus.act === "focus")
     return { on: stimulus.surface === "canvas" ? null : SURFACE[stimulus.surface as Surface] };
@@ -146,12 +143,9 @@ function paramsOf(stimulus: Stimulus): Record<string, string | null> | null {
   return null;
 }
 
-/** An address as a URL that works off the page. */
 export const linkTo = (at: string) =>
   `${window.location.origin}/${at.startsWith("#") ? at : `#${at}`}`;
 
-/** The URL of the view as it stands, every recorded part spelled out; with
- * the item the page is at, when `at` is true. */
 export function viewLink(view: View, at = false): string {
   const params = new URLSearchParams(window.location.search);
   for (const [k, v] of Object.entries(viewParams(view, true)))
@@ -162,11 +156,8 @@ export function viewLink(view: View, at = false): string {
   return `${window.location.origin}/${queryOf(params)}${at ? window.location.hash : ""}`;
 }
 
-/**
- * Every unit a tool returns, with its URL beside its address: `link` beside
- * an `at`, and a quote's `page` made absolute. For the person's own agent,
- * which reports in a chat of its own where a fragment means nothing.
- */
+/** For the person's own agent, which reports in a chat of its own where a
+ * fragment means nothing. */
 export function linked(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(linked);
   if (!value || typeof value !== "object") return value;
@@ -180,14 +171,8 @@ export function linked(value: unknown): unknown {
 
 // -- following a URL ----------------------------------------------------------
 
-/** Bring the view to what a query says: the recorded parts by gesture, each
- * only where it differs; the grid and the conversation directly. Resolves
- * once every gesture has.
- *
- * A link from elsewhere that leaves a recorded part out leaves it as it is.
- * An entry in this tab's history was written by the page, which leaves out
- * only defaults, so going back to one reads an absent part as its default
- * (`written`). */
+/** Resolves once every gesture has. `written` is an entry in this tab's
+ * history, which the page wrote, so an absent part reads as its default. */
 function useBring() {
   const { view, gesture, grid, setGrid } = useConfigurator();
   const chat = useCopilotChatConfiguration();
@@ -240,8 +225,7 @@ function useBring() {
 }
 
 /**
- * The page's URL and its view, kept in step. Once the first view has
- * arrived, the query the page was opened with is followed; until then
+ * Once the first view has arrived, the query the page was opened with is followed; until then
  * nothing is written, so the link is not overwritten before it is read.
  * After that the view is written back as it changes, and going back through
  * the history follows the query again. Resolves to whether the link has
@@ -397,8 +381,6 @@ export function CopyLink({
   );
 }
 
-/** Copy the link to the view as it stands, every recorded part spelled out,
- * with the item the page is at. */
 export function CopyViewLink() {
   const { view } = useConfigurator();
   return (

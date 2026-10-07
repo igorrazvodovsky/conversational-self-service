@@ -27,8 +27,6 @@ import { useConfigurator, type Option, type Variable } from "./provider";
 import { useShown } from "./showing";
 
 /**
- * The one click that sets a value, and what it carries.
- *
  * In answering mode the pick names the clause it answers and goes to
  * `Binding` (the `answer` gesture); a variable whose value already answers
  * exactly one clause keeps answering it when changed, which is a substitution;
@@ -50,12 +48,7 @@ function usePick(variable: Variable) {
 }
 
 /**
- * The options of a variable, and what is shown beside each.
- *
- * The label is always there. What each option adds to the price or the
- * carbon sits inside its button when the `price` or `carbon` facet is shown;
- * the rules that rule an option out are a list under the buttons when
- * `excluded` is. Which of those a person sees is `Showing`'s, not this
+ * Which facts a person sees beside each option is `Showing`'s, not this
  * component's. The catalogue's note is advice about one option, read while
  * choosing it, so it is that option's tooltip rather than a line of its own:
  * as a list it repeated every label beneath the buttons.
@@ -172,10 +165,8 @@ function Rules({ rules }: { rules: Variable["owing"] }) {
 }
 
 /**
- * Who put an asserted value there, as a mark before it: the person, their
- * own agent, or the assistant, whose proposals carry the same sparkles. The
- * `how` sentence is its title, and the words are there for a screen reader;
- * the open line still says it in full. Shown with the `how` facet.
+ * The assistant's mark is the sparkles its proposals carry. The open line
+ * still says the `how` sentence in full.
  */
 const MARKS = {
   person: { Icon: UserIcon, who: "you" },
@@ -199,10 +190,9 @@ function ByMark({ variable }: { variable: Variable }) {
 }
 
 /**
- * A value a party asserted, on a line of the ledger: its heading and the
- * value, and nothing else. The value is the line's way into the rest — who
- * asserted it and from which words, what else it answers, its options, taking
- * it back — which `AssertedDetails` draws while the line is open. What stands
+ * A value a party asserted, on a line of the ledger. The value is the line's
+ * way into the rest, which `AssertedDetails` draws while the line is open.
+ * What stands
  * against the value is a fact about it, not a detail, so it stays: a
  * yielded value is struck through and says what it gave way to, an unmet one
  * says it cannot be built with the rest.
@@ -274,13 +264,6 @@ export function AssertedPair({
   );
 }
 
-/**
- * Everything about an asserted value beyond the value itself, drawn while its
- * line is open: what the assistant read it from (the `how` facet), what
- * it is held for and the other clauses it answers (`answers`), whether it
- * reached the rules as a preference, the rules that refused it or that it gave
- * way to, its options, and taking it back.
- */
 export function AssertedDetails({
   variable,
   under,
@@ -336,8 +319,6 @@ export function AssertedDetails({
       ) : others.some((a) => held.has(a.clause)) ? (
         <p>Yours: the assistant cannot change it.</p>
       ) : null}
-      {/* Held softly: the value answers only negotiable clauses, and reached
-          the rules as a preference rather than a requirement. */}
       {variable.softly ? <p>Negotiable: it reached the rules as a preference.</p> : null}
       {unmet ? (
         <div className="space-y-1">
@@ -411,7 +392,6 @@ export function FollowsPair({
   );
 }
 
-/** The rules behind a value that follows, for the open line. */
 export function FollowsWhy({ variable }: { variable: Variable }) {
   const shown = useShown();
   if (!shown("rules") || !variable.owing.length) return null;
@@ -463,7 +443,6 @@ export function FollowsRow({
         {shown("rules") ? (
           <>
             <Rules rules={variable.owing} />
-            {/* The assertions the value rests on, from the same core. */}
             {variable.following.length ? (
               <p className="text-xs text-muted-foreground">
                 from{" "}

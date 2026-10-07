@@ -50,7 +50,6 @@ type ToolCall = NonNullable<Extract<Message, { role: "assistant" }>["toolCalls"]
 type ToolMessage = Extract<Message, { role: "tool" }>;
 type Thought = Extract<Message, { role: "reasoning" }>;
 
-/** One call and the message carrying its result, if it has one yet. */
 type Call = { toolCall: ToolCall; toolMessage?: ToolMessage };
 type Item = { call: Call } | { thought: Thought };
 
@@ -119,7 +118,6 @@ function groupCalls(all: Messages, ownRenderer: (name: string) => boolean) {
   return { runs, folded, trailing: open as Item[] | null };
 }
 
-/** Reads the groups from the transcript's current messages. */
 export function ToolCallGroups({
   messages,
   isRunning = false,
@@ -145,7 +143,6 @@ export function ToolCallGroups({
 const calls = (items: Item[]) =>
   items.flatMap((item) => ("call" in item ? [item.call] : []));
 
-/** The names in a group, in the order first called, with how often. */
 function summary(items: Item[]) {
   const counts = new Map<string, number>();
   for (const { toolCall } of calls(items))

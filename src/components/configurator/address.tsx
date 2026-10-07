@@ -3,47 +3,20 @@
 /**
  * Addresses on the surfaces.
  *
- * Every item worth returning to has a fragment: a variable at
- * `#variable:<name>`, a clause at `#clause:<id>`, a choice — a value bound
- * to the clause it answers, on its ledger line — at `#choice:<id>`, a source at
- * `#source:<kind>:<id>`, the list at `#asserted`. The fragment is the id of
- * the element that renders the item, wherever the current state puts it — the
- * same variable is an answer on a requirement's line today and an open row at
- * the list's tail after a withdrawal, and the address follows it. An item the
- * frame leaves out is not drawn, so following its address, once it is not
- * found, takes the frame off and looks again. A link between two items is
- * a plain anchor to one of these, and so is a link from the chat.
- *
- * A quote's lines are items too: `#quote:<id>:variable:<name>` and
- * `#quote:<id>:clause:<id>`, the frozen value or clause as that offer holds
- * it, which the live address of the same variable does not reach; and
- * `#quote:<id>:event:<key>`, a milestone of its programme.
- *
- * Who the proposal is for is at `#addressee`, on the quote surface.
- *
- * Two offers compared are a place too: `#compare:<id>:<other>`, where the
- * other is a quote or `now`, the specification as it stands. A line of the
- * comparison is `#compare:<id>:<other>:variable:<name>` or
- * `…:clause:<id>`. The pair is named by the address and held nowhere else, so
- * a reply in the chat can put a comparison in front of the person without
+ * An address is the id of the element that renders an item, so it names the
+ * item rather than a place: the same variable is an answer on a requirement's
+ * line today and an open row after a withdrawal, and the address follows it.
+ * A quote's lines have addresses of their own, because the frozen value is
+ * not the live one. A comparison is named by its address and held nowhere
+ * else, so a reply in the chat can put one in front of the person without
  * anything being recorded.
  *
- * An item lives on one of `Moding`'s two surfaces: a clause, a choice, a
- * source, a variable, a question or a section on the specification, a
- * quote's line on the quotes. A turn is in the log, which opens over
- * either, and the words said are in the chat.
- * Following an address to the other surface performs `focus` on it — what a
- * link is for — and then scrolls to the item once it has rendered; following
- * one the frame leaves out performs `unframe`. Those two are recorded. The address itself records
- * nothing: it names a place on a view, and the state the view shows is
- * reconstructed from the log on its own.
- *
- * The fragment is half of the page's URL; the query, which names the view
- * the item is shown in, is `link.tsx`'s, and a link's query is followed
- * before its fragment. An address with nothing at it — an item struck,
- * withdrawn, never issued — still arrives: the page says nothing is there
- * now, and stays where it landed. The addresses are kept, so a link given
- * out goes on working (`docs/ui.md`, "Links").
+ * Following an address to the other surface performs `focus`, and following
+ * one the frame leaves out performs `unframe`. Those two are recorded; the
+ * address itself records nothing. The fragment is half of the URL, and the
+ * query (`link.tsx`) is followed first. An address with nothing at it still
+ * arrives, and the page says so, because a link given out goes on working
+ * (`docs/ui.md`, "Links").
  */
 
 import { useAgent, useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
@@ -74,17 +47,14 @@ export const compareOf = (id: string): [string, string] | null => {
   return quote && other ? [quote, other] : null;
 };
 
-/** The quote an address on the quote surface names, if it names one. */
 export const quoteOf = (id: string): string | null =>
   id.startsWith("quote:") ? id.split(":")[1] ?? null : null;
 
-/** The kind of a quote's line an address names: a value, a clause or a milestone. */
 export const quoteKindOf = (id: string): string | null =>
   id.startsWith("quote:") ? id.split(":")[2] ?? null : null;
 
 export const href = (id: string) => `#${id}`;
 
-/** The fragment the page is at, kept current. */
 export function useHash(): string {
   const [hash, setHash] = useState("");
   useEffect(() => {
@@ -96,7 +66,6 @@ export function useHash(): string {
   return hash;
 }
 
-/** Whether the page is at this item's address. */
 export function useTargeted(id: string): boolean {
   return useHash() === id;
 }
@@ -165,7 +134,6 @@ export function useFollowAddress(arrived: boolean): string | null {
   return lost;
 }
 
-/** What the page says when a link's item is not there now. */
 export function Lost({ id }: { id: string | null }) {
   return (
     <div role="status">
@@ -198,8 +166,7 @@ export function arrive(el: HTMLElement) {
     }
 }
 
-/** Go to an address: set the fragment, or scroll again if it is already
- * set. An item at the address the page is already at may be on the other
+/** An item at the address the page is already at may be on the other
  * surface — followed once, then the surfaces toggled — and setting the same
  * fragment again fires nothing, so the fragment is cleared first and the
  * change is followed as any other. */
@@ -222,7 +189,6 @@ export function goTo(id: string) {
 export const addressable = "scroll-mt-28";
 export const targeted = "bg-muted/60 animate-arrive";
 
-/** A link from one item on the canvas to another, by address. */
 export function To({
   id,
   children,
@@ -252,8 +218,7 @@ export function To({
   );
 }
 
-/** Words a person said, linked to where they are in the chat. Words said
- * in another conversation are reached by opening it first, which changes
+/** Words said in another conversation are reached by opening it first, which changes
  * only what the chat pane shows; the bubble goes to itself once it renders
  * (`chat/index.tsx`). Words recorded with no conversation stay plain. A
  * leaf of its own, because `useAgent` re-renders its caller on every

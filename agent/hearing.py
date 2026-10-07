@@ -103,7 +103,6 @@ def turn() -> str | None:
 
 
 def heard() -> str | None:
-    """The utterance the current turn's words became, or nothing."""
     thread = _thread()
     return _said.get(thread) if thread is not None else None
 
@@ -152,7 +151,6 @@ def _text(message: HumanMessage) -> str:
     content = message.content
     if isinstance(content, str):
         return content
-    # A multi-part message: keep the text parts, in order.
     return "".join(
         part.get("text", "")
         for part in content
@@ -161,7 +159,6 @@ def _text(message: HumanMessage) -> str:
 
 
 def _files(message: HumanMessage) -> list[tuple[str, str]]:
-    """The documents attached to a message, each read into text, in order."""
     content = message.content
     if isinstance(content, str):
         return []
@@ -218,7 +215,6 @@ def _name(part: dict[str, Any]) -> str:
 
 
 def _named(part: dict[str, Any]) -> str | None:
-    """The `name` parameter of the part's data URL, if it has one."""
     url = _url(part)
     if not url.startswith("data:"):
         return None
@@ -248,7 +244,6 @@ def _bytes(part: dict[str, Any]) -> bytes | None:
 
 
 def _read(raw: bytes, mime: str, name: str) -> str:
-    """The document as text: a PDF's pages, or the bytes decoded."""
     if mime == "application/pdf" or name.lower().endswith(".pdf"):
         try:
             from pypdf import PdfReader
@@ -329,7 +324,6 @@ def _hear(said: HumanMessage, thread: str | None) -> None:
         )
         if thread is not None and utterance:
             _said[thread] = utterance
-    # The documents, in the same flow as the words that brought them.
     for name, content in _files(said):
         record = engine.root(
             "Copiloting", "gesture", actor="person", flow=flow,
@@ -341,7 +335,6 @@ def _hear(said: HumanMessage, thread: str | None) -> None:
 
 
 def _unattached(message: Any) -> Any:
-    """The message with each attached file replaced by a line naming it."""
     if not isinstance(message, HumanMessage) or isinstance(message.content, str):
         return message
     if not any(_attached(part) for part in message.content):
@@ -378,7 +371,6 @@ BROWSER = "browser"
 
 
 def _attributed(message: Any) -> Any:
-    """The person's own agent's words, marked as theirs for the model."""
     if not isinstance(message, HumanMessage):
         return message
     already = _said_already(message)

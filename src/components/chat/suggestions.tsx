@@ -3,8 +3,8 @@
 /**
  * The suggestions under the composer, read from the state.
  *
- * A suggestion is an affordance on an existing stimulus (docs/concepts/README.md,
- * "what is deliberately not a concept"): pressing one sends a message, and the
+ * A suggestion is an affordance on an existing stimulus (docs/method/concept.md,
+ * "What is deliberately not a concept"): pressing one sends a message, and the
  * message is a move the chat carries (docs/moves.md, "The suggestions"). So
  * the strip is a read over the view, like the canvas, and not a model's guess
  * at what the person might want. A read costs nothing, is the same on every
@@ -13,8 +13,7 @@
  * and the person does both on the canvas.
  *
  * Each candidate below is one row of the moves table, offered when the state
- * makes it apt. The first few by priority are shown; the openers appear only
- * while nothing has been asserted or required.
+ * makes it apt.
  */
 
 import { useMemo } from "react";
@@ -50,7 +49,6 @@ const OPENERS: Suggestion[] = [
   },
 ];
 
-/** The requirement's words, short enough for a pill. */
 function clip(text: string, at = 40): string {
   const one = text.replace(/\s+/g, " ").trim().replace(/[.。]$/, "");
   return one.length > at ? `${one.slice(0, at - 1).trimEnd()}…` : one;
@@ -215,7 +213,6 @@ export function suggestionsFor(view: View | null, label: Label): Suggestion[] {
   return out.slice(0, SHOWN);
 }
 
-/** The facets worth a pill, with a short name for it. */
 const SHOWABLE = new Map([
   ["price", "prices"],
   ["carbon", "carbon"],

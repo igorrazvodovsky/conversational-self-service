@@ -33,8 +33,7 @@ WORKSPACE = "workspace"
 MODEL = "model"
 PERSON = "person"
 
-# The one basis the catalogue seeds.  A second would be a second set of terms
-# to quote on, and the state can now hold one.
+# The one basis the catalogue seeds.
 BASIS = "catalogue"
 
 
@@ -245,7 +244,6 @@ def _open(states: States, spec: str) -> Callable[[str], bool]:
 
 
 def _pending_proposed(states: States, spec: str) -> list[dict[str, Any]]:
-    """Every proposed value of the specification still asked and unanswered."""
     return [
         q
         for q in readings.pending(states["Deciding"].state())
@@ -261,9 +259,8 @@ def _a_completion_is_put_to_the_person(c: Completion, _: States) -> list[Invocat
             "Deciding",
             "ask",
             {
-                # `about` is what keeps this question and a pending conflict
-                # apart.  Both concern the same specification, and passing the
-                # specification alone made one silently replace the other.
+                # `about` keeps this question and a pending conflict, both
+                # about the same specification, apart.
                 "request": _completion(c.output["spec"]),
                 "reason": "adopt this completion",
                 "options": [c.output["assignment"]],
@@ -498,7 +495,6 @@ def _the_canvas_is_shown_before_it_changes(
 
 
 def _same(named: Any, offered: list[Any]) -> bool:
-    """Whether the options a question names are the ones offered, in any order."""
     if not isinstance(named, list):
         return False
     key = lambda o: json.dumps(o, sort_keys=True)  # noqa: E731

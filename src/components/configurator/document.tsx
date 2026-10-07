@@ -10,11 +10,7 @@
  * recomputed from the frozen values and labelled as one. Labels come from the
  * catalogue, because an option's identity does not change.
  *
- * The shape follows what a lift manufacturer actually sends: letterhead and
- * addressee, a one-sentence proposal with the sum, the basis of design, the
- * scope of supply without line prices, the price and what it includes, a
- * payment schedule, a programme, the maintenance agreement, the warranty,
- * work by others, exclusions, conditions, and acceptance.
+ * The shape follows what a lift manufacturer actually sends.
  *
  * The rendering knows a few of the catalogue's variable names — the handover
  * option, the contract term, the service level — because a proposal puts
@@ -76,7 +72,6 @@ const SCOPE: [string, string][] = [
   ["cabin", "Car interior"],
 ];
 
-// Variables a proposal puts in a sentence rather than in the table.
 const SENTENCED = {
   handover: "lead_time",
   term: "contract_term",
@@ -151,7 +146,6 @@ function Heading({ level, children }: { level: number; children: ReactNode }) {
   return <H className="mb-2 text-sm font-semibold">{children}</H>;
 }
 
-/** A heading inside a section, set small and spaced like a label. */
 function Subheading({
   level,
   className,

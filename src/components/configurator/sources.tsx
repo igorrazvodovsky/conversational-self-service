@@ -5,10 +5,7 @@
  *
  * A document the person attached is a file in `Filing`; something they said
  * that the model read a requirement from is an utterance in `Conversing`.
- * Beside each, every item the model read from it — the words, the options it
- * took to answer them, and what became of the clause: answered, unanswered,
- * or struck by the person, which is the reading disowned.
- * The reading is checked against its source whole here, where the ledger
+ * An item the person struck is the reading disowned. The reading is checked against its source whole here, where the ledger
  * shows it clause by clause. See docs/syncs/reading.md, "What the canvas
  * reads".
  */
@@ -121,10 +118,8 @@ function OneSource({ source }: { source: Source }) {
 }
 
 /**
- * The section: every source with a reading, or a document with none yet.
- * Under the ledger and closed by default — it is where a reading is checked
- * against its source whole, not where the work happens; each clause already
- * links to its source, and following the link opens this. What only this
+ * Closed by default, because the work happens on the ledger: each clause
+ * already links to its source, and following the link opens this. What only this
  * section holds is an item the person struck, and a document nothing was
  * read from yet.
  */

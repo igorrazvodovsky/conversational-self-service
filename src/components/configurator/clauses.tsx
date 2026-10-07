@@ -3,10 +3,8 @@
 /**
  * The vocabulary a clause is rendered with, and the answering mode.
  *
- * The requirement ledger itself is a document, in `specification.tsx`. What
- * lives here is what both the document and the value cards need: the
- * references a clause's words may carry, the negotiabilities as words, and
- * the mode in which a pick on the canvas is bound to a clause. The mode is
+ * The requirement ledger itself is a document, in `specification.tsx`; what
+ * lives here is what both the document and the value cards need. The mode is
  * the clause frame from `Framing`: while a clause frames the canvas, a pick
  * answers it. It is recorded, survives a reload, and the model can put it
  * there too (docs/syncs/gestures.md, "The canvas is narrowed to one
@@ -45,7 +43,6 @@ export function token(reference: Reference): string {
 
 export type Segment = { text: string } | { reference: Reference };
 
-/** The clause's words, cut at each reference. */
 export function segments(text: string): Segment[] {
   const out: Segment[] = [];
   let last = 0;
@@ -68,11 +65,7 @@ export function plain(text: string): string {
   return text.replace(TOKEN, "$2");
 }
 
-/**
- * A reference as a chip: a value reads darker than the individual it belongs
- * to, and a value that answers the clause it sits in carries a tick. Given
- * children the chip renders through them, so the editor can make it a button.
- */
+/** Given children the chip renders through them, so the editor can make it a button. */
 export function ReferenceChip({
   reference,
   bound = false,

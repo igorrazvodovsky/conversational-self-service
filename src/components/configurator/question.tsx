@@ -85,9 +85,8 @@ function OneQuestion({ question }: { question: Question }) {
   );
 }
 
-/** One answer to a conflict: the assertion to give up, and what giving it
- * up would do. Multi-line and left-aligned, so the shared Button has its
- * nowrap and centring relaxed. */
+/** Multi-line and left-aligned, so the shared Button has its nowrap and
+ * centring relaxed. */
 export function Answer({
   name,
   foreseen,
@@ -124,9 +123,7 @@ export function useAnswerName() {
   };
 }
 
-/** What one answer would do: whether it can be built, what would then
- * follow, and both deltas. Shared by a conflict's answers and a proposed
- * value's row. */
+/** Shared by a conflict's answers and a proposed value's row. */
 export function Consequences({ foreseen }: { foreseen?: Foreseen }) {
   const { view } = useConfigurator();
   const currency = view?.currency ?? "";
@@ -171,14 +168,14 @@ export function Consequences({ foreseen }: { foreseen?: Foreseen }) {
   );
 }
 
-/** A delta, with its sign; zero reads as no change rather than as a figure. */
+/** Zero reads as no change rather than as a figure. */
 function signed(amount: number, format: (n: number) => string) {
   if (amount === 0) return "no change";
   return `${amount > 0 ? "+" : "−"}${format(Math.abs(amount))}`;
 }
 
 /**
- * The questions waiting on the canvas. A completion whose every value has
+ * A completion whose every value has
  * been taken or declined has nothing left to adopt as a whole; it goes when
  * the specification next moves, and until then it is not counted.
  */

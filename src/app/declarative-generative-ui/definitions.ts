@@ -28,7 +28,7 @@ export const demonstrationCatalogDefinitions = {
   },
 
   // Text: removed — the basic catalog's Text uses DynamicStringSchema
-  // which supports path bindings (e.g. { path: "flights[*].airline" }).
+  // which supports path bindings (for example, { path: "flights[*].airline" }).
   // Overriding it with z.string() breaks fixed-schema data binding.
 
   Row: {
@@ -179,6 +179,5 @@ export const demonstrationCatalogDefinitions = {
   },
 };
 
-/** Type helper for renderers */
 export type DemonstrationCatalogDefinitions =
   typeof demonstrationCatalogDefinitions;

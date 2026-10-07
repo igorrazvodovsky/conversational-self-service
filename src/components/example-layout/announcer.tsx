@@ -40,9 +40,6 @@ function useAnnouncement(): [string, (text: string) => void] {
   return [message, say];
 }
 
-/** A turn by the other party, as it lands under the bell, and
- * a question that has just arrived; and, visibly, a gesture the concept
- * layer refused. */
 export function CanvasAnnouncer() {
   const { view, error } = useConfigurator();
   const [message, say] = useAnnouncement();
@@ -92,8 +89,7 @@ export function CanvasAnnouncer() {
   );
 }
 
-/** The assistant's run starting and ending. The transcript is a log and
- * says nothing while it is written (`aria-busy`); this says that a reply
+/** The transcript is a log and says nothing while it is written (`aria-busy`); this says that a reply
  * has begun and that it is complete. */
 export function RunAnnouncer() {
   const { agent } = useAgent();

@@ -42,7 +42,6 @@ function since(at: number) {
   return "just now";
 }
 
-/** The side of the sale a party acts for. */
 const SIDE: Record<string, string> = { buyer: "Buyer's side", seller: "Seller's side" };
 
 /** What the sheet opens on: everyone else's changes to the specification,
@@ -99,16 +98,13 @@ function listed(names: string[]) {
 }
 
 /**
- * The log, read by turn, behind a bell in the panel's header: what each
- * turn changed, and on whose authority (`docs/ui.md`, "What a view is").
- * Each entry is one turn: who took part and when, the words or documents it
- * read, what it stated, answered, reworded, struck or withdrew, and beneath
- * that every record it wrote with the rule that authorised it — MSM
- * §5.2.3's accountability property, rendered rather than described.
+ * What each turn changed, and on whose authority (`docs/ui.md`, "What a view
+ * is"). Beneath each turn is every record it wrote with the rule that
+ * authorised it — MSM §5.2.3's accountability property, rendered rather than
+ * described.
  *
- * Who took part and what the turn did are filters over the one list, each
- * a menu, and it opens on everyone else's changes to the specification, the
- * notification center. The bell counts those since the person last changed
+ * Who took part and what the turn did are filters over the one list. The
+ * bell counts those since the person last changed
  * the specification themselves, whatever is chosen; nothing records that
  * the sheet was opened, so the count goes when they next act, not when they
  * look.
@@ -292,8 +288,8 @@ export function Log() {
   );
 }
 
-/** One choice in a filter's menu, with its count. The menu stays open, as
- * a person choosing a view sets several; the last one checked stays. */
+/** The menu stays open, as a person choosing a view sets several; the last
+ * one checked stays. */
 function Choice({
   checked,
   last,
@@ -400,8 +396,6 @@ function Head({ turn, after }: { turn: Turn; after?: Turn }) {
   );
 }
 
-/** A run of turns folded into one line that says what they did, opened to
- * show them, and opened by itself when one of them is addressed. */
 function Run({ turns, hash }: { turns: Turn[]; hash: string }) {
   const [open, setOpen] = useState(false);
   const addressed = turns.some((t) => hash === address.turn(t.flow));
@@ -442,8 +436,6 @@ function Run({ turns, hash }: { turns: Turn[]; hash: string }) {
   );
 }
 
-/** One turn: the words or documents that opened it, what it changed or
- * else what the gesture was, and the records it wrote. */
 function Entry({ turn }: { turn: Turn }) {
   const { view, label } = useConfigurator();
   const id = address.turn(turn.flow);

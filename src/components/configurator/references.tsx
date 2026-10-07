@@ -44,7 +44,6 @@ import {
 import { ReferenceChip, token, type Reference } from "./clauses";
 import { useConfigurator, type View } from "./provider";
 
-/** One thing the popup offers: a reference, with where it sits in the catalogue. */
 interface Offer extends Reference {
   key: string;
   /** The variable's heading, for a value; the family, for an individual. */
@@ -55,7 +54,6 @@ interface Offer extends Reference {
 
 const AT_MOST = 12;
 
-/** What the catalogue offers for a query: individuals whose heading matches, then values whose label or heading does. */
 function offers(view: View | null, query: string): Offer[] {
   if (!view) return [];
   const q = query.trim().toLowerCase();
@@ -187,7 +185,7 @@ const OfferList = forwardRef<ListHandle, SuggestionProps<Offer, Reference>>(
 // -- the node -----------------------------------------------------------------
 
 /**
- * The chip in the document. A value's chip is a button: pressed, it performs
+ * A value's chip is a button: pressed, it performs
  * `answer` for the clause it sits in — the same gesture as a pick on the
  * canvas while answering, made where the value was named — and once the
  * value answers the clause the chip says so. An individual's chip only names.
@@ -239,7 +237,7 @@ function ReferenceView({ node, editor, getPos }: NodeViewProps) {
 }
 
 /**
- * The extension. `viewRef` is read when the popup opens, so the list is the
+ * `viewRef` is read when the popup opens, so the list is the
  * catalogue as the canvas has it now, without recreating the editor.
  */
 export function referencing(viewRef: RefObject<View | null>) {

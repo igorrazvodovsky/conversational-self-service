@@ -272,7 +272,6 @@ def asked_for_addressee(
 
 
 def fresh(prefix: str) -> str:
-    """A fresh identity: `bind a fresh identity as ?x`."""
     return f"{prefix}{uuid.uuid4().hex[:8]}"
 
 

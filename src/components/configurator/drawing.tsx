@@ -40,7 +40,6 @@ function one(label: string | undefined): number | null {
 const WALL = 200; // mm, drawn, not quoted
 const FONT = 12;
 
-/** A dimension line with ticks and its figure, horizontal or vertical. */
 function Dim({
   x1,
   y1,
@@ -104,7 +103,6 @@ function Hatch({ id }: { id: string }) {
   );
 }
 
-/** The shaft from above: walls, the car in it, and the entrance in front. */
 function Plan({
   shaft,
   car,
@@ -171,7 +169,6 @@ function Plan({
         d={`M${pad.l} ${pad.t}h${w + 2 * wall}v${d + 2 * wall}H${dx + ow}v${-wall}h${-ow}v${wall}H${pad.l}Z M${ox} ${oy}h${w}v${d}H${ox}Z`}
       />
       <rect x={ox} y={oy} width={w} height={d} fill="none" stroke="currentColor" />
-      {/* The car. */}
       <rect x={cx} y={cy} width={cw} height={cd} fill="var(--card)" stroke="currentColor" strokeWidth="1.5" />
       <text x={cx + cw / 2} y={cy + cd / 2 - 8} textAnchor="middle" dominantBaseline="middle" fill="currentColor" fontSize={FONT}>
         <tspan x={cx + cw / 2}>car</tspan>
@@ -190,8 +187,6 @@ function Plan({
   );
 }
 
-/** The shaft from the side: pit, the car at the bottom landing, the
- * travel broken, the top landing and the headroom over it. */
 function Section({
   pit,
   carHeight,
@@ -245,7 +240,6 @@ function Section({
       <rect x={pad.l} y={floor} width={w + 2 * wall} height={wall} fill={`url(#${hatch})`} stroke="currentColor" />
       <rect x={pad.l} y={top} width={wall} height={floor - top} fill={`url(#${hatch})`} stroke="currentColor" />
       <rect x={ox + w} y={top} width={wall} height={floor - top} fill={`url(#${hatch})`} stroke="currentColor" />
-      {/* The break, standing for the travel. */}
       <path d={zig(upper + gap / 2 - 4)} fill="none" stroke="currentColor" className="text-muted-foreground" />
       <path d={zig(upper + gap / 2 + 4)} fill="none" stroke="currentColor" className="text-muted-foreground" />
       {/* Landings. */}
@@ -267,10 +261,6 @@ function Section({
   );
 }
 
-/**
- * Both views side by side, captioned, or nothing when a size the drawing
- * needs is not held or does not read as one.
- */
 export function LiftDrawing({ holds, id }: { holds: Held[]; id: string }) {
   const label = (name: string) => holds.find((h) => h.name === name)?.label;
   const value = (name: string) => holds.find((h) => h.name === name)?.value;

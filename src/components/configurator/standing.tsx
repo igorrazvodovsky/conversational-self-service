@@ -41,9 +41,7 @@ function Line({ term, amount }: { term: string; amount: string }) {
 }
 
 /**
- * Where the specification stands: whether an offer can be asked for yet and
- * what stands in the way, how its values divide between asked, followed and
- * open, and what it comes to so far. The price and carbon of a single choice
+ * The price and carbon of a single choice
  * are beside that choice; here they are the running sum, and say so until
  * nothing is left open.
  */
@@ -113,8 +111,6 @@ export function Standing() {
           <CollapsibleContent>
             <div className="mt-3 grid gap-6 @xl:grid-cols-2">
               <div>
-                {/* The price by stage of the lift's life: what is paid once
-                    for each, and the maintenance charge by the month. */}
                 <dl className="space-y-1 text-xs">
                   {LIFE.map(({ stage, words }) => {
                     const { capital: once, monthly } = byStage[stage];
@@ -154,9 +150,8 @@ export function Standing() {
                 )}
               </div>
               <div>
-                {/* The carbon by stage, over the service life: maintaining
-                    and running it accrue every year of it, whatever the
-                    maintenance agreement's term. */}
+                {/* Maintaining and running accrue every year of the service
+                    life, whatever the maintenance agreement's term. */}
                 <dl className="space-y-1 text-xs">
                   {LIFE.map(({ stage, words }) => (
                     <Line
@@ -210,8 +205,7 @@ function capital(text: string): string {
 }
 
 /**
- * A conflict, as a fact: which assertions cannot hold together, each linked
- * to its line. The question of which gives way is put in the chat, where the
+ * The conflict as a fact. The question of which gives way is put in the chat, where the
  * person can ask why before choosing — in the turn that ran into it, or in a
  * conversation opened for it from here (`docs/moves.md`, "The conflict, as
  * the worked case").

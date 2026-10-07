@@ -42,8 +42,8 @@ from typing import IO, Any
 
 from engine import ActionLog, Engine, Record
 
-# Where the log is kept.  `AGENT_JOURNAL` may be absolute or relative to this
-# directory; deleting the file starts the specification over.
+# `AGENT_JOURNAL` may be absolute or relative to this directory; deleting the
+# file starts the specification over.
 JOURNAL = Path(__file__).parent / (
     os.environ.get("AGENT_JOURNAL") or Path(".journal") / "actions.jsonl"
 )

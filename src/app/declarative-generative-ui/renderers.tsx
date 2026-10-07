@@ -1,9 +1,6 @@
 /**
  * A2UI Catalog — React Renderers
  *
- * Each renderer maps a component name from definitions.ts to a React
- * implementation. Props are type-checked against the Zod schemas.
- *
  * Every renderer is composed from the shadcn primitives in
  * `src/components/ui/` (docs/ui.md), so an agent-drawn dashboard reads in the
  * same zinc, square vocabulary as the configurator beside it. Colours an agent

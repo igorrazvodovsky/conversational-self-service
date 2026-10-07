@@ -97,10 +97,7 @@ def _outcome(completion: Any, grid: str) -> dict[str, Any]:
 def gesture(
     stimulus: dict[str, Any] = Body(...), grid: str = "today", actor: str = "person"
 ) -> dict[str, Any]:
-    """A person acted on an application surface.
-
-    The one root action a person's browser performs.  What follows is
-    entirely a matter for the synchronizations.
+    """The one root action a person's browser performs.
 
     `grid` arrives as a query parameter rather than in the body, because it is
     a property of the read that comes back and not of the act.  Which carbon

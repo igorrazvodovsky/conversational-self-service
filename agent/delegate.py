@@ -6,9 +6,8 @@ theirs, so this server offers the person's gestures: each tool performs
 `Copiloting/gesture` with the same `act` the canvas sends, under the actor
 `browser`, and the rules in `syncs/gestures.py`, `binding.py` and
 `reading.py` decide what follows.  `propose` and `read`, which a person has
-no gesture for, perform `Copiloting/invoke` under the same actor.  `review`
-and `open_quote` are the model's reads, of the specification and of an
-issued offer, and perform nothing.  How much the person delegates is set in
+no gesture for, perform `Copiloting/invoke` under the same actor.  `review`,
+`open_quote` and `look_up` are reads, and perform nothing.  How much the person delegates is set in
 their agent, not here.  See `docs/syncs/conduct.md`, "The person's own
 agent, acting as the person".
 
@@ -26,11 +25,9 @@ gestures, each a tool only the view can call, recorded under the actor
 Conduct, "In the person's own chat, the facts stay facts".
 
 The person's agent reports to the person in a chat of its own, where a
-fragment of the page means nothing.  So every result is linked: each unit
-carries its URL under `link` beside its address under `at`, a quote its
-printable page under `page`, and the result the URL of the view the call
-left under `here`.  The URL grammar is the page's (`src/components/
-configurator/link.tsx`), written against `CONFIGURATOR_URL`.
+fragment of the page means nothing.  So every result carries URLs beside
+its addresses, in the page's URL grammar (`src/components/configurator/
+link.tsx`), written against `CONFIGURATOR_URL`.
 """
 
 from __future__ import annotations

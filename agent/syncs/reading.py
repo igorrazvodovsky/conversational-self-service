@@ -14,7 +14,7 @@ with one trigger moved, and the note says where.
 
 A reading stated as a requirement is one individual in two concepts: the
 clause's identity is the item's (`docs/syncs/reading.md`, "A reading becomes
-a clause").
+a clause, and its answer a choice").
 """
 
 from __future__ import annotations

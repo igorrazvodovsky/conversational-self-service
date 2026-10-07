@@ -18,10 +18,11 @@
  * The document is never the state. A transaction here is a stimulus: a node
  * that appears is `require`, one that vanishes is `strike`, changed text is
  * `reword`, a changed order is `move`, and the node view's controls are
- * `settle` and `relax`. A clause is dragged by the grip that appears beside
- * it on hover. The mapping lives in `flush` below and holds nothing across
- * renders except what has not yet been sent. See
- * docs/concepts/specifying.md, "The specification is edited as a document".
+ * `settle`, `relax`, `strike` and, on a reading still the assistant's,
+ * `keep`. A clause is dragged by the grip that appears beside it on hover.
+ * The mapping lives in `flush` below. Across renders it holds only what has
+ * not yet been sent and which clauses the document was last given. See
+ * docs/syncs/gestures.md, "A clause is stated in the person's words".
  *
  * While the person is typing it owns the text; the view from the server is
  * written back into it only when they are not, so that a refresh while the
@@ -96,7 +97,7 @@ import { Sources } from "./sources";
 
 // -- the schema ---------------------------------------------------------------
 
-/** Whether the selection reaches beyond one clause — a document-level selection counts. */
+/** A document-level selection counts as reaching beyond one clause. */
 function spansClauses(editor: Editor): boolean {
   const { $from, $to } = editor.state.selection;
   if ($from.depth < 1 || $to.depth < 1) return true;
@@ -175,8 +176,8 @@ const ClauseNode = Node.create({
 const ClauseDocument = Document.extend({ content: "clause+" });
 
 /**
- * The hint on an empty clause. The extension decides which empty clauses
- * carry one and what it says; it lands as a decoration on the clause node,
+ * The extension decides which empty clauses carry a hint and what it says;
+ * it lands as a decoration on the clause node,
  * and the node view reads it there and puts it where the words go, since the
  * extension's own `::before` would sit on the wrapper and not on the line.
  */
@@ -188,7 +189,6 @@ const ClausePlaceholder = Placeholder.configure({
       : "Another requirement, in your words",
 });
 
-/** The placeholder's hint on this node, if the extension put one there. */
 function hintOf(decorations: NodeViewProps["decorations"]): string | null {
   for (const decoration of decorations) {
     const hint = decoration.type.attrs?.["data-placeholder"];
@@ -197,7 +197,6 @@ function hintOf(decorations: NodeViewProps["decorations"]): string | null {
   return null;
 }
 
-/** A clause's text as inline content: words, and a reference node per token. */
 function inlineOf(text: string) {
   return segments(text).map((segment) =>
     "text" in segment
@@ -206,7 +205,6 @@ function inlineOf(text: string) {
   );
 }
 
-/** The document a view describes, for writing into the editor. */
 function documentOf(view: View | null) {
   const clauses = view?.clauses ?? [];
   return {
@@ -303,11 +301,6 @@ function Relax({ clause, onDone }: { clause: Clause; onDone: () => void }) {
 }
 
 /**
- * The node view. The text is `NodeViewContent`, editable; the rest is read
- * from the view by the clause's identity and is not part of the document.
- */
-/**
- * Take focus to a control in a clause once the clause has rendered again.
  * A gesture on a clause comes back as a new document, and the node views are
  * made afresh, so the control the person pressed is gone; this finds its
  * successor, or the clause itself, so the keyboard keeps its place.
@@ -353,12 +346,15 @@ const Current = createContext<{
   setOpened: () => {},
 });
 
-/** The clause the selection is in, if it has an identity. */
 function clauseAt(editor: Editor): string | null {
   const { $from } = editor.state.selection;
   return $from.depth >= 1 ? ($from.node(1).attrs.clause ?? null) : null;
 }
 
+/**
+ * The text is `NodeViewContent`, editable; the rest is read from the view by
+ * the clause's identity and is not part of the document.
+ */
 function ClauseView({ node, decorations }: NodeViewProps) {
   const { view, gesture, busy } = useConfigurator();
   const { answering, setAnswering } = useAnswering();
@@ -377,8 +373,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const hint = hintOf(decorations);
   const open = clause?.negotiability === "open";
   const isTarget = useTargeted(clause ? address.clause(clause.clause) : "");
-  // This line's place in the ledger: whether the frame leaves it, and what
-  // answers it.
   const lines = view ? ledger(view, framedAsserted(view)) : null;
   const outside = !!view?.frame && (!clause || !lines?.shown.has(clause.clause));
   const order = view?.clauses.map((c) => c.clause) ?? [];
@@ -410,9 +404,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
         outside && "hidden",
       )}
     >
-      {/* One line of the ledger, read as a question and its answer: the
-          requirement in the person's words, and beneath it what answers
-          it. Everything else is the open line's. */}
       <div className="flex min-w-0 items-start gap-3">
         <div className="min-w-0 flex-1">
           {relaxing && clause ? (
@@ -446,8 +437,8 @@ function ClauseView({ node, decorations }: NodeViewProps) {
             >
               {/* Frame the canvas on this clause: its answers, what they
                   forced, what could still answer it — and while it is
-                  framed, a pick answers it. Pressed again, the frame comes
-                  off. The line's one way to answer it. */}
+                  framed, a pick answers it. The line's one way to answer
+                  it. */}
               <Button
                 variant={active ? "default" : "ghost"}
                 size="icon-xs"
@@ -664,13 +655,7 @@ export function Specification() {
     [editor],
   );
 
-  /**
-   * Send what the document says that the state does not: a strike for every
-   * identity that has gone, a reword for every changed text, a require for
-   * every node with words and no identity — in document order — and then a
-   * move for every clause the document holds somewhere else, one gesture
-   * each, awaited, so the log reads as the person's edits did.
-   */
+  /** One gesture each, awaited, so the log reads as the person's edits did. */
   const flush = useCallback(async () => {
     if (!editor || flushing.current) return;
     flushing.current = true;
@@ -736,7 +721,6 @@ export function Specification() {
     timer.current = setTimeout(() => void flush(), SETTLE_AFTER);
   }, [flush]);
 
-  // The view writes back into the document only while nobody is typing in it.
   useEffect(() => {
     if (flushing.current) return;
     writeBack(view);
@@ -764,7 +748,7 @@ export function Specification() {
         // Placed against the clause's left edge; the padding takes it out
         // of the card and level with the first line of words.
         <DragHandle editor={editor}>
-          {/* For the pointer; the keyboard has each clause's Move buttons. */}
+          {/* For the pointer only: the keyboard has no way to reorder a clause. */}
           <span
             aria-hidden
             className="flex cursor-grab pt-3 pr-4 text-muted-foreground hover:text-foreground active:cursor-grabbing"

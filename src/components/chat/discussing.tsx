@@ -75,7 +75,6 @@ function keyOf(options: Option[]): string {
     .join("&");
 }
 
-/** The open conflict, if there is one. */
 export function openConflict(view: View | null): Question | undefined {
   return view?.questions.find((q) => q.about === "conflict");
 }
@@ -145,7 +144,6 @@ export function useDiscuss() {
   return useContext(Discussing)?.discuss;
 }
 
-/** The conflict this conversation was opened for, if it was. */
 function useDiscussed(): Discussed | undefined {
   const threads = useContext(Discussing)?.threads;
   const thread = useCopilotChatConfiguration()?.threadId;

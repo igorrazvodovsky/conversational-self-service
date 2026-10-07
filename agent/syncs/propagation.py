@@ -341,11 +341,8 @@ def _a_new_specification_is_given_to_the_solver(
 def _a_discarded_specification_leaves_the_solver(
     c: Completion, _: States
 ) -> list[Invocation]:
-    """The inverse of the rule above.
-
-    `Asserting/discard` was an action no stimulus reached and no rule
-    followed.  MSM §5.1.2: an action whose inverse is missing is a trap.
-    """
+    """The inverse of the rule above.  MSM §5.1.2: an action whose inverse
+    is missing is a trap."""
     if c.failed:
         return []
     return [Invocation("Constraining", "forget", {"spec": c.output["spec"]})]
@@ -447,10 +444,8 @@ def _a_conflict_is_put_to_the_person(c: Completion, states: States) -> list[Invo
             "Deciding",
             "ask",
             {
-                # The request names the question, not only its subject.  Two
-                # different questions about one specification are two requests;
-                # passing the specification made them one, and a pending
-                # conflict was silently replaced by a proposed completion.
+                # The request names the question, not only its subject: two
+                # different questions about one specification are two requests.
                 "request": {"spec": spec, "about": "conflict"},
                 "reason": "; ".join(sentences) or "these cannot hold together",
                 "options": candidates,

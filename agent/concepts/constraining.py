@@ -604,8 +604,6 @@ class Constraining:
         """
         solver = self._built()
         rules = list(self._rule_lit.values())
-        # The assumptions, and every inclination that can hold with them:
-        # honoured where it can be, dropped where it cannot, earlier first.
         assumptions, honoured = self._honoured(
             solver, rules, self._assumption_literals(spec), self._inclined.get(spec, {})
         )

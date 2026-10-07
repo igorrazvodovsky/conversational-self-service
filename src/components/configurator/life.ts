@@ -17,18 +17,15 @@ export const LIFE = [
 
 export type Life = (typeof LIFE)[number]["stage"];
 
-/** The catalogue families that are a stage of the lift's life in their own right. */
 const FAMILY: Record<string, Life> = {
   installation: "installed",
   maintenance: "maintained",
   "end-of-life": "ended",
 };
 
-/** A family's stage: its own, or making the lift. */
 export const stageOf = (family: string): Life => FAMILY[family] ?? "made";
 
-/** The view's sums by family, gathered by stage. Running the lift costs
- * nothing that is priced separately, so it has no line. */
+/** Running the lift costs nothing that is priced separately, so it has no line. */
 export function priced(stages: Stage[]): Record<Life, { capital: number; monthly: number }> {
   const out = Object.fromEntries(
     LIFE.map(({ stage }) => [stage, { capital: 0, monthly: 0 }]),
