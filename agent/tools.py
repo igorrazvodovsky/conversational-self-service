@@ -425,11 +425,10 @@ def show(facet: str) -> dict[str, Any]:
 
     `facet` is one of the names `review` lists under `showing`, each with
     what it shows and whether it is shown now: `price` and `carbon` (what
-    each option adds), `notes` (the catalogue's note on each option),
-    `excluded` (which rule rules an option out), `rules` (the rule behind a
-    value that follows), `answers` (the requirement an asserted value
-    answers), `how` (who asserted a value, and the words it was read from). Changes what the person sees and
-    nothing else; use it when they ask to see something at a glance rather
+    each option adds), `excluded` (which rule rules an option out), `rules`
+    (the rule behind a value that follows), `answers` (the requirement an
+    asserted value answers), `how` (who asserted a value, and the words it
+    was read from). Changes what the person sees and nothing else; use it when they ask to see something at a glance rather
     than reciting the figures.
     """
     completion = engine.root(

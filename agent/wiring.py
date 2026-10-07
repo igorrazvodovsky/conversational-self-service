@@ -64,7 +64,6 @@ BASIS = "catalogue"
 FACETS: list[tuple[str, str, bool]] = [
     ("price", "what each option adds to the price, beside its label", False),
     ("carbon", "what each option adds to the carbon over the lift's life", False),
-    ("notes", "the catalogue's note on each option", False),
     ("excluded", "for each option ruled out, the rule that rules it out", False),
     ("consequences", "on a proposed value, what taking it would settle and cost", False),
     ("rules", "on a value that follows, the rule that forces it and the assertion it rests on", True),

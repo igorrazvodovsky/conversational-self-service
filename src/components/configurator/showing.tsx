@@ -24,7 +24,6 @@ import { useConfigurator } from "./provider";
 const LABEL: Record<string, string> = {
   price: "Price of each option",
   carbon: "Carbon of each option",
-  notes: "Notes on the options",
   excluded: "Why an option is ruled out",
   consequences: "What a proposed value would do",
   rules: "The rule behind what follows",
@@ -56,7 +55,7 @@ export function ShowingMenu() {
           title="Choose which facts the canvas shows beside each item"
         >
           <EyeIcon />
-          Show {on} of {view.showing.length}
+          Show
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">

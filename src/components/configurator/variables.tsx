@@ -8,6 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
@@ -45,9 +46,11 @@ function usePick(variable: Variable) {
  *
  * The label is always there. What each option adds to the price or the
  * carbon sits inside its button when the `price` or `carbon` facet is shown;
- * the catalogue's notes and the rules that rule an option out are lists
- * under the buttons when `notes` or `excluded` is. Which of those a person
- * sees is `Showing`'s, not this component's.
+ * the rules that rule an option out are a list under the buttons when
+ * `excluded` is. Which of those a person sees is `Showing`'s, not this
+ * component's. The catalogue's note is advice about one option, read while
+ * choosing it, so it is that option's tooltip rather than a line of its own:
+ * as a list it repeated every label beneath the buttons.
  */
 function Options({ variable }: { variable: Variable }) {
   const { busy, view } = useConfigurator();
@@ -56,69 +59,67 @@ function Options({ variable }: { variable: Variable }) {
   const currency = view?.currency ?? "";
   const price = shown("price");
   const carbon = shown("carbon");
-  const noted = shown("notes")
-    ? variable.options.filter((o) => o.note)
-    : [];
   const excluded = shown("excluded")
     ? variable.options.filter((o) => !o.possible && o.excluded.length)
     : [];
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-1.5">
-        {variable.options.map((option) => (
-          <Button
-            key={option.id}
-            variant={option.possible ? "outline" : "secondary"}
-            size="xs"
-            disabled={busy || option.id === variable.asked}
-            title={
-              option.possible
-                ? (option.note ?? undefined)
-                : "Ruled out by what has been asserted so far"
-            }
-            className={cn(
-              "h-auto py-1",
-              !option.possible && "text-muted-foreground line-through",
-            )}
-            onClick={() => pick(option)}
-          >
-            {option.id === variable.asked ? <CheckIcon /> : null}
-            {option.label}
-            {/* The strike, the dimming and the tick are for the eye only. */}
-            {option.id === variable.asked ? (
-              <span className="sr-only">, the current value</span>
-            ) : !option.possible ? (
-              <span className="sr-only">, ruled out</span>
-            ) : null}
-            {price && option.capital !== null ? (
-              <span className="font-normal tabular-nums text-muted-foreground">
-                {adds(option.capital, currency)}
-              </span>
-            ) : null}
-            {price && option.monthly !== null ? (
-              <span className="font-normal tabular-nums text-muted-foreground">
-                {adds(option.monthly, currency)}/mo
-              </span>
-            ) : null}
-            {carbon && option.carbon !== null ? (
-              <span className="font-normal tabular-nums text-muted-foreground">
-                {option.carbon < 0 ? "−" : "+"}
-                {kilos(Math.abs(option.carbon))}
-              </span>
-            ) : null}
-          </Button>
-        ))}
+        {variable.options.map((option) => {
+          const tip = option.possible
+            ? option.note
+            : "Ruled out by what has been asserted so far";
+          const disabled = busy || option.id === variable.asked;
+          const button = (
+            <Button
+              variant={option.possible ? "outline" : "secondary"}
+              size="xs"
+              disabled={disabled}
+              className={cn(
+                "h-auto py-1",
+                !option.possible && "text-muted-foreground line-through",
+              )}
+              onClick={() => pick(option)}
+            >
+              {option.id === variable.asked ? <CheckIcon /> : null}
+              {option.label}
+              {/* The strike, the dimming and the tick are for the eye only. */}
+              {option.id === variable.asked ? (
+                <span className="sr-only">, the current value</span>
+              ) : !option.possible ? (
+                <span className="sr-only">, ruled out</span>
+              ) : null}
+              {price && option.capital !== null ? (
+                <span className="font-normal tabular-nums text-muted-foreground">
+                  {adds(option.capital, currency)}
+                </span>
+              ) : null}
+              {price && option.monthly !== null ? (
+                <span className="font-normal tabular-nums text-muted-foreground">
+                  {adds(option.monthly, currency)}/mo
+                </span>
+              ) : null}
+              {carbon && option.carbon !== null ? (
+                <span className="font-normal tabular-nums text-muted-foreground">
+                  {option.carbon < 0 ? "−" : "+"}
+                  {kilos(Math.abs(option.carbon))}
+                </span>
+              ) : null}
+            </Button>
+          );
+          if (!tip) return <span key={option.id}>{button}</span>;
+          // A disabled button takes no pointer events, so the tooltip hangs
+          // on a span around it: the current value keeps its note.
+          return (
+            <Tooltip key={option.id}>
+              <TooltipTrigger asChild>
+                <span tabIndex={disabled ? 0 : undefined}>{button}</span>
+              </TooltipTrigger>
+              <TooltipContent>{tip}</TooltipContent>
+            </Tooltip>
+          );
+        })}
       </div>
-      {noted.length ? (
-        <dl className="space-y-0.5 text-xs text-muted-foreground">
-          {noted.map((option) => (
-            <div key={option.id} className="flex gap-1.5">
-              <dt className="shrink-0 text-foreground">{option.label}</dt>
-              <dd>{option.note}</dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
       {excluded.length ? (
         <ul className="space-y-0.5 text-xs text-muted-foreground">
           {excluded.map((option) => (
