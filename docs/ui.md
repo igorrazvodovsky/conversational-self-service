@@ -119,7 +119,7 @@ Two things the principle leaves open:
 
 Work on a configuration is shared by link: a person sends a colleague what
 they are looking at, the assistant points at an item in a reply, and the
-person's own agent, working through WebMCP, reports what it did in its own
+person's own agent, working over MCP, reports what it did in its own
 chat with links back to the page. So the page's URL is its state. A link
 names the place, and opening it shows the same place to whoever opens it.
 

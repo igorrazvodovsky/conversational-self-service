@@ -8,7 +8,8 @@ These are the rules of the case's slice 2, written for the composition this
 repository keeps: the model is a root actor, and its reading is a tool call
 that records what it perceived. The case's `Hear` invokes `Reading/read` from
 a rule with a language model inside the action; here the model calls `read`
-once per requirement it perceives, and the rules take the reading from there.
+with an item per requirement it perceives, every item invoked on its own,
+and the rules take the reading from there.
 A document is the case's *foreign document* row: the same rules, with a file
 as the source instead of an utterance.
 

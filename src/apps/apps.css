@@ -1,0 +1,8 @@
+/* The page's stylesheet, for a view rendered in the person's own client
+   (`scripts/build-apps.mjs`). Its tokens follow the page's, so a view reads
+   as the canvas does. */
+@import "../app/globals.css";
+
+body {
+  background: transparent;
+}

@@ -1,7 +1,7 @@
 # The moves
 
 What either party can do in a turn, what it changes, and which surface carries
-it. The canvas and the chat are two surfaces over one specification, and every
+it. The canvas and the chat are the surfaces over one specification, and every
 question of the form *should this be a message or a section?* is answered here,
 move by move, rather than by a rule of thumb.
 
@@ -9,7 +9,7 @@ This is a placement note. It changes no concept, action or rule; where a move
 reaches state, the rule that carries it is linked, and the rule is the
 authority.
 
-## The two surfaces
+## The surfaces
 
 The canvas is a view over concept state (`agent/views.py`). It shows what is
 the case: what the person requires, what was asserted and by whom, what
@@ -41,6 +41,14 @@ so a reply can put a comparison in front of the person by linking it, and
 nothing is recorded: which pair is shown stays the viewer's. A link is the
 page's URL too, so the person can send one to a colleague, and their own agent
 can link its work from a chat of its own ([Links](ui.md#links)).
+
+The person's own agent has a chat of its own, and when the person's client
+renders MCP Apps the canvas reaches into it: the specification or an offer,
+rendered beside the agent's reply from the read the agent made, each item in
+its kind and linked back to the page. The test above holds there too. The
+view is the canvas's, holding what is the case, and the agent's reply around
+it is the chat's. A gesture made in that view is the person's
+([Conduct](syncs/conduct.md#in-the-persons-own-chat-the-facts-stay-facts)).
 
 ## The person's moves
 
@@ -116,7 +124,7 @@ whenever a solve fails, holding the rules' sentences as its reason and the
 assertions that could give way as its options. It stays until it is answered,
 declined or withdrawn, and it is there after a reload. It is asked the same
 way whoever caused it — the person by a click, the model by a tool, a browser
-agent over WebMCP — which is why it cannot live in the chat: two of those three
+agent over MCP — which is why it cannot live in the chat: two of those three
 have no turn to attach it to.
 
 In the chat it is a question, when the model's own turn ran into it: the
@@ -223,7 +231,8 @@ already under way says so.
   go past. Neither is put with `ask` yet.
 - *The person's agent talks to the assistant only through the page.* It
   speaks in the chat the person has open, and the assistant's reply reaches
-  it from there. An agent with no page open has no conversation to speak in.
+  it from there. An agent connected to the MCP server with no page open can
+  act as the person, but has no conversation to speak in.
 
 ## See also
 

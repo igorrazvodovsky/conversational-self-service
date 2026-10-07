@@ -13,9 +13,14 @@ async function forward(request: Request, path: string[], body?: string) {
   const url = new URL(request.url);
   const target = `${AGENT_URL}/configurator/${path.join("/")}${url.search}`;
   try {
+    // `accept` passes through for the MCP route (`agent/delegate.py`), whose
+    // transport requires it; every route answers in JSON.
     const response = await fetch(target, {
       method: request.method,
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        accept: request.headers.get("accept") ?? "application/json",
+      },
       body,
       cache: "no-store",
     });

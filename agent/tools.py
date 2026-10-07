@@ -23,11 +23,18 @@ text from the log, so what the model read is what is on record.  A single `confi
 taking the whole assignment — the shape this repository used to have — says
 only that something did.
 
+A verb returns what it did, never the specification: each result stays in
+the conversation and goes back to the model at every later step, so a
+digest in each would make a document of many requirements cost the square
+of their number.  `read` takes every requirement a source states in one
+call and performs one invocation per item, so the log is the same as for
+separate calls.
+
 `review`, `open_file` and `open_quote` are readings: each returns a
 projection of state and records nothing, so the model asking what an offer
 holds is not an action anybody performed.  `open_quote` is the offer as it
 was frozen at issue, the record the quote surface lays out and the person's
-own agent reads at `GET /configurator/quotes/<quote>`.
+own agent reads through `open_quote` in `delegate.py`.
 
 `show`, `hide`, `frame` and `unframe` are the four that change no fact: they
 choose which facts the canvas shows beside each item
@@ -47,7 +54,7 @@ tool string the rules match on is `assert`, which is the vocabulary.
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, NotRequired, TypedDict
 
 from langchain.tools import tool
 from langchain_core.tools import InjectedToolCallId
@@ -60,7 +67,7 @@ from syncs import readings
 from views import digest, filed, put_question, quoted
 
 
-def _outcome(completion: Record) -> dict[str, Any]:
+def _did(completion: Record) -> list[dict[str, Any]]:
     """What the rules did with the stimulus, in the vocabulary they did it in.
 
     Read from the completion onward rather than from the start of the flow:
@@ -80,7 +87,27 @@ def _outcome(completion: Record) -> dict[str, Any]:
         if error:
             entry["refused"] = error
         did.append(entry)
-    outcome: dict[str, Any] = {"did": did, "state": digest(engine, SPEC)}
+    return did
+
+
+def _outcome(completion: Record) -> dict[str, Any]:
+    """What a call did, and the conflicts and yielded values that stand after it.
+
+    Not the specification: every result stays in the conversation and is
+    sent to the model again at each later step, so a result carrying the
+    whole digest makes a document of many requirements cost the square of
+    their number.  `review` is the reading, called when the model needs it.
+    """
+    return _standing({"did": _did(completion)})
+
+
+def _standing(outcome: dict[str, Any]) -> dict[str, Any]:
+    """What the model must say before the turn ends: an assertion that cannot
+    be met, a negotiable one that gave way, and a conflict not yet put."""
+    state = digest(engine, SPEC)
+    for key in ("unmet", "yielded"):
+        if state[key]:
+            outcome[key] = state[key]
     if _unasked():
         outcome["next"] = (
             "a conflict is open and has not been put to the person: once nothing "
@@ -149,7 +176,7 @@ def assert_value(variable: str, option: str) -> dict[str, Any]:
 
     `variable` is a variable name such as `building_type`; `option` is a full
     option id such as `building_type:hospital`. Read them from the `open` list
-    that every tool returns. An assertion that cannot be met is still recorded,
+    that `review` returns. An assertion that cannot be met is still recorded,
     and comes back with the rules that refuse it. A value that answers a
     requirement the person stated is theirs: the call does nothing, and comes
     back under `refused` saying so, or under `unchanged` when it already is
@@ -180,16 +207,23 @@ def withdraw(variable: str) -> dict[str, Any]:
     return _not_done(_outcome(completion), held)
 
 
-@tool
-def read(
-    words: str, answer: list[str] | None = None, file: str | None = None
-) -> dict[str, Any]:
-    """Record a requirement you read, with the words it was read from and the
-    catalogue options you take to answer it.
+class Requirement(TypedDict):
+    """One requirement read from a source."""
 
-    Call this once per requirement, for anything the person or their document
+    words: str
+    answer: NotRequired[list[str]]
+    file: NotRequired[str]
+
+
+@tool
+def read(items: list[Requirement]) -> dict[str, Any]:
+    """Record the requirements you read, each with the words it was read
+    from and the catalogue options you take to answer it.
+
+    One item per requirement, for anything the person or their document
     requires of the lift: a load, a speed, a finish, a service term, a
-    condition. `words` is the requirement copied from the source as one
+    condition. Pass every requirement a message or a document states in one
+    call, in the order the source states them. `words` is the requirement copied from the source as one
     unbroken passage: trim either end, never cut the middle, never
     paraphrase. `answer` is the option ids that answer it,
     exactly as `review` lists them under `open`, such as `rated_load:kg1250`,
@@ -199,38 +233,43 @@ def read(
     with its source, and the person can answer it or take it further.
     `file` is the id of the document the words are from, as `review` lists
     it under `files`; leave it out when they are from the person's message.
-    Words the cited source does not contain read nothing, and come back
-    under `refused`.
+
+    Each item is read in turn and comes back under `read`, in the same
+    order, with what the rules did with it. Words the cited source does not
+    contain read nothing, and come back under `refused`.
 
     The clause is stated on the canvas as your reading, cited to its source,
     and each option in `answer` is asserted as answering it. An id the
     catalogue does not offer answers nothing and comes back under
-    `not_offered`; call `read` again with the right ids rather than leaving
+    `not_offered`; read that item again with the right ids rather than leaving
     the clause unanswered. An option whose variable answers a requirement the
     person stated is not asserted, and comes back under `not_asserted`: the
     clause stays unanswered, and answering it is the person's, even with the
     value it already has.
     A count is answered by the option whose range
     contains it: six stops is `stops:s2_6`. A value that cannot be met is
-    still recorded and comes back with the rules that refuse it; keep reading
+    still recorded and comes back under `unmet` with the rules that refuse it; keep reading
     the rest of the source before raising it. Use `assert_value` for context
     that is not a requirement, such as the region a city implies.
     """
+    # Each item is its own invocation, in the turn's flow, so the rules, the
+    # log and the measures see one reading per requirement; what an item did
+    # is read before the next is performed, or it would claim the next's.
+    return _standing({"read": [_read(item) for item in items]})
+
+
+def _read(item: Requirement) -> dict[str, Any]:
+    words, answer, file = item["words"], list(item.get("answer") or []), item.get("file")
     offers = engine.state("Cataloguing")["offers"]
     variable_of = {o: v for v, options in offers.items() for o in options}
     asserted = engine.state("Asserting")["asserted"].get(SPEC, {})
-    held = {o: _held(variable_of[o]) for o in (answer or []) if o in variable_of}
+    held = {o: _held(variable_of[o]) for o in answer if o in variable_of}
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
-        spec=SPEC, words=words, answer=list(answer or []), file=file,
+        spec=SPEC, words=words, answer=answer, file=file,
         utterance=None if file else heard(),
     )
-    offered = {
-        option
-        for options in engine.state("Cataloguing")["offers"].values()
-        for option in options
-    }
-    outcome = _outcome(completion)
+    outcome: dict[str, Any] = {"words": words, "did": _did(completion)}
     if not any(entry["action"] == "Reading/read" for entry in outcome["did"]):
         # The rule declined: the words are not in the cited source.
         outcome["refused"] = (
@@ -253,10 +292,10 @@ def read(
                 )
                 for o, texts in kept.items()
             ]
-    return {
-        **outcome,
-        "not_offered": [o for o in (answer or []) if o not in offered],
-    }
+    not_offered = [o for o in answer if o not in variable_of]
+    if not_offered:
+        outcome["not_offered"] = not_offered
+    return outcome
 
 
 @tool

@@ -10,6 +10,7 @@ enforced by an absence rather than by a sentence in the prompt below.
 
 from copilotkit import CopilotKitMiddleware
 from langchain.agents import create_agent
+from langchain.agents.middleware import ClearToolUsesEdit, ContextEditingMiddleware
 from langchain_openai import ChatOpenAI
 
 # The configurator
@@ -21,7 +22,11 @@ from src.query import query_data
 from src.a2ui_dynamic_schema import generate_a2ui
 from src.a2ui_fixed_schema import search_flights
 
-model = ChatOpenAI(model="gpt-6-luna", model_kwargs={"parallel_tool_calls": False})
+# A rate limit is per minute, so a turn that meets one waits it out: the
+# client retries with backoff and honours the provider's `retry-after`.
+model = ChatOpenAI(
+    model="gpt-6-luna", model_kwargs={"parallel_tool_calls": False}, max_retries=6
+)
 
 SYSTEM_PROMPT = """
 You help a person specify an EP-3000 lift. Keep replies to one or two sentences.
@@ -39,19 +44,22 @@ How the configurator works, because it is not the usual kind:
   optimiser, which will pick whatever is cheapest and be wrong about where the
   building is.
 - Call `review` before answering any question about the current state. Your
-  view of it is a projection and the person may have changed it since.
+  view of it is a projection and the person may have changed it since. The
+  other tools say what they did, not where the specification stands: call
+  `review` once their work is done and you need to know.
 - `review` lists what is REQUIRED, in the source's own words, under
   `required`, with who stated each clause and what answers it. Read them
   before asserting anything.
 - A REQUIREMENT is recorded with `read`, never with `assert_value`. When the
   person's message or a document they attached says what the lift must do or
-  carry, or on what terms, call `read` once per requirement: the words it was
+  carry, or on what terms, call `read` with one item per requirement, all
+  the requirements a message or document states in the same call: the words it was
   read from, copied as one unbroken passage of the source (trim either end,
   never cut the middle, never paraphrase), and the option ids that answer
   it, exactly as `review` lists them and never a label: several when one
   sentence settles several variables, only what the words themselves settle,
   none when nothing in the catalogue does. An id that comes back under
-  `not_offered` answered nothing; read again with the right one. Words the
+  `not_offered` answered nothing; read that item again with the right one. Words the
   cited source does not contain read nothing and come back under `refused`;
   copy them again from the source, with `file` when they are from a document.
   Record the requirements with no answer too: the person can answer them or
@@ -62,9 +70,10 @@ How the configurator works, because it is not the usual kind:
   it. `assert_value` is for context that is not a requirement: the region a
   city implies, the stops a storey count implies.
 - A document the person attached is listed by `review` under `files`. Read it
-  with `open_file`, go through it whole, item by item, and call `read` for
-  every numbered item or sentence that states a requirement, each with its
-  `file` id, all before replying. A conflict one reading raises does not stop
+  with `open_file`, go through it whole, and call `read` with an item for
+  every numbered item or sentence that states a requirement, in the
+  document's order, each with its `file` id, all before replying. A long
+  document may take a call per section. A conflict one reading raises does not stop
   the reading: it waits on the canvas, and you raise it once the last item
   is read. In the reply, list only what came back as read. Say what you
   read and what you found nothing for; never say you have read a document you
@@ -106,7 +115,7 @@ How the configurator works, because it is not the usual kind:
   make room. A question waiting on the person, or one they left for now,
   is not asked again.
 - Claim only what a tool call in this turn did. A requirement is recorded
-  when `read` came back with a `Reading/read` under `did`; a value is set when
+  when its item in `read`'s result came back with a `Reading/read` under `did`; a value is set when
   `assert_value` did. Anything you did not call, or that came back refused,
   is not recorded: say so, and never write "recorded", "updated", "fixed" or
   "the rest" for it.
@@ -201,6 +210,10 @@ Other tools: `search_flights` for flight cards, `generate_a2ui` for dashboards,
 `query_data` before rendering a chart.
 """
 
+forgetting = ContextEditingMiddleware(
+    edits=[ClearToolUsesEdit(trigger=30_000, keep=3, exclude_tools=["open_file"])]
+)
+
 agent = create_agent(
     model=model,
     tools=[*configurator_tools, query_data, generate_a2ui, search_flights],
@@ -210,7 +223,10 @@ agent = create_agent(
     # text is read from the log.  See `docs/syncs/reading.md`.
     # `attributing` tells the model which words were the person's own
     # agent's.  See `docs/syncs/gestures.md`.
-    middleware=[hearing, unattaching, attributing, CopilotKitMiddleware()],
+    # `forgetting` empties older tool results once the request grows: a
+    # reading is out of date once the next is made, and what a call did is
+    # on the log.  A document's text is kept, since `read` copies from it.
+    middleware=[hearing, unattaching, attributing, forgetting, CopilotKitMiddleware()],
     system_prompt=SYSTEM_PROMPT,
 )
 

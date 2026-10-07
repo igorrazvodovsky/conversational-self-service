@@ -690,12 +690,22 @@ MCP-B relay — is the person's: it acts because they asked it to, and how much
 they hand it is theirs to decide, in their own agent, not the seller's to
 decide in these rules. So it gets the person's grant, not the model's.
 
-The page registers the person's gestures on its WebMCP model context
-(`document.modelContext`), through `useFrontendTool` with `webmcp` set
-([`src/components/configurator/webmcp.tsx`](../../src/components/configurator/webmcp.tsx)).
+The person's gestures are one table of tools, held by an MCP server beside
+the concept layer ([`agent/delegate.py`](../../agent/delegate.py)), at
+`/configurator/mcp`. An agent reaches that table from the server or from the
+page:
+
+- *An agent that connects to the server*, such as a desktop or web chat client
+  the person has added it to, calls the tools there. It needs no page open.
+- *An agent in the person's browser* finds the same tools on the page. The
+  page reads the table from the server and registers each tool on its WebMCP
+  model context (`document.modelContext`), forwarding every call to the
+  server ([`src/components/configurator/webmcp.tsx`](../../src/components/configurator/webmcp.tsx)).
+  The person's browser agent discovers the seller's page with no setup,
+  which is why the page offers the tools as well as the server.
+
 Each call is `Copiloting/gesture`, carrying the same `act` the canvas would
-send, and reaches the engine at `POST /configurator/gesture` with the actor
-`browser`. Every rule in [Gestures](gestures.md), [Binding](binding.md) and
+send, under the actor `browser`. Every rule in [Gestures](gestures.md), [Binding](binding.md) and
 [Reading](reading.md) matches on the act and not on the actor, so the grant
 is the person's grant and no rule is added for it: the person's agent may
 file a document, state, reword, relax, settle, move, strike or keep a
@@ -707,10 +717,9 @@ canvas shows. What a person cannot do it cannot do either: no act reaches
 ([Gestures](gestures.md#what-a-gesture-is-not-allowed-to-be)).
 
 It also gets the model's verbs that a person has no gesture for,
-`propose` and `read`, through `Copiloting/invoke` under the same actor at
-`POST /configurator/invoke`. It reads as the model does, and a read
-performs nothing: `review`, at `GET /configurator/digest`, is how it sees
-the specification, and `open_quote`, at `GET /configurator/quotes/<quote>`,
+`propose` and `read`, through `Copiloting/invoke` under the same actor. It
+reads as the model does, and a read performs nothing: `review`, the digest
+the in-app model reads, is how it sees the specification, and `open_quote`
 is how it reads an offer before the person accepts it, the same record the
 assistant reads ([An offer, read](../moves.md#an-offer-read)). `propose`
 asks the solver for the cheapest completion, which comes back as questions
@@ -732,7 +741,8 @@ its root actors is one that moved while the person was not looking, and the
 canvas marks what it reached until the person next acts themselves.
 
 The person's agent may also talk to the assistant, in the chat the person
-watches. `converse` says something to it, as the person would in the
+watches, and so only through the page: `converse` and `listen` are
+registered there and are not in the server's table. `converse` says something to it, as the person would in the
 composer: the words are a `say` gesture under the agent's actor, and the
 page then runs the assistant on them in the open conversation
 ([The person's own agent speaks in the chat](gestures.md#the-persons-own-agent-speaks-in-the-chat)).
@@ -754,25 +764,61 @@ reaches the model marked as the person's agent's words, read from the
 to: a question the person's agent cannot settle for them is still put, and
 the agent hands it back with a reply.
 
-A desktop client is the same actor. The page also loads the MCP-B relay's
+Every way in is the same actor. The page also loads the MCP-B relay's
 embed script, which forwards the model context's tools over localhost to a
-relay that any MCP client talks to over stdio. A call from there runs the
-same handler in the same tab and lands under `browser` too.
+relay that an MCP client talks to over stdio, so a client that speaks only
+stdio reaches the tab's tools, `converse` among them. A call from there runs
+the same handler in the same tab and lands under `browser` too.
 
 The person's agent reports to the person wherever they talk to it, which is
-seldom this page. So what the page's tools return links back to it: every
-unit `review` and `open_quote` carry under `at` also carries its URL under
+seldom this page. So what the tools return links back to it: every unit
+`review` and `open_quote` carry under `at` also carries its URL under
 `link`, an issued quote its printable page under `page`, and every result the
 URL of the view the call left under `here`
-([Links](../ui.md#links)). An agent that narrowed the canvas, asserted a value
+([Links](../ui.md#links)). The server writes these against the page's
+public origin, since it has no tab to read one from. An agent that narrowed the canvas, asserted a value
 or requested a quote can hand the person the link to it, and the person, or
 whoever they forward it to, lands on it. Linking performs nothing, and needs
 no rule.
 
-The tools are registered under an agent id no in-app agent has, so the
-assistant is never offered the person's gestures as frontend tools. `review`
-and `open_quote` carry the WebMCP `readOnlyHint`; the rest carry none, since
-each changes a fact or the canvas.
+The page registers the server's tools on the model context directly, not as
+CopilotKit frontend tools, so the assistant is never offered the person's
+gestures; `converse` and `listen`, which are CopilotKit tools, are
+registered under an agent id no in-app agent has. `review` and `open_quote`
+carry the `readOnlyHint`; the rest carry none, since each changes a fact or
+the canvas.
+
+### In the person's own chat, the facts stay facts
+
+An agent retelling the specification in its own words can turn *follows from
+that* into *was chosen*, which is the conflation the canvas exists to
+prevent. So when the person's client renders MCP Apps, `review` and
+`open_quote` come with views: the host shows the specification, or the
+offer, beside the agent's reply, rendered from the same read the tool
+returned, each item in its kind. The view is a surface of the canvas's,
+holding what is the case ([The moves](../moves.md#the-surfaces)), set inside
+the person's conversation with their own agent, and its items link back to
+the page.
+
+A view can also carry the person's own gestures: keeping or striking a
+reading, answering a question, accepting or revoking an offer. Those are
+the person's, made by their hand in their own client, so they land under the
+actor `person`, as a click on the canvas does, and not under `browser`. The
+log then tells *you accepted it, in your own chat* from *your agent accepted
+it*. Each is a separate tool whose MCP Apps `visibility` is the view alone,
+so the agent is never offered it and calls the `browser` tool of the same
+act instead. Nothing is taken from the agent: how much the person delegates
+stays theirs to set.
+
+The boundary that makes `person` honest is the host's, not the engine's.
+A host that renders MCP Apps keeps a view-only tool off its agent's tool
+list. A client that does not render them lists every tool to its model, and
+the server, being stateless, cannot tell the one kind of client from the
+other, so a view-only tool's description says that only the view calls it
+and names the agent's tool for the same act. The server cannot see who
+pressed what: an agent that called a view-only tool anyway would be recorded
+as the person. In a deployment the server's authentication is what stands
+behind the actor, as the page's session does for the canvas.
 
 ## The tool names are ours
 

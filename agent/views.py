@@ -1403,15 +1403,18 @@ def _item_at(kind: str, source: str, item: str) -> str:
     return f"#source:{kind}:{source}:item:{item}"
 
 
-def digest(engine: Engine, spec: str, actor: str = "model") -> dict[str, Any]:
+def digest(
+    engine: Engine, spec: str, actor: str = "model", view: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """The same reading, small enough to hand a language model.
 
     `actor` is who reads it.  The person's own agent (`browser`) acts as the
     person, so a value their requirement holds is not out of its reach, and
-    a proposed value comes with the question that adopts it.
+    a proposed value comes with the question that adopts it.  `view` is the
+    canvas, when the caller has already read it.
     """
     agent = actor == BROWSER
-    view = canvas(engine, spec)
+    view = view or canvas(engine, spec)
     label = {
         option["id"]: option["label"]
         for variable in view["variables"]

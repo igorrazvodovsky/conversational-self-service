@@ -13,11 +13,12 @@
  * CopilotKit state channel would tell us — by design: state lives behind the
  * actions now, not in the channel.
  *
- * The person's own agent is a third caller and needs no polling: its tool
- * calls run in this page (`webmcp.tsx`) and go to `POST /gesture` as the
- * person's acts under its own actor, or to `POST /invoke` for the model's
- * verbs a person has no gesture for, and the view comes back with the
- * outcome as it does for a gesture.
+ * The person's own agent is a third caller, and may act with no page
+ * involved: its tools are the MCP server's (`agent/delegate.py`), called
+ * from its own client or forwarded there from this page (`webmcp.tsx`). So
+ * while the model is idle the page asks only where the log stands
+ * (`GET /at`), which costs nothing to answer, and reads the view again when
+ * it has moved past what is shown.
  */
 
 import { useAgent } from "@copilotkit/react-core/v2";
@@ -510,6 +511,32 @@ export interface Outcome {
   state: unknown;
 }
 
+/** A tool on the person's own agent's MCP server (`agent/delegate.py`). */
+export interface DelegatedTool {
+  name: string;
+  description?: string;
+  inputSchema: Record<string, unknown>;
+  annotations?: { readOnlyHint?: boolean };
+  _meta?: { ui?: { resourceUri?: string; visibility?: ("model" | "app")[] } };
+}
+
+/** One JSON-RPC request to the MCP server, through the proxy. Stateless, so
+ * no session is opened first. */
+async function rpc(method: string, params: Record<string, unknown> = {}) {
+  const response = await fetch("/api/configurator/mcp", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  const body = await response.json();
+  if (!response.ok || body.error)
+    throw new Error(body.error?.message ?? body.error ?? `${method} failed`);
+  return body.result;
+}
+
 interface Configurator {
   view: View | null;
   grid: Grid;
@@ -522,14 +549,13 @@ interface Configurator {
    * Resolves to what the rules did and the digest it reads; rejects when the
    * request fails, so the agent hears it rather than a silent nothing. */
   act: (stimulus: Stimulus) => Promise<Outcome>;
-  /** The person's own agent calls one of the model's verbs a person has no
-   * gesture for. Resolves to what the tool returns a model; rejects when the
-   * engine refuses the call. */
-  invoke: (tool: string, args?: Record<string, unknown>) => Promise<Outcome>;
+  /** The person's own agent's tools, as the MCP server lists them. */
+  tools: () => Promise<DelegatedTool[]>;
+  /** Call one of them; resolves to what it returns once the canvas shows
+   * what it did, and rejects when the call fails. */
+  call: (name: string, args: Record<string, unknown>) => Promise<unknown>;
   /** The reading a model gets — `review` in `agent/tools.py` — for the person's own agent. */
   review: () => Promise<unknown>;
-  /** An issued offer's contents, as `open_quote` in `agent/tools.py` reads them. */
-  openQuote: (quote: string) => Promise<unknown>;
   label: (id: string | null) => string;
   /** The view as last shown, read when called rather than when rendered:
    * what a tool's result links to once the call has settled. */
@@ -605,6 +631,21 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [running, refresh]);
 
+  // While the model is idle, the person's own agent may still act.
+  useEffect(() => {
+    if (running) return;
+    const timer = setInterval(async () => {
+      try {
+        const response = await fetch("/api/configurator/at", { cache: "no-store" });
+        const { at } = await response.json();
+        if (typeof at === "number" && at > shown.current.at) void refresh();
+      } catch {
+        // The next tick asks again; `refresh` reports a server that is down.
+      }
+    }, 1500);
+    return () => clearInterval(timer);
+  }, [running, refresh]);
+
   const gesture = useCallback(async (stimulus: Stimulus) => {
     setBusy(true);
     const ticket = take();
@@ -661,24 +702,20 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     [show],
   );
 
-  const invoke = useCallback(
-    async (tool: string, args: Record<string, unknown> = {}) => {
+  const tools = useCallback(
+    async () => (await rpc("tools/list")).tools as DelegatedTool[],
+    [],
+  );
+
+  const call = useCallback(
+    async (name: string, args: Record<string, unknown>) => {
       setBusy(true);
-      const ticket = take();
       try {
-        const response = await fetch(
-          `/api/configurator/invoke?grid=${gridRef.current}`,
-          {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ tool, ...args }),
-          },
-        );
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error ?? "the call was refused");
-        show(ticket, body.view);
-        setError(null);
-        return { did: body.did, state: body.state } as Outcome;
+        const result = await rpc("tools/call", { name, arguments: args });
+        await refresh();
+        if (result.isError)
+          throw new Error(result.content?.[0]?.text ?? `${name} failed`);
+        return result.structuredContent ?? result.content;
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : String(cause));
         throw cause;
@@ -686,7 +723,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
         setBusy(false);
       }
     },
-    [show],
+    [refresh],
   );
 
   const review = useCallback(async () => {
@@ -695,16 +732,6 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error ?? "could not read the state");
-    return body as unknown;
-  }, []);
-
-  const openQuote = useCallback(async (quote: string) => {
-    const response = await fetch(
-      `/api/configurator/quotes/${encodeURIComponent(quote)}`,
-      { cache: "no-store" },
-    );
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.error ?? "could not read the quote");
     return body as unknown;
   }, []);
 
@@ -722,9 +749,9 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      view, grid, setGrid, busy, error, gesture, act, invoke, review, openQuote, label, latest,
+      view, grid, setGrid, busy, error, gesture, act, tools, call, review, label, latest,
     }),
-    [view, grid, busy, error, gesture, act, invoke, review, openQuote, label, latest],
+    [view, grid, busy, error, gesture, act, tools, call, review, label, latest],
   );
 
   return (

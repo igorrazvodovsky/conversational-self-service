@@ -5,20 +5,17 @@ in the same process as the graph and shares one engine with the model's tools.
 
 Two kinds of route and no more, because there are only two things to do:
 perform a root action, or read.  This is WYSIWID §6.4's split at the level of
-the wire — `POST /gesture` and `POST /invoke` are the action API, `GET /view`,
-`GET /digest` and `GET /quotes/<quote>` are the querying capability, and
-nothing writes through a read.  `GET /measures` is a read too, for whoever studies the sessions rather
+the wire — `POST /gesture` is the action API, `GET /view`, `GET /at` and `GET /digest`
+are the querying capability, and nothing writes through a read.  `GET /measures` is a read too, for whoever studies the sessions rather
 than either party in them (`docs/measures.md`).
 
-The person's own agent reaches the engine through both.  The page registers
-the person's gestures on `document.modelContext` (`src/components/
-configurator/webmcp.tsx`), and each lands at `/gesture` as
-`Copiloting/gesture` under the actor `browser`: the rules in
+The person's own agent reaches the engine through one more route,
+`/configurator/mcp`: the MCP server in `delegate.py`, each of whose tools is
+again a root action, under the actor `browser`, or a read.  It
+is the one table of the person's agent's tools; the page registers it on
+`document.modelContext` and forwards each call there.  The rules in
 `syncs/gestures.py` match on the act and not on the actor, so what the
-person's agent may do is what the person may do.  `propose` and `read`,
-which a person has no gesture for, land at `/invoke` under the same actor
-and fire the model's rules; its reads, `review` and `open_quote`, are
-`/digest` and `/quotes/<quote>`, and record nothing.  See
+person's agent may do is what the person may do.  See
 `docs/syncs/conduct.md`, "The person's own agent, acting as the person".
 
 Note what is absent: there is no endpoint per concept action.  A person's click
@@ -31,17 +28,36 @@ from __future__ import annotations
 
 import os
 import sys
+from contextlib import asynccontextmanager
 from typing import Any
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import Body, FastAPI, HTTPException  # noqa: E402
 
+from delegate import BROWSER, done, server  # noqa: E402
 from instance import SPEC, engine  # noqa: E402
 from measures import measures  # noqa: E402
-from views import canvas, digest, quoted  # noqa: E402
+from views import canvas, digest  # noqa: E402
 
-app = FastAPI()
+# The person's own agent's tools, over streamable HTTP.  Stateless and
+# answering in JSON, so each call is one request and one response, and the
+# frontend's proxy forwards it like any other route.
+delegated = server.streamable_http_app(
+    streamable_http_path="/configurator/mcp", stateless_http=True, json_response=True
+)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    async with server.session_manager.run():
+        yield
+
+
+app = FastAPI(lifespan=lifespan)
+# The route itself, not the sub-application mounted: a mount at the root
+# would stand in front of the LangGraph server's own routes.
+app.router.routes.extend(delegated.routes)
 
 
 @app.get("/configurator/view")
@@ -49,18 +65,20 @@ def view(grid: str = "today") -> dict[str, Any]:
     return canvas(engine, SPEC, grid=grid)
 
 
+@app.get("/configurator/at")
+def at() -> dict[str, Any]:
+    """Where the log stands, for a page to tell whether anything has happened
+    since its view without rendering one: the person's own agent may act
+    through the MCP server with no page involved."""
+    return {"at": engine.log.last_seq}
+
+
 @app.get("/configurator/digest")
 def review() -> dict[str, Any]:
-    """The reading the person's own agent gets: the projection `tools.py`'s
-    `review` returns to the in-app model, read as the person reads it."""
+    """The reading the person's own agent gets, as `review` in `delegate.py`
+    returns it without the links: what `converse` reads to see whether a
+    question waits on the person."""
     return digest(engine, SPEC, actor=BROWSER)
-
-
-@app.get("/configurator/quotes/{quote}")
-def open_quote(quote: str) -> dict[str, Any]:
-    """An issued offer's contents for the person's own agent: the read
-    `tools.py`'s `open_quote` returns to the in-app model, and the same one."""
-    return quoted(engine, SPEC, quote)
 
 
 @app.get("/configurator/measures")
@@ -71,46 +89,15 @@ def measured() -> dict[str, Any]:
     return measures(engine)
 
 
-# The person's own agent, as an actor: it performs the person's gestures and
-# the model's verbs a person has no gesture for.  Which rules apply is
-# a matter of the root action and its act or tool, not of this actor.
-BROWSER = "browser"
 ACTORS = {"person", BROWSER}
-
-
-@app.post("/configurator/invoke")
-def invoke(
-    stimulus: dict[str, Any] = Body(...), grid: str = "today"
-) -> dict[str, Any]:
-    """The person's own agent called one of the model's tools.
-
-    The body carries the tool's name under `tool` and its arguments beside
-    it, as `tools.py` passes them.  The response is what the tool returns to
-    a model — what the rules did, and the reading — with the view beside it
-    so the canvas can render from the action's own outputs.
-    """
-    stimulus.setdefault("spec", SPEC)
-    completion = engine.root("Copiloting", "invoke", actor=BROWSER, **stimulus)
-    return _outcome(completion, grid)
 
 
 def _outcome(completion: Any, grid: str) -> dict[str, Any]:
     """What the person's own agent hears back: what the rules did, in the
     shape `tools.py` hands the in-app model, and the reading afterwards."""
-    did = []
-    for record in engine.log.flow(completion.flow):
-        if record.kind != "completion" or record.concept == "Copiloting":
-            continue
-        entry: dict[str, Any] = {"action": f"{record.concept}/{record.action}"}
-        if record.via:
-            entry["by rule"] = record.via
-        error = (record.output or {}).get("error")
-        if error:
-            entry["refused"] = error
-        did.append(entry)
     return {
         "flow": completion.flow,
-        "did": did,
+        "did": done(completion),
         "state": digest(engine, SPEC, actor=BROWSER),
         "view": canvas(engine, SPEC, grid=grid),
     }
@@ -130,9 +117,9 @@ def gesture(
     intensity somebody is looking at is not something they did, and it has no
     business in the action log.
 
-    `actor` is `browser` when the person's own agent performed it, and the
-    response is then what `/invoke` returns: what the rules did, and the
-    digest it reads.
+    `actor` is `browser` when the person's own agent performed it through the
+    page itself — `converse` saying something in the chat — and the response
+    is then what a tool in `delegate.py` returns, with the view beside it.
     """
     if actor not in ACTORS:
         raise HTTPException(status_code=400, detail=f"no actor {actor}")

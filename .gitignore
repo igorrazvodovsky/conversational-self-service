@@ -57,3 +57,5 @@ agent/.journal/
 .scratch/
 .agents
 skills-lock.json
+# The MCP Apps views, built from src/apps/ (scripts/build-apps.mjs)
+agent/apps/

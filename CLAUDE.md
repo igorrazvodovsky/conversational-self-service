@@ -93,10 +93,11 @@ layer beside the agent.
 │   │   │   ├── life.ts                   # the stages of the lift's life, and the catalogue's families read against them
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
 │   │   │   ├── address.tsx               # every item's address, and links between them
-│   │   │   ├── webmcp.tsx                # the person's gestures, registered for their own agent (WebMCP)
+│   │   │   ├── webmcp.tsx                # the person's agent's tools, read from the MCP server and registered on the page (WebMCP)
 │   │   │   └── variables.tsx             # an answer and what it forced, a row that follows, an open row
 │   │   ├── example-layout/               # the artifact panel (the specification or the quotes, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features
+│   ├── apps/                             # the MCP Apps views: the specification and an offer, in the person's own client
 │   └── hooks/
 ├── agent/
 │   ├── concepts/          # one module per concept — MSM §5.2.1
@@ -106,7 +107,9 @@ layer beside the agent.
 │   ├── wiring.py          # discovers concepts, wires rules, boots with the catalogue
 │   ├── views.py           # the read side (WYSIWID §6.4) — invokes nothing
 │   ├── measures.py        # what the case's plan counts, read off the log — shown to neither party
-│   ├── webapp.py          # POST /gesture, POST /invoke, GET /view, GET /digest, GET /quotes/<quote>, GET /measures — mounted by langgraph.json
+│   ├── webapp.py          # POST /gesture, GET /view, GET /at, GET /digest, GET /measures, and /mcp — mounted by langgraph.json
+│   ├── delegate.py        # the person's own agent's tools, as an MCP server, with the MCP Apps views
+│   ├── apps/              # the views, built from src/apps/ by `npm run build:apps`
 │   ├── tools.py           # the model's tools
 │   ├── hearing.py         # the chat message and its attachments, as a person's `say` and `file` gestures
 │   ├── instance.py        # the one engine every actor shares
@@ -145,10 +148,12 @@ comments is ordinary maintenance.
 
 Whose agent it is decides the column, not where it runs. The model is the
 seller's assistant, in the page. The person's agent is one the person brings,
-such as a WebMCP-capable browser or Claude Desktop through the relay. It finds the
-person's gestures registered on `document.modelContext`, performs them as
+such as a WebMCP-capable browser or a chat client the person adds the
+configurator's MCP server to. It finds the person's gestures as that server's
+tools, or registered on the page's `document.modelContext`, performs them as
 `Copiloting.gesture` under its own actor, and the person's rules decide what
-follows. How much the person delegates is theirs to set, in their own agent.
+follows. Where the client renders MCP Apps, the specification and the offer
+come with views, and a gesture the person makes in one is theirs, by hand. How much the person delegates is theirs to set, in their own agent.
 
 |  | person | model | person's agent |
 |---|---|---|---|
@@ -225,12 +230,34 @@ The specification survives a restart: the action log is kept in
 `agent/.journal/actions.jsonl` (`AGENT_JOURNAL` moves it) and replayed at boot.
 `npm run reset:agent` deletes it, which starts over.
 
+The person's own agent's tools are an MCP server at
+`http://localhost:8123/configurator/mcp` (streamable HTTP, stateless,
+`agent/delegate.py`). Results link back to the page at `CONFIGURATOR_URL`
+(by default `http://localhost:3000`). Claude Code adds it with
+`claude mcp add --transport http configurator http://localhost:8123/configurator/mcp`;
+a client that speaks only stdio reaches it through `mcp-remote`:
+
+```json
+"configurator": {
+  "command": "<npx>",
+  "args": ["mcp-remote", "http://localhost:8123/configurator/mcp"]
+}
+```
+
+`review` and `open_quote` carry MCP Apps views, built from `src/apps/` into
+`agent/apps/` by `npm run build:apps` (which `npm run dev` and `npm run build`
+run first); a client that does not render MCP Apps gets the same result as
+text.
+
 WebMCP needs Chrome 149 or later with `chrome://flags/#enable-webmcp-testing`
 enabled (or the origin trial; headless, `--enable-features=WebMCPTesting`).
 Chrome's Model Context Tool Inspector then lists the tools the page registers
-and can call them; from the console, `document.modelContext.getTools()`.
+and can call them; from the console, `document.modelContext.getTools()`. The
+page registers the server's tools, forwarding each call there, and adds
+`converse` and `listen`, which run in its own conversation.
 
-A desktop MCP client reaches the same tools through the MCP-B local relay:
+A desktop MCP client can also reach the tab's tools, `converse` among them,
+through the MCP-B local relay:
 the layout loads `@mcp-b/webmcp-local-relay`'s embed script (served by
 `src/app/webmcp-relay/[file]/route.ts`), which forwards the tab's tools over a
 localhost WebSocket to the relay, and the relay is an MCP server over stdio.
