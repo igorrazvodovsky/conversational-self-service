@@ -14,9 +14,15 @@
  * another way. See `docs/syncs/conduct.md`, "Asking, and
  * waiting for the answer".
  *
- * Words typed in the composer while the question waits are a reply to it,
- * not a new turn: the transport refuses a new run while an interrupt is
- * open. `useAnswerInWords` routes them.
+ * The model asks one other question the same way: who a quote is for, when
+ * the person's name or the job's site is all a quote lacks. Its card links to
+ * the addressee on the quote surface rather than holding the fields, and the
+ * wait ends when they are recorded there, by the person's agent, or by the
+ * model from a reply ("Asking who the quote is for").
+ *
+ * Words typed in the composer while either question waits are a reply to
+ * it, not a new turn: the transport refuses a new run while an interrupt is
+ * open. `ConfiguratorChatView` routes them.
  */
 
 import {
@@ -31,7 +37,7 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import { MessageCircleQuestionIcon } from "lucide-react";
+import { ArrowRightIcon, MessageCircleQuestionIcon } from "lucide-react";
 import {
   CopilotChatView,
   useCopilotChatConfiguration,
@@ -40,8 +46,13 @@ import {
 } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
+import { address, goTo } from "@/components/configurator/address";
 import { Answer, useAnswerName } from "@/components/configurator/question";
-import { useConfigurator, type Question } from "@/components/configurator/provider";
+import {
+  useConfigurator,
+  type AskedAddressee,
+  type Question,
+} from "@/components/configurator/provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -49,6 +60,12 @@ import { Button } from "@/components/ui/button";
 function useConflict(): Question | undefined {
   const { view } = useConfigurator();
   return view?.questions.find((q) => q.about === "conflict");
+}
+
+/** The question of who the quote is for, as the assistant last put it. */
+function useAddressee(): AskedAddressee | null | undefined {
+  const { view } = useConfigurator();
+  return view?.quotable.asked;
 }
 
 /**
@@ -172,9 +189,72 @@ function WaitingQuestion({
   );
 }
 
+const FIELD = { name: "your name", site: "the site" } as const;
+
+/** Who the quote is for, waiting in the chat. The fields are on the quote
+ * surface, where they are edited whether or not anybody asked; the card
+ * links there. */
+function WaitingAddressee({
+  message,
+  resolve,
+}: {
+  message?: string;
+  resolve: () => Promise<unknown>;
+}) {
+  const waiting = useContext(Waiting);
+  const asked = useAddressee();
+  const status = asked?.status ?? "withdrawn";
+  const resumed = useRef(false);
+
+  useEffect(() => {
+    if (!waiting) return;
+    waiting.mounted.current = true;
+    return () => {
+      waiting.mounted.current = false;
+    };
+  }, [waiting]);
+
+  // Recorded, replied to, or no longer all a quote lacks: let the turn go on.
+  useEffect(() => {
+    if (status === "awaiting" || resumed.current) return;
+    resumed.current = true;
+    void resolve();
+  }, [status, resolve]);
+
+  if (!asked || status !== "awaiting") return <></>;
+  const lacking = asked.lacking.map((field) => FIELD[field]).join(" and ");
+
+  return (
+    <Alert className="my-2" role="region" aria-labelledby="waiting-question">
+      <MessageCircleQuestionIcon />
+      <AlertTitle id="waiting-question" className="text-sm">The assistant is waiting on you</AlertTitle>
+      <AlertDescription>
+        <p>{message ?? asked.text}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-foreground">
+          <Button size="sm" variant="outline" onClick={() => goTo(address.addressee)}>
+            Fill in {lacking}
+            <ArrowRightIcon />
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            or answer in your own words below
+          </span>
+        </div>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 /** What the person sees of an answered question in the transcript, from
  * what `ask` returned: the record survives the card and a reload. */
-function AskedRecord({ question, result }: { question?: string; result?: string }) {
+function AskedRecord({
+  question,
+  addressee,
+  result,
+}: {
+  question?: string;
+  addressee: boolean;
+  result?: string;
+}) {
   const answerName = useAnswerName();
   let outcome: { status?: string; given?: string; replied?: string; by?: string } = {};
   try {
@@ -183,7 +263,11 @@ function AskedRecord({ question, result }: { question?: string; result?: string 
     outcome = {};
   }
   const answer =
-    outcome.status === "chosen"
+    addressee && outcome.status === "recorded"
+      ? "Answered on the quote surface"
+      : addressee && outcome.status === "withdrawn"
+        ? "No longer all a quote lacks"
+        : outcome.status === "chosen"
       ? `Answered: give up ${answerName(outcome.given ?? "")}`
       : outcome.status === "declined"
         ? "Left for now"
@@ -211,32 +295,46 @@ export function useWaitingQuestion() {
   useRenderTool(
     {
       name: "ask",
-      parameters: z.object({ question: z.string() }),
+      parameters: z.object({
+        question: z.string(),
+        missing: z.array(z.string()).optional(),
+      }),
       render: ({ status, parameters, result }) =>
         status === "complete" ? (
-          <AskedRecord question={parameters?.question} result={result} />
+          <AskedRecord
+            question={parameters?.question}
+            addressee={!!parameters?.missing}
+            result={result}
+          />
         ) : (
           <></>
         ),
     },
     [],
   );
+  // One hook for both questions: CopilotKit holds a single interrupt
+  // element, and a second hook would take it from the first.
   useInterrupt({
     enabled: (event) =>
-      (event.value as { reason?: string } | undefined)?.reason === "conflict",
-    render: ({ interrupt, resolve, cancel }) => (
-      <WaitingQuestion
-        message={interrupt?.message}
-        resolve={() => resolve({})}
-        cancel={() => cancel()}
-      />
-    ),
+      ["conflict", "addressee"].includes(
+        (event.value as { reason?: string } | undefined)?.reason ?? "",
+      ),
+    render: ({ event, interrupt, resolve, cancel }) =>
+      (event.value as { reason?: string }).reason === "addressee" ? (
+        <WaitingAddressee message={interrupt?.message} resolve={() => resolve({})} />
+      ) : (
+        <WaitingQuestion
+          message={interrupt?.message}
+          resolve={() => resolve({})}
+          cancel={() => cancel()}
+        />
+      ),
   });
 }
 
 /**
- * The chat view, with one change: words submitted while the assistant's
- * question awaits an answer are the person's reply to it, whether typed or
+ * The chat view, with one change: words submitted while a question the
+ * assistant put awaits an answer are the person's reply to it, whether typed or
  * a suggestion picked. The reply is a gesture; the card then sees the
  * question replied to and resumes the turn. A suggestion sent as a message
  * would start a run the transport refuses while the interrupt is open.
@@ -244,8 +342,14 @@ export function useWaitingQuestion() {
 export function ConfiguratorChatView(props: ComponentProps<typeof CopilotChatView>) {
   const { gesture } = useConfigurator();
   const question = useConflict();
+  const addressee = useAddressee();
   const waiting = useContext(Waiting);
-  const awaiting = question?.asked?.status === "awaiting" ? question.asked : null;
+  const awaiting =
+    question?.asked?.status === "awaiting"
+      ? question.asked
+      : addressee?.status === "awaiting"
+        ? addressee
+        : null;
 
   const submit = props.onSubmitMessage;
   const onSubmitMessage = useCallback(

@@ -29,9 +29,10 @@ import re
 from datetime import date
 from typing import Any
 
-from engine import Engine
+from engine import Engine, States
 from wiring import BASIS, FACETS, WORKSPACE
 from syncs import readings
+from syncs.gestures import unaddressed
 
 # Which rule put an assertion on record, in words.  Three sentences, three
 # rules, and no field anywhere recording which: the difference between them is
@@ -265,6 +266,29 @@ def put_question(engine: Engine, request: Any) -> dict[str, Any] | None:
         if any(at > seq for at, _ in choices)
     }
     return readings.asked(conversing, engine.state("Deciding"), request, again, since)
+
+
+def put_addressee(engine: Engine, spec: str) -> dict[str, Any] | None:
+    """The question the model last put about who the quote is for, and where
+    it stands: Conduct's *awaits an answer*, read against what the
+    specification lacks for a quote now.  Shared by the canvas and the
+    model's `ask` tool."""
+    return readings.asked_for_addressee(
+        engine.state("Conversing"), spec, unaddressed(States(engine.concepts), spec)
+    )
+
+
+def _by(engine: Engine, put: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Whose each reply to a question was: the person's own agent replies as
+    the person, under its own actor, and the log says which."""
+    if put is None:
+        return None
+    actors = _speakers(engine, {r["utterance"] for r in put["replies"]})
+    put["replies"] = [
+        {**r, "by": "your agent" if actors.get(r["utterance"]) == BROWSER else "you"}
+        for r in put["replies"]
+    ]
+    return put
 
 
 def _speakers(engine: Engine, utterances: set[str]) -> dict[str, str]:
@@ -766,13 +790,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         # not been put to anybody.
         if put is not None and put["status"] == "overtaken":
             put = None
-        if put is not None:
-            actors = _speakers(engine, {r["utterance"] for r in put["replies"]})
-            put["replies"] = [
-                {**r, "by": "your agent" if actors.get(r["utterance"]) == BROWSER else "you"}
-                for r in put["replies"]
-            ]
-        q["asked"] = put
+        q["asked"] = _by(engine, put)
 
     # What each answer to a conflict would cost — the ripple and both deltas,
     # per option, so the person chooses with the consequences in view rather
@@ -881,6 +899,9 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         quotable = {"ok": False, "because": "no site for the lift"}
     else:
         quotable = {"ok": True, "because": "everything is settled, priced and addressed"}
+    # Who the quote is for, if the assistant asked: beside the reason, because
+    # it is not a `Deciding` request and has no place among the questions.
+    quotable["asked"] = _by(engine, put_addressee(engine, spec))
 
     return {
         "spec": spec,

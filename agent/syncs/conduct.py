@@ -24,7 +24,7 @@ from typing import Any, Callable
 from engine import Completion, Invocation, States, Sync
 from . import readings
 
-from .gestures import DETAILS, offer
+from .gestures import ADDRESSEE, DETAILS, offer, unaddressed
 
 WORKSPACE = "workspace"
 
@@ -542,6 +542,38 @@ def _the_model_may_ask_the_person(c: Completion, states: States) -> list[Invocat
     ]
 
 
+def _the_model_may_ask_who_the_quote_is_for(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """`where { ?s lacks only ?f for a quote }`: the question is put only
+    when the name or the site is all that stands between the specification
+    and a quote, and names exactly what is missing.  The fields are put in
+    `ADDRESSEE`'s order, so the same question asked twice is about the same
+    matter."""
+    if c.output.get("tool") != "ask" or c.output.get("request") is not None:
+        return []
+    spec = c.output.get("spec")
+    missing = c.output.get("missing")
+    text = c.output.get("text")
+    if not spec or not isinstance(missing, list) or not text:
+        return []
+    lacking = unaddressed(states, spec)
+    if not lacking or set(missing) != set(lacking):
+        return []
+    return [
+        Invocation(
+            "Conversing",
+            "say",
+            {
+                "party": MODEL,
+                "text": text,
+                "to": PERSON,
+                "about": {"spec": spec, "missing": [f for f in ADDRESSEE if f in lacking]},
+            },
+        )
+    ]
+
+
 def _a_person_replies_to_a_question(c: Completion, _: States) -> list[Invocation]:
     """A reply in words, about the question as it was put.  It settles
     nothing: the question stays pending until a choice, a decline or the
@@ -681,12 +713,18 @@ rules = [
         _tool("unframe", "Framing", "unframe", lens=WORKSPACE),
     ),
     # The floor: the model may put a question the rules already asked, as it
-    # stands, and the person may reply to it in words.  Neither settles it;
+    # stands, or ask who the quote is for when that is all a quote lacks, and
+    # the person may reply to either in words.  Neither settles it;
     # no rule here carries an invocation to `Deciding`.
     Sync(
         "TheModelMayAskThePerson",
         ("Copiloting", "invoke"),
         _the_model_may_ask_the_person,
+    ),
+    Sync(
+        "TheModelMayAskWhoTheQuoteIsFor",
+        ("Copiloting", "invoke"),
+        _the_model_may_ask_who_the_quote_is_for,
     ),
     Sync(
         "APersonRepliesToAQuestion",

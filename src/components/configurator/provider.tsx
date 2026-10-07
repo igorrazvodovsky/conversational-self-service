@@ -244,6 +244,21 @@ export interface Asked {
     | "overtaken";
 }
 
+/** Who the quote is for, as the assistant asked it: `awaiting` while the
+ * specification lacks only some of the fields asked for and nobody has
+ * spoken since; `recorded` once none is missing; `withdrawn` once it lacks
+ * something else as well (`docs/syncs/conduct.md`, "Asking who the quote
+ * is for"). */
+export interface AskedAddressee {
+  utterance: string;
+  text: string;
+  about: { spec: string; missing: ("name" | "site")[] };
+  replies: { utterance: string; text: string; by: "you" | "your agent" }[];
+  status: "awaiting" | "replied" | "passed" | "recorded" | "withdrawn";
+  /** What is still missing of what was asked. */
+  lacking: ("name" | "site")[];
+}
+
 export interface Foreseen {
   variable: string;
   option: string;
@@ -477,7 +492,7 @@ export interface View {
   /** The specification read as a quote requested now would freeze it;
    * `complete` is false while anything is open or the term presumed. */
   now: Side & { complete: boolean };
-  quotable: { ok: boolean; because: string };
+  quotable: { ok: boolean; because: string; asked?: AskedAddressee | null };
   customer: Party;
   seller: Party;
   project: { title: string; site: string };

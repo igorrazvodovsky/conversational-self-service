@@ -19,6 +19,8 @@
  * it, which the live address of the same variable does not reach; and
  * `#quote:<id>:event:<key>`, a milestone of its programme.
  *
+ * Who the proposal is for is at `#addressee`, on the quote surface.
+ *
  * Two offers compared are a place too: `#compare:<id>:<other>`, where the
  * other is a quote or `now`, the specification as it stands. A line of the
  * comparison is `#compare:<id>:<other>:variable:<name>` or
@@ -56,6 +58,7 @@ export const address = {
   source: (kind: string, id: string) => `source:${kind}:${id}`,
   item: (kind: string, id: string, item: string) => `source:${kind}:${id}:item:${item}`,
   question: (about: string) => `question:${about}`,
+  addressee: "addressee",
   turn: (flow: string) => `turn:${flow}`,
   said: (utterance: string) => `said:${utterance}`,
   quote: (quote: string, kind: "variable" | "clause" | "event", id: string) =>
@@ -101,7 +104,8 @@ export function useTargeted(id: string): boolean {
 /** The surface an address is on; none for the chat, which is always there. */
 export function surfaceOf(id: string): Surface | null {
   if (id.startsWith("said:") || id.startsWith("turn:")) return null;
-  if (id.startsWith("quote:") || id.startsWith("compare:")) return "quote";
+  if (id.startsWith("quote:") || id.startsWith("compare:") || id === address.addressee)
+    return "quote";
   return "canvas";
 }
 

@@ -34,6 +34,44 @@ def today() -> str:
     return date.today().isoformat()
 
 
+# The two conditions of `APersonRequestsAQuote` that address the proposal, in
+# the order `quotable` gives its reason in.
+ADDRESSEE = ("name", "site")
+
+
+def unaddressed(states: States, spec: str) -> list[str] | None:
+    """`?s lacks only ?f for a quote` (`docs/syncs/conduct.md`), with `?f`
+    possibly empty: every condition of `APersonRequestsAQuote` holds of the
+    specification but the two that address it, and these of those two fail,
+    in `ADDRESSEE`'s order.  None when another condition fails.  `offer` reads
+    it too, so the two cannot drift apart."""
+    constraining = states["Constraining"].state()
+    asserting = states["Asserting"].state()
+    settled = constraining["settled"].get(spec, {})
+    if any(variable not in settled for variable in constraining["range"]):
+        return None
+    assumed = constraining["assumed"].get(spec, {})
+    inclined = constraining["inclined"].get(spec, {})
+    refused = constraining["refused"].get(spec, {})
+    asserted = asserting["asserted"].get(spec, {})
+    # `?v -> ?o is met in ?s`, as Propagation defines it: assumed, or inclined
+    # with nothing refused.  A value held softly counts as met whether
+    # honoured or yielded: a preference that gave way is not a requirement
+    # the offer fails.
+    if any(
+        assumed.get(v) != o and not (inclined.get(v) == o and not refused.get(v))
+        for v, o in asserted.items()
+    ):
+        return None
+    if not states["Pricing"].total(settled.values(), BASIS)["complete"]:
+        return None
+    given = {
+        "name": readings.profile(states["Profiling"].state(), PERSON).get("name"),
+        "site": states["Naming"].state()["site"].get(spec, ""),
+    }
+    return [field for field in ADDRESSEE if not given[field]]
+
+
 def offer(states: States, spec: str) -> dict[str, Any] | None:
     """The `where` of `APersonRequestsAQuote`, shared with the model's rule.
 
@@ -54,32 +92,15 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
     any of them next month does not change a quote issued this month.  See
     `docs/concepts/quoting.md`.
     """
+    if unaddressed(states, spec) != []:
+        return None
     constraining = states["Constraining"].state()
     asserting = states["Asserting"].state()
     settled = constraining["settled"].get(spec, {})
-    if any(variable not in settled for variable in constraining["range"]):
-        return None
-    assumed = constraining["assumed"].get(spec, {})
-    inclined = constraining["inclined"].get(spec, {})
-    refused = constraining["refused"].get(spec, {})
-    asserted = asserting["asserted"].get(spec, {})
-    # `?v -> ?o is met in ?s`, as Propagation defines it: assumed, or inclined
-    # with nothing refused.  A value held softly counts as met whether
-    # honoured or yielded: a preference that gave way is not a requirement
-    # the offer fails.
-    if any(
-        assumed.get(v) != o and not (inclined.get(v) == o and not refused.get(v))
-        for v, o in asserted.items()
-    ):
-        return None
     total = states["Pricing"].total(settled.values(), BASIS)
-    if not total["complete"]:
-        return None
     customer = readings.profile(states["Profiling"].state(), PERSON)
     naming = states["Naming"].state()
     site = naming["site"].get(spec, "")
-    if not customer.get("name") or not site:
-        return None
     # The clauses that hold for what is settled: an option's scope of supply
     # is printed only in an offer that carries the option.
     stipulated = readings.terms(

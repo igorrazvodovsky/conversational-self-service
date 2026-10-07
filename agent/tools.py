@@ -61,11 +61,12 @@ from langchain.tools import tool
 from langchain_core.tools import InjectedToolCallId
 from langgraph.types import interrupt
 
-from engine import Record
+from engine import Record, States
 from hearing import follow, heard, turn
 from instance import SPEC, engine
 from syncs import readings
-from views import detailed, digest, filed, put_question, quoted
+from syncs.gestures import unaddressed
+from views import detailed, digest, filed, put_addressee, put_question, quoted
 
 
 def _did(completion: Record) -> list[dict[str, Any]]:
@@ -410,16 +411,33 @@ def propose(measure: Literal["cost", "carbon"] = "cost") -> dict[str, Any]:
 def quote() -> dict[str, Any]:
     """Ask for a quote on the specification as it stands.
 
-    One is issued to the person only when every variable is settled and nothing
-    asserted is unmet; otherwise nothing happens, and `quotable` in the result
-    says why. The quote freezes the values and the price as they are now. You
-    cannot accept it — only the person can, on the canvas — and saying that the
-    lift has been ordered would be false.
+    One is issued to the person only when every variable is settled, nothing
+    asserted is unmet, and the person's name and the site are on record;
+    otherwise nothing happens, and `quotable` in the result says why. The
+    quote freezes the values and the price as they are now. You cannot accept
+    it — only the person can, on the canvas — and saying that the lift has
+    been ordered would be false.
     """
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="quote", spec=SPEC,
     )
-    return _outcome(completion)
+    outcome = _outcome(completion)
+    if not any(e["action"] == "Quoting/quote" for e in outcome["did"]):
+        outcome["quotable"] = digest(engine, SPEC)["quotable"]
+        lacking = _lacking()
+        if lacking:
+            outcome["next"] = (
+                f"only the {' and the '.join(lacking)} stand in the way: call `ask` "
+                f"with missing={lacking}, rather than asking in the reply, and the "
+                "turn waits for them"
+            )
+    return outcome
+
+
+def _lacking() -> list[str] | None:
+    """What the specification lacks for a quote, when it lacks only who the
+    quote is for: `?s lacks only ?f for a quote`, as the rule reads it."""
+    return unaddressed(States(engine.concepts), SPEC)
 
 
 @tool
@@ -539,7 +557,7 @@ def unframe() -> dict[str, Any]:
     return _outcome(completion)
 
 
-# The one question `ask` may put so far: a conflict on the specification.
+# The request a conflict on the specification is asked as.
 CONFLICT = {"spec": SPEC, "about": "conflict"}
 
 
@@ -626,25 +644,142 @@ def _answered(put: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _quoted_since(utterance: str) -> bool:
+    """Whether a quote was issued after the question was put: the person may
+    have requested it themselves once the name was in."""
+    said = None
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if record.kind != "completion" or "error" in (record.output or {}):
+            continue
+        if record.concept == "Conversing" and (record.output or {}).get("utterance") == utterance:
+            said = record.seq
+        elif said is not None and record.concept == "Quoting" and record.action == "quote":
+            return True
+    return False
+
+
+def _addressed(put: dict[str, Any]) -> dict[str, Any]:
+    """What ended the wait for the addressee, in words the model can act on."""
+    status = put["status"]
+    if status == "recorded":
+        if _quoted_since(put["utterance"]):
+            return {"answered": "the name and the site are on record and a quote has "
+                    "been issued since; say so, and do not request another"}
+        return {"answered": "the name and the site are on record: call `quote` now, "
+                "which is what the person asked for"}
+    if status == "withdrawn":
+        return {"answered": "the specification now lacks more than who the quote is "
+                "for; `quotable` in `review` says what"}
+    if status == "passed":
+        return {"answered": "the person talked about something else; the quote still "
+                "lacks who it is for — do not press it"}
+    reply = put["replies"][-1]
+    source = _reply(reply["utterance"])
+    by = "the person"
+    if source is not None:
+        flow, actor = source
+        follow(flow, reply["utterance"])
+        if actor == "browser":
+            by = "the person's own agent"
+    return {
+        "replied": reply["text"],
+        "by": by,
+        "still_missing": put["lacking"],
+        "answered": f"{by} replied in words. If the reply gives the name, record it "
+        "with `introduce`; if it gives the site, record it with `entitle`; then call "
+        "`quote`. Record only what they said. If it gives neither, answer what they "
+        "said, and do not ask again in this turn",
+    }
+
+
+def _ask_who_the_quote_is_for(
+    question: str, missing: list[str], tool_call_id: str
+) -> dict[str, Any]:
+    if not _already_asked(tool_call_id):
+        lacking = _lacking()
+        if lacking is None:
+            return {
+                "refused": "the specification lacks more than who the quote is for, "
+                "and that comes first: `quotable` in `review` says what",
+            }
+        if not lacking:
+            return {"refused": "the name and the site are on record: call `quote`"}
+        before = put_addressee(engine, SPEC)
+        if before is not None and before["status"] == "awaiting":
+            return {"refused": "already asked, and still waiting on the person"}
+        if before is not None and before["status"] in {"replied", "passed"}:
+            conversing = engine.state("Conversing")
+            last = next(
+                (u for u in reversed(conversing["utterances"])
+                 if conversing["by"].get(u) == "person"),
+                None,
+            )
+            if last is not None and conversing["about"].get(last) == before["about"]:
+                return {
+                    "refused": "the person answered this question in words in this "
+                    "turn: answer what they said instead of asking again",
+                }
+        completion = engine.root(
+            "Copiloting", "invoke", actor="model", flow=turn(), tool="ask",
+            spec=SPEC, missing=list(dict.fromkeys(missing)), text=question,
+            call=tool_call_id,
+        )
+        if not any(entry["action"] == "Conversing/say" for entry in _did(completion)):
+            return {
+                "refused": f"the quote lacks the {' and the '.join(lacking)}: ask "
+                f"with missing={lacking}",
+            }
+    put = put_addressee(engine, SPEC)
+    if put is None:
+        return {"refused": "not asked"}
+    if put["status"] == "awaiting":
+        # As for a conflict: the chat resumes the run once the view shows the
+        # question no longer awaits an answer.
+        interrupt(
+            {
+                "reason": "addressee",
+                "message": put["text"],
+                "toolCallId": tool_call_id,
+                "question": put["about"],
+            }
+        )
+        put = put_addressee(engine, SPEC) or put
+    return {"status": put["status"], **_addressed(put), "state": digest(engine, SPEC)}
+
+
 @tool
 def ask(
     question: str,
-    options: list[str],
     tool_call_id: Annotated[str, InjectedToolCallId],
+    options: list[str] | None = None,
+    missing: list[Literal["name", "site"]] | None = None,
 ) -> dict[str, Any]:
-    """Put the open conflict to the person, and wait for the answer.
+    """Put a question the turn cannot go past to the person, and wait for the answer.
 
-    `options` is the option ids the question offers to give up, exactly as
-    `review` lists them under the open conflict in `questions`, such as
-    `door_finish:glass`. Only that conflict can be asked: other values that
-    cannot be met wait under `unmet`, and come back as the question once it
-    is settled. `question` is what you ask, in one or two sentences, about
-    those options: which rule refuses what, and which assertion gives way.
-    The chat shows it with the canvas's answers and your turn waits until
-    the person chooses one, leaves it, or replies in words; then this
-    returns what happened. Call it last in a turn, once there is nothing
-    else to do before the answer. You cannot answer it yourself.
+    Two questions can be put, each naming its matter. Give exactly one of
+    `options` or `missing`.
+
+    The open conflict: `options` is the option ids the question offers to
+    give up, exactly as `review` lists them under the open conflict in
+    `questions`, such as `door_finish:glass`. Only that conflict can be
+    asked: other values that cannot be met wait under `unmet`, and come back
+    as the question once it is settled. `question` says, in one or two
+    sentences, which rule refuses what, and which assertion gives way.
+
+    Who the quote is for: `missing` is what a quote the person asked for
+    lacks and nothing else does, `name` (the person's), `site` (where the
+    lift goes), or both. `question` asks for them in a sentence. The chat
+    links to where they fill them in, and they may answer in words instead.
+
+    Your turn waits until the person answers, by a gesture or in words; then
+    this returns what happened. Call it last in a turn, once there is
+    nothing else to do before the answer. You cannot answer it yourself.
     """
+    if (options is None) == (missing is None):
+        return {"refused": "give exactly one of `options` (a conflict) or `missing` "
+                "(who the quote is for)"}
+    if missing is not None:
+        return _ask_who_the_quote_is_for(question, missing, tool_call_id)
     if not _already_asked(tool_call_id):
         open_ = next(
             (

@@ -7,7 +7,8 @@ the concepts expose their state and nothing else, and a record assembled from
 their relations is the reader's business, not theirs.  The definitions are in
 the sync notes: *a party's profile* and *the terms on a basis* in
 `docs/syncs/gestures.md`, and *the pending questions*, *held for a reason*
-and *awaits an answer* in `docs/syncs/conduct.md`.  The last is read by the
+and *awaits an answer*, for a conflict and for the quote's addressee, in
+`docs/syncs/conduct.md`.  The last is read by the
 canvas, the chat and the model's tool, and by no rule: no rule reads
 `Conversing`.
 
@@ -209,6 +210,64 @@ def asked(
         "replies": replies,
         "status": status,
         "chosen": chosen,
+    }
+
+
+def asked_for_addressee(
+    conversing: dict[str, Any], spec: str, lacking: list[str] | None
+) -> dict[str, Any] | None:
+    """The question the model last put about who a quote is for, and where
+    it stands: Conduct's *awaits an answer* for a matter `[ spec: ?s ;
+    missing: ?f ]`.  `lacking` is what the specification lacks for a quote
+    now, as `gestures.unaddressed` reads it, which the caller passes because
+    that reading is the rules'.
+
+    `status` is `awaiting` while the specification lacks only some of `?f`
+    and nobody has spoken since; otherwise `recorded` (nothing of `?f` is
+    missing any more), `withdrawn` (it lacks something else as well),
+    `replied` or `passed`, as for a conflict.  None when the model never
+    asked.
+    """
+    about = conversing["about"]
+    put = None
+    for utterance in conversing["utterances"]:
+        matter = about.get(utterance)
+        if (
+            conversing["by"].get(utterance) == "model"
+            and isinstance(matter, dict)
+            and matter.get("spec") == spec
+            and "missing" in matter
+        ):
+            put = utterance
+    if put is None:
+        return None
+    matter = about[put]
+    later = conversing["utterances"][conversing["utterances"].index(put) + 1 :]
+    replies = [
+        {"utterance": u, "text": conversing["text"][u]}
+        for u in later
+        if conversing["by"].get(u) == "person" and about.get(u) == matter
+    ]
+    moved_on = any(
+        conversing["by"].get(u) == "person" and about.get(u) != matter for u in later
+    )
+    if lacking == []:
+        status = "recorded"
+    elif lacking is None or not set(lacking) <= set(matter["missing"]):
+        status = "withdrawn"
+    elif replies:
+        status = "replied"
+    elif moved_on:
+        status = "passed"
+    else:
+        status = "awaiting"
+    return {
+        "utterance": put,
+        "text": conversing["text"][put],
+        "about": matter,
+        "replies": replies,
+        "status": status,
+        "lacking": lacking or [],
     }
 
 

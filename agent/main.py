@@ -208,8 +208,13 @@ How the configurator works, because it is not the usual kind:
   and never `frame` the canvas in place of answering it.
 - `introduce` and `entitle` record who the person is and where the lift is
   going, for the proposal's letterhead. Record only what they actually said;
-  never invent a name, a company or an address. If a quote is wanted and
-  `review` shows no customer name or no site, ask for them.
+  never invent a name, a company or an address. When a quote is wanted and
+  the name or the site is all that stands in the way (`quote` says so under
+  `next`), end the turn with `ask`, giving `missing`, rather than asking in
+  the reply: the person fills them in, or tells you, and your turn resumes
+  and requests the quote. If anything else stands in the way, that comes
+  first. `quotable.asked` in `review` is that question, and while its
+  status is `awaiting` it is not asked again.
 - `show` and `hide` change what the canvas shows beside each item — prices,
   carbon, why an option is ruled out, what taking a proposed value would
   settle and cost, the rules, the requirement a value

@@ -73,7 +73,16 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { addressable, compareOf, quoteKindOf, quoteOf, useHash } from "./address";
+import {
+  address,
+  addressable,
+  compareOf,
+  quoteKindOf,
+  quoteOf,
+  targeted,
+  useHash,
+  useTargeted,
+} from "./address";
 import { Comparison, NOW } from "./comparison";
 import { CopyLink, READINGS, linkTo, setQuery, type Reading } from "./link";
 import { QuoteDocument, STANDING } from "./document";
@@ -115,6 +124,22 @@ function Addressee() {
   useEffect(() => {
     if (missing) setOpen(true);
   }, [missing]);
+  // Arrived at from the assistant's question in the chat: open, with the
+  // keyboard in the first field a quote still needs.
+  const isTarget = useTargeted(address.addressee);
+  const firstMissing = !customer.name ? "name" : !project.site ? "site" : null;
+  useEffect(() => {
+    if (!isTarget) return;
+    setOpen(true);
+    if (firstMissing)
+      setTimeout(
+        () =>
+          document
+            .querySelector<HTMLElement>(`#${address.addressee} [name="${firstMissing}"]`)
+            ?.focus({ preventScroll: true }),
+        0,
+      );
+  }, [isTarget, firstMissing]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -139,7 +164,12 @@ function Addressee() {
   };
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="mb-6">
+    <Collapsible
+      id={address.addressee}
+      open={open}
+      onOpenChange={setOpen}
+      className={cn("mb-6", addressable, isTarget && targeted)}
+    >
       <Card size="sm">
         <CardHeader>
           <CardDescription className="uppercase tracking-wide">
