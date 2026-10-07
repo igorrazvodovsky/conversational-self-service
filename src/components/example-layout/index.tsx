@@ -9,6 +9,7 @@ import {
 } from "./chat-surface";
 import { RefetchWhenRunEnds, useConversations } from "./conversation-menu";
 import { CanvasAnnouncer, RunAnnouncer } from "./announcer";
+import { DiscussingProvider } from "@/components/chat/discussing";
 import { Split } from "./split";
 import { Lost, useFollowAddress } from "@/components/configurator/address";
 import { usePlace } from "@/components/configurator/link";
@@ -78,82 +79,90 @@ export function ExampleLayout({
   return (
     /* Two surfaces, no navigation column: the conversation list rides in the
        chat's header (`conversation-menu.tsx`). */
-    <div className="relative h-dvh w-full overflow-hidden bg-background">
-      <SkipLinks />
-      <Split
-        canvasPercent={canvasPercent}
-        artifact={
-          <>
-            {/* The panel's own header: the wordmark and the way around the
-                panel, surfaces and sections in one row. */}
-            <header className="flex min-h-9 shrink-0 flex-wrap items-center gap-x-4 border-b bg-frame pr-3 pl-3">
-              <div className="flex shrink-0 items-center gap-1.5">
-                {/* The seller's mark: a lift's doors under its up arrow.
-                    Northline is the catalogue's vendor, and the assistant
-                    is theirs. */}
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  className="size-5"
-                  aria-hidden
-                >
-                  <rect x="3" y="2" width="18" height="20" />
-                  <path d="M3 8H21M12 8V22M9 6L12 3.5L15 6" />
-                </svg>
-                <span className="text-base font-extrabold tracking-tight">
-                  Northline
-                </span>
-              </div>
-              <PanelNav />
-            </header>
-            <CanvasAnnouncer />
-            <Lost id={lost} />
-            {/* Named by the surface's `h1`; focus lands here when the person
-                changes surface (`panel-nav.tsx`) or skips to it. */}
-            <main
-              id="main"
-              aria-labelledby="surface-title"
-              className="min-h-0 flex-1"
-            >
-              {/* The surface's name, in every state it can be in — loading,
-                  empty, refused — for a screen reader; the eye has the nav. */}
-              <h1 id="surface-title" data-surface={mode} className="sr-only">
-                {TITLE[mode]}
-                {view ? ` of ${view.product}` : ""}
-              </h1>
-              {mode === "quote" ? quoteContent : appContent}
-            </main>
-          </>
-        }
-        chat={chatContent}
-        chatHeader={
-          <ChatSurfaceHeader
-            mode={chatSurface.mode}
-            onSelect={chatSurface.select}
-            onHide={chatSurface.hide}
-            onUnseenReply={chatSurface.noteReply}
-            conversations={conversations.conversations}
-            activeThreadId={conversations.activeThreadId}
-            onSelectConversation={conversations.select}
-            onNewConversation={conversations.startNew}
-            onConversationsOpen={(open) => open && conversations.refetch()}
-          />
-        }
-        mode={chatSurface.mode}
-      />
-      {chatSurface.mode === "hidden" && (
-        <ChatRestoreButton
-          unseenReplies={chatSurface.unseenReplies}
-          onClick={chatSurface.restore}
+    /* A conflict a gesture caused is offered a conversation from the canvas
+       and put in the chat (`chat/discussing.tsx`), so both sit inside. */
+    <DiscussingProvider
+      startNew={conversations.startNew}
+      select={conversations.select}
+      showChat={() => chatSurface.mode === "hidden" && chatSurface.restore()}
+    >
+      <div className="relative h-dvh w-full overflow-hidden bg-background">
+        <SkipLinks />
+        <Split
+          canvasPercent={canvasPercent}
+          artifact={
+            <>
+              {/* The panel's own header: the wordmark and the way around the
+                  panel, surfaces and sections in one row. */}
+              <header className="flex min-h-9 shrink-0 flex-wrap items-center gap-x-4 border-b bg-frame pr-3 pl-3">
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {/* The seller's mark: an up arrow, north, cut out of a
+                      solid tile so it holds at favicon size. Northline is the
+                      catalogue's vendor, and the assistant is theirs. */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="size-5"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M2 2H22V22H2ZM12 4.5L19 12H14.5V19.5H9.5V12H5Z"
+                    />
+                  </svg>
+                  <span className="text-base font-extrabold tracking-tight">
+                    Northline
+                  </span>
+                </div>
+                <PanelNav />
+              </header>
+              <CanvasAnnouncer />
+              <Lost id={lost} />
+              {/* Named by the surface's `h1`; focus lands here when the person
+                  changes surface (`panel-nav.tsx`) or skips to it. */}
+              <main
+                id="main"
+                aria-labelledby="surface-title"
+                className="min-h-0 flex-1"
+              >
+                {/* The surface's name, in every state it can be in — loading,
+                    empty, refused — for a screen reader; the eye has the nav. */}
+                <h1 id="surface-title" data-surface={mode} className="sr-only">
+                  {TITLE[mode]}
+                  {view ? ` of ${view.product}` : ""}
+                </h1>
+                {mode === "quote" ? quoteContent : appContent}
+              </main>
+            </>
+          }
+          chat={chatContent}
+          chatHeader={
+            <ChatSurfaceHeader
+              mode={chatSurface.mode}
+              onSelect={chatSurface.select}
+              onHide={chatSurface.hide}
+              onUnseenReply={chatSurface.noteReply}
+              conversations={conversations.conversations}
+              activeThreadId={conversations.activeThreadId}
+              onSelectConversation={conversations.select}
+              onNewConversation={conversations.startNew}
+              onConversationsOpen={(open) => open && conversations.refetch()}
+            />
+          }
+          mode={chatSurface.mode}
         />
-      )}
-      {/* Outside the chat, which is `inert` while hidden: a reply that
-          arrives then is the one most worth announcing. */}
-      <RunAnnouncer />
-      <RefetchWhenRunEnds refetch={conversations.refetch} />
-    </div>
+        {chatSurface.mode === "hidden" && (
+          <ChatRestoreButton
+            unseenReplies={chatSurface.unseenReplies}
+            onClick={chatSurface.restore}
+          />
+        )}
+        {/* Outside the chat, which is `inert` while hidden: a reply that
+            arrives then is the one most worth announcing. */}
+        <RunAnnouncer />
+        <RefetchWhenRunEnds refetch={conversations.refetch} />
+      </div>
+    </DiscussingProvider>
   );
 }
 

@@ -10,8 +10,8 @@
  * words — and is on record before the run resumes. So this card answers
  * with the canvas's own gestures, watches the view, and resumes the run as
  * soon as the question no longer awaits an answer, however that came about:
- * a click here or on the canvas, the person's own agent over WebMCP, or the
- * conflict going another way. See `docs/syncs/conduct.md`, "Asking, and
+ * a click here, the person's own agent over WebMCP, or the conflict going
+ * another way. See `docs/syncs/conduct.md`, "Asking, and
  * waiting for the answer".
  *
  * Words typed in the composer while the question waits are a reply to it,
@@ -37,8 +37,7 @@ import {
 } from "@copilotkit/react-core/v2";
 import { z } from "zod";
 
-import { address, To } from "@/components/configurator/address";
-import { Answer } from "@/components/configurator/question";
+import { Answer, useAnswerName } from "@/components/configurator/question";
 import { useConfigurator, type Question } from "@/components/configurator/provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -69,7 +68,8 @@ function WaitingQuestion({
   cancel: () => Promise<unknown>;
 }) {
   const waiting = useContext(Waiting);
-  const { gesture, busy, label } = useConfigurator();
+  const { gesture, busy } = useConfigurator();
+  const answerName = useAnswerName();
   const question = useConflict();
   const status = question?.asked?.status ?? "withdrawn";
   const resumed = useRef(false);
@@ -99,24 +99,20 @@ function WaitingQuestion({
       document.querySelector<HTMLElement>("#chat textarea")?.focus(),
     );
 
-  // A region, not an alert: the canvas shows the same question, and its
-  // arrival is announced once, politely (`example-layout/announcer.tsx`).
+  // A region, not an alert: the turn that asked it is on screen, and the
+  // canvas announces the conflict once, politely
+  // (`example-layout/announcer.tsx`).
   return (
     <Alert className="my-2" role="region" aria-labelledby="waiting-question">
       <MessageCircleQuestionIcon />
       <AlertTitle id="waiting-question" className="text-sm">The assistant is waiting on you</AlertTitle>
       <AlertDescription>
-        <p>
-          {message ?? question.asked?.text}{" "}
-          <To id={address.question(question.about)} className="text-xs">
-            The same question on the canvas
-          </To>
-        </p>
+        <p>{message ?? question.asked?.text}</p>
         <div className="mt-2 flex flex-col gap-2 text-foreground">
           {question.options.map((option, index) => (
             <Answer
               key={index}
-              name={label((option as { option: string }).option)}
+              name={answerName((option as { option: string }).option)}
               foreseen={question.foreseen?.[index]}
               disabled={busy}
               onClick={() =>
@@ -149,7 +145,7 @@ function WaitingQuestion({
 /** What the person sees of an answered question in the transcript, from
  * what `ask` returned: the record survives the card and a reload. */
 function AskedRecord({ question, result }: { question?: string; result?: string }) {
-  const { label } = useConfigurator();
+  const answerName = useAnswerName();
   let outcome: { status?: string; given?: string; replied?: string; by?: string } = {};
   try {
     outcome = result ? JSON.parse(result) : {};
@@ -158,7 +154,7 @@ function AskedRecord({ question, result }: { question?: string; result?: string 
   }
   const answer =
     outcome.status === "chosen"
-      ? `Answered: give up ${label(outcome.given ?? "")}`
+      ? `Answered: give up ${answerName(outcome.given ?? "")}`
       : outcome.status === "declined"
         ? "Left for now"
         : outcome.status === "withdrawn"

@@ -225,8 +225,8 @@ drop things it knows nothing about. Some of them fail silently:
   way, blue where an offer waits for them. Everything else stays in zinc.
   Nothing on the canvas is an error: a conflict is a question put to the
   person, and an unmet assertion is on record waiting for that answer, so
-  amber rather than red, and on the item itself the words say it and the
-  question links to the assertions it is between. A refusal in the log is an
+  amber rather than red. On the item itself the words say it, and the
+  question is put in the chat ([Moves](moves.md#the-conflict-as-the-worked-case)). A refusal in the log is an
   `outline` `Badge`, a permission working rather than a fault. `destructive`
   is kept for an action that destroys and for a request that failed.
 - Nothing is smaller than 12px.

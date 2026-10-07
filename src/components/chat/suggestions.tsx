@@ -71,28 +71,18 @@ export function suggestionsFor(view: View | null, label: Label): Suggestion[] {
 
   const out: Suggestion[] = [];
 
-  // A conflict is open: ask why, or answer it in words. The model withdraws
-  // the conceded assertion at the person's word (docs/moves.md, "The
-  // conflict, as the worked case").
+  // A conflict is open: ask why. The answers are the question's own, beside
+  // it in the chat (docs/moves.md, "The conflict, as the worked case").
   const conflict = questions.find((q) => q.about === "conflict");
   if (conflict) {
-    const headings = new Map(variables.map((v) => [v.name, v.heading]));
     const giving = conflict.options
       .map((o) => o as { variable: string; option: string })
-      .map((o) => ({
-        name: label(o.option),
-        of: (headings.get(o.variable) ?? o.variable).toLowerCase(),
-      }))
+      .map((o) => ({ name: label(o.option) }))
       .filter((o) => o.name);
     out.push({
       title: "Why can't these hold together?",
       message: `Why can't ${giving.map((o) => o.name).join(" and ")} hold together? Give me the rules' own sentences, and what would have to give.`,
     });
-    for (const { name, of } of giving.slice(0, 2))
-      out.push({
-        title: `Give up ${name}`,
-        message: `Give up the ${of} ${name}, and tell me what comes back.`,
-      });
   } else {
     // Refused without a question yet: the same argument.
     const unmet = variables.find((v) => v.standing === "unmet");

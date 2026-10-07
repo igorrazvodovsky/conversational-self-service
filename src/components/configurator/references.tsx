@@ -154,12 +154,12 @@ const OfferList = forwardRef<ListHandle, SuggestionProps<Offer, Reference>>(
               value={offer.key}
               onSelect={() => pick(offer)}
               onMouseMove={() => setSelected(items.indexOf(offer))}
-              className={!offer.possible ? "text-muted-foreground line-through" : undefined}
+              className={!offer.possible ? "text-muted-foreground" : undefined}
             >
               <ReferenceChip reference={offer} />
               <span className="truncate text-muted-foreground">{offer.under}</span>
               {!offer.possible ? (
-                <span className="ml-auto shrink-0 text-xs no-underline">ruled out</span>
+                <span className="ml-auto shrink-0 text-xs text-caution">conflicts</span>
               ) : null}
             </CommandItem>
           ))}

@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/collapsible";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { goTo, To } from "./address";
+import { address, addressable, goTo, targeted, To, useTargeted } from "./address";
+import { openConflict, useDiscuss } from "@/components/chat/discussing";
 import { money, tonnes } from "./format";
 import { LIFE, priced } from "./life";
 import { TONE, type Tone } from "./tone";
@@ -81,6 +82,8 @@ export function Standing() {
             </Button>
           </div>
         </div>
+
+        <Conflict />
 
         <Collapsible>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t pt-3 text-sm">
@@ -204,4 +207,52 @@ export function Standing() {
 
 function capital(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * A conflict, as a fact: which assertions cannot hold together, each linked
+ * to its line. The question of which gives way is put in the chat, where the
+ * person can ask why before choosing — in the turn that ran into it, or in a
+ * conversation opened for it from here (`docs/moves.md`, "The conflict, as
+ * the worked case").
+ */
+function Conflict() {
+  const { view, label } = useConfigurator();
+  const discuss = useDiscuss();
+  const question = openConflict(view);
+  const at = address.question("conflict");
+  const isTarget = useTargeted(at);
+  if (!question) return null;
+  const options = question.options as { variable: string; option: string }[];
+  const awaiting = question.asked?.status === "awaiting";
+  return (
+    <div
+      id={at}
+      className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t pt-3 text-sm ${addressable} ${isTarget ? targeted : ""}`}
+    >
+      <p>
+        {options.map((option, index) => (
+          <span key={option.option}>
+            {index > 0 ? (index === options.length - 1 ? " and " : ", ") : null}
+            <To id={address.variable(option.variable)}>{label(option.option)}</To>
+          </span>
+        ))}{" "}
+        cannot hold together.
+      </p>
+      <Button
+        variant="ghost"
+        size="xs"
+        className="ml-auto"
+        onClick={() =>
+          awaiting
+            ? document
+                .getElementById("waiting-question")
+                ?.scrollIntoView({ block: "center", behavior: "smooth" })
+            : discuss?.(question)
+        }
+      >
+        {awaiting ? "The assistant asked you in the chat" : "Discuss in the chat"}
+      </Button>
+    </div>
+  );
 }

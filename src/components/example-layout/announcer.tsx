@@ -14,6 +14,7 @@
  * a live region inserted together with its message is not announced.
  */
 
+import { openConflict } from "@/components/chat/discussing";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAgent } from "@copilotkit/react-core/v2";
 import { sections } from "@/components/configurator";
@@ -48,12 +49,13 @@ export function CanvasAnnouncer() {
   const latest = view?.turns.find(isNotice) ?? null;
   const movedKey = latest?.flow ?? "";
   const asked = view ? sections(view).questions.length : 0;
-  const seen = useRef({ movedKey, asked, ready: false });
+  const conflict = !!openConflict(view);
+  const seen = useRef({ movedKey, asked, conflict, ready: false });
 
   useEffect(() => {
     if (!view) return;
     const last = seen.current;
-    seen.current = { movedKey, asked, ready: true };
+    seen.current = { movedKey, asked, conflict, ready: true };
     // The state the page opened on is not news.
     if (!last.ready) return;
     const said: string[] = [];
@@ -65,8 +67,11 @@ export function CanvasAnnouncer() {
           ? "A question is waiting for you, under Asked of you."
           : `${asked} questions are waiting for you, under Asked of you.`,
       );
+    // The question itself is put in the chat; the canvas says where.
+    if (conflict && !last.conflict)
+      said.push("Some of what was asked cannot hold together; it can be discussed in the chat.");
     if (said.length) say(said.join(" "));
-  }, [view, movedKey, asked, latest, say]);
+  }, [view, movedKey, asked, conflict, latest, say]);
 
   return (
     <>

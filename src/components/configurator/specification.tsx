@@ -652,8 +652,14 @@ export function Specification() {
       if (!editor || typing(editor)) return;
       const wanted = documentOf(next);
       given.current = new Set((next?.clauses ?? []).map((c) => c.clause));
-      if (JSON.stringify(editor.getJSON()) !== JSON.stringify(wanted))
-        editor.commands.setContent(wanted, { emitUpdate: false });
+      // After the effect that called this, not inside it: each clause is a
+      // React node view, and Tiptap renders a new one with `flushSync`,
+      // which React refuses mid-commit and logs once per clause.
+      queueMicrotask(() => {
+        if (editor.isDestroyed || typing(editor)) return;
+        if (JSON.stringify(editor.getJSON()) !== JSON.stringify(wanted))
+          editor.commands.setContent(wanted, { emitUpdate: false });
+      });
     },
     [editor],
   );

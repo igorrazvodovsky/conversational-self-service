@@ -1,6 +1,14 @@
 "use client";
 
-import { BotIcon, CheckIcon, ChevronDownIcon, SparklesIcon, UserIcon, XIcon } from "lucide-react";
+import {
+  BotIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  SparklesIcon,
+  TriangleAlertIcon,
+  UserIcon,
+  XIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -51,6 +59,10 @@ function usePick(variable: Variable) {
  * component's. The catalogue's note is advice about one option, read while
  * choosing it, so it is that option's tooltip rather than a line of its own:
  * as a list it repeated every label beneath the buttons.
+ *
+ * An option the rules rule out stays a choice: picking it records the
+ * assertion and puts the conflict to the person. So it is not struck, which
+ * would say it is gone, but marked in the caution hue as one that conflicts.
  */
 function Options({ variable }: { variable: Variable }) {
   const { busy, view } = useConfigurator();
@@ -68,26 +80,30 @@ function Options({ variable }: { variable: Variable }) {
         {variable.options.map((option) => {
           const tip = option.possible
             ? option.note
-            : "Ruled out by what has been asserted so far";
+            : "Conflicts with what has been asserted so far. Picking it puts the conflict to you.";
           const disabled = busy || option.id === variable.asked;
           const button = (
             <Button
-              variant={option.possible ? "outline" : "secondary"}
+              variant="outline"
               size="xs"
               disabled={disabled}
               className={cn(
                 "h-auto py-1",
-                !option.possible && "text-muted-foreground line-through",
+                !option.possible && "border-dashed text-muted-foreground",
               )}
               onClick={() => pick(option)}
             >
-              {option.id === variable.asked ? <CheckIcon /> : null}
+              {option.id === variable.asked ? (
+                <CheckIcon />
+              ) : !option.possible ? (
+                <TriangleAlertIcon aria-hidden className="text-caution" />
+              ) : null}
               {option.label}
-              {/* The strike, the dimming and the tick are for the eye only. */}
+              {/* The tick and the caution mark are for the eye only. */}
               {option.id === variable.asked ? (
                 <span className="sr-only">, the current value</span>
               ) : !option.possible ? (
-                <span className="sr-only">, ruled out</span>
+                <span className="sr-only">, conflicts with what has been asserted</span>
               ) : null}
               {price && option.capital !== null ? (
                 <span className="font-normal tabular-nums text-muted-foreground">
@@ -124,8 +140,7 @@ function Options({ variable }: { variable: Variable }) {
         <ul className="space-y-0.5 text-xs text-muted-foreground">
           {excluded.map((option) => (
             <li key={option.id}>
-              <span className="text-foreground line-through">{option.label}</span>
-              <span className="sr-only">, ruled out by</span>{" "}
+              <span className="text-foreground">{option.label}</span> conflicts with{" "}
               {option.excluded.map((rule, i) => (
                 <span key={rule.rule}>
                   {i ? " · " : ""}

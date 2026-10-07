@@ -62,6 +62,7 @@ import {
   useWaitingQuestion,
   WaitingProvider,
 } from "./question";
+import { DiscussedConflict, useOpensOnConflict } from "./discussing";
 import {
   Alert,
   AlertAction,
@@ -479,6 +480,8 @@ function OneTranscript(props: ComponentProps<typeof CopilotChatMessageView>) {
   // group of tool calls sees the calls that join it (`tool-calls.tsx`).
   return (
     <ToolCallGroups messages={props.messages ?? []} isRunning={props.isRunning}>
+      {/* A conversation opened for a conflict starts with its question. */}
+      <DiscussedConflict />
       <CopilotChatMessageView
         {...props}
         role="log"
@@ -508,12 +511,18 @@ function WelcomeScreen({
   suggestionView?: React.ReactNode;
 }) {
   const { view } = useConfigurator();
+  const onConflict = useOpensOnConflict();
   const underway =
     !!view &&
     (view.counts.asked + view.counts.unmet + view.counts.yielded > 0 ||
       view.clauses.length > 0);
   return (
     <div className="flex h-full flex-col">
+      {onConflict ? (
+        <div className={cn(CHAT_COLUMN, "flex-1 overflow-y-auto pt-4")}>
+          <DiscussedConflict />
+        </div>
+      ) : (
       <Empty className="flex-1">
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -529,6 +538,7 @@ function WelcomeScreen({
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
+      )}
       <div className={cn(CHAT_COLUMN, "pb-2")}>{suggestionView}</div>
       {input}
     </div>

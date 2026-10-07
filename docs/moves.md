@@ -72,7 +72,7 @@ their request, and reads that way in the log.
 | Assert or withdraw a value | canvas, or chat | `Asserting/assert` or `withdraw`, by gesture or by the model's tool | on the canvas, nothing — the model is not run; in the chat, what followed and why |
 | Ask why — "why can't I have 630 kg?" | chat | nothing; `review` reads state | the rule's own sentence, and the argument if the person pushes back. This lives in the chat and only there |
 | Ask what a choice cost | chat, or canvas | [`Framing`](concepts/framing.md) | one sentence saying what the narrowed canvas now shows |
-| Answer a conflict question | canvas, or chat | `Deciding/choose` or `decline` by gesture; in the chat, the model withdraws the conceded assertion at the person's word, under its own actor | the model saying what it withdrew and what came back |
+| Answer a conflict question | chat | `Deciding/choose` or `decline` by gesture, from the question in the chat; or in words, and the model withdraws the conceded assertion at the person's word, under its own actor | the question and its answers, in the turn that ran into it or in a conversation opened for it; then the model saying what it withdrew and what came back |
 | Talk to the assistant through their own agent — the person's agent says what the person would type | the person's agent, shown in the chat as theirs | `Conversing/say` under the agent's actor, then the assistant's turn in [the flow the words opened](syncs/gestures.md#the-persons-own-agent-speaks-in-the-chat), as for the person's own words | the assistant's reply, returned to the agent as well; a question it put comes back with it, for the agent to answer or hand back |
 | Reply to a question the assistant asked, in words — "keep the hospital", or "that one is for facilities" | chat, or the person's agent | `Conversing/say` about the question as put, through [`APersonRepliesToAQuestion`](syncs/conduct.md#asking-and-waiting-for-the-answer); the question stays on the canvas until something settles it | the model carrying the answer out, or saying it will wait |
 | Take a proposed value, or the whole proposal | canvas only | `Deciding/choose`, then [`AnAdoptedValueBecomesAnAssertion`](syncs/conduct.md#proposing-and-not-adopting) | the model may say what it proposed and that it is waiting; it cannot adopt any of it |
@@ -116,41 +116,61 @@ nothing.
 
 ## The conflict, as the worked case
 
-A conflict is the move that lives on both surfaces, and it shows why the
-placement is not a duplicate.
+A conflict is the move with the most chat-like shape: something has to give,
+the person may want to know why before they choose, and the choice is
+theirs. So the question is put in the chat, and the canvas holds only the
+fact.
 
-On the canvas it is a fact: a `Deciding` request, asked by
+The fact is a `Deciding` request, asked by
 [`AConflictIsPutToThePerson`](syncs/propagation.md#when-assertions-cannot-hold-together)
 whenever a solve fails, holding the rules' sentences as its reason and the
-assertions that could give way as its options. It stays until it is answered,
-declined or withdrawn, and it is there after a reload. It is asked the same
-way whoever caused it — the person by a click, the model by a tool, a browser
-agent over MCP — which is why it cannot live in the chat: two of those three
-have no turn to attach it to.
+assertions that could give way as its options. It is asked the same way
+whoever caused it — the person by a click, the model by a tool, a browser
+agent over MCP — and it stays until it is answered, declined or withdrawn.
+What the canvas shows of it passes the test above: where the specification
+stands says it is not buildable as asked, each assertion that cannot be met
+says so on its own line, and a link takes the question into the chat. Delete
+the transcript and nothing the person needs to check is lost; the question
+is the request, and can be put again.
 
-In the chat it is a question, when the model's own turn ran into it: the
-model says which rules refuse the value, asks which assertion gives way, and
-waits. The question is recorded as the model's, addressed to the person, and
-the turn is paused on it ([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)).
-The chat shows the question with its answers; they are the canvas's answers,
-performed as the same gestures. The person may answer with a click there or
-on the canvas, or leave it for now, and the turn resumes with one sentence on
-what followed. Or they answer in words, typed while the question waits, and
-the words are a reply to the question rather than a new turn; the model
-withdraws the conceded assertion at their word — a permitted move, recorded
-under the model's actor — and
+The question is put in one of two places, depending on whether there is a
+turn to put it in.
+
+When the model's own turn ran into the conflict, the question is in that
+turn: the model says which rules refuse the value, asks which assertion gives
+way, and waits. The question is recorded as the model's, addressed to the
+person, and the turn is paused on it
+([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)). The chat
+shows the question with its answers, each answer a gesture with what it
+would do beside it. The person may answer with a click or leave it for now,
+and the turn resumes with one sentence on what followed. Or they answer in
+words, typed while the question waits, and the words are a reply to the
+question rather than a new turn; the model withdraws the conceded assertion
+at their word — a permitted move, recorded under the model's actor — and
 [`AResolvedConflictWithdrawsItsQuestion`](syncs/propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it)
-takes the question off the canvas once every assertion holds again. The chat
-poses and waits; the canvas holds; either settles.
+takes the question away once every assertion holds again. A value that
+answers a requirement the person stated is not the model's to withdraw, so
+that answer is given with its button.
+
+When a gesture caused it — the person's on the canvas, or their agent's —
+there is no turn. The model is not run on a gesture (*Silence*, below), so
+nothing asks. The canvas's link offers a conversation for it instead, and
+following it opens a new conversation that starts with the question and its
+answers, put by the configurator rather than by the assistant. The person
+answers there with a click, or writes, and their words open a turn like any
+other: the model reads the open question in `review` and can explain the
+rules, ask, or withdraw at their word. The conversation in progress is never
+pulled away. Following the link again returns to the conversation opened for
+that conflict, while it is still the one open.
 
 The person's own agent meets the same question in `review`, with who asked it
 and the words it was asked in, and answers it the person's way: it chooses,
 leaves it, or replies. A reply is how it hands a decision back without
-settling it — *that one is for the client* — and the question stays on the
-canvas with the reply beside it, for the person it was meant for.
+settling it — *that one is for the client* — and the question stays open with
+the reply beside it, for the person it was meant for.
 
 What the chat must not do: state that a rejected value was recorded, walk
-the options the canvas already lists, or decide for the person. Each is a
+the options the question already lists, or decide for the person. Each is a
 turn standing in for a fact, and the first is the model reporting a state it
 never checked. The prompt's rule is against withdrawing *unasked*;
 withdrawing at the person's word is the person's answer, carried out.
@@ -212,8 +232,8 @@ produce them, for two reasons. A read is the same on every reload and costs no
 turn. And a pill written by the model could offer a move the chat does not
 carry — *adopt the proposal*, *accept the quote* — which the model would then
 have to decline; a read draws only from the rows of the table above where the
-chat is a surface. So a conflict offers *why can't these hold together* and
-*give up this one*; a proposal offers *what did it assume*, never *take it*;
+chat is a surface. So a conflict offers *why can't these hold together*, and
+not the answers, which the question beside it already carries; a proposal offers *what did it assume*, never *take it*;
 a displaced or unanswered requirement offers to look at it; a settled value
 offers its argument; an incomplete specification offers a completion; a
 complete one offers a quote, and an issued one asks what has moved since,
