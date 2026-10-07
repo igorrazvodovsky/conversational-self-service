@@ -15,7 +15,9 @@
  */
 
 import {
+  createContext,
   forwardRef,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -39,6 +41,7 @@ import {
   CopilotChatMessageView,
   CopilotChatSuggestionPill,
   CopilotChatUserMessage,
+  useCopilotChatConfiguration,
 } from "@copilotkit/react-core/v2";
 
 import {
@@ -57,6 +60,12 @@ import {
   useWaitingQuestion,
   WaitingProvider,
 } from "./question";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import {
@@ -188,6 +197,7 @@ const composer = {
         live, so the fade is taken back on the group rather than the attribute
         taken off the buttons.
       */}
+      <TurnFailed />
       <InputGroup
         className="h-auto flex-col items-stretch bg-background has-disabled:bg-background has-disabled:opacity-100 dark:has-disabled:bg-input/30"
         onClick={(event) => {
@@ -495,18 +505,63 @@ export function ConfiguratorChat() {
   );
 }
 
+/**
+ * A turn that failed, said above the composer of the conversation it failed
+ * in. CopilotKit's own banner for it stays up across conversations until
+ * dismissed (`showDevConsole` turns it off in `app/layout.tsx`), so a new
+ * conversation opened under an old failure. The failure is kept with the
+ * thread it happened in, and shows only there.
+ */
+type Failure = { thread?: string; message: string };
+const Failed = createContext<{ failure: Failure | null; dismiss: () => void }>({
+  failure: null,
+  dismiss: () => {},
+});
+
+function TurnFailed() {
+  const { failure, dismiss } = useContext(Failed);
+  const thread = useCopilotChatConfiguration()?.threadId;
+  if (!failure || failure.thread !== thread) return null;
+  return (
+    <Alert variant="destructive" className="mb-2">
+      <AlertTitle>The assistant&rsquo;s turn failed</AlertTitle>
+      <AlertDescription>
+        {failure.message}. What it did before the failure stays done; send your
+        message again to carry on.
+      </AlertDescription>
+      <AlertAction>
+        <Button variant="ghost" size="xs" onClick={dismiss}>
+          Dismiss
+        </Button>
+      </AlertAction>
+    </Alert>
+  );
+}
+
 function Chat() {
   useStateSuggestions();
   useWaitingQuestion();
+  const thread = useCopilotChatConfiguration()?.threadId;
+  const [failure, setFailure] = useState<Failure | null>(null);
+  // CopilotChat's `onError` is typed as the div's as well as its own, so the
+  // event is read for the one it is.
+  const failed = (event: unknown) => {
+    const error = (event as { error?: unknown }).error;
+    if (error instanceof Error)
+      setFailure({ thread, message: error.message.replace(/\.$/, "") });
+  };
   return (
-    <CopilotChat
-      chatView={ConfiguratorChatView}
-      attachments={{ enabled: true }}
-      input={composer}
-      suggestionView={{ container: SuggestionStrip, suggestion: SuggestionPill }}
-      welcomeScreen={WelcomeScreen}
-      scrollView={{ scrollToBottomButton: ScrollToBottomButton }}
-      messageView={Transcript}
-    />
+    <Failed.Provider value={{ failure, dismiss: () => setFailure(null) }}>
+      <CopilotChat
+        onError={failed}
+        chatView={ConfiguratorChatView}
+        attachments={{ enabled: true }}
+        input={composer}
+        suggestionView={{ container: SuggestionStrip, suggestion: SuggestionPill }}
+        welcomeScreen={WelcomeScreen}
+        scrollView={{ scrollToBottomButton: ScrollToBottomButton }}
+        messageView={Transcript}
+      />
+    </Failed.Provider>
   );
 }

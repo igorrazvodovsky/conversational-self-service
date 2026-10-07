@@ -53,6 +53,8 @@ export default function RootLayout({
         <ThemeProvider>
           <CopilotKit
             runtimeUrl="/api/copilotkit"
+            // A failed turn is said in the chat it failed in (`chat/index.tsx`).
+            showDevConsole={false}
             a2ui={{ catalog: demonstrationCatalog }}
             openGenerativeUI={{}}
             useSingleEndpoint={false}
