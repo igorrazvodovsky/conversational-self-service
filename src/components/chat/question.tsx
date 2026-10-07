@@ -210,8 +210,10 @@ export function useWaitingQuestion() {
 
 /**
  * The chat view, with one change: words submitted while the assistant's
- * question awaits an answer are the person's reply to it. The reply is a
- * gesture; the card then sees the question replied to and resumes the turn.
+ * question awaits an answer are the person's reply to it, whether typed or
+ * a suggestion picked. The reply is a gesture; the card then sees the
+ * question replied to and resumes the turn. A suggestion sent as a message
+ * would start a run the transport refuses while the interrupt is open.
  */
 export function ConfiguratorChatView(props: ComponentProps<typeof CopilotChatView>) {
   const { gesture } = useConfigurator();
@@ -231,5 +233,20 @@ export function ConfiguratorChatView(props: ComponentProps<typeof CopilotChatVie
     [awaiting, submit, gesture, waiting, props],
   );
 
-  return <CopilotChatView {...props} onSubmitMessage={props.onSubmitMessage && onSubmitMessage} />;
+  const select = props.onSelectSuggestion;
+  const onSelectSuggestion = useCallback(
+    (...[suggestion, index]: Parameters<NonNullable<typeof select>>) => {
+      if (!awaiting || !waiting?.mounted.current) return select?.(suggestion, index);
+      void gesture({ act: "reply", about: awaiting.about, text: suggestion.message });
+    },
+    [awaiting, select, gesture, waiting],
+  );
+
+  return (
+    <CopilotChatView
+      {...props}
+      onSubmitMessage={props.onSubmitMessage && onSubmitMessage}
+      onSelectSuggestion={props.onSelectSuggestion && onSelectSuggestion}
+    />
+  );
 }
