@@ -1,4 +1,40 @@
+import type { RunAgentInput } from "@ag-ui/client";
 import { LangGraphAgent } from "@copilotkit/runtime/langgraph";
+
+/**
+ * Keeps an attachment's name on its way to the graph.
+ *
+ * The chat sends a file as a content part with its name in `metadata`, and
+ * `@ag-ui/langgraph` turns the part into a data URL and drops the metadata,
+ * so `agent/hearing.py` would file the document as "attachment.pdf". The
+ * name goes into the data URL as a `name` parameter (RFC 2397), the one
+ * part of it that survives; `hearing.py` reads it back.
+ */
+class NamingAgent extends LangGraphAgent {
+  run(input: RunAgentInput) {
+    return super.run({ ...input, messages: input.messages.map(named) });
+  }
+}
+
+function named(message: RunAgentInput["messages"][number]) {
+  if (message.role !== "user" || !Array.isArray(message.content)) return message;
+  return {
+    ...message,
+    content: message.content.map((part) => {
+      if (!("source" in part)) return part;
+      const filename = (part.metadata as { filename?: unknown } | undefined)?.filename;
+      if (
+        part.source.type !== "data" ||
+        typeof filename !== "string" ||
+        part.source.mimeType.includes(";name=")
+      ) {
+        return part;
+      }
+      const mimeType = `${part.source.mimeType};name=${encodeURIComponent(filename)}`;
+      return { ...part, source: { ...part.source, mimeType } };
+    }),
+  };
+}
 
 /**
  * Builds this starter's agent.
@@ -9,7 +45,7 @@ import { LangGraphAgent } from "@copilotkit/runtime/langgraph";
  * conversation, so a shared instance would leak state across threads.
  */
 export function createDefaultAgent(): LangGraphAgent {
-  return new LangGraphAgent({
+  return new NamingAgent({
     deploymentUrl:
       process.env.AGENT_URL ||
       process.env.LANGGRAPH_DEPLOYMENT_URL ||

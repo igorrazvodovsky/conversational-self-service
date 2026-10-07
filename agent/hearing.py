@@ -64,7 +64,9 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
+import mimetypes
 import sys
+import urllib.parse
 from typing import Any
 
 from langchain.agents.middleware import before_model, wrap_model_call
@@ -165,22 +167,66 @@ def _files(message: HumanMessage) -> list[tuple[str, str]]:
         return []
     out = []
     for part in content:
-        if not isinstance(part, dict) or part.get("type") != "file":
+        if not _attached(part):
             continue
         name = _name(part)
         raw = _bytes(part)
         if raw is None:
             continue
-        out.append((name, _read(raw, part.get("mime_type") or "", name)))
+        out.append((name, _read(raw, _mime(part), name)))
     return out
+
+
+def _url(part: dict[str, Any]) -> str:
+    """The part's URL, flat (`file`) or nested (`image_url`)."""
+    url = part.get("url")
+    if part.get("type") == "image_url":
+        nested = part.get("image_url")
+        url = nested if isinstance(nested, str) else (nested or {}).get("url")
+    return url if isinstance(url, str) else ""
+
+
+def _mime(part: dict[str, Any]) -> str:
+    url = _url(part)
+    if url.startswith("data:"):
+        return url[5:].split(",", 1)[0].split(";", 1)[0]
+    return part.get("mime_type") or ""
+
+
+def _attached(part: Any) -> bool:
+    """Whether a content part is an attached document rather than words.
+
+    `@ag-ui/langgraph` hands every attachment over as an `image_url` part
+    whose data URL carries the document's own MIME type, and drops its name,
+    which `src/agent.ts` puts back as the URL's `name` parameter; a part
+    that is really an image is left for the model to see.
+    """
+    if not isinstance(part, dict):
+        return False
+    if part.get("type") == "file":
+        return True
+    return part.get("type") == "image_url" and not _mime(part).startswith("image/")
 
 
 def _name(part: dict[str, Any]) -> str:
     return (
         part.get("filename")
         or (part.get("metadata") or {}).get("filename")
-        or "attachment"
+        or _named(part)
+        or "attachment" + (mimetypes.guess_extension(_mime(part)) or "")
     )
+
+
+def _named(part: dict[str, Any]) -> str | None:
+    """The `name` parameter of the part's data URL, if it has one."""
+    url = _url(part)
+    if not url.startswith("data:"):
+        return None
+    for parameter in url[5:].split(",", 1)[0].split(";")[1:]:
+        key, _, value = parameter.partition("=")
+        if key == "name" and value:
+            return urllib.parse.unquote(value)
+    return None
 
 
 def _bytes(part: dict[str, Any]) -> bytes | None:
@@ -192,8 +238,8 @@ def _bytes(part: dict[str, Any]) -> bytes | None:
                 return base64.b64decode(value)
             except ValueError:
                 return None
-    url = part.get("url")
-    if isinstance(url, str) and url.startswith("data:") and "," in url:
+    url = _url(part)
+    if url.startswith("data:") and "," in url:
         try:
             return base64.b64decode(url.split(",", 1)[1])
         except ValueError:
@@ -298,9 +344,7 @@ def _unattached(message: Any) -> Any:
     """The message with each attached file replaced by a line naming it."""
     if not isinstance(message, HumanMessage) or isinstance(message.content, str):
         return message
-    if not any(
-        isinstance(part, dict) and part.get("type") == "file" for part in message.content
-    ):
+    if not any(_attached(part) for part in message.content):
         return message
     content = [
         {
@@ -308,7 +352,7 @@ def _unattached(message: Any) -> Any:
             "text": f"[attached: {_name(part)}. Filed; `review` lists it under "
             "`files`, and `open_file` returns its text.]",
         }
-        if isinstance(part, dict) and part.get("type") == "file"
+        if _attached(part)
         else part
         for part in message.content
     ]
