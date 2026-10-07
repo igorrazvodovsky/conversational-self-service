@@ -39,6 +39,7 @@ import {
   CopilotChatAssistantMessage,
   CopilotChatInput,
   CopilotChatMessageView,
+  CopilotChatReasoningMessage,
   CopilotChatSuggestionPill,
   CopilotChatUserMessage,
   useCopilotChatConfiguration,
@@ -55,6 +56,7 @@ import {
 import { useFollowLink } from "@/components/configurator/link";
 import { useConfigurator } from "@/components/configurator/provider";
 import { useStateSuggestions } from "./suggestions";
+import { GroupedToolCalls, ToolCallGroups, UngroupedThought } from "./tool-calls";
 import {
   ConfiguratorChatView,
   useWaitingQuestion,
@@ -239,13 +241,15 @@ const composer = {
 // ─── Suggestions ────────────────────────────────────────────────────
 
 /** The pills themselves are read from the state in `suggestions.tsx`. */
+/** The library indents the strip on a wide screen; here it lines up with the
+ * turns above it and the composer below. */
 const SuggestionStrip = forwardRef<HTMLDivElement, ComponentProps<"div">>(
-  function SuggestionStrip({ className, ...props }, ref) {
+  function SuggestionStrip({ className: _libraryMargins, ...props }, ref) {
     return (
       <div
         ref={ref}
         data-slot="suggestion-strip"
-        className={cn("flex flex-wrap items-center gap-2", className)}
+        className="mb-3 flex flex-wrap items-center gap-2"
         {...props}
       />
     );
@@ -330,6 +334,35 @@ function ScrollToBottomButton({
   );
 }
 
+/**
+ * A turn's actions, shown while the pointer is over the turn or focus is in
+ * it, and always on a touch screen, which has no hover. The row keeps its
+ * height while hidden, so a turn does not move when it appears; that height
+ * is the space below a turn, and the turns are spaced around it.
+ */
+function TurnActions({
+  className: _libraryClass,
+  align = "start",
+  ...props
+}: ComponentProps<"div"> & { align?: "start" | "end" }) {
+  return (
+    <div
+      className={cn(
+        // The button's own inset is taken back, so the icon lines up with
+        // the text above it.
+        "invisible mt-1 flex min-h-6 items-center group-focus-within/turn:visible group-hover/turn:visible pointer-coarse:visible",
+        align === "end" ? "-mr-1.5 justify-end" : "-ml-1.5",
+      )}
+      data-slot="turn-actions"
+      {...props}
+    />
+  );
+}
+
+const YourActions = (props: ComponentProps<"div">) => (
+  <TurnActions {...props} align="end" />
+);
+
 const CopyYours = (props: ComponentProps<typeof CopilotChatUserMessage.CopyButton>) => (
   <CopyButton {...props} name="Copy your message" />
 );
@@ -383,8 +416,12 @@ function OneUserMessage(props: ComponentProps<typeof CopilotChatUserMessage>) {
     <div ref={self} id={id} className={cn(addressable, isTarget && targeted)}>
       <CopilotChatUserMessage
         {...props}
+        // The library's 2.5rem above a turn is replaced by the space its
+        // predecessor's actions leave, and this.
+        className="group/turn pt-4!"
         messageRenderer={agents ? AgentBubble : UserBubble}
         copyButton={CopyYours}
+        toolbar={YourActions}
       />
     </div>
   );
@@ -394,16 +431,23 @@ const UserMessage = Object.assign(OneUserMessage, CopilotChatUserMessage);
 
 /** The markdown body stays CopilotKit's, at this app's reading size rather
  * than prose's own 16px (important, because both are utilities and
- * stylesheet order would otherwise decide), and says who is speaking. */
+ * stylesheet order would otherwise decide), and says who is speaking.
+ * Prose puts a margin above the first paragraph and below the last, which
+ * would add to the turn's own spacing, so the edges are taken back.
+ * A turn that is only tool calls has no words to announce or copy. */
 function AssistantMarkdown(
   props: ComponentProps<typeof CopilotChatAssistantMessage.MarkdownRenderer>,
 ) {
+  if (!props.content?.trim()) return null;
   return (
     <>
       <span className="sr-only">The assistant said: </span>
       <CopilotChatAssistantMessage.MarkdownRenderer
         {...props}
-        className={cn(props.className, "text-sm! leading-relaxed!")}
+        className={cn(
+          props.className,
+          "text-sm! leading-relaxed! *:first:mt-0 *:last:mb-0",
+        )}
       />
     </>
   );
@@ -416,20 +460,36 @@ function AssistantMarkdown(
  */
 // Module constants, so the memoised slots see the same props on every
 // streamed token and the cursor is not remounted.
-const ASSISTANT_MESSAGE = { markdownRenderer: AssistantMarkdown, copyButton: CopyReply };
+const ASSISTANT_MESSAGE = {
+  // A turn with no words (`AssistantMarkdown` drew nothing) has nothing to
+  // copy; on a local run CopilotKit would still give it a row for the
+  // inspector's button, a gap under its tool calls.
+  className:
+    "group/turn has-[>:first-child:empty]:*:data-[slot=turn-actions]:hidden",
+  markdownRenderer: AssistantMarkdown,
+  toolbar: TurnActions,
+  copyButton: CopyReply,
+  toolCallsView: GroupedToolCalls,
+};
+const Thought = Object.assign(UngroupedThought, CopilotChatReasoningMessage);
 const Cursor = () => <Spinner className="size-3 text-muted-foreground" />;
 
 function OneTranscript(props: ComponentProps<typeof CopilotChatMessageView>) {
+  // Read from the current messages, past CopilotKit's memo of each one, so a
+  // group of tool calls sees the calls that join it (`tool-calls.tsx`).
   return (
-    <CopilotChatMessageView
-      {...props}
-      role="log"
-      aria-label="Conversation"
-      aria-busy={props.isRunning || undefined}
-      userMessage={UserMessage}
-      assistantMessage={ASSISTANT_MESSAGE}
-      cursor={Cursor}
-    />
+    <ToolCallGroups messages={props.messages ?? []} isRunning={props.isRunning}>
+      <CopilotChatMessageView
+        {...props}
+        role="log"
+        aria-label="Conversation"
+        aria-busy={props.isRunning || undefined}
+        userMessage={UserMessage}
+        assistantMessage={ASSISTANT_MESSAGE}
+        reasoningMessage={Thought}
+        cursor={Cursor}
+      />
+    </ToolCallGroups>
   );
 }
 
