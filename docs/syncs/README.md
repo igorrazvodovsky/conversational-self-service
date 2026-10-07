@@ -109,6 +109,7 @@ it.
 | `AnEmptiedProposalIsWithdrawn` | [Conduct](conduct.md) |
 | `TheCanvasIsShownBeforeItChanges` | [Conduct](conduct.md) |
 | `TheModelMayAskThePerson` | [Conduct](conduct.md) |
+| `TheModelMayAskWhoTheQuoteIsFor` | [Conduct](conduct.md) |
 | `APersonRepliesToAQuestion` | [Conduct](conduct.md) |
 
 ## Seeding

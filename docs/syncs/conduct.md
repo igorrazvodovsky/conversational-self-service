@@ -538,9 +538,25 @@ where { ?r is pending
 then  { Conversing/say: [ party: model ; text: ?t ; to: person ;
           about: [ request: ?r ; offered: ?options ] ] }
 
+sync TheModelMayAskWhoTheQuoteIsFor
+when  { Copiloting/invoke: [ tool: "ask" ; spec: ?s ; missing: ?f ;
+          text: ?t ] => [] }
+where { ?s lacks only ?f for a quote }
+then  { Conversing/say: [ party: model ; text: ?t ; to: person ;
+          about: [ spec: ?s ; missing: ?f ] ] }
+
 sync APersonRepliesToAQuestion
 when  { Copiloting/gesture: [ act: "reply" ; about: ?q ; text: ?t ] => [] }
 then  { Conversing/say: [ party: person ; text: ?t ; to: model ; about: ?q ] }
+```
+
+```
+?s lacks only ?f for a quote
+  iff  every condition of APersonRequestsAQuote holds of ?s
+         but the two that address it
+  and  ?f is { name  when Profiling: { person name: _ } does not bind ,
+               site  when Naming: { ?s site: _ } does not bind }
+  and  ?f is not empty
 ```
 
 A conflict is a fact on the canvas whoever caused it, and stays one
@@ -569,18 +585,28 @@ asked. Keyed to the options as well, a re-ask that displaces them leaves the
 earlier question overtaken, and the model may ask the new one.
 
 A question *awaits an answer* while nothing has been said or done about it
-since it was put. That is a reading over `Conversing`, `Deciding` and the log, made by
-the canvas, the chat and the model's tool, never by a rule:
+since it was put. That is a reading over `Conversing`, the state the
+question is about, and the log, made by the canvas, the chat and the model's
+tool, never by a rule:
 
 ```
 ?u awaits an answer
-  iff  Conversing: { ?u by: model ; ?u to: person ;
-                     ?u about: [ request: ?r ; offered: ?options ] }
-  and  ?u is the last utterance by the model about ?r
-  and  ?r is pending, and Deciding: { ?r offered: ?options }
-  and  no Deciding/ask of ?r has completed since ?u
+  iff  Conversing: { ?u by: model ; ?u to: person ; ?u about: ?m }
+  and  ?u is the last utterance by the model about ?m
+  and  ?m is still open since ?u
   and  no utterance by the person follows ?u
+
+?m is still open since ?u
+  iff  ?m is [ request: ?r ; offered: ?options ]
+       and  ?r is pending, and Deciding: { ?r offered: ?options }
+       and  no Deciding/ask of ?r has completed since ?u
+  or   ?m is [ spec: ?s ; missing: ?f ]
+       and  ?s lacks only some of ?f for a quote
 ```
+
+The first kind of matter is a conflict, and most of what follows is about
+it. The second is the quote's addressee
+([below](#asking-who-the-quote-is-for)).
 
 An answer can leave another conflict behind it. Giving up the glass doors
 releases the solver, the assertions still unmet are tried again, and the one
@@ -614,6 +640,7 @@ to the matter or something the person said:
 | a later conflict displaced the options, or asked the same again | `Deciding: { ?r offered: ?options }` no longer binds, or a `Deciding/ask` of `?r` follows the question |
 | the person replied in words | an utterance by the person about the question follows it |
 | the person talked about something else | another utterance by the person follows it |
+| the name or the site still missing was recorded — on the canvas, by the person's agent, or by the model from the person's words | `?s` no longer lacks any of `?f`, or lacks something else as well |
 
 A reply in words is the answer that leaves the matter open, and it is
 the answer the person's own agent needs most. An agent handed a question it
@@ -653,12 +680,50 @@ Nothing is answered by the model. No rule carries `Copiloting/invoke` to
 question and cannot settle it, any more than it could before it had a way to
 ask.
 
+### Asking who the quote is for
+
+A quote is addressed: [`APersonRequestsAQuote`](gestures.md#a-quote-is-requested)
+needs the person's name and the job's site, and the model's `quote` reads
+the same `where`. When everything else holds and one of those is missing,
+the person asked for a quote and the turn cannot give them one, and the
+only way on is the name or the site, which the model may not invent. That
+is a question the turn cannot go past, as a conflict is, and the model puts
+it with `ask` and waits. A specification still open or not buildable lacks
+more than an addressee, and the question would be the wrong one: the turn
+can go on, with a proposal or the conflict, so the rule asks only when the
+addressee is all that stands between the specification and the quote.
+
+What the pause buys is the quote. Asked in the reply instead, the question
+leaves the turn finished, and the person who fills in the name on the canvas
+has made a gesture, after which nothing is run (*Silence*); they would have
+to ask for the quote again. Paused, the gesture ends the wait, and the turn
+the person opened resumes and requests the quote it was opened for. Words
+end it the same way: the model records the name or the site from the
+person's reply with `introduce` or `entitle`, which it is permitted, and
+requests the quote.
+
+The chat shows the question and links to the addressee on the quote
+surface; it does not hold the fields. A conflict's answers moved into the
+chat because they are answers to the question and exist only while it is
+open. The name and the site are not answers to anything: they are the
+person's profile and the job's, entered on the quote surface whether or not
+anybody asked, and two places to type them would be two editors for one
+fact.
+
+The question is the same move as a conflict's and is put with the same
+tool, `ask`, naming its matter: the options for a conflict, the missing
+fields for the addressee. The floor, the wait and the ways the wait ends are
+one mechanism, and the model has one move to learn. The view carries this
+question beside the reason the specification cannot be quoted
+(`quotable`), because it is not a `Deciding` request and has no place
+among the questions.
+
 ### The floor is carried by an interrupt
 
 The model's `ask` tool records the question, then pauses the run with a
 LangGraph interrupt that CopilotKit receives as an AG-UI interrupt. The
-interrupt carries the question's words, the conflict's reason, and the
-question as put, options included. It has no `responseSchema`, because the
+interrupt carries the question's words, which kind of matter it is about,
+and the question as put: for a conflict, its reason and the options. It has no `responseSchema`, because the
 resume is not where an answer goes: every answer is one of the gestures
 above and is in the log before the run resumes. An AG-UI client that read a
 schema there would resume with a payload nobody acts on. The chat renders the waiting question with its answers, watches the

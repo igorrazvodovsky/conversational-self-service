@@ -76,8 +76,8 @@ their request, and reads that way in the log.
 | Talk to the assistant through their own agent — the person's agent says what the person would type | the person's agent, shown in the chat as theirs | `Conversing/say` under the agent's actor, then the assistant's turn in [the flow the words opened](syncs/gestures.md#the-persons-own-agent-speaks-in-the-chat), as for the person's own words | the assistant's reply, returned to the agent as well; a question it put comes back with it, for the agent to answer or hand back |
 | Reply to a question the assistant asked, in words — "keep the hospital", or "that one is for facilities" | chat, or the person's agent | `Conversing/say` about the question as put, through [`APersonRepliesToAQuestion`](syncs/conduct.md#asking-and-waiting-for-the-answer); the question stays on the canvas until something settles it | the model carrying the answer out, or saying it will wait |
 | Take a proposed value, or the whole proposal | canvas only | `Deciding/choose`, then [`AnAdoptedValueBecomesAnAssertion`](syncs/conduct.md#proposing-and-not-adopting) | the model may say what it proposed and that it is waiting; it cannot adopt any of it |
-| Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote |
-| Request a quote | canvas, or chat | `Quoting/quote` when the specification is complete and addressed | what is missing, if anything, and where the proposal is |
+| Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote; while the assistant's question about it waits, nothing, because the turn resumes with the quote |
+| Request a quote | canvas, or chat | `Quoting/quote` when the specification is complete and addressed | what is missing, if anything, and where the proposal is; when only the name or the site is, the question, put with `ask` ([Conduct](syncs/conduct.md#asking-who-the-quote-is-for)) |
 | Ask about the product — "which access control systems does the lobby badge work with?", "is the integration in the price?", "does remote monitoring need our network?" | chat | nothing; `look_up` reads what the seller publishes about a variable and its options — [`Detailing`](concepts/detailing.md)'s particulars, and the clauses of [`Stipulating`](concepts/stipulating.md) that hold where an option is chosen | an answer to every part, as the seller, from that record and linked to the variable; where the record is silent, that it is, and never a guess or a referral to "the supplier" |
 | Ask about an offer — "why is the battery backup in No. 2?", "what does it cost me over the term?", "what do I pay on dispatch?", "what do I have to provide?" | chat | nothing; `open_quote` reads the offer as it was frozen at issue | the answer, with the offer's own lines linked — the value, the clause, the milestone — rather than recited |
 | Accept or revoke a quote | canvas only | `Quoting/commit`, `revoke` | nothing; the model cannot accept |
@@ -96,10 +96,10 @@ what the chat exists for. The reply's moves:
 | Consequence | after an assertion, when the rules forced something | what followed and the rule's sentence — the canvas shows the edge, the chat explains it | list every entailment; restate the canvas |
 | Argument | when asked why | the rule, in its own words, and what would have to give | compose a reason no rule states |
 | Explaining an offer | when asked about an issued quote | what the offer holds and why, as it was frozen: the grounds of a value, what a line added, when a payment falls due, what the customer provides — linking the offer's lines at `#quote:` addresses | read the offer against the specification as it stands without saying so; recite the proposal; accept or revoke it |
-| Asking | when its own turn ran into a conflict | the question, put with `ask`, and nothing after it: the turn waits until the person answers, replies or leaves it ([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)) | answer it; treat its own turn as the person's answer; ask again what was already asked and not yet answered |
+| Asking | when its own turn ran into a conflict, or the quote the person asked for lacks only the name or the site | the question, put with `ask`, and nothing after it: the turn waits until the person answers, replies or leaves it ([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)) | answer it; treat its own turn as the person's answer; ask again what was already asked and not yet answered |
 | Proposing | when the specification is incomplete and the person seems done stating context | the offer to work out the rest, or what a proposal assumed | say the proposal was adopted |
 | Declining | when asked to do something no rule permits — adopt, accept, change a price | that it cannot, and who can | do it another way |
-| Resuming | when the question it asked was answered, replied to or left, wherever that happened | one sentence on what followed, or carrying out a reply in words | narrate the click; ask the question again |
+| Resuming | when the question it asked was answered, replied to or left, wherever that happened | one sentence on what followed, or carrying out a reply in words; for the addressee, the quote the turn was opened for | narrate the click; ask the question again |
 | Silence | when the person acted on the canvas and no question of the model's was waiting | nothing — the model is not run on a gesture | narrate a gesture after the fact |
 
 The last row is by construction rather than by instruction: a gesture is
@@ -262,10 +262,10 @@ already under way says so.
 - *The model's reply is specified only in the prompt.* The table above is the
   first place the reply's moves are written down; `agent/main.py` carries them
   as instructions, and nothing measures whether they are followed.
-- *Only a conflict is asked.* A quote that needs a name and a site, and a
-  completion that cannot be proposed until the person says what to finish it
-  for, are the same move: a question the turn cannot go past. Neither is put
-  with `ask` yet.
+- *A completion is proposed without asking what to finish it for.* A
+  completion that cannot be proposed until the person says whether to finish
+  it cheapest or lowest-carbon is a question the turn cannot go past, as the
+  quote's addressee is, and is not put with `ask`.
 - *The person's agent talks to the assistant only through the page.* It
   speaks in the chat the person has open, and the assistant's reply reaches
   it from there. An agent connected to the MCP server with no page open can
