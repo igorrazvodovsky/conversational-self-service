@@ -130,7 +130,9 @@ def _unasked() -> bool:
     ):
         return False
     put = _asked()
-    if put is None or put["status"] == "overtaken":
+    # The last question put was answered, or displaced, and a conflict is
+    # still pending: it is a later one, not yet put.
+    if put is None or put["status"] in {"overtaken", "chosen"}:
         return True
     if put["status"] not in {"replied", "passed"}:
         return False

@@ -24,6 +24,8 @@ function named(message: RunAgentInput["messages"][number]) {
       if (!("source" in part)) return part;
       const filename = (part.metadata as { filename?: unknown } | undefined)?.filename;
       if (
+        // An image goes to the model as it is; only a document is filed.
+        part.type === "image" ||
         part.source.type !== "data" ||
         typeof filename !== "string" ||
         part.source.mimeType.includes(";name=")

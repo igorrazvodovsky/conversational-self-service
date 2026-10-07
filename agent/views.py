@@ -229,24 +229,33 @@ def put_question(engine: Engine, request: Any) -> dict[str, Any] | None:
     """The question the model last put about a request, and where it stands:
     Conduct's *awaits an answer*, with the clause it reads from the log —
     whether `Deciding` was asked the request again after the question was
-    put.  Shared by the canvas and the model's `ask` tool."""
+    put, and what was chosen for it since, which a re-ask in the same flow
+    discards from `Deciding`.  Shared by the canvas and the model's `ask`
+    tool."""
     conversing = engine.state("Conversing")
     said_at: dict[str, int] = {}
     last_ask = -1
+    choices: list[tuple[int, Any]] = []
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         if record.kind != "completion":
             continue
         output = record.output or {}
+        if "error" in output:
+            continue
         if record.concept == "Conversing" and output.get("utterance"):
             said_at[output["utterance"]] = record.seq
-        elif (
-            record.concept == "Deciding"
-            and record.action == "ask"
-            and output.get("request") == request
-        ):
-            last_ask = record.seq
+        elif record.concept == "Deciding" and output.get("request") == request:
+            if record.action == "ask":
+                last_ask = record.seq
+            elif record.action == "choose":
+                choices.append((record.seq, (record.input or {}).get("option")))
     again = {u for u, seq in said_at.items() if seq < last_ask}
-    return readings.asked(conversing, engine.state("Deciding"), request, again)
+    since = {
+        u: next(option for at, option in reversed(choices) if at > seq)
+        for u, seq in said_at.items()
+        if any(at > seq for at, _ in choices)
+    }
+    return readings.asked(conversing, engine.state("Deciding"), request, again, since)
 
 
 def _speakers(engine: Engine, utterances: set[str]) -> dict[str, str]:

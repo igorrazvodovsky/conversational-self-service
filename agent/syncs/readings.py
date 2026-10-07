@@ -139,6 +139,7 @@ def asked(
     deciding: dict[str, Any],
     request: Any,
     asked_again: set[str] = frozenset(),
+    chosen_since: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """The question the model last put about a request, and where it stands.
 
@@ -153,7 +154,10 @@ def asked(
     `asked_again` is the log's part of the reading: the utterances the
     request was asked of `Deciding` again after.  The caller reads it from
     the log, because a request asked again with the same options leaves no
-    trace in the state.
+    trace in the state.  `chosen_since` is the other part: for an utterance,
+    the option chosen for the request after it, which a re-ask in the same
+    flow discards from `Deciding` while the question it answered stands
+    answered.
     """
     about = conversing["about"]
     put = None
@@ -178,7 +182,10 @@ def asked(
         conversing["by"].get(u) == "person" and about.get(u) != matter for u in later
     )
     key = next((k for k, r in deciding["request"].items() if r == request), None)
-    if key is not None and key in deciding["chosen"]:
+    chosen = deciding["chosen"].get(key) if key is not None else None
+    if chosen is None and put in (chosen_since or {}):
+        chosen = (chosen_since or {})[put]
+    if chosen is not None:
         status = "chosen"
     elif key is not None and key in deciding["declined"]:
         status = "declined"
@@ -198,7 +205,7 @@ def asked(
         "about": matter,
         "replies": replies,
         "status": status,
-        "chosen": deciding["chosen"].get(key) if key is not None else None,
+        "chosen": chosen,
     }
 
 

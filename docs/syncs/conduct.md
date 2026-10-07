@@ -566,6 +566,13 @@ the canvas, the chat and the model's tool, never by a rule:
   and  no utterance by the person follows ?u
 ```
 
+An answer can leave another conflict behind it. Giving up the glass doors
+releases the solver, the assertions still unmet are tried again, and the one
+that still fails asks the same request with its own options in the same
+flow, which discards the answer in `Deciding`. The choice is still on the
+log, after the question, and that is what the question was answered with;
+the new question is a new one.
+
 The clause on the log is there because the same conflict can come back.
 Settle it, assert the refused value again, and the rules ask the same request
 with the same options; nothing in `Deciding`'s state tells that question
@@ -585,7 +592,7 @@ to the matter or something the person said:
 
 | What happened | Read as |
 |---|---|
-| an option was chosen — on the canvas, in the chat, or by the person's agent | `Deciding: { ?r chosen: _ }` |
+| an option was chosen — on the canvas, in the chat, or by the person's agent | `Deciding: { ?r chosen: _ }`, or a `Deciding/choose` of `?r` on the log since the question |
 | the person left it for now | `?r` is in `declined` |
 | the conflict went another way, and its question with it | `?r` is not offered: [`AResolvedConflictWithdrawsItsQuestion`](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it) withdrew it |
 | a later conflict displaced the options, or asked the same again | `Deciding: { ?r offered: ?options }` no longer binds, or a `Deciding/ask` of `?r` follows the question |

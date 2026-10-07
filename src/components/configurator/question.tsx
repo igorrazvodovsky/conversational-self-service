@@ -151,7 +151,8 @@ function Between({ question }: { question: Question }) {
  */
 function Asked({ question }: { question: Question }) {
   const asked = question.asked;
-  if (!asked || asked.status === "overtaken") return null;
+  // A question answered or overtaken was about the conflict before this one.
+  if (!asked || asked.status === "overtaken" || asked.status === "chosen") return null;
   return (
     <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
       <p>
