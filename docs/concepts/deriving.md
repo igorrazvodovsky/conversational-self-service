@@ -42,7 +42,8 @@ actions
     if the method is defined already,
     or the formula is not arithmetic over numbers and the quantities
     it needs — sums, differences, products, quotients and brackets,
-    or it presumes a value for a quantity it does not need
+    or it presumes a value for a quantity it does not need,
+    or a value it presumes is not a finite number
     return the error description
 
   derive [ method: Method ; for: Target ; stated: Quantity -> Real ;
