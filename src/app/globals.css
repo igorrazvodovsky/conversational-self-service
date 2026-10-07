@@ -230,6 +230,25 @@ main#main:focus-visible {
 }
 
 /*
+ * An item arrived at by its address flashes, then settles into the tint it
+ * keeps while it is the target (`targeted` in `address.tsx`), so the eye
+ * finds it after the scroll. The flash is the foreground at low strength,
+ * which reads on every level and in both themes.
+ */
+@theme {
+  --animate-arrive: arrive 1.4s ease-out;
+  @keyframes arrive {
+    0%,
+    25% {
+      background-color: color-mix(in oklab, var(--foreground) 14%, transparent);
+    }
+    100% {
+      background-color: color-mix(in oklab, var(--muted) 60%, transparent);
+    }
+  }
+}
+
+/*
  * Motion only for those who have not asked for less. Under the preference
  * every animation and transition settles at once — the collapsibles, the
  * chevrons, the menus, the spinner — and scrolling jumps rather than glides.

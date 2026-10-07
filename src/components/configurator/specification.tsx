@@ -62,7 +62,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
-import { address, addressable, To, useTargeted } from "./address";
+import { address, addressable, targeted, To, useTargeted } from "./address";
 import {
   NEGOTIABILITY,
   plain,
@@ -406,7 +406,7 @@ function ClauseView({ node, decorations }: NodeViewProps) {
         "group/clause relative border-b py-3 last:border-b-0",
         clause && addressable,
         "scroll-mt-28",
-        (active || isTarget) && "ring-1 ring-ring",
+        (active || isTarget) && targeted,
         outside && "hidden",
       )}
     >

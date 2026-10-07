@@ -186,6 +186,12 @@ export function arrive(el: HTMLElement) {
   if (!el.matches("a[href], button, input, select, textarea, [tabindex]"))
     el.tabIndex = -1;
   el.focus({ preventScroll: true });
+  // Arriving again at the item already targeted plays its flash again.
+  for (const animation of el.getAnimations())
+    if (animation instanceof CSSAnimation && animation.animationName === "arrive") {
+      animation.cancel();
+      animation.play();
+    }
 }
 
 /** Go to an address: set the fragment, or scroll again if it is already
@@ -206,11 +212,11 @@ export function goTo(id: string) {
 }
 
 /** The classes an addressable item carries: room under the sticky header. The
- * ring while it is the target comes from `useTargeted`, since `:target` is
- * not re-evaluated for an element mounted after the fragment was set — which
+ * tint while it is the target, and the flash it arrives with, come from
+ * `useTargeted`, since `:target` is not re-evaluated for an element mounted after the fragment was set — which
  * is what happens when a link changes surface. */
 export const addressable = "scroll-mt-28";
-export const targeted = "ring-1 ring-ring";
+export const targeted = "bg-muted/60 animate-arrive";
 
 /** A link from one item on the canvas to another, by address. */
 export function To({
