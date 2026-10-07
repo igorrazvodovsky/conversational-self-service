@@ -48,6 +48,7 @@ when  { Copiloting/invoke: [ tool: "read" ; file: ?f ;
           words: ?w ; answer: ?a ] => [] }
 where { Filing: { ?f text: ?t }
         ?w occurs in ?t
+        ?a names at most one option per variable, read from Cataloguing
         bind a fresh identity as ?i }
 then  { Reading/read: [ source: [ file: ?f ] ; words: ?w ; answer: ?a ; item: ?i ] }
 
@@ -56,6 +57,7 @@ when  { Copiloting/invoke: [ tool: "read" ; utterance: ?u ;
           words: ?w ; answer: ?a ] => [] }
 where { Conversing: { ?u text: ?t }
         ?w occurs in ?t
+        ?a names at most one option per variable, read from Cataloguing
         bind a fresh identity as ?i }
 then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ; item: ?i ] }
 ```
@@ -90,6 +92,22 @@ the tool reports what the rules did, as it does for every call.
 and it may be empty. That is the model's claim, recorded as such in
 [Reading](../concepts/reading.md), and it is the record the rest of this
 note reads.
+
+An answer may name a value that already holds: one that follows from another
+assertion, or one already asked for to answer another clause. A source that
+asks for what follows has asked for it, so the value is then asked for, and
+answers the clause, and it stays when what it followed from goes. An empty
+answer is the claim that nothing in the catalogue answers the words, and a
+reading that left out a value because it was already there would make that
+claim falsely, to the person and in a quote's basis of design.
+
+An answer names at most one option for each variable, since `Asserting`
+holds one value per variable and the second would displace the first for
+no reason the source gives. Two options on one variable say the reader could
+not tell which answers, so the rule reads nothing, as it does for words the
+source does not bear out, and the tool says which variable was named twice.
+Which one answers is for the reader to say: *2200 mm minimum* is the 2200
+option, and a reading that cannot tell leaves the item to be read again.
 
 ## A reading becomes a clause, and its answer a choice
 
@@ -177,6 +195,13 @@ counted before a gate is paid for. That count is a read over the log, in
 the clause or at the answer, which argue for different gates.
 
 ## What the reading cannot say, and what is read instead
+
+An item's answer answers the whole of its words. Words that ask for two
+things, one the catalogue answers and one it does not, are two items, each
+an unbroken passage of the source: *framed glass landing doors* answered,
+*with an antimicrobial coating* answered by nothing. Read as one item, the
+miss would sit inside a clause the ledger shows as answered, and nobody
+would see it.
 
 A read item with no answer is the model's claim that nothing in the catalogue
 answers those words. Whether the claim is right is not a fact any rule can

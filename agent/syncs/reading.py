@@ -91,12 +91,27 @@ def _occurs_in(words: str, text: str) -> bool:
     )
 
 
+def _named_twice(states: States, answer: list[Any]) -> list[str]:
+    """The variables an answer names more than one option for, read from
+    `Cataloguing`: `?a names at most one option per variable` fails on them."""
+    seen: dict[str, Any] = {}
+    twice: list[str] = []
+    for option in dict.fromkeys(answer):
+        variable = _variable_offering(states, option)
+        if variable is None:
+            continue
+        if variable in seen and variable not in twice:
+            twice.append(variable)
+        seen[variable] = option
+    return twice
+
+
 def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Invocation]:
     """One rule, two triggers, on the shape of the source.  A call naming
     neither a file nor an utterance reads nothing: there is no source to
     check it against.  Nor does one whose words the source does not bear
     out — `Filing: { ?f text: ?t }` or `Conversing: { ?u text: ?t }`, and
-    `?w occurs in ?t`."""
+    `?w occurs in ?t` — or whose answer names two options on one variable."""
     if c.output.get("tool") != "read":
         return []
     words = c.output.get("words", "")
@@ -109,6 +124,8 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
     else:
         return []
     if text is None or not _occurs_in(words, text):
+        return []
+    if _named_twice(states, c.output.get("answer") or []):
         return []
     return [
         Invocation(

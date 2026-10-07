@@ -54,6 +54,7 @@ tool string the rules match on is `assert`, which is the vocabulary.
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Annotated, Any, Literal, NotRequired, TypedDict
 
 from langchain.tools import tool
@@ -230,12 +231,18 @@ def read(items: list[Requirement]) -> dict[str, Any]:
     condition. Pass every requirement a message or a document states in one
     call, in the order the source states them. `words` is the requirement copied from the source as one
     unbroken passage: trim either end, never cut the middle, never
-    paraphrase. `answer` is the option ids that answer it,
-    exactly as `review` lists them under `open`, such as `rated_load:kg1250`,
-    never a label; several when one sentence settles several variables, only
-    what the words themselves settle, and empty when nothing in the catalogue
-    answers it. An empty answer is still worth recording: the clause is kept
-    with its source, and the person can answer it or take it further.
+    paraphrase. `answer` is the option ids that answer it, exactly as
+    `review` lists them, such as `rated_load:kg1250`, never a label: under
+    `open`, or a value under `follows` or `asked` when the words ask for what
+    already holds, which then answers this clause too. Several when one
+    sentence settles several variables, one option per variable, only what
+    the words themselves settle, and empty only when nothing in the
+    catalogue answers it, since an empty answer tells the person the
+    catalogue has nothing for it. An empty answer is still worth recording:
+    the clause is kept with its source, and the person can answer it or take
+    it further. Words asking for two things, one the catalogue answers and
+    one it does not, are two items, each its own passage, so the miss is not
+    hidden in an answered clause.
     `file` is the id of the document the words are from, as `review` lists
     it under `files`; leave it out when they are from the person's message.
 
@@ -275,10 +282,17 @@ def _read(item: Requirement) -> dict[str, Any]:
         utterance=None if file else heard(),
     )
     outcome: dict[str, Any] = {"words": words, "did": _did(completion)}
+    named = Counter(variable_of[o] for o in dict.fromkeys(answer) if o in variable_of)
+    twice = sorted(v for v, times in named.items() if times > 1)
     if not any(entry["action"] == "Reading/read" for entry in outcome["did"]):
-        # The rule declined: the words are not in the cited source.
+        # The rule declined: an answer naming two options on one variable,
+        # or words that are not in the cited source.
         outcome["refused"] = (
-            "nothing was read: the words are not in the cited source; "
+            "nothing was read: the answer names more than one option for "
+            + ", ".join(twice)
+            + "; read the item again with the one option the words ask for"
+            if twice
+            else "nothing was read: the words are not in the cited source; "
             "copy them as one passage, and pass `file` if they are from the document"
         )
     else:

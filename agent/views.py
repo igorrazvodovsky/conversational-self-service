@@ -1493,6 +1493,7 @@ def digest(
         "asked": [
             {
                 **at(v),
+                "option": v["value"],
                 "says": say(v)
                 + (" (negotiable)" if v["softly"] else "")
                 + (
@@ -1524,6 +1525,7 @@ def digest(
         "follows": [
             {
                 **at(v),
+                "option": v["value"],
                 "says": f"{say(v)} — {', '.join(o['because'] for o in v['owing'])}"
                 + (
                     f" (from {', '.join(f['heading'] for f in v['following'])})"

@@ -57,8 +57,14 @@ How the configurator works, because it is not the usual kind:
   read from, copied as one unbroken passage of the source (trim either end,
   never cut the middle, never paraphrase), and the option ids that answer
   it, exactly as `review` lists them and never a label: several when one
-  sentence settles several variables, only what the words themselves settle,
-  none when nothing in the catalogue does. An id that comes back under
+  sentence settles several variables, one option per variable, only what the
+  words themselves settle, none only when nothing in the catalogue does. A
+  requirement a value already meets — one under `follows`, or one `asked`
+  for another clause — is answered by that value's `option`; never leave it
+  empty because the value is already there, since an empty answer tells the
+  person the catalogue has nothing for it. Words asking for something the
+  catalogue answers and something it does not are two items, so the gap
+  stands on its own line. An id that comes back under
   `not_offered` answered nothing; read that item again with the right one. Words the
   cited source does not contain read nothing and come back under `refused`;
   copy them again from the source, with `file` when they are from a document.
