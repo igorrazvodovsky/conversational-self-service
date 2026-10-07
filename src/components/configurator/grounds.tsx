@@ -35,7 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted, To, useTargeted } from "./address";
 import { ClauseText, plain } from "./clauses";
-import { STANDING } from "./document";
+import { STANDING, STANDING_TONE } from "./document";
 import { adds, day, money } from "./format";
 import type { Ground, Quote, View } from "./provider";
 
@@ -80,7 +80,8 @@ export function Decision({
         <h2 id={`${quote.quote}-offer`} className="text-base font-semibold">
           Quotation No. {quote.number}
         </h2>
-        <Badge variant={quote.standing === "committed" ? "default" : "outline"}>
+        <Badge variant="secondary"
+          className={STANDING_TONE[quote.standing]}>
           {STANDING[quote.standing]}
         </Badge>
         <span className="text-xs text-muted-foreground">

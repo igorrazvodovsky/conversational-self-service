@@ -52,6 +52,13 @@
   --ground: oklch(0.98 0.002 286);
   --sunken: oklch(0.958 0.003 286);
 
+  /* Status hues, for badges only (docs/ui.md). Each is text on a tenth of
+     itself: 12px text needs 4.5:1, and every one clears it on that tint
+     over a card. */
+  --positive: oklch(0.5 0.12 150);
+  --caution: oklch(0.52 0.12 65);
+  --info: oklch(0.5 0.13 255);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -99,6 +106,10 @@
   --ground: oklch(0.172 0.005 286);
   --sunken: oklch(0.141 0.005 286);
 
+  --positive: oklch(0.8 0.13 150);
+  --caution: oklch(0.82 0.12 75);
+  --info: oklch(0.8 0.1 255);
+
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -134,6 +145,9 @@
   --color-frame: var(--frame);
   --color-ground: var(--ground);
   --color-sunken: var(--sunken);
+  --color-positive: var(--positive);
+  --color-caution: var(--caution);
+  --color-info: var(--info);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

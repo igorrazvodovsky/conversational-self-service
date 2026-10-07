@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { goTo, To } from "./address";
 import { money, tonnes } from "./format";
 import { LIFE, priced } from "./life";
+import { TONE, type Tone } from "./tone";
 import { useShown } from "./showing";
 import { useConfigurator, type Grid, type View } from "./provider";
 
@@ -22,11 +23,11 @@ import { useConfigurator, type Grid, type View } from "./provider";
  * first — the same order `quotable` gives its reason in, so the word and the
  * sentence beside it never disagree.
  */
-function state(view: View): string {
-  if (view.quotable.ok) return "Ready to quote";
-  if (view.counts.unmet) return "Not buildable as asked";
-  if (view.counts.open) return "Incomplete";
-  return "Not addressed";
+function state(view: View): { words: string; tone?: Tone } {
+  if (view.quotable.ok) return { words: "Ready to quote", tone: "positive" };
+  if (view.counts.unmet) return { words: "Not buildable as asked", tone: "caution" };
+  if (view.counts.open) return { words: "Incomplete" };
+  return { words: "Not addressed" };
 }
 
 function Line({ term, amount }: { term: string; amount: string }) {
@@ -54,24 +55,17 @@ export function Standing() {
   const years = price.term / 12;
   const asked = counts.asked + counts.yielded + counts.unmet;
   const issued = view.quotes.length;
+  const { words, tone } = state(view);
 
   return (
     <Card size="sm">
       <CardContent className="space-y-3">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <Badge variant={quotable.ok ? "default" : "outline"}>{state(view)}</Badge>
+          <Badge variant="secondary" className={tone && TONE[tone]}>
+            {words}
+          </Badge>
           {quotable.ok ? null : <span className="text-sm">{capital(quotable.because)}.</span>}
           <div className="ml-auto flex gap-2">
-            {issued ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={busy}
-                onClick={() => void gesture({ act: "focus", surface: "quote" })}
-              >
-                {issued === 1 ? "1 quote issued" : `${issued} quotes issued`}
-              </Button>
-            ) : null}
             <Button
               size="sm"
               variant={quotable.ok ? "default" : "outline"}
@@ -87,29 +81,6 @@ export function Standing() {
             </Button>
           </div>
         </div>
-
-        {/* What is open is a filter over the list, so the count of it
-            narrows the list to it. */}
-        <p className="text-xs text-muted-foreground">
-          <To id="asserted">{asked} asked</To> · {counts.follows} follow from that ·{" "}
-          {counts.open ? (
-            <a
-              href="#asserted"
-              className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-              onClick={(event) => {
-                event.preventDefault();
-                if (busy) return;
-                void gesture({ act: "frame", frame: { by: "gap", gap: "open" } }).then(() =>
-                  goTo("asserted"),
-                );
-              }}
-            >
-              {counts.open} open
-            </a>
-          ) : (
-            `${counts.open} open`
-          )}
-        </p>
 
         <Collapsible>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t pt-3 text-sm">

@@ -218,15 +218,17 @@ drop things it knows nothing about. Some of them fail silently:
 
 - Contrast between surfaces comes from neutral levels, not colour, so a
   thing's place in the scale reads before its words do.
-- Status has no colour of its own — no amber for a question, red for an unmet
-  assertion, violet for the model in the log or green for a trend going up —
-  because zinc has no equivalent. Nothing on the canvas is an error: a conflict
-  is a question put to the person, and an unmet assertion is on record waiting
-  for that answer. Neither is styled: the words say it, and the question links
-  to the assertions it is between, so finding one is following a link rather
-  than scanning for a mark. A refusal in the log is an `outline` `Badge`, a
-  permission working rather than a fault. `destructive` is kept for an action
-  that destroys and for a request that failed.
+- Colour marks status, and only on a status badge (`tone.ts`): where the
+  specification or an offer stands. A badge in zinc alone is a dark block
+  beside a dark button, so a status reads as a control. It is a tint
+  instead: green where the person can go on, amber where something is in the
+  way, blue where an offer waits for them. Everything else stays in zinc.
+  Nothing on the canvas is an error: a conflict is a question put to the
+  person, and an unmet assertion is on record waiting for that answer, so
+  amber rather than red, and on the item itself the words say it and the
+  question links to the assertions it is between. A refusal in the log is an
+  `outline` `Badge`, a permission working rather than a fault. `destructive`
+  is kept for an action that destroys and for a request that failed.
 - Nothing is smaller than 12px.
 
 ## Accessibility

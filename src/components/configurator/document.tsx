@@ -42,6 +42,7 @@ import type { Party, Quote, View } from "./provider";
 
 import { day, money, tonnes as tonnesOf } from "./format";
 import { LIFE } from "./life";
+import { TONE } from "./tone";
 import { LiftDrawing } from "./drawing";
 
 const tonnes = (kg: number) => `${tonnesOf(kg)} CO₂e`;
@@ -53,6 +54,14 @@ export const STANDING: Record<Quote["standing"], string> = {
   committed: "Accepted",
   revoked: "Revoked",
   lapsed: "Lapsed",
+};
+
+/** An open offer waits on the person, an accepted one is done; the rest are past. */
+export const STANDING_TONE: Record<Quote["standing"], string | undefined> = {
+  open: TONE.info,
+  committed: TONE.positive,
+  revoked: undefined,
+  lapsed: undefined,
 };
 
 // The catalogue's families, given the headings a proposal uses. `context`
@@ -217,7 +226,8 @@ export function QuoteDocument({
             term="Standing"
             amount={
               <Badge
-                variant={quote.standing === "committed" ? "default" : "outline"}
+                variant="secondary"
+          className={STANDING_TONE[quote.standing]}
               >
                 {STANDING[quote.standing]}
               </Badge>

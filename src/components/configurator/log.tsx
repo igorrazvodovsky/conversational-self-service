@@ -159,7 +159,7 @@ export function Log() {
           title="What each turn changed, and on whose authority"
         >
           <BellIcon />
-          {fresh ? <span className="text-foreground tabular-nums">{fresh}</span> : null}
+          {fresh ? <Badge variant="ghost" className="h-auto p-0 tabular-nums hover:bg-transparent">{fresh}</Badge> : null}
         </Button>
       </SheetTrigger>
       <SheetContent
