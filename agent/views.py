@@ -16,8 +16,10 @@ already recorded and needs no extra field anywhere.
 The log also answers *from which words*.  A person's message opens a flow and
 the model's tool calls in reply run in it (`hearing.py`), so an assertion
 whose flow holds a `Conversing/say` was made in reply to those words, and the
-canvas says so — *the assistant read "hospital, six storeys" as this* — from
-the flow token alone.  No concept holds the reading; the trace does.
+canvas says so — *the assistant asked for this in reply to "hospital, six
+storeys"* — from the flow token alone.  It says no more than that: the flow
+shows the value was asserted in reply to the words, not that it was read
+from them, which only `Reading` records.  No concept holds the reading; the trace does.
 """
 
 from __future__ import annotations
@@ -193,8 +195,9 @@ def _source_name(engine: Engine, source: Any) -> str | None:
 def _how(engine: Engine, entry: dict[str, Any], cited: bool = False) -> str:
     """The sentence beside an asserted value.
 
-    With words in the flow, the sentence says what they were: the reading is
-    what the person corrects, so it stands where the value does.  When the
+    With words in the flow, the sentence says what they were: an assertion
+    made in reply to them, or a reading of them where `Reading` holds one,
+    since what the model took them to mean is what the person corrects.  When the
     value answers a clause the model stated from those same words, the clause
     already carries them beside the value (`cited`), and the sentence says
     only who read it and where; the words come back the moment the value
@@ -204,7 +207,7 @@ def _how(engine: Engine, entry: dict[str, Any], cited: bool = False) -> str:
     agent_said = entry.get("speaker") == BROWSER
     if words and via == "TheModelMayAssertAValue":
         whose = "your agent's " if agent_said else ""
-        return f"the assistant read {whose}“{words}” as this"
+        return f"the assistant asked for this in reply to {whose}“{words}”"
     if words and via in {"AChoiceReachesTheAssertions", "ASubstituteReachesTheAssertions"}:
         who = "your agent" if actor == BROWSER else "the assistant"
         name = _source_name(engine, entry.get("source"))

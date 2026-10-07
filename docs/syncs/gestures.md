@@ -179,12 +179,17 @@ A person's message and the tool calls the model makes in reply are one
 occasion, as the catalogue's arrival at boot is one, so the `say` opens a flow
 and `agent/tools.py` performs every root action of that turn in it
 (`agent/hearing.py` keeps the token per thread and hands it to the tools).
-That is what makes the model's reading of the person's words a fact rather
+That is what makes the model's reply to the person's words a fact rather
 than a sentence in its reply: *the person said "hospital, six storeys"* and
 *the model asserted `building_type:hospital`* carry the same flow token. The
 canvas reads the utterance off the assertion's flow (`agent/views.py`) and
-shows it beside the value under the `how` facet — *the assistant read
-"hospital, six storeys" as this* — in place of *the assistant asked for this*.
+shows it beside the value under the `how` facet — *the assistant asked for
+this in reply to "hospital, six storeys"*. That is all the flow says: the
+model may have asserted the value in reply to words about something else
+altogether, such as *please try again*, and the sentence is still true. Only
+a reading says the value was read from the words, and only an assertion that
+answers a clause the model read carries one: *the assistant read "a bed must
+fit" as this*.
 When the value answers a clause the model stated from those same words, the
 clause beside it already carries them, and the sentence says only who read it
 and where; the words come back the moment the value stops answering the clause.
@@ -230,8 +235,8 @@ names no such utterance is heard as anything else in the chat is, as the
 person's words.
 
 So the trace reads the same for both speakers, and the actor on the `say`
-is what tells them apart: the canvas says *the assistant read your agent's
-"…" as this*, and an utterance a requirement was read from is shown as what
+is what tells them apart: the canvas says *the assistant asked for this in
+reply to your agent's "…"*, and an utterance a requirement was read from is shown as what
 the person's agent said. No rule is added and none matches on the actor.
 
 What a tool returns to the model is scoped the same way: the effects it

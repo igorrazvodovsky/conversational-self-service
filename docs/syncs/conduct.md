@@ -69,8 +69,8 @@ different things a person did, and both write `person`.
 
 The model's call is performed in the flow the person's message opened, so an
 assertion made in reply to their words shares a flow token with the
-utterance, and the canvas reads the words off it: *the assistant read
-"hospital, six storeys" as this*. That is a fact of the trace and not of any
+utterance, and the canvas reads the words off it: *the assistant asked for
+this in reply to "hospital, six storeys"*. That is a fact of the trace and not of any
 concept — see [The turn is one flow](gestures.md#the-turn-is-one-flow).
 
 A value is *held for a reason* when a clause the person stated rests on it:
@@ -629,7 +629,7 @@ records the question only when the log holds no `ask` for its own tool call.
 The call's identity rides on the invocation (`call`), so the check reads
 the log and survives a restart. The words of a reply open a flow of their
 own, and whatever the model does next in that turn runs in it, so the canvas
-shows *the assistant read "keep the hospital" as this* as it would for a
+shows *the assistant asked for this in reply to "keep the hospital"* as it would for a
 message ([The turn is one flow](gestures.md#the-turn-is-one-flow)).
 
 A gesture that ends the wait resumes a turn the person opened; it does not

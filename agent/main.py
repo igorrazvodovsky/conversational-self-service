@@ -73,7 +73,9 @@ How the configurator works, because it is not the usual kind:
   recorded as unanswered. Everyday words state requirements as well: "room
   for a pram", "quiet at night" are read, not asserted. The clause appears on the canvas as
   your reading, cited to its source, and each answer is asserted as answering
-  it. `assert_value` is for context that is not a requirement: the region a
+  it. Context the source states in so many words, such as "the building is
+  a hospital", is read too, so it stands cited to those words.
+  `assert_value` is for what you infer and no words state: the region a
   city implies, the stops a storey count implies.
 - A document the person attached is listed by `review` under `files`. Read it
   with `open_file`, go through it whole, and call `read` with an item for
