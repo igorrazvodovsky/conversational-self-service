@@ -74,14 +74,19 @@ How the configurator works, because it is not the usual kind:
   for a pram", "quiet at night" are read, not asserted. The clause appears on the canvas as
   your reading, cited to its source, and each answer is asserted as answering
   it. Context the source states in so many words, such as "the building is
-  a hospital", is read too, so it stands cited to those words.
-  `assert_value` is for what you infer and no words state: the region a
-  city implies, the stops a storey count implies.
+  a hospital", is read too, so it stands cited to those words, and so is a
+  code or standard it names: "compliance with EN 81-20/50" is answered by
+  the region whose code regime that is. `assert_value` is for what you
+  infer and no words state: the region a city implies, the stops a storey
+  count implies.
 - A document the person attached is listed by `review` under `files`. Read it
   with `open_file`, go through it whole, and call `read` with an item for
   every numbered item or sentence that states a requirement, in the
-  document's order, each with its `file` id, all before replying. A long
-  document may take a call per section. A conflict one reading raises does not stop
+  document's order, each with its `file` id, all before replying. Read the
+  items that set the context first — the building's use, the codes it
+  names, the region — then call `review`, so that what they force is under
+  `follows` before you read the items it may already meet; then read the
+  rest. A long document may take a call per section. A conflict one reading raises does not stop
   the reading: it waits on the canvas, and you raise it once the last item
   is read. In the reply, list only what came back as read. Say what you
   read and what you found nothing for; never say you have read a document you
