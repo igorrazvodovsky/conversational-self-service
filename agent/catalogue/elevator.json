@@ -71,7 +71,6 @@
         "Rail bracket supports at each floor to the layout drawings, and rough openings at each landing until the entrances are set.",
         "A three-phase 400 V fused supply to the control cabinet with a lockable isolator, and a separate lighting and socket circuit.",
         "A telephone line or data connection to the control cabinet for the alarm and, where specified, remote monitoring.",
-        "Where fire recall is specified, a smoke detector contact at each landing wired to the control cabinet.",
         "A dry, lockable storage area beside the shaft for the equipment on delivery, and free parking for the installation team."
       ],
       "conditions": [
@@ -133,8 +132,30 @@
       "group": "context",
       "options": [
         { "value": "none", "label": "None", "co2": 0 },
-        { "value": "en81_70", "label": "EN 81-70 accessibility", "price": 1800, "co2": 25 },
-        { "value": "ada", "label": "ADA accessibility", "price": 1800, "co2": 25 }
+        {
+          "value": "en81_70",
+          "label": "EN 81-70 accessibility",
+          "price": 1800,
+          "co2": 25,
+          "particulars": [
+            {
+              "topic": "features",
+              "text": "Buttons with raised markings and Braille, voice announcement of floor and direction, audible and visible acknowledgement of every call, and door dwell extended for a slow passenger. The car size and door width needed for a wheelchair follow from the rules, not from this package."
+            }
+          ]
+        },
+        {
+          "value": "ada",
+          "label": "ADA accessibility",
+          "price": 1800,
+          "co2": 25,
+          "particulars": [
+            {
+              "topic": "features",
+              "text": "Buttons, markings and signals to ADA and ASME A17.1, with voice announcement and a two-way communication device in the car that a hearing- or speech-impaired passenger can use."
+            }
+          ]
+        }
       ]
     },
     {
@@ -213,7 +234,18 @@
       "options": [
         { "value": "standard", "label": "Standard", "price": 0, "co2": 0 },
         { "value": "eco", "label": "LED lighting + deep standby", "price": 900, "co2": 0 },
-        { "value": "regen", "label": "Regenerative drive (includes eco measures)", "price": 4500, "co2": 120 }
+        {
+          "value": "regen",
+          "label": "Regenerative drive (includes eco measures)",
+          "price": 4500,
+          "co2": 120,
+          "particulars": [
+            {
+              "topic": "operation",
+              "text": "The drive returns braking energy to the building's supply instead of burning it in a resistor, typically 20 to 35 % of drive energy in a mid-rise with heavy traffic. It includes the eco package's LED lighting and deep standby."
+            }
+          ]
+        }
       ]
     },
     {
@@ -231,9 +263,31 @@
       "name": "dispatch_control",
       "label": "Call dispatching",
       "group": "platform",
+      "particulars": [
+        {
+          "topic": "group",
+          "text": "Destination control groups up to eight cars; collective control up to four. Both run on the same group controller, so collective control can be upgraded to destination control later without changing the cars."
+        }
+      ],
       "options": [
         { "value": "collective", "label": "Collective control (up/down landing calls)", "price": 0, "co2": 0, "note": "one car answers the call it happens to suit" },
-        { "value": "destination", "label": "Destination control (lobby panels)", "price": 14000, "co2": 60, "note": "passengers are grouped by floor before they board" }
+        {
+          "value": "destination",
+          "label": "Destination control (lobby panels)",
+          "price": 14000,
+          "co2": 60,
+          "note": "passengers are grouped by floor before they board",
+          "particulars": [
+            {
+              "topic": "panels",
+              "text": "A destination panel at every landing of the group: one per two cars at the main lobby, one at each upper landing. Each has a 10.1-inch touch display and an accessible mode with tactile keys and voice guidance to EN 81-70 Annex G, or ADA where that applies."
+            },
+            {
+              "topic": "traffic",
+              "text": "Up-peak, down-peak, lunchtime and balanced modes, switched by time of day or by measured load. The panel shows the car assigned before the passenger reaches it."
+            }
+          ]
+        }
       ]
     },
     {
@@ -345,8 +399,41 @@
       "group": "safety",
       "options": [
         { "value": "manual", "label": "Manual release by a technician", "price": 0, "co2": 0, "note": "passengers wait for the call-out to arrive" },
-        { "value": "ard", "label": "Automatic rescue device", "price": 3200, "co2": 60, "note": "the car reaches the nearest floor by itself and opens" },
-        { "value": "ups", "label": "Full battery backup", "price": 9000, "co2": 210, "note": "the lift keeps running through an outage" }
+        {
+          "value": "ard",
+          "label": "Automatic rescue device",
+          "price": 3200,
+          "co2": 60,
+          "note": "the car reaches the nearest floor by itself and opens",
+          "particulars": [
+            {
+              "topic": "operation",
+              "text": "A battery unit in the controller brings the car at low speed to the nearest landing in the direction of load and opens the doors, within 60 seconds of the mains failing. The controller tests the batteries every month; they are replaced every four years under maintenance."
+            }
+          ]
+        },
+        {
+          "value": "ups",
+          "label": "Full battery backup",
+          "price": 9000,
+          "co2": 210,
+          "note": "the lift keeps running through an outage",
+          "particulars": [
+            {
+              "topic": "operation",
+              "text": "An online UPS keeps the lift in normal service for 60 minutes after the mains fail, or two hours where a firefighters lift requires it, then parks the car at the main floor and opens the doors."
+            },
+            {
+              "topic": "location",
+              "text": "In the machine room, or, machine-room-less, in a cabinet beside the shaft at the top landing; it needs about 0.6 m² of floor and ventilation to the building's plant standards."
+            }
+          ],
+          "scope": {
+            "included": [
+              "For full battery backup: the UPS and its batteries, their changeover to the lift's supply, and battery replacement during maintenance."
+            ]
+          }
+        }
       ]
     },
     {
@@ -356,8 +443,42 @@
       "note": "Region-split like accessibility: EN 81-72 firefighters lift in Europe, ASME A17.1 Phase I/II emergency operation in North America.",
       "options": [
         { "value": "none", "label": "None", "price": 0, "co2": 0 },
-        { "value": "recall", "label": "Phase I/II emergency operation", "price": 4500, "co2": 45, "note": "the brigade recalls the car and then drives it from inside" },
-        { "value": "en81_72", "label": "EN 81-72 firefighters lift", "price": 12000, "co2": 190, "note": "protected lobby, brigade switch, two hours of operation in a fire" }
+        {
+          "value": "recall",
+          "label": "Phase I/II emergency operation",
+          "price": 4500,
+          "co2": 45,
+          "note": "the brigade recalls the car and then drives it from inside",
+          "particulars": [
+            {
+              "topic": "operation",
+              "text": "Phase I recalls the car to the designated floor on a smoke detector contact at a landing or on the building's fire alarm signal; Phase II lets a firefighter drive it from a key switch in the car."
+            }
+          ],
+          "scope": {
+            "provided": [
+              "For fire recall: a smoke detector contact at each landing, or a fire alarm signal, wired to the control cabinet."
+            ]
+          }
+        },
+        {
+          "value": "en81_72",
+          "label": "EN 81-72 firefighters lift",
+          "price": 12000,
+          "co2": 190,
+          "note": "protected lobby, brigade switch, two hours of operation in a fire",
+          "particulars": [
+            {
+              "topic": "operation",
+              "text": "A firefighters lift to EN 81-72: a brigade switch at the access level, water protection of the car and pit equipment, a rescue hatch in the car roof, and the car at the furthest floor within 60 seconds. It runs for two hours on a secondary supply."
+            }
+          ],
+          "scope": {
+            "provided": [
+              "For the firefighters lift: a fire-protected lobby at each landing, a fire alarm signal wired to the control cabinet, and drainage of the pit for firefighting water."
+            ]
+          }
+        }
       ]
     },
     {
@@ -388,7 +509,18 @@
       "options": [
         { "value": "standard", "label": "Standard buttons", "price": 0, "co2": 10 },
         { "value": "vandal", "label": "Vandal-resistant", "price": 700, "co2": 15 },
-        { "value": "touch_premium", "label": "Premium touchscreen", "price": 2600, "co2": 40 }
+        {
+          "value": "touch_premium",
+          "label": "Premium touchscreen",
+          "price": 2600,
+          "co2": 40,
+          "particulars": [
+            {
+              "topic": "panel",
+              "text": "A 10-inch capacitive touchscreen, with physical buttons kept for alarm, door open and door close. Floor names and messages are edited by the owner in the portal, with the connectivity package, or on site with the service tool."
+            }
+          ]
+        }
       ]
     },
     {
@@ -415,19 +547,118 @@
       "name": "access_control",
       "label": "Floor access control",
       "group": "cabin",
+      "particulars": [
+        {
+          "topic": "coverage",
+          "text": "Floor access control is fitted to every car of the order and configured for every landing it serves. Any floor can be left open to all, by time of day or permanently, from the access control system; the lift keeps no permissions of its own."
+        },
+        {
+          "topic": "in a fire",
+          "text": "Fire recall and firefighters' operation override floor access control: once the car is recalled, every floor is open to the brigade."
+        }
+      ],
       "options": [
         { "value": "none", "label": "Open to every floor", "price": 0, "co2": 0 },
-        { "value": "card_reader", "label": "Card reader in the car", "price": 2800, "co2": 25, "note": "a badge unlocks the floors it is allowed" },
-        { "value": "destination_linked", "label": "Badge at the lobby panel", "price": 5200, "co2": 40, "note": "the badge names the floor, so the panel routes the passenger to a car" }
+        {
+          "value": "card_reader",
+          "label": "Card reader in the car",
+          "price": 2800,
+          "co2": 25,
+          "note": "a badge unlocks the floors it is allowed",
+          "particulars": [
+            {
+              "topic": "systems",
+              "text": "Certified integrations, tested with the access control vendor and kept current at each release: LenelS2 OnGuard, Genetec Security Center (Synergis), Gallagher Command Centre, Honeywell Pro-Watch, Siemens SiPass integrated, Software House C•CURE 9000 and Nedap AEOS. Another system is integrated through the low-level interface, which any access control panel with OSDP or Wiegand inputs and relay outputs can drive, after a compatibility check at layout approval."
+            },
+            {
+              "topic": "interface",
+              "text": "A reader in the car operating panel, supplied by us, reads 125 kHz proximity and 13.56 MHz MIFARE DESFire EV2/EV3 credentials and passes each badge to the building's access control panel over OSDP v2 (secure channel) or Wiegand 26/34-bit. The access control system answers with the floors the badge allows, on one dry contact per locked floor at the controller's interface terminal."
+            },
+            {
+              "topic": "coverage",
+              "text": "Locks the floor buttons in the car. Landing calls stay open: anyone can call the car, and only an allowed badge can send it to a locked floor. It needs collective control: a destination-controlled car has no floor buttons, and access is checked at the lobby panel instead."
+            }
+          ],
+          "scope": {
+            "included": [
+              "For the card reader in the car: a reader in each car operating panel, its wiring through the travelling cable to the controller, the dry-contact interface terminal, and a commissioning test of every locked floor."
+            ],
+            "excluded": [
+              "For the card reader in the car: the access control system, its credentials and licences, and the access control contractor's engineering and wiring on its side of the interface terminal."
+            ],
+            "provided": [
+              "For the card reader in the car: one dry contact per locked floor from the access control system to the controller's interface terminal, and the floor permission data for each badge group."
+            ]
+          }
+        },
+        {
+          "value": "destination_linked",
+          "label": "Badge at the lobby panel",
+          "price": 5200,
+          "co2": 40,
+          "note": "the badge names the floor, so the panel routes the passenger to a car",
+          "particulars": [
+            {
+              "topic": "systems",
+              "text": "Certified integrations, tested with the access control vendor and kept current at each release: LenelS2 OnGuard, Genetec Security Center (Synergis), Gallagher Command Centre, Honeywell Pro-Watch, Siemens SiPass integrated, Software House C•CURE 9000 and Nedap AEOS. Another system is integrated through the low-level interface, which any access control panel with OSDP or Wiegand inputs and relay outputs can drive, after a compatibility check at layout approval."
+            },
+            {
+              "topic": "interface",
+              "text": "Two levels, chosen at layout approval and priced the same. Low level: the building's own reader is mounted in each destination panel and passes the badge to its access control panel over OSDP v2 (secure channel) or Wiegand 26/34-bit pass-through; the access control system grants or refuses and returns the allowed floors on dry contacts or over OSDP. High level: the group controller takes each badge group's floor permissions and each grant from the access control server over our REST/JSON integration API, or over BACnet/IP where the building management system carries floor security. High level is recommended above six cars or twenty-four access groups, where contact wiring grows unwieldy."
+            },
+            {
+              "topic": "coverage",
+              "text": "The destination panels at every landing that has one. With destination control the car carries no floor buttons, so the floor a badge allows is enforced at the panel that assigns the car, and there is no separate floor locking in the car. A reader in the car is the card reader in the car, an alternative to this option: a lift has one or the other."
+            },
+            {
+              "topic": "functions",
+              "text": "A badge read can place the call by itself, to its holder's home floor; badge groups can be given dedicated cars or priority, and visitor badges a single trip. These are configured at commissioning at no extra charge."
+            },
+            {
+              "topic": "price",
+              "text": "The price is per car of the group, whatever the number of panels or interface level."
+            }
+          ],
+          "scope": {
+            "included": [
+              "For floor access at the lobby panel: a reader housing in each destination panel, the integration module in the group controller, its configuration against the customer's floor permission data, and a commissioning test witnessed with the access control contractor."
+            ],
+            "excluded": [
+              "For floor access at the lobby panel: the access control system itself, with its readers, credentials, controllers, server and licences and any integration licence its vendor charges, and the access control contractor's engineering and wiring on its side of the interface."
+            ],
+            "provided": [
+              "For floor access at the lobby panel: the access control contractor's attendance at commissioning, the floor permission data for each badge group, and the network or contact wiring from the access control system to the lift's interface terminal."
+            ]
+          }
+        }
       ]
     },
     {
       "name": "lead_time",
       "label": "Handover date",
       "group": "installation",
+      "particulars": [
+        {
+          "topic": "counted from",
+          "text": "Handover is counted in weeks from order, on layout drawings approved within the four weeks the programme allows; a later approval moves handover by the same number of weeks."
+        }
+      ],
       "options": [
         { "value": "standard", "label": "16 weeks from order", "weeks": 16, "price": 0, "co2": 0, "note": "the factory's ordinary queue, any finish" },
-        { "value": "expedited", "label": "10 weeks from order", "weeks": 10, "price": 7500, "co2": 0, "note": "a slot bought out of the queue, stock finishes only" }
+        {
+          "value": "expedited",
+          "label": "10 weeks from order",
+          "weeks": 10,
+          "price": 7500,
+          "co2": 0,
+          "note": "a slot bought out of the queue, stock finishes only",
+          "particulars": [
+            {
+              "topic": "finishes",
+              "text": "The ten weeks hold for stock finishes only: painted steel, laminate or brushed stainless car walls. The slot is held for five working days from the quotation's acceptance."
+            }
+          ]
+        }
       ]
     },
     {
@@ -436,7 +667,20 @@
       "group": "installation",
       "options": [
         { "value": "none", "label": "None, a new shaft", "price": 0, "co2": 0 },
-        { "value": "strip_recycle", "label": "Dismantled and removed by us, metals recycled", "price": 9500, "co2": 0, "co2_installed": 350, "note": "the old car, machine and rails leave site sorted, with certificates of recycling" },
+        {
+          "value": "strip_recycle",
+          "label": "Dismantled and removed by us, metals recycled",
+          "price": 9500,
+          "co2": 0,
+          "co2_installed": 350,
+          "note": "the old car, machine and rails leave site sorted, with certificates of recycling",
+          "particulars": [
+            {
+              "topic": "disposal",
+              "text": "The old car, machine, rails and wiring are sorted on site; a certificate of recycling is issued for each metal stream, and hydraulic oil is removed and disposed of as hazardous waste."
+            }
+          ]
+        },
         { "value": "strip_by_others", "label": "Removed by the customer's contractor before we start", "price": 0, "co2": 0, "co2_installed": 400, "note": "the shaft is handed over empty, with no assurance of what is recycled" }
       ]
     },
@@ -446,13 +690,32 @@
       "group": "installation",
       "options": [
         { "value": "normal", "label": "Weekdays, normal working hours", "price": 0, "co2": 0 },
-        { "value": "out_of_hours", "label": "Evenings and weekends, with the building in use", "price": 8500, "co2": 0, "co2_installed": 60, "note": "for a building that cannot lose its lift by day" }
+        {
+          "value": "out_of_hours",
+          "label": "Evenings and weekends, with the building in use",
+          "price": 8500,
+          "co2": 0,
+          "co2_installed": 60,
+          "note": "for a building that cannot lose its lift by day",
+          "particulars": [
+            {
+              "topic": "hours",
+              "text": "Work between 18:00 and 07:00 on weekdays and through weekends, with the landings made safe and the shaft closed each morning so the building is in use by day."
+            }
+          ]
+        }
       ]
     },
     {
       "name": "service_level",
       "label": "Service level",
       "group": "maintenance",
+      "particulars": [
+        {
+          "topic": "uptime",
+          "text": "Uptime is measured per car and per calendar year, excluding outages caused by misuse, vandalism, a power failure or work by others; a shortfall is credited against the next year's maintenance charge, at 5 % of the annual charge per 0.1 % below the figure."
+        }
+      ],
       "options": [
         { "value": "basic", "label": "Business-hours support, next-day response", "monthly_price": 150, "co2": 0, "co2_upkeep": 80 },
         { "value": "standard", "label": "24/7 call-out, 8 h response, 99.5 % uptime", "monthly_price": 300, "co2": 0, "co2_upkeep": 120 },
@@ -485,7 +748,24 @@
       "group": "maintenance",
       "options": [
         { "value": "none", "label": "Not connected", "co2": 0 },
-        { "value": "connected", "label": "Remote monitoring and diagnostics", "monthly_price": 80, "co2": 0, "co2_upkeep": -20, "note": "fewer call-outs: a fault is diagnosed before anyone drives out" }
+        {
+          "value": "connected",
+          "label": "Remote monitoring and diagnostics",
+          "monthly_price": 80,
+          "co2": 0,
+          "co2_upkeep": -20,
+          "note": "fewer call-outs: a fault is diagnosed before anyone drives out",
+          "particulars": [
+            {
+              "topic": "link",
+              "text": "A 4G/LTE gateway in the controller sends fault codes, trip counts and door cycles to our service centre, so no building network is needed. Where the machine space has no 4G signal, the gateway connects over the building's Ethernet instead."
+            },
+            {
+              "topic": "data",
+              "text": "Data is hosted in the Netherlands and stays in the EU. The owner reads it in a web portal and exports it as CSV; status points for a building management system are offered over BACnet/IP."
+            }
+          ]
+        }
       ]
     },
     {
@@ -504,7 +784,19 @@
       "group": "maintenance",
       "options": [
         { "value": "proprietary", "label": "Service tool and parameters kept by us", "price": 0, "co2": 0 },
-        { "value": "open", "label": "Service tool, passwords and wiring diagrams handed over, without expiry", "price": 6000, "co2": 0, "note": "another firm can maintain the lift when this agreement ends" }
+        {
+          "value": "open",
+          "label": "Service tool, passwords and wiring diagrams handed over, without expiry",
+          "price": 6000,
+          "co2": 0,
+          "note": "another firm can maintain the lift when this agreement ends",
+          "particulars": [
+            {
+              "topic": "handover",
+              "text": "The service tool, its passwords and the controller parameters are handed over at acceptance and do not expire. With the wiring diagrams and the parts list in the operating manual, a competent firm can maintain, adjust and fault-find the lift without us."
+            }
+          ]
+        }
       ]
     },
     {
@@ -513,7 +805,20 @@
       "group": "end-of-life",
       "options": [
         { "value": "owner", "label": "Dismantled and disposed of by the owner's contractor", "price": 0, "co2": 0 },
-        { "value": "take_back", "label": "Taken back by us: dismantled, parts refurbished, metals recycled", "price": 3500, "co2": 0, "co2_ended": -250, "note": "a price fixed now for work done at the end of the service life" }
+        {
+          "value": "take_back",
+          "label": "Taken back by us: dismantled, parts refurbished, metals recycled",
+          "price": 3500,
+          "co2": 0,
+          "co2_ended": -250,
+          "note": "a price fixed now for work done at the end of the service life",
+          "particulars": [
+            {
+              "topic": "terms",
+              "text": "The price is fixed now and indexed to the Dutch consumer price index; the take-back can be called on by the owner at any time after twenty years, with six months' notice."
+            }
+          ]
+        }
       ]
     }
   ],
@@ -1058,6 +1363,13 @@
       "type": "implication",
       "if_all": [{ "var": "end_of_life", "in": ["take_back"] }],
       "then": { "var": "region", "in": ["europe"] }
+    },
+    {
+      "id": "R61",
+      "label": "A card reader in the car locks floor buttons, which a destination-controlled car does not have",
+      "type": "implication",
+      "if_all": [{ "var": "access_control", "in": ["card_reader"] }],
+      "then": { "var": "dispatch_control", "in": ["collective"] }
     }
   ],
   "footprint": {

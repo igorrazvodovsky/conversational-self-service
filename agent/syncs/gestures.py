@@ -80,7 +80,13 @@ def offer(states: States, spec: str) -> dict[str, Any] | None:
     site = naming["site"].get(spec, "")
     if not customer.get("name") or not site:
         return None
-    stipulated = readings.terms(states["Stipulating"].state(), BASIS)
+    # The clauses that hold for what is settled: an option's scope of supply
+    # is printed only in an offer that carries the option.
+    stipulated = readings.terms(
+        states["Stipulating"].state(),
+        BASIS,
+        states["Stipulating"].terms(BASIS, settled.values())["clauses"],
+    )
     return {
         "item": {
             "spec": spec,

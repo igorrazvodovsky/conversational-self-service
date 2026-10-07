@@ -681,9 +681,13 @@ cannot set one. Nothing tells it not to.
 _No rule lets the model change the catalogue, or the seller's terms._ Same
 shape. `Cataloguing/list` and `Cataloguing/delist` are invoked by the wiring
 at boot ([Seeding](seeding.md)) and by nothing else, and so are every action
-of `Stipulating` and the seller's `Profiling/introduce`. The model can put
-the person's name on a proposal and cannot change what the proposal
-stipulates.
+of `Stipulating` and [Detailing](../concepts/detailing.md) and the seller's
+`Profiling/introduce`. The model can put the person's name on a proposal and
+cannot change what the proposal stipulates. It answers a question about the
+product from that record, and what it says in the chat of what a price
+covers reaches no concept: an offer carries only the clauses `Stipulating`
+holds for the options chosen, so a promise the record does not make is not
+in the offer.
 
 None of that is a prohibition, because the DSL has no way to write one. Each is
 the absence of a permission, and an action reaches the
@@ -739,7 +743,9 @@ It also gets the model's verbs that a person has no gesture for,
 reads as the model does, and a read performs nothing: `review`, the digest
 the in-app model reads, is how it sees the specification, and `open_quote`
 is how it reads an offer before the person accepts it, the same record the
-assistant reads ([An offer, read](../moves.md#an-offer-read)). `propose`
+assistant reads ([An offer, read](../moves.md#an-offer-read)), and
+`look_up` is how it reads what the seller publishes about an option.
+`propose`
 asks the solver for the cheapest completion, which comes back as questions
 it can then answer as the person would. `read`
 is how a requirement it took from a document stays cited: it files the

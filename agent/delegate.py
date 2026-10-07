@@ -51,7 +51,7 @@ from mcp.types import CallToolResult, TextContent, ToolAnnotations  # noqa: E402
 from pydantic import Field  # noqa: E402
 
 from instance import SPEC, engine  # noqa: E402
-from views import canvas, digest, plain, quoted  # noqa: E402
+from views import canvas, detailed, digest, plain, quoted  # noqa: E402
 
 # The person's own agent, as an actor: it performs the person's gestures and
 # the model's verbs a person has no gesture for.  Which rules apply is a
@@ -353,6 +353,28 @@ def open_quote(quote: Quote) -> CallToolResult:
         # Where the offer stands now, which the view's buttons depend on.
         {"standing": issued and {k: issued[k] for k in ("standing", "committed")}},
     )
+
+
+@tool(
+    "look_up",
+    "Read what the seller publishes about one variable and its options, for "
+    "a question the specification does not answer: what each option is and "
+    "does, the systems it works with and the interfaces it speaks "
+    "(`particulars`); what its price includes, excludes and asks the "
+    "customer to provide (`scope`), which an offer carrying it prints among "
+    "its terms; its price; which option is settled; and the rules that "
+    "mention the variable. `variable` is a bare name such as "
+    "`access_control`, as `review` lists it. With no variable, returns the "
+    "seller's terms as an offer issued now would carry them: validity, "
+    "warranty, programme periods, payment stages, and the clauses included, "
+    "excluded, provided by the customer and conditions. Changes nothing.",
+)
+def look_up(
+    variable: Annotated[
+        str | None, Field(description="A variable's name, from `review`; none for the terms")
+    ] = None,
+) -> dict[str, Any]:
+    return linked(detailed(engine, SPEC, variable))
 
 
 # -- requirements ---------------------------------------------------------------

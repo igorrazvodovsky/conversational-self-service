@@ -26,6 +26,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Reading](reading.md) | to hold what a source was read as, so that the reading can be checked against the source and corrected |
 | [Constraining](constraining.md) | to work out what a specification can still become under the rules that say what can be built, given what is asked of it firmly and what only as a preference |
 | [Cataloguing](cataloguing.md) | to say what may be ordered, in terms a person can recognise |
+| [Detailing](detailing.md) | to keep what the seller publishes about what an item is and does, so that a question about it is answered from the seller's record |
 | [Pricing](pricing.md) | to say what each choice adds to the cost of a specification |
 | [Footprinting](footprinting.md) | to estimate the carbon a specification will emit over its service life |
 | [Quoting](quoting.md) | to hold an offer still — what is offered, at what price, on what terms, until when — so that a party can accept it as it stood |

@@ -26,6 +26,7 @@ from concepts.cataloguing import Cataloguing
 from concepts.constraining import Constraining
 from concepts.conversing import Conversing
 from concepts.deciding import Deciding
+from concepts.detailing import Detailing
 from concepts.filing import Filing
 from concepts.footprinting import Footprinting
 from concepts.framing import Framing
@@ -77,6 +78,7 @@ def build(path: Path = CATALOGUE) -> Engine:
     for concept in (
         Copiloting(),
         Cataloguing(),
+        Detailing(),
         Constraining(),
         Pricing(),
         Footprinting(),

@@ -21,6 +21,7 @@ state
   clauses:      Basis -> seq Clause
   section:      Clause -> string
   text:         Clause -> string
+  where:        Clause -> set Option        — none: the clause always holds
 
   Event is one of
     order        — the quote accepted
@@ -45,9 +46,12 @@ actions
     append a payment stage: the event on which a share of the
     price falls due, in the seller's words and as a milestone
 
-  clause [ basis: Basis ; section: string ; text: string ]
+  clause [ basis: Basis ; section: string ; text: string ;
+           where: set Option ]
     => [ clause: Clause ]
-    append a clause to the basis, under a section
+    append a clause to the basis, under a section,
+    that holds only where one of the options is chosen,
+    or always when where is empty
 
   delegate [ basis: Basis ; variable: Variable ]
     => [ basis: Basis ]
@@ -55,6 +59,11 @@ actions
     on the site, to be provided by others, and not an item supplied
 
 queries
+  terms [ basis: Basis ; chosen: set Option ]
+    => [ clauses: seq Clause ]
+    the clauses of the basis, in order, whose where is empty
+    or where one of the chosen options is in their where
+
   programme [ basis: Basis ; chosen: set Option ; term: Natural ]
     => [ milestones: seq [ event: Event ; week: Natural ] ;
          warranty: Natural ; maintenance: Natural ]
@@ -74,11 +83,16 @@ operational principle
   and stage [ basis: b ; upon: "order" ; event: order ; share: 0.3 ] => [ stage: s1 ]
   and stage [ basis: b ; upon: "readiness for dispatch" ; event: dispatch ; share: 0.5 ]
     => [ stage: s2 ]
-  and clause [ basis: b ; section: "excluded" ; text: "VAT" ] => [ clause: c ]
+  and clause [ basis: b ; section: "excluded" ; text: "VAT" ; where: {} ]
+    => [ clause: c ]
+  and clause [ basis: b ; section: "provided" ; text: "a smoke detector contact" ;
+               where: {recall} ] => [ clause: d ]
   and delegate [ basis: b ; variable: shaft ] => [ basis: b ]
   then validity of b is 30
   and stages of b is s1 then s2
   and shaft is in byOthers of b
+  and terms [ basis: b ; chosen: {standard} ] => [ clauses: c ]
+  and terms [ basis: b ; chosen: {standard, recall} ] => [ clauses: c then d ]
   and programme [ basis: b ; chosen: {standard} ; term: 120 ]
     => [ milestones: order 0, approval 4, dispatch 10, completion 16,
                      acceptance 16 ;

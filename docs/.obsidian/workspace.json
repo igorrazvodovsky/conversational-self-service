@@ -189,6 +189,7 @@
   },
   "active": "83ee5d50279fef92",
   "lastOpenFiles": [
+    "concepts/detailing.md",
     "concepts/deciding.md",
     "ui.md",
     "visit.md",
@@ -214,7 +215,6 @@
     "concepts/showing.md",
     "concepts/stipulating.md",
     "method/objects.md",
-    "concept-relations.md",
     "concept-relations.canvas",
     "syncs",
     "concepts",

@@ -21,7 +21,7 @@ policy is [Two tiers of concept](../method/boundaries.md).
 | a person acts on an application surface | in | the canvas (`src/components/configurator/`), reaching `POST /configurator/gesture` |
 | a person acts on a rendered surface | in | `useHumanInTheLoop` (`src/hooks/use-generative-ui-examples.tsx`), A2UI events |
 | the model calls a named tool | in | `agent/tools.py`, the MCP client (`src/app/api/copilotkit/[[...slug]]/route.ts`) |
-| the person's own agent acts for them | in | the MCP server in `agent/delegate.py`, at `/configurator/mcp`, and the same tools registered on the page's model context (`src/components/configurator/webmcp.tsx`); `gesture` for the person's acts, `invoke` for `propose` and `read`; its reads, `review` and `open_quote`, perform nothing |
+| the person's own agent acts for them | in | the MCP server in `agent/delegate.py`, at `/configurator/mcp`, and the same tools registered on the page's model context (`src/components/configurator/webmcp.tsx`); `gesture` for the person's acts, `invoke` for `propose` and `read`; its reads, `review`, `look_up` and `open_quote`, perform nothing |
 | the person's own agent speaks to the model | in | `converse` (`src/components/chat/converse.tsx`), a `say` gesture under `browser`, then the chat's run on a message whose id is that gesture's flow |
 | the model returns prose | out | `CopilotChat`, and to the person's own agent the reply `converse` and `listen` return |
 | the model asks the person, and its run waits | out | a LangGraph interrupt from `ask` (`agent/tools.py`), received as an AG-UI interrupt by `useInterrupt` (`src/components/chat/question.tsx`) |

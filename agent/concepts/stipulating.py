@@ -17,13 +17,14 @@ state
   clauses:      Basis -> seq Clause
   section:      Clause -> string
   text:         Clause -> string
+  where:        Clause -> set Option
 
 `Basis` is the one Pricing prices on; a payment schedule and a warranty are
 terms of the same kind as a financing factor, kept apart because a condition
 is a sentence and a price is arithmetic.  Stages and clauses are individuals
 minted here, in sequence, because their order is what a reader sees.
 
-`programme` is a query, as Pricing's `total` is: the milestones are the ends
+`programme` and `terms` are queries, as Pricing's `total` is: the milestones are the ends
 of the periods this concept holds, reckoned here and nowhere else, and it
 records nothing.
 """
@@ -53,6 +54,7 @@ class Stipulating:
         self._clauses: dict[str, list[str]] = {}
         self._section: dict[str, str] = {}
         self._text: dict[str, str] = {}
+        self._where: dict[str, list[str]] = {}
 
     def state(self) -> dict[str, Any]:
         return {
@@ -69,6 +71,7 @@ class Stipulating:
             "clauses": {b: list(cs) for b, cs in self._clauses.items()},
             "section": dict(self._section),
             "text": dict(self._text),
+            "where": {c: list(os) for c, os in self._where.items()},
         }
 
     # -- actions ------------------------------------------------------------
@@ -95,12 +98,16 @@ class Stipulating:
         self._share[stage] = float(share)
         return {"stage": stage}
 
-    def clause(self, basis: str, section: str, text: str) -> dict[str, Any]:
+    def clause(
+        self, basis: str, section: str, text: str, where: Iterable[str] = ()
+    ) -> dict[str, Any]:
         clauses = self._clauses.setdefault(basis, [])
         clause = f"{basis}/clause{len(clauses) + 1}"
         clauses.append(clause)
         self._section[clause] = section
         self._text[clause] = text
+        if where:
+            self._where[clause] = list(where)
         return {"clause": clause}
 
     def delegate(self, basis: str, variable: str) -> dict[str, Any]:
@@ -109,7 +116,20 @@ class Stipulating:
             delegated.append(variable)
         return {"basis": basis}
 
-    # -- the read -----------------------------------------------------------
+    # -- the reads ----------------------------------------------------------
+
+    def terms(self, basis: str, chosen: Iterable[str]) -> dict[str, Any]:
+        """The query in `docs/concepts/stipulating.md`: the clauses that
+        hold always, and those that hold where a chosen option is in their
+        `where`, in the basis's order."""
+        held = set(chosen)
+        return {
+            "clauses": [
+                c
+                for c in self._clauses.get(basis, [])
+                if c not in self._where or held & set(self._where[c])
+            ]
+        }
 
     def programme(self, basis: str, chosen: Iterable[str], term: int) -> dict[str, Any]:
         """The query in `docs/concepts/stipulating.md`, and nowhere else.

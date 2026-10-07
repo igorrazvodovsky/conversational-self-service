@@ -102,6 +102,23 @@ def _the_sellers_terms_are_stipulated(c: Completion, _: States) -> list[Invocati
                     {"basis": basis, "section": section, "text": text},
                 )
             )
+    # An option's scope of supply: clauses that hold where it is chosen.
+    for variable in _catalogue(c).get("variables", []):
+        for option in variable["options"]:
+            for section, texts in option.get("scope", {}).items():
+                for text in texts:
+                    out.append(
+                        Invocation(
+                            "Stipulating",
+                            "clause",
+                            {
+                                "basis": basis,
+                                "section": section,
+                                "text": text,
+                                "where": [oid(variable["name"], option["value"])],
+                            },
+                        )
+                    )
     for variable in terms.get("by_others", []):
         out.append(
             Invocation("Stipulating", "delegate", {"basis": basis, "variable": variable})
@@ -141,6 +158,27 @@ def _the_catalogue_is_listed(c: Completion, _: States) -> list[Invocation]:
                 out.append(
                     Invocation(
                         "Cataloguing", "annotate", {"option": identity, "note": option["note"]}
+                    )
+                )
+    return out
+
+
+def _the_catalogue_is_detailed(c: Completion, _: States) -> list[Invocation]:
+    """The seller's particulars of each variable and each option, in the
+    order the file gives them.  Nothing else is read off them."""
+    out: list[Invocation] = []
+    for variable in _catalogue(c).get("variables", []):
+        items = [(variable["name"], variable)] + [
+            (oid(variable["name"], option["value"]), option)
+            for option in variable["options"]
+        ]
+        for item, record in items:
+            for particular in record.get("particulars", []):
+                out.append(
+                    Invocation(
+                        "Detailing",
+                        "detail",
+                        {"item": item, "topic": particular["topic"], "text": particular["text"]},
                     )
                 )
     return out
@@ -358,6 +396,7 @@ rules = [
     Sync("TheSellerIsIntroduced", BOOT, _the_seller_is_introduced),
     Sync("TheSellersTermsAreStipulated", BOOT, _the_sellers_terms_are_stipulated),
     Sync("TheCatalogueIsListed", BOOT, _the_catalogue_is_listed),
+    Sync("TheCatalogueIsDetailed", BOOT, _the_catalogue_is_detailed),
     Sync("TheCatalogueIsPriced", BOOT, _the_catalogue_is_priced),
     Sync("TheCatalogueIsFootprinted", BOOT, _the_catalogue_is_footprinted),
     Sync("TheCatalogueSetsTheRules", BOOT, _the_catalogue_sets_the_rules),

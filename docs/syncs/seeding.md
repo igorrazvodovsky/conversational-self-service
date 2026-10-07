@@ -41,8 +41,10 @@ then  { Stipulating/stipulate: [ basis: ?b ; validity, warranty,
           for each option of each variable with a promised handover ;
         Stipulating/stage: [ basis: ?b ; upon ; event ; share ]
           for each entry of ?t's schedule ;
-        Stipulating/clause: [ basis: ?b ; section ; text ]
+        Stipulating/clause: [ basis: ?b ; section ; text ; where: {} ]
           for each text under each section of ?t's clauses ;
+        Stipulating/clause: [ basis: ?b ; section ; text ; where: { option } ]
+          for each text under each section of each option's scope ;
         Stipulating/delegate: [ basis: ?b ; variable ]
           for each variable ?t leaves to others }
 
@@ -54,6 +56,13 @@ then  { Cataloguing/describe: [ variable ; heading ; family ]
           for each option of each variable ;
         Cataloguing/annotate: [ option ; note ]
           for each option with a note }
+
+sync TheCatalogueIsDetailed
+when  { Copiloting/boot: [] => [ catalogue: ?c ] }
+then  { Detailing/detail: [ item: variable ; topic ; text ]
+          for each particular of each variable ;
+        Detailing/detail: [ item: option ; topic ; text ]
+          for each particular of each option }
 
 sync TheCatalogueIsPriced
 when  { Copiloting/boot: [] => [ catalogue: ?c ; basis: ?b ] }
@@ -166,6 +175,17 @@ the programme is reckoned from, and neither is parsed out of the other. A
 payment stage carries both of its descriptions the same way: `upon` in the
 seller's words for the proposal, `event` as the milestone the programme
 places it on.
+
+What the seller supplies with an option, what it leaves out and what it asks
+the customer to provide are conditions too, so an option's `scope` in the file
+becomes clauses of the basis that hold where the option is chosen, and an
+offer prints them only then. What the option is and does, the interfaces it
+speaks and what it covers, is a description, and goes to
+[Detailing](../concepts/detailing.md) beside the label rather than into the
+terms. The line between them is whether the seller is bound by it: *the
+customer's access control contractor attends commissioning* is a condition
+of the price, *the reader in the lobby panel speaks OSDP v2* is what the
+option is.
 
 ## See also
 

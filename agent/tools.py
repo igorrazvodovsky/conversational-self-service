@@ -65,7 +65,7 @@ from engine import Record
 from hearing import follow, heard, turn
 from instance import SPEC, engine
 from syncs import readings
-from views import digest, filed, put_question, quoted
+from views import detailed, digest, filed, put_question, quoted
 
 
 def _did(completion: Record) -> list[dict[str, Any]]:
@@ -349,6 +349,31 @@ def open_quote(quote: str) -> dict[str, Any]:
     quote; the person does, on the quote surface.
     """
     return quoted(engine, SPEC, quote)
+
+
+@tool
+def look_up(variable: str | None = None) -> dict[str, Any]:
+    """Read what the seller publishes about one variable and its options,
+    or, with no variable, the seller's terms.
+
+    `variable` is a bare name like `access_control`, as `review` lists it.
+    Returns, for the variable and for each option, the particulars of what
+    it is and does, under the topic each answers (`particulars`) — the
+    systems it works with, the interfaces it speaks, what it covers — and,
+    where the seller has stated them, what the price of the option includes,
+    excludes and asks the customer to provide (`scope`), which an offer
+    carrying the option prints among its terms; the price of each option;
+    which option the specification has settled; and the rules that mention
+    the variable, in their own sentences. Link `at` when you answer from it.
+
+    With no variable, returns the terms an offer issued now would carry:
+    how long it stands, the warranty, the weeks to drawings and on site, the
+    payment stages, what is left to others, and the clauses — `included`,
+    `excluded`, what the customer has `provided`, and the `conditions` — that
+    hold for the options settled. A projection, like `review`; it changes
+    nothing.
+    """
+    return detailed(engine, SPEC, variable)
 
 
 @tool
@@ -692,5 +717,5 @@ def review() -> dict[str, Any]:
 
 configurator_tools = [
     assert_value, withdraw, read, propose, introduce, entitle, quote,
-    show, hide, frame, unframe, review, open_file, open_quote, ask,
+    show, hide, frame, unframe, review, look_up, open_file, open_quote, ask,
 ]

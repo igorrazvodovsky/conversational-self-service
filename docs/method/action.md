@@ -27,6 +27,7 @@ by way of a [synchronization](synchronization.md) or as a root action.
 | `Asserting` | `start`, `assert`, `withdraw`, `discard` |
 | `Constraining` | `offer`, `withhold`, `tabulate`, `imply`, `consider`, `assume`, `incline`, `release`, `complete` |
 | `Cataloguing` | `describe`, `list`, `annotate`, `delist` |
+| `Detailing` | `detail` |
 | `Pricing` | `list`, `span`, `presume`, `finance`, `delist` |
 | `Footprinting` | `attribute`, `meter`, `rate`, `frame` |
 | `Deciding` | `ask`, `choose`, `decline` |

@@ -283,6 +283,86 @@ def filed(engine: Engine, file: str) -> dict[str, Any]:
     return {"file": file, "name": filing["name"][file], "text": filing["text"][file]}
 
 
+def detailed(engine: Engine, spec: str, variable: str | None = None) -> dict[str, Any]:
+    """What the seller publishes about one variable and its options, for a
+    question the canvas does not answer: what an option is and does
+    (`Detailing`), what the seller supplies with it, leaves out and asks the
+    customer to provide (`Stipulating`'s clauses that hold where it is
+    chosen), what it adds to the price, and the rules that mention the
+    variable.  Each part is read from its own concept, and nothing here
+    records anything.
+
+    With no variable, the seller's terms as an offer issued now would carry
+    them: the periods, the payment schedule, what the customer provides and
+    the clauses that hold for the options settled.
+    """
+    if variable is None:
+        settled = engine.state("Constraining")["settled"].get(spec, {})
+        return readings.terms(
+            engine.state("Stipulating"),
+            BASIS,
+            engine.concepts["Stipulating"].terms(BASIS, settled.values())["clauses"],
+        )
+    catalogue = engine.state("Cataloguing")
+    if variable not in catalogue["offers"]:
+        return {
+            "error": f"there is no variable {variable}; `review` names them, "
+            "as a bare name like `rated_load`"
+        }
+    detailing = engine.state("Detailing")
+    stipulating = engine.state("Stipulating")
+    pricing = engine.state("Pricing")
+    constraining = engine.state("Constraining")
+
+    def particulars(item: str) -> list[dict[str, str]]:
+        return [
+            {"topic": detailing["topic"][p], "text": detailing["text"][p]}
+            for p in detailing["particulars"].get(item, [])
+        ]
+
+    scope: dict[str, dict[str, list[str]]] = {}
+    for clause in stipulating["clauses"].get(BASIS, []):
+        for option in stipulating["where"].get(clause, []):
+            scope.setdefault(option, {}).setdefault(
+                stipulating["section"][clause], []
+            ).append(stipulating["text"][clause])
+    settled = constraining["settled"].get(spec, {}).get(variable)
+    return {
+        "variable": variable,
+        "heading": catalogue["heading"].get(variable, variable),
+        "at": f"#variable:{variable}",
+        "particulars": particulars(variable),
+        "options": [
+            {
+                "id": option,
+                "label": catalogue["label"].get(option, option),
+                **({"note": catalogue["note"][option]} if option in catalogue["note"] else {}),
+                **(
+                    {"capital": pricing["capital"][option]}
+                    if option in pricing["capital"]
+                    else {}
+                ),
+                **(
+                    {"monthly": pricing["monthly"][option]}
+                    if option in pricing["monthly"]
+                    else {}
+                ),
+                "particulars": particulars(option),
+                # In the seller's sections: what is `included` in the price,
+                # `excluded` from it, and `provided` by the customer.
+                **({"scope": scope[option]} if option in scope else {}),
+                **({"settled": True} if option == settled else {}),
+            }
+            for option in catalogue["offers"][variable]
+        ],
+        "rules": [
+            {"rule": rule, "because": constraining["because"].get(rule, rule)}
+            for rule, over in constraining["scope"].items()
+            if variable in over
+        ],
+    }
+
+
 def _sources(
     engine: Engine, clauses: list[dict[str, Any]], stated: set[str]
 ) -> list[dict[str, Any]]:

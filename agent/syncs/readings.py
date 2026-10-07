@@ -39,10 +39,13 @@ def profile(profiling: dict[str, Any], party: str) -> dict[str, str]:
     }
 
 
-def terms(stipulating: dict[str, Any], basis: str) -> dict[str, Any]:
-    """The terms on a basis: everything stipulated on it, as one record."""
+def terms(
+    stipulating: dict[str, Any], basis: str, holding: list[str]
+) -> dict[str, Any]:
+    """The terms on a basis: everything stipulated on it, as one record, with
+    the clauses that hold (Stipulating's `terms`) under their sections."""
     clauses: dict[str, list[str]] = {}
-    for clause in stipulating["clauses"].get(basis, []):
+    for clause in holding:
         clauses.setdefault(stipulating["section"][clause], []).append(
             stipulating["text"][clause]
         )
