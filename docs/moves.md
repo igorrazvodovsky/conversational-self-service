@@ -175,6 +175,19 @@ turn standing in for a fact, and the first is the model reporting a state it
 never checked. The prompt's rule is against withdrawing *unasked*;
 withdrawing at the person's word is the person's answer, carried out.
 
+## A proposal, answered on the canvas
+
+A proposal is a `Deciding` request too, and it is not put in the chat. A
+conflict is a question the turn cannot go past: the model cannot go on
+configuring around it, so it takes the floor and the turn waits. A proposal
+blocks nothing. The person asked for it, the turn that made it is over once
+it is on the canvas, and it asks for a value at a time
+([Conduct](syncs/conduct.md#the-unit-of-adoption-is-a-value-and-the-whole-is-a-shortcut)),
+each beside the open variable it would settle. A card in the chat would
+either list the values, which recites the canvas, or offer only the whole,
+which hides the unit. So the proposal is answered where its values stand,
+and the chat carries what it assumed and that it waits.
+
 ## The specification, read
 
 `review` is the canvas for the readers off the page: the assistant, and the
@@ -249,9 +262,10 @@ already under way says so.
 - *The model's reply is specified only in the prompt.* The table above is the
   first place the reply's moves are written down; `agent/main.py` carries them
   as instructions, and nothing measures whether they are followed.
-- *Only a conflict is asked.* A completion that needs a choice, and a quote
-  that needs a name and a site, are the same move: a question the turn cannot
-  go past. Neither is put with `ask` yet.
+- *Only a conflict is asked.* A quote that needs a name and a site, and a
+  completion that cannot be proposed until the person says what to finish it
+  for, are the same move: a question the turn cannot go past. Neither is put
+  with `ask` yet.
 - *The person's agent talks to the assistant only through the page.* It
   speaks in the chat the person has open, and the assistant's reply reaches
   it from there. An agent connected to the MCP server with no page open can
