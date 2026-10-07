@@ -555,7 +555,8 @@ def decline(
 @tool(
     "reply",
     "Reply in words to a question the seller's assistant put, as the person "
-    "(`asked` on a question in `review`). The reply settles nothing: the "
+    "(`asked` on a question in `review`, or `quotable.asked` when it asked who "
+    "the quote is for). The reply settles nothing: the "
     "question stays on the person's canvas with your words beside it, and "
     "the assistant, if it is waiting on the answer, goes on. Use it to say "
     "which assertion gives way in your own words, or that the decision is "

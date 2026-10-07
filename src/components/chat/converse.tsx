@@ -16,7 +16,7 @@
  * A turn can outlast what a tool call may take, so `converse` waits for a
  * bounded time and then returns what has been said so far, and `listen`
  * waits again. `listen` is also how the agent hears the assistant go on
- * after it answered a question with `choose`, `decline` or `reply`.
+ * after it answered a question, by a gesture or with `reply`.
  *
  * While a question waits, the conversation's floor is the person's: a new
  * message would not be run, and the transport would re-emit the open
@@ -43,20 +43,35 @@ type Digest = {
     options: unknown[];
     asked?: { status: string; text: string; about: unknown } | null;
   }[];
+  quotable?: {
+    asked?: { status: string; text: string; about: unknown; lacking: string[] } | null;
+  };
 };
 
-/** The question the assistant put and waits on, as the agent answers it. */
+/** The question the assistant put and waits on, as the agent answers it: a
+ * conflict, or who the quote is for. */
 function waitingIn(state: unknown) {
-  const question = (state as Digest).questions?.find(
-    (q) => q.asked?.status === "awaiting",
-  );
-  if (!question?.asked) return null;
-  return {
-    question: question.asked.text,
-    about: question.asked.about,
-    request: question.request,
-    options: question.options,
-  };
+  const digest = state as Digest;
+  const question = digest.questions?.find((q) => q.asked?.status === "awaiting");
+  if (question?.asked)
+    return {
+      question: question.asked.text,
+      about: question.asked.about,
+      request: question.request,
+      options: question.options,
+      answer: "`choose`, `decline` or `reply`",
+    };
+  const addressee = digest.quotable?.asked;
+  if (addressee?.status === "awaiting")
+    return {
+      question: addressee.text,
+      about: addressee.about,
+      missing: addressee.lacking,
+      answer:
+        "`introduce` for the name and `entitle` for the site, with what the " +
+        "person gave you, or `reply`",
+    };
+  return null;
 }
 
 /** What the assistant said after a message, in order. */
@@ -97,8 +112,7 @@ export function ConverseTools() {
     "Say something to the seller's assistant, as the person would in the " +
       "chat, and hear its reply. The person sees your words in the chat as " +
       "their agent's. Returns `reply`; `waiting`, when the assistant put a " +
-      "question and waits on it, which you answer with `choose`, `decline` " +
-      "or `reply`; and `running`, when it is still answering — call " +
+      "question and waits on it, with how to answer it under `answer`; and `running`, when it is still answering — call " +
       "`listen` with `said` to hear the rest. Says nothing while a question " +
       "waits or the assistant is answering.",
     { text: z.string().describe("What you say to the assistant") },
@@ -109,8 +123,8 @@ export function ConverseTools() {
         return {
           said: null,
           refused:
-            "a question waits on the person; answer it with `choose`, " +
-            "`decline` or `reply`, then call `listen`",
+            "a question waits on the person; answer it as `waiting.answer` " +
+            "says, then call `listen`",
           waiting,
         };
       if (agent.isRunning)

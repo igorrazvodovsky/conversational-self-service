@@ -303,7 +303,7 @@ export function useWaitingQuestion() {
         status === "complete" ? (
           <AskedRecord
             question={parameters?.question}
-            addressee={!!parameters?.missing}
+            addressee={!!parameters?.missing?.length}
             result={result}
           />
         ) : (
