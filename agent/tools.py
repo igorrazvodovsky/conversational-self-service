@@ -114,6 +114,11 @@ def _standing(outcome: dict[str, Any]) -> dict[str, Any]:
             "else is left to do this turn, call `ask` with it instead of asking in "
             "the reply"
         )
+        outcome["question"] = next(
+            {"because": q["reason"], "options": [o["option"] for o in q["options"]]}
+            for q in readings.pending(engine.state("Deciding"))
+            if q["request"] == CONFLICT
+        )
     return outcome
 
 
@@ -558,30 +563,57 @@ def _answered(put: dict[str, Any]) -> dict[str, Any]:
 
 @tool
 def ask(
-    question: str, tool_call_id: Annotated[str, InjectedToolCallId]
+    question: str,
+    options: list[str],
+    tool_call_id: Annotated[str, InjectedToolCallId],
 ) -> dict[str, Any]:
     """Put the open conflict to the person, and wait for the answer.
 
-    `question` is what you ask, in one or two sentences: which rules refuse
-    what, and which assertion gives way. The chat shows it with the canvas's
-    answers and your turn waits until the person chooses one, leaves it, or
-    replies in words; then this returns what happened. Call it last in a
-    turn, once there is nothing else to do before the answer. You cannot
-    answer it yourself.
+    `options` is the option ids the question offers to give up, exactly as
+    `review` lists them under the open conflict in `questions`, such as
+    `door_finish:glass`. Only that conflict can be asked: other values that
+    cannot be met wait under `unmet`, and come back as the question once it
+    is settled. `question` is what you ask, in one or two sentences, about
+    those options: which rule refuses what, and which assertion gives way.
+    The chat shows it with the canvas's answers and your turn waits until
+    the person chooses one, leaves it, or replies in words; then this
+    returns what happened. Call it last in a turn, once there is nothing
+    else to do before the answer. You cannot answer it yourself.
     """
     if not _already_asked(tool_call_id):
-        if not any(
-            q["request"] == CONFLICT
-            for q in readings.pending(engine.state("Deciding"))
-        ):
+        open_ = next(
+            (
+                q
+                for q in readings.pending(engine.state("Deciding"))
+                if q["request"] == CONFLICT
+            ),
+            None,
+        )
+        if open_ is None:
             return {"refused": "there is no open conflict to ask about"}
         before = _asked()
         if before is not None and before["status"] == "awaiting":
             return {"refused": "already asked, and still waiting on the person"}
-        engine.root(
+        offers = engine.state("Cataloguing")["offers"]
+        variable_of = {o: v for v, options_ in offers.items() for o in options_}
+        named = [
+            {"variable": variable_of.get(o), "option": o} for o in dict.fromkeys(options)
+        ]
+        completion = engine.root(
             "Copiloting", "invoke", actor="model", flow=turn(), tool="ask",
-            spec=SPEC, request=CONFLICT, text=question, call=tool_call_id,
+            spec=SPEC, request=CONFLICT, offered=named, text=question,
+            call=tool_call_id,
         )
+        if not any(entry["action"] == "Conversing/say" for entry in _did(completion)):
+            # The rule declined: the options named are not the open conflict's.
+            return {
+                "refused": "the open conflict offers other options; ask about "
+                "it, with these ids, and the rest come back once it is settled",
+                "open": {
+                    "because": open_["reason"],
+                    "options": [o["option"] for o in open_["options"]],
+                },
+            }
     put = _asked()
     if put is None:
         return {"refused": "not asked"}

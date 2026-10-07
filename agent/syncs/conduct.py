@@ -18,6 +18,7 @@ likely to infer from a paragraph of English.
 
 from __future__ import annotations
 
+import json
 from typing import Any, Callable
 
 from engine import Completion, Invocation, States, Sync
@@ -496,11 +497,21 @@ def _the_canvas_is_shown_before_it_changes(
     ]
 
 
+def _same(named: Any, offered: list[Any]) -> bool:
+    """Whether the options a question names are the ones offered, in any order."""
+    if not isinstance(named, list):
+        return False
+    key = lambda o: json.dumps(o, sort_keys=True)  # noqa: E731
+    return sorted(map(key, named)) == sorted(map(key, offered))
+
+
 def _the_model_may_ask_the_person(c: Completion, states: States) -> list[Invocation]:
     """`where { ?r is pending ; Deciding: { ?r offered: ?options } }`: the
     question is put as it stands, with the options it is offered now, so a
     later conflict that displaces them leaves this one overtaken rather than
-    answered."""
+    answered.  `?options` is bound in the `when` too: a question naming
+    options `Deciding` does not offer is about another conflict, and is not
+    put."""
     if c.output.get("tool") != "ask":
         return []
     request = c.output.get("request")
@@ -515,7 +526,7 @@ def _the_model_may_ask_the_person(c: Completion, states: States) -> list[Invocat
         ),
         None,
     )
-    if question is None:
+    if question is None or not _same(c.output.get("offered"), question["options"]):
         return []
     return [
         Invocation(

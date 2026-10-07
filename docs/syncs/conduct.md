@@ -515,7 +515,8 @@ rules doing their work together.
 
 ```
 sync TheModelMayAskThePerson
-when  { Copiloting/invoke: [ tool: "ask" ; request: ?r ; text: ?t ] => [] }
+when  { Copiloting/invoke: [ tool: "ask" ; request: ?r ; offered: ?options ;
+          text: ?t ] => [] }
 where { ?r is pending
         Deciding: { ?r offered: ?options } }
 then  { Conversing/say: [ party: model ; text: ?t ; to: person ;
@@ -533,6 +534,16 @@ point down: they stop, put it to the customer, and do not go on configuring
 around it until they have an answer or have been told to wait. The fact is
 `Deciding`'s, and the floor is the conversation's. When the model's own turn
 ran into the conflict, it asks, and its turn waits on the person.
+
+The model names the options its question offers, and the question is put
+only when they are the ones `Deciding` holds. `Deciding` holds one conflict
+per specification, the latest the solver refused, while every assertion that
+cannot be met stays on the canvas as unmet; words written about one of the
+others would sit above a card offering this one's answers, and the person
+would be answering a question nobody asked. A call naming other options puts
+nothing, and the tool says which conflict is open, so the model asks that
+one. The others come back as questions as each is tried again
+([Propagation](propagation.md#an-assertion-is-tried-again-when-the-obstacle-goes)).
 
 The question is about *the question as put*: the request with the options it
 was offered at the time. A request is a value, so a later conflict on the
