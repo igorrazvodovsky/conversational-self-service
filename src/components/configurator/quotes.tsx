@@ -57,6 +57,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   address,
@@ -74,6 +75,7 @@ import { QuoteDocument, STANDING } from "./document";
 import { AsIssued, Decision } from "./grounds";
 import { cn } from "@/lib/utils";
 import { day, money } from "./format";
+import { TONE } from "./tone";
 import { Timeline } from "./timeline";
 import { useConfigurator, type Party, type Quote, type View } from "./provider";
 
@@ -296,7 +298,10 @@ function Issued({
                 {q.number}
               </Button>
             </TableCell>
-            <TableCell>{STANDING[q.standing]}</TableCell>
+            <TableCell>
+              {STANDING[q.standing]}
+              {q.stale.length ? <span className="text-caution"> · out of date</span> : null}
+            </TableCell>
             <TableCell className="text-right tabular-nums">
               {money(q.amount, view.currency)}
             </TableCell>
@@ -500,6 +505,35 @@ export function QuoteSurface() {
               quote={quote}
               view={view}
               actions={
+                  {/* An asked-for value moved since the offer was issued
+                      (docs/syncs/staling.md). The offer stands as issued;
+                      the mark is beside it until the person has looked, or
+                      a fresh quote revokes this one. */}
+                  {quote.stale.length ? (
+                    <span className="flex flex-wrap items-center gap-2 text-xs">
+                      <Badge variant="secondary" className={TONE.caution}>
+                        Out of date
+                      </Badge>
+                      <span className="text-muted-foreground">
+                        {quote.stale
+                          .map((b) =>
+                            "variable" in b
+                              ? (view.variables.find((v) => v.name === b.variable)?.heading ?? b.variable)
+                              : b.clause,
+                          )
+                          .join(", ")}{" "}
+                        moved since issue
+                      </span>
+                      <Button
+                        variant="link"
+                        size="xs"
+                        className="h-auto px-0"
+                        onClick={() => void gesture({ act: "clear", item: quote.quote })}
+                      >
+                        Noted
+                      </Button>
+                    </span>
+                  ) : null}
                 <>
                   {quote.standing === "open" ? (
                     <>

@@ -1190,6 +1190,7 @@ ACTS = {
     "quote": "Requested a quote",
     "commit": "Accepted a quote",
     "revoke": "Revoked a quote",
+    "clear": "Took an out-of-date mark off",
     "handover": "Handed the specification to the seller",
     "focus": "Switched surface",
     "show": "Showed a fact beside each item",
@@ -1228,6 +1229,7 @@ _KIND_OF = {
     "Filing": "reading",
     "Reading": "reading",
     "Quoting": "quotes",
+    "Staling": "specification",
     "HandingOver": "handover",
     "Profiling": "party",
     "Naming": "party",
@@ -1382,6 +1384,10 @@ def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
     }
     selection = next((s for s, of in binding["for"].items() if of == spec), None)
     choices = binding["choices"].get(selection, []) if selection else []
+    # Which answers are marked out of date, and by what: the clause they
+    # answer was reworded or relaxed since they were chosen.  Read only for
+    # choices that still stand; a retracted choice's mark is the log's.
+    because = engine.state("Staling")["because"]
 
     def standing(variable: str | None, option: str) -> str:
         if variable is None:
@@ -1414,6 +1420,7 @@ def ledger(engine: Engine, spec: str) -> list[dict[str, Any]]:
                 else None
             ),
             "standing": standing(variable, option),
+            "stale": because.get(choice, []),
         }
 
     return [
@@ -1456,6 +1463,10 @@ def _quotes(
     quoting = engine.state("Quoting")
     footprinting = engine.concepts["Footprinting"]
     now = date.today().isoformat()
+    # Which offers are marked out of date, and by which assertion: the mark
+    # is `Staling`'s and stays until the person clears it; `differs` below
+    # is the detail, recomputed on every read and maintained by nobody.
+    because = engine.state("Staling")["because"]
     quotes = []
     for number, quote in enumerate(quoting["quotes"], start=1):
         item = quoting["from"][quote]
@@ -1498,6 +1509,7 @@ def _quotes(
                 "differs": sorted(
                     name for name, option in holds.items() if settled.get(name) != option
                 ),
+                "stale": because.get(quote, []),
                 "footprint": footprinting.footprint(holds.values(), grid, BASIS),
             }
         )
@@ -1711,6 +1723,13 @@ def digest(
                 # configuration's ledger line: the value, and what it forced.
                 "answered_by": [
                     {"says": f"{a['heading']}: {a['label']}", "at": f"#choice:{a['choice']}"}
+                    | (
+                        # Chosen for words the clause no longer says; the
+                        # person keeps or replaces it on the canvas.
+                        {"stale": "the requirement was reworded since this was chosen"}
+                        if a["stale"]
+                        else {}
+                    )
                     for a in c["answers"]
                 ],
                 "displaced_by": (
@@ -1888,7 +1907,7 @@ def digest(
                 k: q[k]
                 for k in (
                     "quote", "number", "standing", "issued", "amount", "until",
-                    "committed", "differs",
+                    "committed", "differs", "stale",
                 )
             }
             | {

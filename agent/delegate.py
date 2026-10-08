@@ -646,6 +646,20 @@ def handover(
     return gesture(act="handover", reason=reason)
 
 
+@tool(
+    "clear",
+    "Take the out-of-date mark off an answer or an offer, as the person, "
+    "having looked at what changed: `review` marks an answer `stale` when "
+    "its requirement was reworded since it was chosen, and an offer `stale` "
+    "with the variables whose asked-for values moved since it was issued. "
+    "The mark is information; clearing it changes nothing else.",
+)
+def clear(
+    item: Annotated[str, Field(description="A choice's id from `answered_by`, or a quote's id from `quotes`")],
+) -> dict[str, Any]:
+    return gesture(act="clear", item=item)
+
+
 # -- what the canvas shows ------------------------------------------------------
 
 

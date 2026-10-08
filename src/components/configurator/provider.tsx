@@ -142,6 +142,14 @@ export type Frame =
 
 export type Negotiability = "fixed" | "negotiable" | "open";
 
+/**
+ * What an out-of-date mark names as having changed: the clause an answer was
+ * chosen for, or the variable whose asked-for value moved since an offer
+ * was issued (`docs/syncs/staling.md`). The mark stays until the person
+ * clears it.
+ */
+export type Basis = { clause: string } | { variable: string };
+
 /** A choice currently answering a clause, read against the assertions. */
 export interface Answer {
   choice: string;
@@ -153,6 +161,8 @@ export interface Answer {
   reason: string | null;
   replaced: string | null;
   standing: "asked" | "yielded" | "unmet" | "displaced" | "unrealisable";
+  /** Non-empty when the clause was reworded or relaxed since this was chosen. */
+  stale: Basis[];
 }
 
 /**
@@ -379,6 +389,9 @@ export interface Quote extends Side {
   issuedTo: string;
   how: string | null;
   differs: string[];
+  /** The assertions that moved since issue, until the person clears the mark;
+   * `differs` is the detail, recomputed on every read. */
+  stale: Basis[];
   footprint: Carbon;
 }
 

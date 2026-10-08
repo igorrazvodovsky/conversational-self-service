@@ -33,6 +33,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Quoting](quoting.md) | to hold an offer still — what is offered, at what price, on what terms, until when — so that a party can accept it as it stood |
 | [Stipulating](stipulating.md) | to hold the conditions on which an offer is made, so that every quote is made on stated terms |
 | [Handing over](handing-over.md) | to put an item into another party's hands, with what it is handed over for, so that they can take it up from where it was left |
+| [Staling](staling.md) | to mark an item whose basis has changed without changing the item, so that nothing a person committed is silently re-decided |
 | [Profiling](profiling.md) | to hold what a party says of who they are, so that a document can name and address them |
 | [Naming](naming.md) | to identify an item the way a document names it, by its title and the site it is for |
 

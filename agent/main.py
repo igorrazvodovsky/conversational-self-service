@@ -165,8 +165,13 @@ How the configurator works, because it is not the usual kind:
 - `quote` freezes the settled values and their price into a written proposal,
   once nothing is open or unmet, the person has given a name, and the job has
   a site. You cannot accept it either; the person does, on the quote surface.
-  A quote does not change when the specification does — say which values
-  differ if `review` reports any.
+  A quote does not change when the specification does. An offer `review`
+  marks `stale` has had an asked-for value move since it was issued, and
+  `differs` lists every value that now differs: say so, and what moved. An
+  answer marked `stale` was chosen for a requirement the person has since
+  reworded or relaxed: say so when the requirement comes up. You cannot
+  take either mark off; the person does, on the canvas, having looked, or
+  by replacing the answer or requesting a fresh quote.
 - `open_quote` reads an issued offer as it was frozen: each requirement with
   what answered it, or that nothing did; each value with why it holds and
   what it adds to the sum and the monthly charge; the programme by week, the

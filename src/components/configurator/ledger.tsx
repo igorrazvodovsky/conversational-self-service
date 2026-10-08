@@ -17,6 +17,7 @@
  * of it is drawn.
  */
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useHash, useTargeted } from "./address";
 import { useEffect, useState } from "react";
@@ -171,6 +172,31 @@ function Gone({ answer }: { answer: Answer }) {
   );
 }
 
+/**
+ * The requirement was reworded or relaxed since this answer was chosen, and
+ * the answer stayed (`docs/syncs/staling.md`). The mark is a fact beside the
+ * answer, not a change to it; the person takes it off by keeping the answer,
+ * here, or by picking another on the line, which is a new choice.
+ */
+function Stale({ answer }: { answer: Answer }) {
+  const { gesture, busy } = useConfigurator();
+  if (!answer.stale.length) return null;
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-caution">
+      The requirement changed since this was chosen.
+      <Button
+        variant="link"
+        size="xs"
+        className="h-auto px-0 text-xs"
+        disabled={busy}
+        onClick={() => void gesture({ act: "clear", item: answer.choice })}
+      >
+        Keep it
+      </Button>
+    </p>
+  );
+}
+
 function Choice({ drawn, open, onToggle }: { drawn: Drawn; open: boolean; onToggle: () => void }) {
   const { label } = useConfigurator();
   const { answer, variable, inFrame, whole } = drawn;
@@ -178,6 +204,7 @@ function Choice({ drawn, open, onToggle }: { drawn: Drawn; open: boolean; onTogg
   const isTarget = useTargeted(id);
   return (
     <div id={id} className={cn("min-w-0 space-y-0.5", addressable, isTarget && targetedRing)}>
+      <Stale answer={answer} />
       {!variable ? (
         <Gone answer={answer} />
       ) : whole ? (

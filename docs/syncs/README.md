@@ -116,6 +116,9 @@ it.
 | `APersonRepliesToAQuestion` | [Conduct](conduct.md) |
 | `APersonHandsOver` | [Handover](handover.md) |
 | `TheModelMayHandOver` | [Handover](handover.md) |
+| `AChangedClauseStalesItsAnswers` | [Staling](staling.md) |
+| `AMovedAssertionStalesTheOpenOffers` | [Staling](staling.md) |
+| `APersonClearsAStaleItem` | [Staling](staling.md) |
 
 ## Seeding
 
@@ -188,6 +191,14 @@ but the specification itself: what the seller needs in order to take it up
 is already on the log, as provenance and as utterances. No rule receives a
 handover, because the seller has no surface here. See
 [Handover](handover.md).
+
+## What is out of date is marked
+
+An answer whose requirement was reworded or relaxed, and an open offer whose
+asked-for values have moved since it was issued, are marked stale with the
+change that did it, and the mark stays until the person takes it off; nothing
+is recomputed into currency, and no rule lets the model clear a mark. See
+[Staling](staling.md).
 
 ## Assertions reach the solver
 

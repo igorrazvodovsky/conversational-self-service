@@ -84,6 +84,7 @@ their request, and reads that way in the log.
 | Hand the specification to the seller — "can I talk to someone about the validity?" | canvas, or chat | `HandingOver/send`, by gesture or by the model's tool at the person's word ([Handover](syncs/handover.md)); the specification stays the person's, and the seller reads it from the log | that it was handed over and what for, linked; unasked, only the offer of it, where the assistant has run out of rule and never where the record answers |
 | Choose what the canvas shows beside each item | canvas, or chat | [`Showing`](concepts/showing.md) | nothing; the point of the move is that the figure is on the canvas rather than recited |
 | Discard the specification | canvas | `Asserting/discard` | nothing |
+| Take the out-of-date mark off an answer or an offer, having looked | canvas only | `Staling/clear` ([Staling](syncs/staling.md)); the mark went on by rule when the requirement was reworded or an asked-for value moved | nothing; the model may say an answer or an offer is out of date and cannot clear it |
 
 ## The model's moves
 

@@ -40,10 +40,11 @@ from concepts.quoting import Quoting
 from concepts.reading import Reading
 from concepts.showing import Showing
 from concepts.specifying import Specifying
+from concepts.staling import Staling
 from concepts.stipulating import Stipulating
 from engine import Engine
 from engine.bootstrap import Copiloting
-from syncs import binding, conduct, gestures, handover, propagation, reading, seeding
+from syncs import binding, conduct, gestures, handover, propagation, reading, seeding, staling
 
 CATALOGUE = Path(__file__).parent / "catalogue" / "elevator.json"
 
@@ -98,6 +99,8 @@ def build(path: Path = CATALOGUE) -> Engine:
         # The specification put into the seller's hands.  Nothing to seed,
         # and nothing receives one here (docs/syncs/handover.md).
         HandingOver(),
+        # What is out of date, and by which change.  Nothing to seed.
+        Staling(),
         Profiling(),
         Naming(),
         Stipulating(),
@@ -116,6 +119,7 @@ def build(path: Path = CATALOGUE) -> Engine:
         *gestures.rules,
         *conduct.rules,
         *handover.rules,
+        *staling.rules,
     )
 
     catalogue = json.loads(path.read_text())
