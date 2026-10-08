@@ -83,7 +83,7 @@ import {
   type View,
 } from "./provider";
 import { useNavigate } from "./link";
-import { StepTabs } from "./steps";
+import { StepHeading, StepTabs } from "./steps";
 import {
   Answers,
   AnswersDetails,
@@ -874,27 +874,29 @@ export function AskedFor() {
       <h2 id="asserted-title" className="sr-only">
         The specification
       </h2>
-      {/* The steps of the job, and the gaps as the step's panel: one place
-          for what the list shows (`steps.tsx`). */}
-      <header className="mb-2">
-        <StepTabs>
+      {/* The steps of the job beside the list, and the list's own header
+          under them: the step it is narrowed to, and the gaps within it
+          (`steps.tsx`). */}
+      <StepTabs>
+        <header className="mb-2 space-y-2">
+          <StepHeading />
           <Filters />
-        </StepTabs>
-      </header>
-      {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
-          it is read, and a frame that leaves nothing says so. */}
-      <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-(--field)">
-        <CardContent className={cn("px-3 py-1", view.frame && !shown.size && "[&_.tiptap]:hidden")}>
-          <Specification />
-          <Unbound unbound={unbound} />
-          <Loose loose={loose} />
-          <Open open={open} />
-          {view.frame && empty ? (
-            <p className="py-3 text-xs text-muted-foreground">Nothing here.</p>
-          ) : null}
-        </CardContent>
-      </Card>
-      <Sources />
+        </header>
+        {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
+            it is read, and a frame that leaves nothing says so. */}
+        <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-(--field)">
+          <CardContent className={cn("px-3 py-1", view.frame && !shown.size && "[&_.tiptap]:hidden")}>
+            <Specification />
+            <Unbound unbound={unbound} />
+            <Loose loose={loose} />
+            <Open open={open} />
+            {view.frame && empty ? (
+              <p className="py-3 text-xs text-muted-foreground">Nothing here.</p>
+            ) : null}
+          </CardContent>
+        </Card>
+        <Sources />
+      </StepTabs>
     </section>
   );
 }
