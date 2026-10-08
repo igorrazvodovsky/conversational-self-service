@@ -127,6 +127,8 @@ it.
 | `AStartedSpecificationGetsItsSteps` | [Stepping](stepping.md) |
 | `ADiscardedSpecificationLosesItsSteps` | [Stepping](stepping.md) |
 | `APersonTakesAStep` | [Stepping](stepping.md) |
+| `ATakenStepFramesTheCanvas` | [Stepping](stepping.md) |
+| `AFramedStepShowsTheConfiguration` | [Stepping](stepping.md) |
 | `APersonFinishesAStep` | [Stepping](stepping.md) |
 | `APersonSkipsAStep` | [Stepping](stepping.md) |
 | `APersonReopensAStep` | [Stepping](stepping.md) |
@@ -210,9 +212,10 @@ handover, because the seller has no surface here. See
 
 The seller's template of steps arrives with the catalogue, and a
 specification gets one step of each when it is opened. The person takes a
-step, finishes or skips one with a reason, reopens, reassigns, renames or
-adds one, and every gesture is recorded as made: no rule has a step's
-status in its `where`, so the steps are a map and not a script. What a step
+step, which narrows the canvas to what the step is about, finishes or
+skips one with a reason, reopens, reassigns, renames or adds one, and
+every gesture is recorded as made: no rule has a step's status in its
+`where`, so the steps are a map and not a script. What a step
 still wants is a read over the variables' standing, and the model asks
 about the step the person is at, in its turn, from `review`. See
 [Stepping](stepping.md).

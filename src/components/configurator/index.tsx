@@ -13,7 +13,7 @@ import { address, To } from "./address";
 import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
 import { Standing } from "./standing";
-import { Steps } from "./steps";
+import { StepBanner, Steps } from "./steps";
 import { framedAsserted } from "./ledger";
 import { AskedFor } from "./specification";
 
@@ -51,12 +51,22 @@ function Section({
  * Shown while an assertion or a clause frames the canvas — an assertion only
  * by the assistant or the person's own agent, since the page's own way to
  * what one forced is the card itself. A frame on a clause is also the answering mode, and the strip says so. A gap
- * frame is a filter, shown pressed above the list it filters.
+ * frame is a filter, shown pressed above the list it filters. A step frame
+ * carries the step's own controls, since the step is what the list is
+ * narrowed to (`steps.tsx`).
  */
 function FrameBanner() {
   const { view, gesture, label } = useConfigurator();
   if (!view?.frame || view.frame.by === "gap") return null;
   const { frame } = view;
+  if (frame.by === "step") {
+    const step = view.stepping.steps.find((s) => s.step === frame.step);
+    return (
+      <div className="flex flex-wrap items-center gap-2 border bg-muted/40 px-3 py-1.5 text-xs">
+        {step ? <StepBanner step={step} /> : null}
+      </div>
+    );
+  }
   const inside = view.variables.filter((v) => v.framed);
   const count = (standing: string) =>
     inside.filter((v) => v.standing === standing).length;

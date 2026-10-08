@@ -18,6 +18,15 @@ sync APersonTakesAStep
 when  { Copiloting/gesture: [ act: "take" ; spec: ?s ; step: ?st ] => [] }
 then  { Stepping/take: [ party: person ; spec: ?s ; step: ?st ] }
 
+sync ATakenStepFramesTheCanvas
+when  { Stepping/take: [] => [ spec: ?s ; step: ?st ] }
+then  { Framing/frame: [ lens: workspace ; frame: [ by: "step" ; step: ?st ] ] }
+
+sync AFramedStepShowsTheConfiguration
+when  { Framing/frame: [ lens: workspace ; frame: [ by: "step" ; step: ?st ] ]
+          => [ lens: workspace ; frame: ?f ] }
+then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
+
 sync APersonFinishesAStep
 when  { Copiloting/gesture: [ act: "finish" ; step: ?st ] => [] }
 then  { Stepping/finish: [ party: person ; step: ?st ] }
@@ -71,6 +80,25 @@ the words state, is never wanting, because it stands as a value before
 anyone could ask for it; principle 5's *ask only what cannot be derived* is
 met by the order the rules run in, not by a check.
 
+## A step is a frame
+
+Taking a step is one gesture with the whole canvas as its consequence:
+the claim is recorded, and the canvas narrows to the variables the step
+is about, the ones it still wants marked, with the requirements those
+variables answer. A step is a kind of fact over the one list, as a gap
+is, and it is read the same way: the frame is a value, interpreted by the
+read side, and `Framing` holds one frame per lens as before. The gap
+filters go on working inside the step, as the same value with a gap
+beside the step, so *open within the shaft* is one frame and not two
+concepts. Showing everything again is `unframe`, and it leaves the claim
+standing: the step is still the one the person is at, pressed, with the
+list no longer narrowed to it.
+
+A frame on a step is not a take. The person's own agent, a link, or a
+gesture on the filter row can frame a step, and the rule that brings the
+canvas forward fires for each; only `take` records where the person is.
+The model's `frame` tool does not yet take a step.
+
 ## Asking is a read
 
 The catalogue has the asking policy as a rule that fires on `take` and
@@ -107,11 +135,11 @@ principle 9 keeps from it.
 
 _No grouping of the ledger by step._ The catalogue records each entry
 under the step it was bound at, and lays the specification out along that
-skeleton. Here the ledger is one list filtered by gap
-([Binding](binding.md#the-ledger-is-a-read)), and a step's needs say which
-variables it concerns; an entry is read against the steps by its variable,
-not recorded under one. `under` and `fold` come in with the step-ordered
-ledger, when there is one.
+skeleton. Here the ledger is one list, and a step is a frame over it: an
+entry is read against the steps by its variable, through what each step
+is about, not recorded under one. A requirement nothing answers belongs
+to no step, so the unanswered gap within a step shows them all. `under`
+and `fold` come in with a step-ordered ledger, if one is ever wanted.
 
 _No `done` per step._ The template's advisory conjunct is, in this
 catalogue, that every need is met, which is the read above with nothing

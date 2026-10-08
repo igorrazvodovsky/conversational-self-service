@@ -1,7 +1,7 @@
 # Stepping
 
 ```
-concept Stepping [Spec, Need, Party]
+concept Stepping [Spec, Variable, Party]
 
 purpose
   to show a person where they are in a recurring piece of work, what the
@@ -11,29 +11,33 @@ purpose
 state
   templates:  seq Template
   called:     Template -> string
-  wants:      Template -> set Need
+  wants:      Template -> set Variable
+  covers:     Template -> set Variable
   usually:    Template -> Party
   steps:      Spec -> seq Step
   instanceOf: Step -> Template
   name:       Step -> string
-  needs:      Step -> set Need
+  needs:      Step -> set Variable
+  about:      Step -> set Variable
   owner:      Step -> Party
   status:     Step -> ("open" | "finished" | "skipped")
   at:         Spec -> Step
   deviation:  Step -> seq [ kind: string ; text: string ]
 
 actions
-  author [ template: Template ; name: string ; needs: set Need ; owner: Party ]
+  author [ template: Template ; name: string ; needs: set Variable ;
+           covers: set Variable ; owner: Party ]
     => [ template: Template ]
     append the template to those authored, with the name a person
-    would call the step by, what a step of it needs, and who
-    usually owns one; a template already authored is replaced in place
+    would call the step by, what a step of it needs, the variables it
+    is about, and who usually owns one; a template already authored
+    is replaced in place
 
   instantiate [ spec: Spec ]
     => [ spec: Spec ; steps: seq Step ]
     give the spec one open step per template, in the templates' order,
-    each named, needing and owned as its template says, with the
-    spec at none of them
+    each named, needing, about and owned as its template says, with
+    the spec at none of them
 
   instantiate [ spec: Spec ]
     => [ error: string ]
@@ -103,7 +107,8 @@ actions
   add [ party: Party ; spec: Spec ; name: string ; step: Step ]
     => [ step: Step ; spec: Spec ]
     append an open step of no template to the spec's steps, needing
-    nothing and owned by the party, and record its addition as a deviation
+    nothing, about nothing and owned by the party, and record its
+    addition as a deviation
 
   add [ party: Party ; spec: Spec ; name: string ; step: Step ]
     => [ error: string ]
@@ -111,12 +116,15 @@ actions
     return the error description
 
 operational principle
-  after author [ template: t1 ; name: "The building" ; needs: {building_type, region} ; owner: person ]
+  after author [ template: t1 ; name: "The building" ; needs: {building_type, region} ;
+                 covers: {building_type, region, installation, accessibility} ; owner: person ]
     => [ template: t1 ]
-  and author [ template: t2 ; name: "The journey" ; needs: {stops, travel} ; owner: person ]
+  and author [ template: t2 ; name: "The journey" ; needs: {stops, travel} ;
+               covers: {stops, travel, rated_speed} ; owner: person ]
     => [ template: t2 ]
   and instantiate [ spec: s ] => [ spec: s ; steps: [a, b] ]
   then name of a is "The building", needs of a is {building_type, region},
+    about of a is {building_type, region, installation, accessibility},
     owner of a is person, status of a is "open", and s is at no step
   and after take [ party: p ; spec: s ; step: b ] => [ spec: s ; step: b ; party: p ]
   then at of s is b, and status of a is still "open"

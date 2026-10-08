@@ -439,6 +439,7 @@ def _the_catalogue_sets_the_steps(c: Completion, _: States) -> list[Invocation]:
                 "template": step["step"],
                 "name": step.get("name", step["step"]),
                 "needs": list(step.get("needs", [])),
+                "covers": list(step.get("covers", [])),
                 "owner": step.get("owner", "person"),
             },
         )

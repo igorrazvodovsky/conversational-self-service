@@ -18,7 +18,7 @@ from __future__ import annotations
 from engine import Completion, Invocation, States, Sync
 
 from . import readings
-from .gestures import PERSON
+from .gestures import PERSON, WORKSPACE
 
 
 def _a_started_specification_gets_its_steps(c: Completion, _: States) -> list[Invocation]:
@@ -31,6 +31,28 @@ def _a_discarded_specification_loses_its_steps(c: Completion, _: States) -> list
     if c.failed:
         return []
     return [Invocation("Stepping", "abandon", {"spec": c.output["spec"]})]
+
+
+def _a_taken_step_frames_the_canvas(c: Completion, _: States) -> list[Invocation]:
+    """The claim and the view in one gesture: taking a step narrows the
+    canvas to what the step is about.  The frame is a value the read side
+    interprets, as a gap's is, and `unframe` leaves the claim standing."""
+    if c.failed:
+        return []
+    return [
+        Invocation(
+            "Framing",
+            "frame",
+            {"lens": WORKSPACE, "frame": {"by": "step", "step": c.output["step"]}},
+        )
+    ]
+
+
+def _a_framed_step_shows_the_configuration(c: Completion, _: States) -> list[Invocation]:
+    frame = c.output.get("frame")
+    if c.failed or not isinstance(frame, dict) or frame.get("by") != "step":
+        return []
+    return [Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})]
 
 
 def _gesture(act: str, action: str, *arguments: str):
@@ -79,6 +101,12 @@ rules = [
         _a_discarded_specification_loses_its_steps,
     ),
     Sync("APersonTakesAStep", GESTURE, _gesture("take", "take", "spec", "step")),
+    Sync("ATakenStepFramesTheCanvas", ("Stepping", "take"), _a_taken_step_frames_the_canvas),
+    Sync(
+        "AFramedStepShowsTheConfiguration",
+        ("Framing", "frame"),
+        _a_framed_step_shows_the_configuration,
+    ),
     Sync("APersonFinishesAStep", GESTURE, _gesture("finish", "finish", "step")),
     Sync("APersonSkipsAStep", GESTURE, _gesture("skip", "skip", "step", "reason")),
     Sync("APersonReopensAStep", GESTURE, _gesture("reopen", "reopen", "step")),

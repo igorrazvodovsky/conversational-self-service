@@ -47,8 +47,10 @@ export function framedAsserted(view: View): Variable[] {
 /**
  * A frame on a clause leaves its line; a frame on an assertion leaves the lines its
  * value answers; a frame on the unanswered gap leaves the lines nothing
- * answers, and the other gaps leave none. `asserted` is already narrowed by
- * the frame.
+ * answers, and the other gaps leave none. A frame on a step leaves the
+ * lines its variables answer, or, with the unanswered gap within it, the
+ * lines nothing answers, which belong to no step. `asserted` is already
+ * narrowed by the frame.
  */
 export function ledger(view: View, asserted: Variable[]) {
   const byName = new Map(asserted.map((v) => [v.name, v]));
@@ -64,7 +66,9 @@ export function ledger(view: View, asserted: Variable[]) {
             ? c.clause === frame.clause
             : frame.by === "gap"
               ? frame.gap === "unanswered" && unanswered(c)
-              : c.answers.some((a) => a.variable && byName.has(a.variable)),
+              : frame.by === "step" && frame.gap === "unanswered"
+                ? unanswered(c)
+                : c.answers.some((a) => a.variable && byName.has(a.variable)),
       )
       .map((c) => c.clause),
   );

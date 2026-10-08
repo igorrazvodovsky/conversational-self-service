@@ -104,7 +104,7 @@ then  { Deriving/describe: [ quantity ; meaning ; unit ]
 
 sync TheCatalogueSetsTheSteps
 when  { Copiloting/boot: [] => [ catalogue: ?c ] }
-then  { Stepping/author: [ template ; name ; needs ; owner ]
+then  { Stepping/author: [ template ; name ; needs ; covers ; owner ]
           for each step of ?c, in the catalogue's order }
 
 sync TheWorkspaceIsLaidOut

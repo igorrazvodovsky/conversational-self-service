@@ -138,7 +138,16 @@ export type Gap = "open" | "unanswered" | "unbound";
 export type Frame =
   | { by: "assertion"; variable: string; heading: string; asked: string | null }
   | { by: "clause"; clause: string; text: string }
-  | { by: "gap"; gap: Gap };
+  | { by: "gap"; gap: Gap }
+  /** A step of the job, with a gap filtering within it; `counts` are the
+   * gaps counted within the step (docs/syncs/stepping.md). */
+  | {
+      by: "step";
+      step: string;
+      name: string;
+      gap: Gap | null;
+      counts: { open: number; unanswered: number; unbound: number };
+    };
 
 export type Negotiability = "fixed" | "negotiable" | "open";
 

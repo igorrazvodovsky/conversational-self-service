@@ -79,6 +79,7 @@ import {
   type Gap,
   type Negotiability,
   type Quantity,
+  type Stimulus,
   type View,
 } from "./provider";
 import { useNavigate } from "./link";
@@ -787,10 +788,10 @@ export function Specification() {
 }
 
 /** The gaps a person can narrow the list to, in the order they are offered. */
-const GAPS: { gap: Gap; title: string; count: (view: View) => number }[] = [
-  { gap: "open", title: "Open", count: (view) => view.counts.open },
-  { gap: "unanswered", title: "Unanswered", count: (view) => view.counts.unanswered },
-  { gap: "unbound", title: "Answering nothing", count: (view) => view.counts.unbound },
+const GAPS: { gap: Gap; title: string }[] = [
+  { gap: "open", title: "Open" },
+  { gap: "unanswered", title: "Unanswered" },
+  { gap: "unbound", title: "Answering nothing" },
 ];
 
 const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
@@ -800,8 +801,10 @@ const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
  * `frame` by gap and choosing everything is `unframe`, so the filter is a
  * fact of `Framing`, the same whichever party set it. While an assertion or
  * a clause frames the canvas, no filter is pressed, and the sticky strip
- * names the frame. A gap with nothing in it can be chosen like any other:
- * its count says it is empty, and the list it opens shows that it is.
+ * names the frame. While a step does, the filters work within it: each is
+ * the same step frame with the gap beside it, and the counts are the
+ * step's. A gap with nothing in it can be chosen like any other: its count
+ * says it is empty, and the list it opens shows that it is.
  */
 function Filters() {
   const { view } = useConfigurator();
@@ -809,7 +812,15 @@ function Filters() {
   const navigate = useNavigate();
   if (!view) return null;
   const frame = view.frame;
-  const value = !frame ? "all" : frame.by === "gap" ? frame.gap : "";
+  const step = frame?.by === "step" ? frame : null;
+  const value = !frame ? "all" : frame.by === "gap" ? frame.gap : step ? step.gap ?? "all" : "";
+  const counts = step ? step.counts : view.counts;
+  const to = (next: string): Stimulus =>
+    step
+      ? { act: "frame", frame: { by: "step", step: step.step, ...(next === "all" ? {} : { gap: next }) } }
+      : next === "all"
+        ? { act: "unframe" }
+        : { act: "frame", frame: { by: "gap", gap: next } };
   return (
     <ToggleGroup
       type="single"
@@ -820,9 +831,7 @@ function Filters() {
       aria-label="Show"
       onValueChange={(next) => {
         if (!next || next === value) return;
-        void navigate(
-          next === "all" ? { act: "unframe" } : { act: "frame", frame: { by: "gap", gap: next } },
-        );
+        void navigate(to(next));
       }}
     >
       {/* Pressed is solid: the primitive's muted fill all but vanishes on
@@ -830,7 +839,7 @@ function Filters() {
       <ToggleGroupItem value="all" className={PRESSED}>
         All
       </ToggleGroupItem>
-      {GAPS.map(({ gap, title, count }) => (
+      {GAPS.map(({ gap, title }) => (
         <ToggleGroupItem
           key={gap}
           value={gap}
@@ -838,7 +847,7 @@ function Filters() {
         >
           {title}
           <span className="tabular-nums text-muted-foreground group-data-[state=on]/toggle:text-background/70">
-            {count(view)}
+            {counts[gap]}
           </span>
         </ToggleGroupItem>
       ))}

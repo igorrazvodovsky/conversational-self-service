@@ -7,7 +7,8 @@
  * the page's own words:
  *
  *   on       specification | quotes                          Moding
- *   frame    none | gap:<gap> | assertion:<variable> | clause:<id>   Framing
+ *   frame    none | gap:<gap> | assertion:<variable> | clause:<id>
+ *            | step:<id> | step:<id>:<gap>                    Framing
  *   show     facet names, comma-separated, possibly none     Showing
  *   grid     today | decarbonising                           the read
  *   quote    a quote's id                                    the quote surface
@@ -57,12 +58,14 @@ export type Reading = (typeof READINGS)[number];
 type FrameAsked =
   | { by: "assertion"; variable: string }
   | { by: "clause"; clause: string }
-  | { by: "gap"; gap: string };
+  | { by: "gap"; gap: string }
+  | { by: "step"; step: string; gap?: string | null };
 
 export function frameWord(frame: Frame | FrameAsked | null): string {
   if (!frame) return "none";
   if (frame.by === "gap") return `gap:${frame.gap}`;
   if (frame.by === "assertion") return `assertion:${frame.variable}`;
+  if (frame.by === "step") return frame.gap ? `step:${frame.step}:${frame.gap}` : `step:${frame.step}`;
   return `clause:${frame.clause}`;
 }
 
@@ -75,6 +78,14 @@ function frameNamed(word: string): FrameAsked | null | undefined {
   if (by === "gap") return GAPS.includes(rest) ? { by, gap: rest } : undefined;
   if (by === "assertion") return { by, variable: rest };
   if (by === "clause") return { by, clause: rest };
+  if (by === "step") {
+    // A step's id carries a colon of its own (`spec:shaft`), so the gap is
+    // the last word only when it names one.
+    const last = rest.lastIndexOf(":");
+    const gap = last >= 0 ? rest.slice(last + 1) : "";
+    if (GAPS.includes(gap)) return { by, step: rest.slice(0, last), gap };
+    return { by, step: rest };
+  }
   return undefined;
 }
 

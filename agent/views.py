@@ -728,6 +728,27 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         and frame.get("gap") in ("open", "unanswered", "unbound")
         else None
     )
+    # A step frames the canvas to the variables it is about, and a gap
+    # beside it filters within.  A step the specification no longer has
+    # reads as no frame.  See docs/syncs/stepping.md, "A step is a frame".
+    stepping = engine.state("Stepping")
+    framed_step = (
+        frame.get("step")
+        if isinstance(frame, dict)
+        and frame.get("by") == "step"
+        and frame.get("step") in stepping["steps"].get(spec, [])
+        else None
+    )
+    step_gap = (
+        frame.get("gap")
+        if framed_step is not None and frame.get("gap") in ("open", "unanswered", "unbound")
+        else None
+    )
+    step_vars = (
+        set(stepping["about"].get(framed_step, [])) | set(stepping["needs"].get(framed_step, []))
+        if framed_step is not None
+        else set()
+    )
     # The variables whose asserted value answers the framed clause, read
     # from the ledger below once it exists; filled before `variables` is built.
     answering_clause: set[str] = set()
@@ -736,6 +757,16 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         return name in asserted and not answering.get(asserted[name])
 
     def in_frame(name: str, offered: list[str], allowed: set[str]) -> bool:
+        if framed_step is not None:
+            if name not in step_vars:
+                return False
+            if step_gap == "open":
+                return name not in asserted and name not in settled
+            if step_gap == "unanswered":
+                return False
+            if step_gap == "unbound":
+                return unbound(name)
+            return True
         if framed_gap == "open":
             return name not in asserted and name not in settled
         if framed_gap == "unanswered":
@@ -1103,6 +1134,26 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             if framed_clause is not None
             else {"by": "gap", "gap": framed_gap}
             if framed_gap is not None
+            else {
+                "by": "step",
+                "step": framed_step,
+                "name": stepping["name"].get(framed_step, framed_step),
+                "gap": step_gap,
+                # The gaps counted within the step, for the filter row.
+                "counts": {
+                    "open": sum(
+                        1 for v in variables if v["name"] in step_vars and v["standing"] == "open"
+                    ),
+                    "unanswered": sum(
+                        1 for c in clauses if not c["answers"] and c["negotiability"] != "open"
+                    ),
+                    "unbound": sum(
+                        1 for v in variables
+                        if v["name"] in step_vars and v["asked"] and not v["answers"]
+                    ),
+                },
+            }
+            if framed_step is not None
             else None
         ),
         "variables": variables,

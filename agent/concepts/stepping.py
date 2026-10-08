@@ -7,20 +7,23 @@ Generated from `docs/concepts/stepping.md`.
 state
   templates:  seq Template
   called:     Template -> string
-  wants:      Template -> set Need
+  wants:      Template -> set Variable
+  covers:     Template -> set Variable
   usually:    Template -> Party
   steps:      Spec -> seq Step
   instanceOf: Step -> Template
   name:       Step -> string
-  needs:      Step -> set Need
+  needs:      Step -> set Variable
+  about:      Step -> set Variable
   owner:      Step -> Party
   status:     Step -> ("open" | "finished" | "skipped")
   at:         Spec -> Step
   deviation:  Step -> seq [ kind ; text ]
 
-`Spec`, `Need` and `Party` are type parameters.  A need is whatever the
-authoring party names — here a variable's name — and this concept never
-asks whether one is met: that is a read over other concepts' state, made
+`Spec`, `Variable` and `Party` are type parameters.  A need is a variable
+the step must have, and `covers` the variables the step is about; both are
+names the authoring party gives, and this concept never asks whether a
+need is met: that is a read over other concepts' state, made
 by the rules and the read side.  A step holds its labels and nothing else:
 where the person is, what is missing and whether a step is done are read
 off the specification, not kept here.
@@ -44,11 +47,13 @@ class Stepping:
         self._templates: list[str] = []
         self._called: dict[str, str] = {}
         self._wants: dict[str, list[str]] = {}
+        self._covers: dict[str, list[str]] = {}
         self._usually: dict[str, str] = {}
         self._steps: dict[str, list[str]] = {}
         self._instance_of: dict[str, str] = {}
         self._name: dict[str, str] = {}
         self._needs: dict[str, list[str]] = {}
+        self._about: dict[str, list[str]] = {}
         self._owner: dict[str, str] = {}
         self._status: dict[str, str] = {}
         self._at: dict[str, str] = {}
@@ -59,11 +64,13 @@ class Stepping:
             "templates": list(self._templates),
             "called": dict(self._called),
             "wants": {t: list(n) for t, n in self._wants.items()},
+            "covers": {t: list(n) for t, n in self._covers.items()},
             "usually": dict(self._usually),
             "steps": {s: list(st) for s, st in self._steps.items()},
             "instanceOf": dict(self._instance_of),
             "name": dict(self._name),
             "needs": {st: list(n) for st, n in self._needs.items()},
+            "about": {st: list(n) for st, n in self._about.items()},
             "owner": dict(self._owner),
             "status": dict(self._status),
             "at": dict(self._at),
@@ -81,12 +88,18 @@ class Stepping:
     # -- actions ------------------------------------------------------------
 
     def author(
-        self, template: str, name: str, needs: list[str] | None = None, owner: str = ""
+        self,
+        template: str,
+        name: str,
+        needs: list[str] | None = None,
+        covers: list[str] | None = None,
+        owner: str = "",
     ) -> dict[str, Any]:
         if template not in self._called:
             self._templates.append(template)
         self._called[template] = name
         self._wants[template] = list(dict.fromkeys(needs or []))
+        self._covers[template] = list(dict.fromkeys(covers or []))
         self._usually[template] = owner
         return {"template": template}
 
@@ -100,6 +113,7 @@ class Stepping:
             self._instance_of[step] = template
             self._name[step] = self._called[template]
             self._needs[step] = list(self._wants[template])
+            self._about[step] = list(self._covers[template])
             self._owner[step] = self._usually[template]
             self._status[step] = "open"
             self._deviation[step] = []
@@ -109,7 +123,7 @@ class Stepping:
     def abandon(self, spec: str) -> dict[str, Any]:
         for step in self._steps.pop(spec, []):
             for relation in (
-                self._instance_of, self._name, self._needs,
+                self._instance_of, self._name, self._needs, self._about,
                 self._owner, self._status, self._deviation,
             ):
                 relation.pop(step, None)
@@ -175,6 +189,7 @@ class Stepping:
         self._steps[spec].append(step)
         self._name[step] = name
         self._needs[step] = []
+        self._about[step] = []
         self._owner[step] = party
         self._status[step] = "open"
         self._deviation[step] = [{"kind": "add", "text": name}]
