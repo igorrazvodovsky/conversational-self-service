@@ -5,11 +5,11 @@
  *
  * The end of a configuration is not the configuration; it is an offer
  * somebody can accept. Quotes are a third kind of fact beside the asserted
- * and the entailed — snapshots with a price. The overview's column of frozen
- * values the canvas has since moved away from is the question a person
- * brings to two quotes, and it is `differs`, a read nobody maintains. A
- * comparison (`comparison.tsx`) says what the difference buys and whether
- * anybody chose it, which two proposals read side by side cannot tell you.
+ * and the entailed — snapshots with a price. Which frozen values the canvas
+ * has since moved away from is `differs`, a read nobody maintains, and the
+ * offer's *Changed since* check shows them. A comparison (`comparison.tsx`)
+ * says what the difference buys and whether anybody chose it, which two
+ * proposals read side by side cannot tell you.
  * Whenever the rule that issues a quote would decline to fire, the request
  * control says why beside it and does nothing when pressed, so that nobody
  * presses a button that goes nowhere without being told where it would. Two of those reasons are about the addressee, so the surface
@@ -255,7 +255,6 @@ function Issued({
   onSelect: (quote: string) => void;
   onCompare: (quote: string | null) => void;
 }) {
-  const heading = new Map(view.variables.map((v) => [v.name, v.heading]));
   return (
     <Table className="mb-6 text-xs">
       <TableHeader>
@@ -265,7 +264,6 @@ function Issued({
           <TableHead className="text-right">Sum</TableHead>
           <TableHead>Issued</TableHead>
           <TableHead>Valid until</TableHead>
-          <TableHead>Differs from the canvas</TableHead>
           {quotes.length ? (
             <TableHead className="w-24">
               <span className="sr-only">Compare</span>
@@ -308,13 +306,6 @@ function Issued({
             </TableCell>
             <TableCell>{q.issued ? day(q.issued) : "—"}</TableCell>
             <TableCell>{day(q.until)}</TableCell>
-            <TableCell className="max-w-64 whitespace-normal text-muted-foreground">
-              {q.differs.length
-                ? `${q.differs.length}: ${q.differs
-                    .map((name) => heading.get(name) ?? name)
-                    .join(", ")}`
-                : "nothing"}
-            </TableCell>
             {quotes.length ? (
               <TableCell className="text-right">
                 {q.quote !== selected ? (
