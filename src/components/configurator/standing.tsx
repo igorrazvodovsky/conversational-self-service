@@ -1,9 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Collapsible,
   CollapsibleContent,
@@ -63,6 +73,7 @@ export function Standing() {
           <Badge variant="secondary" className={tone && TONE[tone]}>
             {words}
           </Badge>
+          <HandedOver />
           {quotable.ok ? null : <span className="text-sm">{capital(quotable.because)}.</span>}
           <div className="ml-auto flex gap-2">
             <Button
@@ -78,6 +89,7 @@ export function Standing() {
             >
               Request a quote
             </Button>
+            <HandOver />
           </div>
         </div>
 
@@ -197,6 +209,98 @@ export function Standing() {
         </Collapsible>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * The person's own handover, with its reason. A reason is words, so the
+ * button opens a field rather than firing: the seller is being handed the
+ * specification *for* something, and that is the one fact the handover
+ * holds that nothing else does (`docs/syncs/handover.md`). The gesture is
+ * `APersonHandsOver`; the assistant makes the same one at the person's word.
+ */
+function HandOver() {
+  const { view, gesture, busy } = useConfigurator();
+  const [reason, setReason] = useState("");
+  const [open, setOpen] = useState(false);
+  // The rule allows a second handover while one waits; the card offers one
+  // while none does. The button comes back once the seller has taken it
+  // up, which nothing here records yet.
+  if (view?.handovers.some((h) => !h.received)) return null;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="outline" disabled={busy}>
+          Hand to the seller
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80">
+        <PopoverHeader>
+          <PopoverTitle>Hand to the seller</PopoverTitle>
+          <PopoverDescription>
+            What are they being handed it for? They read the specification as
+            it stands, and the log says how it got there.
+          </PopoverDescription>
+        </PopoverHeader>
+        <Textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="A longer validity than the terms allow"
+          rows={3}
+          className="mt-2"
+        />
+        <Button
+          size="sm"
+          className="mt-2"
+          disabled={busy || !reason.trim()}
+          onClick={() => {
+            void gesture({ act: "handover", reason: reason.trim() });
+            setReason("");
+            setOpen(false);
+          }}
+        >
+          Hand over
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/**
+ * The handover as a state of the specification, beside the other: a badge
+ * saying it is with the seller, with who handed it over, when and what for
+ * behind it. The badge carries the handover's address, so the chat's link
+ * lands on it. The latest handover is the state; the rest are in the log.
+ * `received` is never set here, so the badge says the specification is with
+ * the seller rather than that they have taken it up.
+ */
+function HandedOver() {
+  const { view } = useConfigurator();
+  const handover = view?.handovers.at(-1);
+  const at = address.handover(handover?.handover ?? "");
+  const isTarget = useTargeted(at);
+  if (!handover || handover.received) return null;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge
+          id={at}
+          variant="secondary"
+          className={`${TONE.info} ${addressable} ${isTarget ? targeted : ""}`}
+        >
+          With the seller
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs">
+        <div className="grid gap-1">
+          <p>
+            {capital(handover.how ?? "handed to the seller")}
+            {handover.sent ? `, ${handover.sent}` : ""}.
+          </p>
+          <p>For: {handover.reason}</p>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

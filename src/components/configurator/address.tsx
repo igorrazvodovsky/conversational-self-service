@@ -32,6 +32,7 @@ export const address = {
   item: (kind: string, id: string, item: string) => `source:${kind}:${id}:item:${item}`,
   question: (about: string) => `question:${about}`,
   addressee: "addressee",
+  handover: (id: string) => `handover:${id}`,
   turn: (flow: string) => `turn:${flow}`,
   said: (utterance: string) => `said:${utterance}`,
   quote: (quote: string, kind: "variable" | "clause" | "event", id: string) =>

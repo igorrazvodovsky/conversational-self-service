@@ -32,6 +32,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Footprinting](footprinting.md) | to estimate the carbon a specification will emit over its service life |
 | [Quoting](quoting.md) | to hold an offer still — what is offered, at what price, on what terms, until when — so that a party can accept it as it stood |
 | [Stipulating](stipulating.md) | to hold the conditions on which an offer is made, so that every quote is made on stated terms |
+| [Handing over](handing-over.md) | to put an item into another party's hands, with what it is handed over for, so that they can take it up from where it was left |
 | [Profiling](profiling.md) | to hold what a party says of who they are, so that a document can name and address them |
 | [Naming](naming.md) | to identify an item the way a document names it, by its title and the site it is for |
 
@@ -104,7 +105,9 @@ number and what it assumed are on record rather than in the model's head.
 
 [Quoting](quoting.md) is where the configuration stops being the point: an
 offer, frozen as issued, that the specification can move away from without
-changing.
+changing. [Handing over](handing-over.md) is where the conversation stops
+being the point: the specification put into a seller's hands, with the
+reason, for what the assistant has no rule to do.
 
 [Showing](showing.md) and [Framing](framing.md) are the viewer's-choice
 concepts — which facts appear beside an item, and which items appear at all.

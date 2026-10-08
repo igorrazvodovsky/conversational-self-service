@@ -382,6 +382,34 @@ export interface Quote extends Side {
   footprint: Carbon;
 }
 
+/**
+ * From `HandingOver`: the specification put into the seller's hands, with the
+ * reason. Nothing travelled — the seller reads the specification as it
+ * stands, and the log says how it got there (`docs/syncs/handover.md`). Who
+ * handed it over and when are the log's, as `how` and `issued` are for a
+ * quote. `received` stays null: nothing here performs the receipt.
+ */
+export interface Handover {
+  handover: string;
+  number: number;
+  to: string;
+  reason: string;
+  sent: string | null;
+  received: string | null;
+  how: string | null;
+}
+
+/**
+ * What the person wants has gone beyond what any rule lets the assistant do
+ * or any gesture lets them do, as far as the state can tell: a fixed
+ * requirement the catalogue cannot meet as stated, or a conflict they replied
+ * to in words and left open. The chat offers the seller then; nothing hands
+ * over on its own (`docs/syncs/handover.md`, "When the assistant hands over").
+ */
+export type Beyond =
+  | { because: "fixed"; clause: string; text: string; variable: string }
+  | { because: "replied"; request: Request };
+
 /** Footprinting's estimate, by stage of the lift's life. `complete` when
  * the energy in use is known. */
 export interface Carbon {
@@ -506,6 +534,8 @@ export interface View {
    * `complete` is false while anything is open or the term presumed. */
   now: Side & { complete: boolean };
   quotable: { ok: boolean; because: string; asked?: AskedAddressee | null };
+  handovers: Handover[];
+  beyond: Beyond | null;
   customer: Party;
   seller: Party;
   project: { title: string; site: string };

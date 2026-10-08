@@ -485,8 +485,8 @@ def _the_canvas_is_shown_before_it_changes(
     c: Completion, _: States
 ) -> list[Invocation]:
     if c.output.get("tool") not in {
-        "assert", "withdraw", "read", "propose", "quote", "show", "hide", "frame",
-        "unframe",
+        "assert", "withdraw", "read", "propose", "quote", "handover", "show",
+        "hide", "frame", "unframe",
     }:
         return []
     return [

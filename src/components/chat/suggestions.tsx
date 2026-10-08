@@ -97,6 +97,24 @@ export function suggestionsFor(view: View | null, label: Label): Suggestion[] {
       });
   }
 
+  // What the person wants is past what any rule lets the assistant do or
+  // any gesture lets them do: the seller is the move, and the state can
+  // tell two of the cases (docs/syncs/handover.md, "When the assistant
+  // hands over"). The pill asks; the handover is the person's word.
+  if (view.beyond && !view.handovers.length)
+    out.push(
+      view.beyond.because === "fixed"
+        ? {
+            title: "Ask the seller",
+            message: `My requirement “${view.beyond.text}” cannot be met as I stated it, and I will not relax it. Hand this to someone at the seller who can say what can be done.`,
+          }
+        : {
+            title: "Ask the seller",
+            message:
+              "The decision I left open is not mine to make here. Hand this to someone at the seller who knows the building, with what is still to be decided.",
+          },
+    );
+
   // A negotiable requirement gave way to the rules.
   if (counts.yielded > 0)
     out.push({

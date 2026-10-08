@@ -31,6 +31,7 @@ from concepts.detailing import Detailing
 from concepts.filing import Filing
 from concepts.footprinting import Footprinting
 from concepts.framing import Framing
+from concepts.handing_over import HandingOver
 from concepts.moding import Moding
 from concepts.naming import Naming
 from concepts.pricing import Pricing
@@ -42,7 +43,7 @@ from concepts.specifying import Specifying
 from concepts.stipulating import Stipulating
 from engine import Engine
 from engine.bootstrap import Copiloting
-from syncs import binding, conduct, gestures, propagation, reading, seeding
+from syncs import binding, conduct, gestures, handover, propagation, reading, seeding
 
 CATALOGUE = Path(__file__).parent / "catalogue" / "elevator.json"
 
@@ -94,6 +95,9 @@ def build(path: Path = CATALOGUE) -> Engine:
         Deriving(),
         Deciding(),
         Quoting(),
+        # The specification put into the seller's hands.  Nothing to seed,
+        # and nothing receives one here (docs/syncs/handover.md).
+        HandingOver(),
         Profiling(),
         Naming(),
         Stipulating(),
@@ -111,6 +115,7 @@ def build(path: Path = CATALOGUE) -> Engine:
         *reading.rules,
         *gestures.rules,
         *conduct.rules,
+        *handover.rules,
     )
 
     catalogue = json.loads(path.read_text())

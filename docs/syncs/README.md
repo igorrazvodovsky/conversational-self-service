@@ -114,6 +114,8 @@ it.
 | `TheModelMayAskThePerson` | [Conduct](conduct.md) |
 | `TheModelMayAskWhoTheQuoteIsFor` | [Conduct](conduct.md) |
 | `APersonRepliesToAQuestion` | [Conduct](conduct.md) |
+| `APersonHandsOver` | [Handover](handover.md) |
+| `TheModelMayHandOver` | [Handover](handover.md) |
 
 ## Seeding
 
@@ -175,6 +177,17 @@ gives the quote surface the viewer's attention when a quote is issued. Others le
 the person say who they are and where the lift is going, which is what makes
 the proposal addressed. The model may ask for one and may not accept it, which is one of the things
 [only a person may do](gestures.md#the-two-asymmetries).
+
+## A specification is handed over
+
+When what the person wants is something no rule lets the assistant do and no
+gesture lets them do either, the specification goes to the seller. One rule
+lets the person hand it over, with the reason; one lets the model, at the
+person's word, with the same action and the same parties. Nothing travels
+but the specification itself: what the seller needs in order to take it up
+is already on the log, as provenance and as utterances. No rule receives a
+handover, because the seller has no surface here. See
+[Handover](handover.md).
 
 ## Assertions reach the solver
 

@@ -632,6 +632,20 @@ def revoke(quote: Quote) -> dict[str, Any]:
     return gesture(act="revoke", quote=quote)
 
 
+@tool(
+    "handover",
+    "Put the specification into the seller's hands, as the person, with the "
+    "reason: what the seller is being handed it for, in the person's words. "
+    "Nothing is frozen or locked; the seller reads the specification as it "
+    "stands, and the log says how it got there. Hand over when the person "
+    "has asked for someone at the seller, or has handed you that decision.",
+)
+def handover(
+    reason: Annotated[str, Field(description="What the seller is being handed the specification for")],
+) -> dict[str, Any]:
+    return gesture(act="handover", reason=reason)
+
+
 # -- what the canvas shows ------------------------------------------------------
 
 

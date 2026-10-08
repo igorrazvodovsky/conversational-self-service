@@ -3,8 +3,9 @@
 ## Purpose
 
 This repository is a showcase and template for building AI agents with
-CopilotKit and LangGraph, using a **product configuration** as the primary
-example, with z3 doing the constraint solving. It demonstrates CopilotKit driving interactive UI beyond chat.
+CopilotKit and LangGraph, using a product configuration as the primary
+example, with z3 doing the constraint solving. It demonstrates CopilotKit
+driving interactive UI beyond chat.
 
 ## Read this first
 
@@ -22,7 +23,7 @@ _Why Concepts Aren't Objects_. That work lives in [`docs/`](docs/):
 - [`docs/syncs/`](docs/syncs/README.md) — the rules, the only way two concepts interact
 - [`docs/moves.md`](docs/moves.md) — what either party can do in a turn, and which surface carries it: the canvas holds what is the case, the chat is where the parties address each other
 
-**The notes are the source, and the code is generated from them.** WYSIWID
+_The notes are the source, and the code is generated from them._ WYSIWID
 §7.3: the prompt for the implementation is exactly the concept design spec. If
 you want to change behaviour, edit the specification and regenerate — do not
 patch the generated code. Project skills carry the procedures:
@@ -44,8 +45,8 @@ used here — see [`docs/method/synchronization.md`](docs/method/synchronization
 Ask for a hospital lift and the usage profile becomes near-continuous, the
 rescue system becomes a full battery backup, and most of the rated loads
 disappear. None of that was chosen. The canvas therefore tells three kinds of
-fact apart — **asked for**, **follows from that** (with the rule that forces
-it), and **open** — and which kind an item is, is a property of the
+fact apart — _asked for_, _follows from that_ (with the rule that forces
+it), and _open_ — and which kind an item is, is a property of the
 current state, not of the catalogue. Each item says which it is where it
 stands, rather than in a section of its own: a value that follows sits under
 each assertion it rests on, and a kind of fact is a filter over one list.
@@ -79,9 +80,17 @@ layer beside the agent.
 │   │   │   ├── log.tsx                   # the log by turn, behind the bell: what each turn changed and on whose authority, opening on the other party's changes
 │   │   │   ├── quotes.tsx                # the quote surface: every offer issued, two compared, the addressee, one proposal at a time
 │   │   │   ├── document.tsx              # a quote laid out as a commercial proposal
+│   │   │   ├── grounds.tsx               # a quote read against what was asked, as the specification stood at issue
+│   │   │   ├── comparison.tsx            # two offers compared: only the values that differ, and whose choice each was
+│   │   │   ├── timeline.tsx              # a quote along time: the programme's milestones and the payment stages on them
+│   │   │   ├── drawing.tsx               # the car and shaft as quoted, a plan and a section, to scale
 │   │   │   ├── life.ts                   # the stages of the lift's life, and the catalogue's families read against them
 │   │   │   ├── showing.tsx               # which facts the canvas shows beside each item (Showing)
 │   │   │   ├── address.tsx               # every item's address, and links between them
+│   │   │   ├── link.tsx                  # the page's URL as its state: the view, the frame, the facets, the item
+│   │   │   ├── references.tsx            # the catalogue's vocabulary, offered inside a clause as it is typed
+│   │   │   ├── format.ts                 # number and date formatting shared by the canvas and the proposal
+│   │   │   ├── tone.ts                   # a status badge's hue, laid over the primitive
 │   │   │   ├── webmcp.tsx                # the person's agent's tools, read from the MCP server and registered on the page (WebMCP)
 │   │   │   └── variables.tsx             # an answer and what it forced, a row that follows, an open row
 │   │   ├── example-layout/               # the artifact panel (the specification or the quotes, from Moding) and the chat's geometry (view state)
@@ -90,7 +99,8 @@ layer beside the agent.
 │   └── hooks/
 ├── agent/
 │   ├── concepts/          # one module per concept — MSM §5.2.1
-│   ├── syncs/             # seeding, gestures, binding, propagation, reading, conduct
+│   ├── syncs/             # seeding, gestures, binding, propagation, reading, conduct, handover
+│   │   └── readings.py    # named readings over exposed state, shared by the rules and the read side
 │   ├── engine/            # log, flows, provenance, dispatch — never edited for a behaviour
 │   ├── catalogue/         # elevator.json
 │   ├── wiring.py          # discovers concepts, wires rules, boots with the catalogue
@@ -103,29 +113,29 @@ layer beside the agent.
 │   ├── instance.py        # the one engine every actor shares
 │   ├── journal.py         # the log, kept: appended as written, replayed at boot
 │   └── main.py            # the graph
-└── docs/                  # the method, the concepts, the rules, the analysis
+└── docs/                  # the method, the concepts, the rules, the moves, the UI note, connecting an agent
 ```
 
 ### The rules that make this work
 
-**Concepts never import each other.** Every interaction is a rule in
+_Concepts never import each other._ Every interaction is a rule in
 `agent/syncs/`. If you find yourself wanting to read another concept's state
 from inside a concept, that is a synchronization you have not written yet.
 
-**Only the bootstrap concept initiates.** `Copiloting.gesture` (a person),
+_Only the bootstrap concept initiates._ `Copiloting.gesture` (a person),
 `Copiloting.invoke` (the model) and `Copiloting.boot` (the application starting,
 with its catalogue) are the only root actions. The catalogue's arrival reaches
 every concept by a seeding rule, like anything else. There is no HTTP
 route per concept action and no tool that changes state directly — a tool
 records that the model asked, and a rule decides what follows.
 
-**Reads are not actions.** The price total and the carbon footprint are
+_Reads are not actions._ The price total and the carbon footprint are
 queries in the Pricing and Footprinting notes: calculations over each concept's
 own state that record nothing. A record assembled from exposed state is not
 even that; the rules and `agent/views.py` read it as a `where` would. Nobody
 performs *compute the total*.
 
-**Do not edit `agent/engine/` to get a behaviour.** MSM §5.2.4 observed that
+_Do not edit `agent/engine/` to get a behaviour._ MSM §5.2.4 observed that
 no case of an agent modifying engine code to get a behaviour was ever
 legitimate. Behaviour belongs in a concept or a rule. The engine changes only
 when its own contract does, such as a new kind of stimulus for the bootstrap
@@ -141,7 +151,8 @@ configurator's MCP server to. It finds the person's gestures as that server's
 tools, or registered on the page's `document.modelContext`, performs them as
 `Copiloting.gesture` under its own actor, and the person's rules decide what
 follows. Where the client renders MCP Apps, the specification and the offer
-come with views, and a gesture the person makes in one is theirs, by hand. How much the person delegates is theirs to set, in their own agent.
+come with views, and a gesture the person makes in one is theirs, by hand.
+How much the person delegates is theirs to set, in their own agent.
 
 |  | person | model | person's agent |
 |---|---|---|---|
@@ -155,10 +166,11 @@ come with views, and a gesture the person makes in one is theirs, by hand. How m
 | talk to the other in the chat | yes | yes | yes, as the person |
 | put a conflict, or who the quote is for, to the person and wait for the answer | — | yes | no |
 | reply to that question in words, leaving it open | yes | no | yes |
-| **adopt one, a value at a time or whole** | **yes** | **no** | **yes** |
+| adopt one, a value at a time or whole | yes | no | yes |
 | say who the person is, and where the lift goes | yes | yes | yes |
 | request a quote | yes | yes | yes |
-| **accept or revoke one** | **yes** | **no** | **yes** |
+| accept or revoke one | yes | no | yes |
+| hand the specification to the seller, with the reason | yes | yes, at the person's word | yes |
 | choose which facts the canvas shows beside each item | yes | yes | yes |
 | narrow the canvas to what followed from one assertion, or to one gap | yes | yes | yes |
 | change a price, the catalogue, or the seller's terms | no | no | no |
@@ -183,14 +195,15 @@ file is replayed — each recorded input applied to its concept again, each
 record put back with its identity, timestamp and provenance edge, no rule
 firing. That is MSM §5.2.3's "the state of concepts can be reconstructed
 entirely from the log" taken literally, in [`agent/journal.py`](agent/journal.py).
-The chat threads are kept separately by LangGraph's dev server.
+`AGENT_JOURNAL` moves the file; `npm run reset:agent` deletes it, which starts
+over. The chat threads are kept separately by LangGraph's dev server.
 
 ## Tech stack
 
-- **Frontend**: Next.js 16, React 19, TailwindCSS 4, shadcn/ui (Lyra style, zinc)
-- **Agent**: LangGraph (Python), OpenAI
-- **Solver**: z3-solver
-- **CopilotKit**: React hooks for agent integration (v2)
+- Frontend: Next.js 16, React 19, TailwindCSS 4, shadcn/ui (Lyra style, zinc)
+- Agent: LangGraph (Python), OpenAI
+- Solver: z3-solver
+- CopilotKit: React hooks for agent integration (v2)
 
 ## Development
 
@@ -214,61 +227,9 @@ with the model's tools. `AGENT_URL` points the frontend proxy at it.
 builds side by side, driving one person's task through each; see
 [`e2e/README.md`](e2e/README.md).
 
-The specification survives a restart: the action log is kept in
-`agent/.journal/actions.jsonl` (`AGENT_JOURNAL` moves it) and replayed at boot.
-`npm run reset:agent` deletes it, which starts over.
-
-The person's own agent's tools are an MCP server at
-`http://localhost:8123/configurator/mcp` (streamable HTTP, stateless,
-`agent/delegate.py`). Results link back to the page at `CONFIGURATOR_URL`
-(by default `http://localhost:3000`). Claude Code adds it with
-`claude mcp add --transport http configurator http://localhost:8123/configurator/mcp`;
-a client that speaks only stdio, such as Claude Desktop, reaches it through
-`mcp-remote`. Desktop's `PATH` has no Node, so the entry names `npx` by its
-absolute path and gives it Node's directory:
-
-```json
-"configurator": {
-  "command": "<node-bin>/npx",
-  "args": ["-y", "mcp-remote", "http://localhost:8123/configurator/mcp"],
-  "env": { "PATH": "<node-bin>:/usr/bin:/bin" }
-}
-```
-
-With the relay's entry beside it, Desktop lists the same tools twice when the
-page is open, once from each.
-
-`review` and `open_quote` carry MCP Apps views, built from `src/apps/` into
-`agent/apps/` by `npm run build:apps` (which `npm run dev` and `npm run build`
-run first); a client that does not render MCP Apps gets the same result as
-text.
-
-WebMCP needs Chrome 149 or later with `chrome://flags/#enable-webmcp-testing`
-enabled (or the origin trial; headless, `--enable-features=WebMCPTesting`).
-Chrome's Model Context Tool Inspector then lists the tools the page registers
-and can call them; from the console, `document.modelContext.getTools()`. The
-page registers the server's tools, forwarding each call there, and adds
-`converse` and `listen`, which run in its own conversation.
-
-A desktop MCP client can also reach the tab's tools, `converse` among them,
-through the MCP-B local relay:
-the layout loads `@mcp-b/webmcp-local-relay`'s embed script (served by
-`src/app/webmcp-relay/[file]/route.ts`), which forwards the tab's tools over a
-localhost WebSocket to the relay, and the relay is an MCP server over stdio.
-Claude Desktop's entry, with absolute paths because the app's `PATH` has no
-`npx`:
-
-```json
-"webmcp-local-relay": {
-  "command": "<node>",
-  "args": ["<repo>/node_modules/@mcp-b/webmcp-local-relay/dist/cli.mjs",
-           "--widget-origin", "http://localhost:3000"]
-}
-```
-
-The client then sees `review`, `assert_value` and the rest beside the relay's
-own `webmcp_list_sources`, and acts as the person's agent — see
-[Conduct](docs/syncs/conduct.md#the-persons-own-agent-acting-as-the-person).
+The person's own agent connects as an MCP client of the concept layer, over
+WebMCP in the browser, or through the MCP-B relay from the desktop; the setup
+for each is in [`docs/agents.md`](docs/agents.md).
 
 ## UI components
 
@@ -281,9 +242,9 @@ rewrites `globals.css` and silently drops the `@theme inline` bridge, the
 
 ## Design principles
 
-1. **The specification comes first.** Argue the change in `docs/concepts/` or `docs/syncs/`, then regenerate.
-2. **Pull apart rather than add.** MSM §5.1.1's repair for conflation is separation, and `worktree` is the model.
-3. **State permissions, never prohibitions.** A prohibition is a permission you decline to write.
+1. _The specification comes first._ Argue the change in `docs/concepts/` or `docs/syncs/`, then regenerate.
+2. _Pull apart rather than add._ MSM §5.1.1's repair for conflation is separation, and `worktree` is the model (see [misalignment](docs/method/misalignment.md)).
+3. _State permissions, never prohibitions._ A prohibition is a permission you decline to write.
 
 ## When extending this
 

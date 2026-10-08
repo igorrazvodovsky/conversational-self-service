@@ -524,6 +524,43 @@ def entitle(title: str | None = None, site: str | None = None) -> dict[str, Any]
 
 
 @tool
+def handover(reason: str) -> dict[str, Any]:
+    """Put the specification into the seller's hands, at the person's word.
+
+    `reason` is what the seller is being handed it for, in the person's
+    words or as what you found no rule for: a term the stipulations do not
+    cover, a question the published record does not settle, a requirement
+    the catalogue cannot meet as stated. Call it when the person asks for
+    someone at the seller, in that turn, and never unasked: when you have
+    run out of rule, say what you cannot settle and that someone at the
+    seller can, and hand over only when the person takes that up. Nothing
+    is frozen or locked; the specification stays the person's to change,
+    and the seller reads it as it stands. The handover is listed in `review`
+    under `handovers` with its address.
+    """
+    completion = engine.root(
+        "Copiloting", "invoke", actor="model", flow=turn(), tool="handover",
+        spec=SPEC, reason=reason,
+    )
+    outcome = _outcome(completion)
+    sent = next(
+        (
+            (record.output or {}).get("handover")
+            for record in engine.log.flow(completion.flow)
+            if record.kind == "completion"
+            and record.seq > completion.seq
+            and record.concept == "HandingOver"
+            and record.action == "send"
+            and "error" not in (record.output or {})
+        ),
+        None,
+    )
+    if sent:
+        outcome["handover"] = {"handover": sent, "at": f"#handover:{sent}"}
+    return outcome
+
+
+@tool
 def show(facet: str) -> dict[str, Any]:
     """Show a kind of fact on the canvas, beside every item it concerns.
 
@@ -912,6 +949,11 @@ def review() -> dict[str, Any]:
     `quotes` lists every quote issued, with its number, where it stands and
     which values have moved since; `open_quote` reads what one offers.
 
+    `handovers` lists each time the specification was put into the seller's
+    hands, with the reason. `beyond` is set when what the person wants is
+    past what any rule here lets you or them do: offer the seller then, and
+    hand over only at their word.
+
     Every item comes with its address on the canvas under `at`: link it in
     the reply rather than reciting it.  `struck` lists the items read from a
     source that the person struck, which no clause carries any more.
@@ -930,6 +972,6 @@ def review() -> dict[str, Any]:
 
 
 configurator_tools = [
-    assert_value, withdraw, read, propose, introduce, entitle, quote,
+    assert_value, withdraw, read, propose, introduce, entitle, quote, handover,
     show, hide, frame, unframe, review, look_up, open_file, open_quote, ask,
 ]

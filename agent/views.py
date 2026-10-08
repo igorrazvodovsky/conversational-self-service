@@ -47,6 +47,8 @@ HOW = {
     "ASubstituteReachesTheAssertions": "you chose this, in place of an earlier value",
     "APersonRequestsAQuote": "you asked for this",
     "TheModelMayRequestAQuote": "the assistant asked for this",
+    "APersonHandsOver": "you handed this to the seller",
+    "TheModelMayHandOver": "the assistant handed this to the seller, at your word",
 }
 
 # The same edge under a second actor.  The person's own agent performs the
@@ -59,6 +61,7 @@ SAID = {
     ("APersonAssertsAValue", BROWSER): "your agent asked for this",
     ("AnAdoptedValueBecomesAnAssertion", BROWSER): "adopted from a proposal by your agent",
     ("APersonRequestsAQuote", BROWSER): "your agent asked for this",
+    ("APersonHandsOver", BROWSER): "your agent handed this to the seller",
     ("AChoiceReachesTheAssertions", BROWSER): "your agent chose this",
     ("ASubstituteReachesTheAssertions", BROWSER): "your agent chose this, in place of an earlier value",
 }
@@ -537,6 +540,80 @@ def _sources(
     return out
 
 
+def _handovers(engine: Engine, spec: str) -> list[dict[str, Any]]:
+    """Each time the specification was put into the seller's hands, with the
+    reason, who did it and when.  The reason and the parties are
+    `HandingOver`'s; the rule, the actor and the day are the log's, read as
+    `_issued` reads them for a quote.  Nothing here says what travelled,
+    because nothing did: the seller reads the specification as it stands,
+    and the log says how it got there (`docs/syncs/handover.md`)."""
+    handing = engine.state("HandingOver")
+    sent: dict[str, tuple[str, str, str]] = {}
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if record.kind != "completion" or record.concept != "HandingOver":
+            continue
+        if record.action != "send":
+            continue
+        handover = (record.output or {}).get("handover")
+        if handover:
+            sent[handover] = (
+                record.via or "",
+                record.actor,
+                date.fromtimestamp(record.at).isoformat(),
+            )
+    out = []
+    for number, handover in enumerate(handing["handovers"], start=1):
+        if handing["of"][handover] != spec:
+            continue
+        via, actor, on = sent.get(handover, ("", "", None))
+        out.append(
+            {
+                "handover": handover,
+                "number": number,
+                "to": handing["to"][handover],
+                "reason": handing["reason"][handover],
+                "sent": on,
+                "received": handing["received"].get(handover),
+                "how": said(via, actor),
+            }
+        )
+    return out
+
+
+def _beyond(
+    engine: Engine,
+    spec: str,
+    variables: list[dict[str, Any]],
+    questions: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """`?s has reached the seller's door` (`docs/syncs/handover.md`): what
+    the person wants is something no rule lets the assistant do and no
+    gesture lets them do either, read from state for the suggestion strip.
+    A requirement the person stated and will not relax, which the catalogue
+    cannot build as stated; or a conflict they replied to in words and left
+    open, because the decision is not theirs to make at the screen.  Read
+    by the view, never by a rule, and it hands nothing over on its own."""
+    specifying = engine.state("Specifying")
+    reasons = readings.reasons(
+        engine.state("Asserting"), engine.state("Binding"), specifying, spec
+    )
+    for v in variables:
+        if v["standing"] != "unmet":
+            continue
+        for clause in reasons.get(v["name"], []):
+            if specifying["negotiability"].get(clause) == "fixed":
+                return {
+                    "because": "fixed",
+                    "clause": clause,
+                    "text": plain(specifying["text"].get(clause, "")),
+                    "variable": v["name"],
+                }
+    for q in questions:
+        if q["about"] == "conflict" and q["asked"] and q["asked"]["status"] == "replied":
+            return {"because": "replied", "request": q["request"]}
+    return None
+
+
 def canvas(engine: Engine, spec: str, grid: str = "today") -> dict[str, Any]:
     with engine.turn:
         return _canvas(engine, spec, grid)
@@ -936,6 +1013,8 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 )
 
     quotes = _quotes(engine, spec, grid, settled, issued, trace["asOf"])
+    handovers = _handovers(engine, spec)
+    beyond = _beyond(engine, spec, variables, questions)
     price = pricing.total(chosen, BASIS)
     profiling = engine.state("Profiling")
     customer = readings.profile(profiling, "person")
@@ -1017,6 +1096,11 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             {v["name"] for v in variables if v["standing"] == "unmet"},
         ),
         "quotable": quotable,
+        # Each time the specification was put into the seller's hands, and
+        # whether what the person wants has gone beyond what any rule here
+        # can do, which is when the chat offers the seller.
+        "handovers": handovers,
+        "beyond": beyond,
         "customer": customer,
         "seller": seller,
         "project": project,
@@ -1081,6 +1165,7 @@ KINDS = [
     ("questions", "Questions"),
     ("reading", "Words and documents"),
     ("quotes", "Quotes"),
+    ("handover", "Handed over"),
     ("party", "Who and where"),
     ("view", "The view"),
     ("nothing", "Nothing"),
@@ -1105,6 +1190,7 @@ ACTS = {
     "quote": "Requested a quote",
     "commit": "Accepted a quote",
     "revoke": "Revoked a quote",
+    "handover": "Handed the specification to the seller",
     "focus": "Switched surface",
     "show": "Showed a fact beside each item",
     "hide": "Hid a fact beside each item",
@@ -1142,6 +1228,7 @@ _KIND_OF = {
     "Filing": "reading",
     "Reading": "reading",
     "Quoting": "quotes",
+    "HandingOver": "handover",
     "Profiling": "party",
     "Naming": "party",
     "Moding": "view",
@@ -1812,6 +1899,14 @@ def digest(
             }
             for q in view["quotes"]
         ],
+        # Each time the specification was handed to the seller, with the
+        # reason; `handover` adds one.  `beyond` says when what the person
+        # wants is past what any rule here can do, which is when to offer
+        # the seller rather than hand over unasked.
+        "handovers": [
+            h | {"at": f"#handover:{h['handover']}"} for h in view["handovers"]
+        ],
+        "beyond": view["beyond"],
     }
 
 

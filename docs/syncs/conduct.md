@@ -56,7 +56,7 @@ then  { Framing/unframe: [ lens: workspace ] }
 
 sync TheCanvasIsShownBeforeItChanges
 when  { Copiloting/invoke: [ tool: ?t ] => [] }
-where { ?t is one of assert, withdraw, read, propose, quote, show, hide, frame, unframe }
+where { ?t is one of assert, withdraw, read, propose, quote, handover, show, hide, frame, unframe }
 then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
 ```
 
