@@ -58,7 +58,11 @@ export function PanelNav() {
         : []),
       { id: "asserted", title: "Specification", surface: "canvas" },
     ],
-    [{ id: "quotes", title: "Quote", surface: "quote" }],
+    // Offered once an offer exists: before that there is nothing to look at,
+    // and the request is made from the specification.
+    view.quotes.length || mode === "quote"
+      ? [{ id: "quotes", title: "Quotes", count: view.quotes.length, surface: "quote" }]
+      : [],
   ];
 
   const follow = (place: Place) => {
@@ -85,7 +89,7 @@ export function PanelNav() {
         className="max-w-none flex-none justify-start"
       >
         <NavigationMenuList className="flex-wrap justify-start whitespace-nowrap">
-          {groups.map((places, i) => (
+          {groups.filter((places) => places.length).map((places, i) => (
             <Fragment key={i}>
               {i > 0 ? (
                 <li aria-hidden className="mx-1 h-3.5 w-px shrink-0 bg-border" />

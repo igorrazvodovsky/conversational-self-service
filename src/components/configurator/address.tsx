@@ -75,8 +75,7 @@ export function useTargeted(id: string): boolean {
 /** The surface an address is on; none for the chat, which is always there. */
 export function surfaceOf(id: string): Surface | null {
   if (id.startsWith("said:") || id.startsWith("turn:")) return null;
-  if (id.startsWith("quote:") || id.startsWith("compare:") || id === address.addressee)
-    return "quote";
+  if (id.startsWith("quote:") || id.startsWith("compare:")) return "quote";
   return "canvas";
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Collapsible,
@@ -27,7 +28,7 @@ import { money, tonnes } from "./format";
 import { LIFE, priced } from "./life";
 import { TONE, type Tone } from "./tone";
 import { useShown } from "./showing";
-import { useConfigurator, type Goal as GoalChoice, type Grid, type View } from "./provider";
+import { useConfigurator, type Goal as GoalChoice, type Grid, type Party, type View } from "./provider";
 
 /**
  * The state, named after the condition of `APersonRequestsAQuote` that fails
@@ -102,6 +103,7 @@ export function Standing() {
 
         <Conflict />
         <FinishFor />
+        <Addressee />
 
         <Collapsible>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t pt-3 text-sm">
@@ -330,6 +332,153 @@ function HandedOver() {
         </div>
       </TooltipContent>
     </Tooltip>
+  );
+}
+
+/** Each field says what it holds, so a browser can fill the person's own
+ * details for them; a quote needs the name. */
+const CUSTOMER: {
+  key: keyof Party;
+  label: string;
+  wide?: boolean;
+  required?: boolean;
+  type?: string;
+  autoComplete: string;
+}[] = [
+  { key: "name", label: "Name", required: true, autoComplete: "name" },
+  { key: "organisation", label: "Organisation", autoComplete: "organization" },
+  { key: "address", label: "Address", wide: true, autoComplete: "street-address" },
+  { key: "email", label: "Email", type: "email", autoComplete: "email" },
+  { key: "phone", label: "Phone", type: "tel", autoComplete: "tel" },
+];
+
+/**
+ * Who the specification is for and where the lift goes, as a line of where
+ * it stands: the last thing shaping needs before an offer can be asked
+ * for, beside the reason that names it when it is missing. The form is
+ * behind the line, as the handover's reason is behind its button. Each
+ * field is sent only when it changed, because `introduce` and `entitle`
+ * are partial and a field left alone should stay as it was. Arrived at
+ * from the assistant's question in the chat, the form opens with the
+ * keyboard in the first field a quote still needs.
+ */
+function Addressee() {
+  const { view, gesture } = useConfigurator();
+  const customer = view?.customer ?? {};
+  const project = view?.project ?? { title: "", site: "" };
+  const [open, setOpen] = useState(false);
+  const isTarget = useTargeted(address.addressee);
+  const firstMissing = !customer.name ? "name" : !project.site ? "site" : null;
+  useEffect(() => {
+    if (!isTarget) return;
+    setOpen(true);
+    if (firstMissing)
+      setTimeout(
+        () =>
+          document
+            .querySelector<HTMLElement>(`#addressee-form [name="${firstMissing}"]`)
+            ?.focus({ preventScroll: true }),
+        50,
+      );
+  }, [isTarget, firstMissing]);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const changed = <T extends string>(keys: T[], was: Record<string, string | undefined>) =>
+      Object.fromEntries(
+        keys
+          .map((key) => [key, String(data.get(key) ?? "").trim()] as const)
+          .filter(([key, value]) => value !== (was[key] ?? "")),
+      );
+    const details = changed(
+      CUSTOMER.map((f) => f.key),
+      customer as Record<string, string | undefined>,
+    );
+    const naming = changed(["title", "site"], project);
+    if (Object.keys(details).length) await gesture({ act: "introduce", ...details });
+    if (Object.keys(naming).length) await gesture({ act: "entitle", ...naming });
+    setOpen(false);
+  };
+
+  const who = customer.name
+    ? [customer.name, customer.organisation].filter(Boolean).join(", ")
+    : null;
+  const where = [project.title, project.site].filter(Boolean).join(" · ");
+  return (
+    <div
+      id={address.addressee}
+      className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t pt-3 text-sm ${addressable} ${isTarget ? targeted : ""}`}
+    >
+      {who ? (
+        <p>
+          <span className="text-muted-foreground">For </span>
+          {who}
+          {where ? <span className="text-muted-foreground"> · {where}</span> : null}
+        </p>
+      ) : (
+        <p className="text-muted-foreground">Who is this for, and where is the lift going?</p>
+      )}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant={who ? "ghost" : "outline"} size="xs" className="ml-auto">
+            {who ? "Edit" : "Say who it is for"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-[28rem] max-w-[calc(100vw-2rem)]">
+          <PopoverHeader>
+            <PopoverTitle>Who the proposal is for</PopoverTitle>
+            <PopoverDescription>
+              The name and the site are needed for a quote; the rest goes on
+              the proposal's letterhead.
+            </PopoverDescription>
+          </PopoverHeader>
+          <form
+            id="addressee-form"
+            // Keyed on what is on record, so that a detail the assistant
+            // records while the form is open shows in its field rather than
+            // being sent back blank as the person's correction.
+            key={JSON.stringify([customer, project])}
+            onSubmit={(e) => void submit(e)}
+            className="mt-2 grid gap-3 sm:grid-cols-2"
+          >
+            {CUSTOMER.map((field) => (
+              <label
+                key={field.key}
+                className={field.wide ? "sm:col-span-2 text-xs" : "text-xs"}
+              >
+                <span className="mb-1 block text-muted-foreground">
+                  {field.label}
+                  {field.required ? " (needed for a quote)" : ""}
+                </span>
+                <Input
+                  name={field.key}
+                  type={field.type}
+                  defaultValue={customer[field.key] ?? ""}
+                  autoComplete={field.autoComplete}
+                  aria-required={field.required || undefined}
+                />
+              </label>
+            ))}
+            <label className="text-xs">
+              <span className="mb-1 block text-muted-foreground">Job title</span>
+              <Input name="title" defaultValue={project.title} autoComplete="off" />
+            </label>
+            <label className="text-xs">
+              <span className="mb-1 block text-muted-foreground">
+                Site, where the lift is going (needed for a quote)
+              </span>
+              <Textarea aria-required name="site" defaultValue={project.site} rows={2} className="min-h-9" />
+            </label>
+            <div className="sm:col-span-2 flex justify-end">
+              <Button type="submit" size="sm">
+                Save
+              </Button>
+            </div>
+          </form>
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 

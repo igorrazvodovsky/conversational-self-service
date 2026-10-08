@@ -20,7 +20,7 @@
  * proposal is wanted, and answered with the same gestures ("What a completion
  * is finished for is the person's to say"). Who a quote is for, when the
  * person's name or the job's site is all a quote lacks, is not: its card
- * links to the addressee on the quote surface rather than holding the
+ * links to the addressee on the specification rather than holding the
  * fields, and the wait ends when they are recorded there, by the person's
  * agent, or by the model from a reply ("Asking who the quote is for").
  *
