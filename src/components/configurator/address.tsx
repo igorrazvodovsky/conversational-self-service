@@ -33,6 +33,7 @@ export const address = {
   question: (about: string) => `question:${about}`,
   addressee: "addressee",
   handover: (id: string) => `handover:${id}`,
+  step: (id: string) => `step:${id}`,
   turn: (flow: string) => `turn:${flow}`,
   said: (utterance: string) => `said:${utterance}`,
   quote: (quote: string, kind: "variable" | "clause" | "event", id: string) =>

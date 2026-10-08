@@ -501,6 +501,21 @@ export interface Turn {
   }[];
 }
 
+/** One step of the job, as the seller's template names it or as the person
+ * renamed or added it. `wanting` is the variables of its needs that stand
+ * open: nothing asserted and nothing following (docs/syncs/stepping.md). */
+export interface Step {
+  step: string;
+  at: string;
+  name: string;
+  template: string | null;
+  owner: string;
+  status: "open" | "finished" | "skipped";
+  needs: { variable: string; heading: string; standing: Standing; at: string }[];
+  wanting: string[];
+  deviation: { kind: string; text: string }[];
+}
+
 export interface View {
   spec: string;
   grid: Grid;
@@ -552,6 +567,9 @@ export interface View {
   quotable: { ok: boolean; because: string; asked?: AskedAddressee | null };
   handovers: Handover[];
   beyond: Beyond | null;
+  /** Where the person is in the job: `at` is the step they took, `start`
+   * the first still wanting something while they have taken none. */
+  stepping: { at: string | null; start: string | null; steps: Step[] };
   customer: Party;
   seller: Party;
   project: { title: string; site: string };

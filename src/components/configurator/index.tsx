@@ -13,6 +13,7 @@ import { address, To } from "./address";
 import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
 import { Standing } from "./standing";
+import { Steps } from "./steps";
 import { framedAsserted } from "./ledger";
 import { AskedFor } from "./specification";
 
@@ -182,6 +183,8 @@ export function ConfiguratorCanvas() {
           <div className="mt-4">
             <Standing />
           </div>
+
+          <Steps />
 
           {/* Only while something waits on the person: an empty section
               here would read as a question nobody asked. */}
