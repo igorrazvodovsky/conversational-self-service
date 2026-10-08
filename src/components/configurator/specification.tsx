@@ -874,11 +874,12 @@ export function AskedFor() {
       <h2 id="asserted-title" className="sr-only">
         The specification
       </h2>
-      {/* The steps of the job, then the gaps within the step: one place
-          for what the list shows. */}
-      <header className="mb-2 space-y-2">
-        <StepTabs />
-        <Filters />
+      {/* The steps of the job, and the gaps as the step's panel: one place
+          for what the list shows (`steps.tsx`). */}
+      <header className="mb-2">
+        <StepTabs>
+          <Filters />
+        </StepTabs>
       </header>
       {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
           it is read, and a frame that leaves nothing says so. */}

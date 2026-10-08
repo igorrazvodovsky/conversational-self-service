@@ -32,12 +32,20 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TONE } from "./tone";
 import { address, addressable, targeted, To, useTargeted } from "./address";
 import { useNavigate } from "./link";
 import { useConfigurator, type Step } from "./provider";
 
-export function StepTabs() {
+/**
+ * `children` is the gap filter row, which is the active tab's panel: the
+ * gaps are counted within the step, and the panel's edge says so, so the
+ * two rows read as two axes — where in the job, and which kind of fact —
+ * rather than as two menus of the same kind. With "All" active there is
+ * no panel edge, because nothing is within anything.
+ */
+export function StepTabs({ children }: { children?: React.ReactNode }) {
   const { view } = useConfigurator();
   // A step is a place the person goes, and the back button returns from.
   const navigate = useNavigate();
@@ -69,26 +77,35 @@ export function StepTabs() {
           <Tab key={step.step} step={step} taken={step.step === at} />
         ))}
       </TabsList>
-      {here ? (
-        <StepHeader step={here} />
-      ) : starting ? (
-        <p className="text-xs text-muted-foreground">
-          <Wants step={starting} lead={`Start with ${starting.name.toLowerCase()}`} />
-        </p>
-      ) : null}
+      <div className={here ? "space-y-2 border-l-2 border-foreground/20 pl-3" : "space-y-2"}>
+        {here ? (
+          <StepHeader step={here} />
+        ) : starting ? (
+          <p className="text-xs text-muted-foreground">
+            <Wants step={starting} lead={`Start with ${starting.name.toLowerCase()}`} />
+          </p>
+        ) : null}
+        {children}
+      </div>
     </Tabs>
   );
 }
 
 /**
  * One step's tab: its status mark, its name, and the count of what it
- * still wants. The tab carries the step's address. The step the person
- * took is underlined faintly when another tab is active, so the claim is
- * visible without a second control.
+ * still wants. That count is a different unit from the gap filters' — the
+ * open variables the seller said this step must settle, not every open
+ * value the step is about — and the tooltip on it says which. The tab
+ * carries the step's address. The step the person took is underlined
+ * faintly when another tab is active, so the claim is visible without a
+ * second control.
  */
 function Tab({ step, taken }: { step: Step; taken: boolean }) {
+  const { view } = useConfigurator();
   const at = address.step(step.step);
   const isTarget = useTargeted(at);
+  const heading = (name: string) =>
+    view?.variables.find((v) => v.name === name)?.heading ?? name;
   return (
     <TabsTrigger
       id={at}
@@ -103,7 +120,16 @@ function Tab({ step, taken }: { step: Step; taken: boolean }) {
           wants is still a fact. */}
       <span className={step.status === "skipped" ? "line-through" : ""}>{step.name}</span>
       {step.wanting.length ? (
-        <span className="font-normal tabular-nums text-muted-foreground">{step.wanting.length}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="font-normal tabular-nums text-muted-foreground">
+              {step.wanting.length}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            Still to say: {step.wanting.map(heading).join(", ").toLowerCase()}
+          </TooltipContent>
+        </Tooltip>
       ) : null}
     </TabsTrigger>
   );
