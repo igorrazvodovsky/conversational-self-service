@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TONE } from "./tone";
-import { address, addressable, targeted, To, useTargeted } from "./address";
+import { address, addressable, targeted, useTargeted } from "./address";
 import { useNavigate } from "./link";
 import { useConfigurator, type Step } from "./provider";
 
@@ -50,11 +50,10 @@ export function StepTabs({ children }: { children?: React.ReactNode }) {
   // A step is a place the person goes, and the back button returns from.
   const navigate = useNavigate();
   if (!view?.stepping.steps.length) return null;
-  const { at, start, steps } = view.stepping;
+  const { at, steps } = view.stepping;
   const framed = view.frame?.by === "step" ? view.frame.step : null;
   const active = framed ?? "all";
   const here = steps.find((s) => s.step === framed);
-  const starting = !framed && !at ? steps.find((s) => s.step === start) : null;
   return (
     <Tabs
       value={active}
@@ -78,13 +77,7 @@ export function StepTabs({ children }: { children?: React.ReactNode }) {
         ))}
       </TabsList>
       <div className={here ? "space-y-2 border-l-2 border-foreground/20 pl-3" : "space-y-2"}>
-        {here ? (
-          <StepHeader step={here} />
-        ) : starting ? (
-          <p className="text-xs text-muted-foreground">
-            <Wants step={starting} lead={`Start with ${starting.name.toLowerCase()}`} />
-          </p>
-        ) : null}
+        {here ? <StepHeader step={here} /> : null}
         {children}
       </div>
     </Tabs>
@@ -141,38 +134,10 @@ function Mark({ status }: { status: Step["status"] }) {
   return <span className="size-1.5 rounded-full border border-current" aria-hidden />;
 }
 
-/** What a step still wants, as links, after a lead-in. */
-function Wants({ step, lead }: { step: Step; lead: string }) {
-  if (!step.wanting.length) return <>{lead}; it has what it needs.</>;
-  return (
-    <>
-      {lead}; still to say: <WantList step={step} />.
-    </>
-  );
-}
-
-/** The variables a step still wants, linked, joined as a sentence would. */
-function WantList({ step }: { step: Step }) {
-  const { view } = useConfigurator();
-  const heading = (name: string) =>
-    view?.variables.find((v) => v.name === name)?.heading ?? name;
-  return (
-    <>
-      {step.wanting.map((name, index) => (
-        <span key={name}>
-          {index > 0 ? (index === step.wanting.length - 1 ? " and " : ", ") : null}
-          <To id={address.variable(name)} className="lowercase">
-            {heading(name)}
-          </To>
-        </span>
-      ))}
-    </>
-  );
-}
-
 /**
- * The panel's header: the step's status, what it still wants, and the
- * gestures that change it. A skip needs a reason, so that button opens a
+ * The panel's header: the step's status and the gestures that change it.
+ * What the step still wants is not restated here: the Open filter counts
+ * it and the list shows it. A skip needs a reason, so that button opens a
  * field the way the handover's does (`standing.tsx`); pressed empty, it
  * says what is missing rather than greying out.
  */
@@ -185,15 +150,6 @@ function StepHeader({ step }: { step: Step }) {
       <Badge variant="secondary" className={tone}>
         {step.status}
       </Badge>
-      <span className="text-muted-foreground">
-        {step.wanting.length ? (
-          <>
-            still to say: <WantList step={step} />
-          </>
-        ) : (
-          "it has what it needs"
-        )}
-      </span>
       <span className="ml-auto flex gap-1">
         {step.status === "open" ? (
           <>
