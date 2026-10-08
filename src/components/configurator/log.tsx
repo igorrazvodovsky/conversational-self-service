@@ -134,7 +134,6 @@ export function Log() {
   if (!view) return null;
   const fresh = turns.filter(isNotice).length;
   const parties = view.parties;
-  const visible = parties.filter((p) => !filter.hidden.includes(p.actor));
   const shown = turns.filter((t) => shows(t, filter.hidden, filter.kinds));
   // Each menu's counts are over what the other one leaves.
   const byParty = (actor: string) =>
@@ -193,9 +192,6 @@ export function Log() {
                           <Choice
                             key={p.actor}
                             checked={on}
-                            // One party is always shown: a list filtered to
-                            // nobody could not be told from an empty log.
-                            last={on && visible.length === 1}
                             count={byParty(p.actor)}
                             onChange={(checked) =>
                               choose({
@@ -229,7 +225,6 @@ export function Log() {
                     <Choice
                       key={kind}
                       checked={on}
-                      last={on && filter.kinds.length === 1}
                       count={byKind(kind)}
                       onChange={(checked) =>
                         choose({
@@ -288,17 +283,16 @@ export function Log() {
   );
 }
 
-/** The menu stays open, as a person choosing a view sets several; the last
- * one checked stays. */
+/** The menu stays open, as a person choosing a view sets several. Every
+ * choice can be unchecked, the last included: the list then says that no
+ * turn matches what is chosen, which tells it from an empty log. */
 function Choice({
   checked,
-  last,
   count,
   onChange,
   children,
 }: {
   checked: boolean;
-  last: boolean;
   count: number;
   onChange: (checked: boolean) => void;
   children: React.ReactNode;
@@ -306,7 +300,6 @@ function Choice({
   return (
     <DropdownMenuCheckboxItem
       checked={checked}
-      disabled={last}
       onSelect={(event) => event.preventDefault()}
       onCheckedChange={onChange}
     >

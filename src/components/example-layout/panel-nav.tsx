@@ -42,7 +42,7 @@ interface Place {
  * history, and the back button returns to the surface before.
  */
 export function PanelNav() {
-  const { view, busy } = useConfigurator();
+  const { view } = useConfigurator();
   const navigate = useNavigate();
   if (!view) return null;
   const mode = view.mode;
@@ -107,11 +107,8 @@ export function PanelNav() {
                             : "/?on=specification"
                       }
                       active={current}
-                      aria-disabled={busy && !place.at}
                       onClick={(event) => {
                         event.preventDefault();
-                        // `aria-disabled` says it; this makes it so.
-                        if (busy && !place.at) return;
                         follow(place);
                       }}
                       className={cn(

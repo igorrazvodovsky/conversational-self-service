@@ -121,7 +121,6 @@ function Requirement({ host, line }: { host: Host; line: Line }) {
             <Button
               size="xs"
               variant="outline"
-              disabled={host.busy}
               onClick={() =>
                 host.act("person_keep", { clause: line.clause }, `kept “${line.text}” as their own`)
               }
@@ -131,7 +130,6 @@ function Requirement({ host, line }: { host: Host; line: Line }) {
             <Button
               size="xs"
               variant="ghost"
-              disabled={host.busy}
               onClick={() =>
                 host.act("person_strike", { clause: line.clause }, `struck “${line.text}”`)
               }
@@ -166,7 +164,6 @@ function Conflict({ host, question }: { host: Host; question: Question }) {
               key={o.label}
               size="xs"
               variant="outline"
-              disabled={host.busy}
               onClick={() =>
                 host.act(
                   "person_choose",

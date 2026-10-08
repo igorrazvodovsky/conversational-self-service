@@ -54,7 +54,7 @@ export function ExampleLayout({
   quoteContent,
   canvasPercent,
 }: ExampleLayoutProps) {
-  const { view } = useConfigurator();
+  const { view, busy } = useConfigurator();
   // Any surface the layout does not draw reads as the specification, so a
   // focus on a surface no longer offered, replayed from a journal, lands
   // somewhere.
@@ -121,6 +121,7 @@ export function ExampleLayout({
               <main
                 id="main"
                 aria-labelledby="surface-title"
+                aria-busy={busy || undefined}
                 className="min-h-0 flex-1"
               >
                 {/* The surface's name, in every state it can be in — loading,

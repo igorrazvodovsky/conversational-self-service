@@ -53,7 +53,7 @@ function Section({
  * frame is a filter, shown pressed above the list it filters.
  */
 function FrameBanner() {
-  const { view, gesture, busy, label } = useConfigurator();
+  const { view, gesture, label } = useConfigurator();
   if (!view?.frame || view.frame.by === "gap") return null;
   const { frame } = view;
   const inside = view.variables.filter((v) => v.framed);
@@ -103,7 +103,6 @@ function FrameBanner() {
         variant="ghost"
         size="xs"
         className="ml-auto"
-        disabled={busy}
         onClick={() => void gesture({ act: "unframe" })}
       >
         Show everything

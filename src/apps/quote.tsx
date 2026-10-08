@@ -71,6 +71,7 @@ function Quote({ host, result }: { host: Host; result: Result }) {
       maximumFractionDigits: 0,
     }).format(n);
   const committed = standing?.standing === "committed";
+  const open = standing?.standing === "open";
   const adds = (v: Value) =>
     [v.capital ? money(v.capital) : null, v.monthly ? `${money(v.monthly)} a month` : null]
       .filter(Boolean)
@@ -105,7 +106,6 @@ function Quote({ host, result }: { host: Host; result: Result }) {
             <Button
               size="sm"
               variant="outline"
-              disabled={host.busy}
               onClick={() =>
                 host.act("person_revoke", { quote: offer.quote }, `revoked their acceptance of quote ${offer.number}`)
               }
@@ -113,15 +113,24 @@ function Quote({ host, result }: { host: Host; result: Result }) {
               Revoke my acceptance
             </Button>
           ) : (
+            // An offer no longer open stays in reach and says why it cannot
+            // be accepted, beside the button, rather than greying out.
             <Button
               size="sm"
-              disabled={host.busy || standing?.standing !== "open"}
+              aria-disabled={!open || undefined}
+              aria-describedby={open ? undefined : "accept-why-not"}
               onClick={() =>
+                open &&
                 host.act("person_commit", { quote: offer.quote }, `accepted quote ${offer.number}`)
               }
             >
               Accept this offer
             </Button>
+          )}
+          {committed || open ? null : (
+            <span id="accept-why-not" className="self-center text-xs text-muted-foreground">
+              Not open: this offer is {standing?.standing ?? "not yet issued"}.
+            </span>
           )}
         </div>
         {host.error ? <p className="text-xs text-destructive">{host.error}</p> : null}

@@ -191,7 +191,7 @@ const OfferList = forwardRef<ListHandle, SuggestionProps<Offer, Reference>>(
  * value answers the clause the chip says so. An individual's chip only names.
  */
 function ReferenceView({ node, editor, getPos }: NodeViewProps) {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, gesture } = useConfigurator();
   const reference = node.attrs as Reference;
   const pos = getPos();
   const clauseId: string | null =
@@ -207,15 +207,17 @@ function ReferenceView({ node, editor, getPos }: NodeViewProps) {
           <button
             type="button"
             contentEditable={false}
-            // Bound, it stays reachable so it can say so; it does nothing.
-            disabled={busy || (!answerable && !bound)}
-            aria-disabled={bound || undefined}
+            // Never disabled. Bound, it is pressed and says so; outside a
+            // clause it has nothing to answer and says that. Either way a
+            // press does nothing.
+            aria-pressed={bound || undefined}
+            aria-disabled={(!answerable && !bound) || undefined}
             title={
               bound
                 ? "Answers this clause"
                 : clause
                   ? "Answer this clause with it"
-                  : undefined
+                  : "Only a value inside a requirement can answer it"
             }
             onClick={() =>
               answerable &&
@@ -225,7 +227,11 @@ function ReferenceView({ node, editor, getPos }: NodeViewProps) {
             {bound ? <CheckIcon /> : null}
             {reference.label}
             <span className="sr-only">
-              {bound ? ", answers this clause" : answerable ? ", answer this clause with it" : ""}
+              {bound
+                ? ", answers this clause"
+                : answerable
+                  ? ", answer this clause with it"
+                  : ", not inside a requirement"}
             </span>
           </button>
         </ReferenceChip>

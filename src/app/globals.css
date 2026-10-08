@@ -208,6 +208,22 @@ html {
 }
 
 /*
+ * No control is disabled (`docs/ui.md`). One that cannot act yet says so with
+ * `aria-disabled` and stays in reach, so pressing it can say why; it is drawn
+ * as the primitives draw `disabled`. Unlayered, like the focus rules above, so
+ * it holds against a variant's own opacity.
+ */
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* While a gesture settles, the canvas's controls say so by the pointer. */
+#main[aria-busy="true"] :is(button, [role="button"], [role="menuitem"], a) {
+  cursor: progress;
+}
+
+/*
  * The composer's `InputGroup` is one control to the reader and two to the DOM:
  * the outline goes round the group and the textarea inside gives its own up.
  * A field's border is its own edge and is not recoloured on focus.

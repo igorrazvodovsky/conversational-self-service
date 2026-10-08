@@ -67,7 +67,7 @@ function ActionButton({
   return (
     <Button
       variant={done ? "outline" : BUTTON_VARIANT[variant]}
-      disabled={done}
+      aria-disabled={done || undefined}
       className="w-full"
       onClick={() => {
         if (!done) {

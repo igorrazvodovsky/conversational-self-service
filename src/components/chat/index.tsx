@@ -113,22 +113,43 @@ const ComposerTextArea = forwardRef<
  * answering and leaves it empty otherwise, so `children` is read as that state
  * and redrawn — icon and label together, because a control that stops a run
  * may not announce itself as send.
+ *
+ * The library also disables it while the field is empty. It is never
+ * disabled here (`docs/ui.md`): it says it has nothing to send, and pressed
+ * then, it puts the cursor in the field, where the words go.
  */
 function ComposerSendButton({
   children,
+  disabled,
+  onClick,
   ...props
 }: ComponentProps<typeof CopilotChatInput.SendButton>) {
   const stops = children != null;
   return (
-    <Button size="icon-sm" aria-label={stops ? "Stop" : "Send"} {...props}>
+    <Button
+      size="icon-sm"
+      aria-label={stops ? "Stop" : "Send"}
+      aria-disabled={disabled || undefined}
+      title={disabled && !stops ? "Write something to send" : undefined}
+      onClick={(event) => {
+        if (!disabled) return onClick?.(event);
+        event.currentTarget
+          .closest<HTMLElement>('[data-slot="input-group"]')
+          ?.querySelector("textarea")
+          ?.focus();
+      }}
+      {...props}
+    >
       {stops ? <SquareIcon className="fill-current" /> : <ArrowUpIcon />}
     </Button>
   );
 }
 
+/** The library disables it while dictating; here it says so instead. */
 function ComposerAddButton({
   onAddFile,
   toolsMenu: _toolsMenu,
+  disabled,
   ...props
 }: ComponentProps<typeof CopilotChatInput.AddMenuButton>) {
   return (
@@ -136,7 +157,9 @@ function ComposerAddButton({
       variant="ghost"
       size="icon-sm"
       aria-label="Attach a file"
-      onClick={() => onAddFile?.()}
+      aria-disabled={disabled || undefined}
+      title={disabled ? "Finish dictating to attach a file" : undefined}
+      onClick={() => disabled || onAddFile?.()}
       {...props}
     >
       <PaperclipIcon />
@@ -191,16 +214,10 @@ const composer = {
         Clicking the chrome around the field focuses it, as CopilotKit's own
         composer does. `InputGroupAddon` has the same idea but looks for an
         `input`, and this composer's control is a textarea.
-
-        `InputGroup` also fades itself whole when anything inside is disabled,
-        which is meant for a disabled field. Here it is the send button on an
-        empty field, or the attach button while dictating, and the field stays
-        live, so the fade is taken back on the group rather than the attribute
-        taken off the buttons.
       */}
       <TurnFailed />
       <InputGroup
-        className="h-auto flex-col items-stretch bg-background has-disabled:bg-background has-disabled:opacity-100 dark:has-disabled:bg-input/30"
+        className="h-auto flex-col items-stretch bg-background"
         onClick={(event) => {
           const target = event.target as HTMLElement;
           if (target.closest("button, textarea")) return;
@@ -258,12 +275,15 @@ const SuggestionStrip = forwardRef<HTMLDivElement, ComponentProps<"div">>(
 const SuggestionPill = forwardRef<
   HTMLButtonElement,
   ComponentProps<typeof CopilotChatSuggestionPill>
->(function SuggestionPill({ icon, isLoading, children, className, ...props }, ref) {
+>(function SuggestionPill({ icon, isLoading, children, className, onClick, ...props }, ref) {
+  // Loading, it says so and a second press sends nothing; it is not disabled.
   return (
     <Button
       ref={ref}
       variant="outline"
       size="xs"
+      aria-busy={isLoading || undefined}
+      onClick={(event) => isLoading || onClick?.(event)}
       {...props}
       // A long suggestion wraps rather than running out of a narrow chat.
       className={cn(

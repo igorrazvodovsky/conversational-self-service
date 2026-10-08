@@ -58,7 +58,11 @@ function useHost(): Host {
     });
   }, []);
 
-  const act = useCallback(
+  // No button in a view is disabled while a call is in flight (`docs/ui.md`),
+  // so a second press of the same one before the first has settled is the
+  // first, and resolves with it.
+  const pending = useRef(new Map<string, Promise<void>>());
+  const call = useCallback(
     async (name: string, args: Record<string, unknown>, done: string) => {
       const connection = app.current;
       if (!connection) return;
@@ -78,6 +82,18 @@ function useHost(): Host {
       }
     },
     [],
+  );
+
+  const act = useCallback(
+    (name: string, args: Record<string, unknown>, done: string) => {
+      const key = JSON.stringify([name, args]);
+      const same = pending.current.get(key);
+      if (same) return same;
+      const settled = call(name, args, done).finally(() => pending.current.delete(key));
+      pending.current.set(key, settled);
+      return settled;
+    },
+    [call],
   );
 
   const open = useCallback((url: string) => {

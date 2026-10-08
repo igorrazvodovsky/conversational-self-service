@@ -22,7 +22,7 @@ import { useConfigurator, type Foreseen, type Question, type View } from "./prov
  * it declines them — `docs/syncs/conduct.md`, "Proposing, and not adopting".
  */
 function OneQuestion({ question }: { question: Question }) {
-  const { gesture, busy, view } = useConfigurator();
+  const { gesture, view } = useConfigurator();
   const proposed = (view?.variables ?? []).filter((v) => v.proposed).length;
   const title = useId();
   const at = address.question(question.about);
@@ -60,7 +60,6 @@ function OneQuestion({ question }: { question: Question }) {
               key={index}
               variant="outline"
               size="sm"
-              disabled={busy}
               onClick={() =>
                 answer({ act: "choose", request: question.request, option })
               }
@@ -71,7 +70,6 @@ function OneQuestion({ question }: { question: Question }) {
           <Button
             variant="ghost"
             size="sm"
-            disabled={busy}
             className="text-muted-foreground"
             onClick={() =>
               answer({ act: "decline", request: question.request })
@@ -90,19 +88,16 @@ function OneQuestion({ question }: { question: Question }) {
 export function Answer({
   name,
   foreseen,
-  disabled,
   onClick,
 }: {
   name: string;
   foreseen?: Foreseen;
-  disabled: boolean;
   onClick: () => void;
 }) {
   return (
     <Button
       variant="outline"
       size="sm"
-      disabled={disabled}
       onClick={onClick}
       className="block h-auto w-full whitespace-normal px-3 py-2 text-left font-normal"
     >

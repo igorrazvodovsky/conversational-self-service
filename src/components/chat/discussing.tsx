@@ -165,7 +165,7 @@ export function useOpensOnConflict(): boolean {
  */
 export function DiscussedConflict() {
   const discussed = useDiscussed();
-  const { view, gesture, busy } = useConfigurator();
+  const { view, gesture } = useConfigurator();
   const answerName = useAnswerName();
   const askedHere = useAskedHere();
   if (!discussed || !view) return null;
@@ -210,7 +210,6 @@ export function DiscussedConflict() {
               key={index}
               name={answerName((option as Option).option)}
               foreseen={question.foreseen?.[index]}
-              disabled={busy}
               onClick={() =>
                 answer({ act: "choose", request: question.request, option })
               }
@@ -220,7 +219,6 @@ export function DiscussedConflict() {
             <Button
               variant="ghost"
               size="sm"
-              disabled={busy}
               className="text-muted-foreground"
               onClick={() =>
                 answer({ act: "decline", request: question.request })

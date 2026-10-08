@@ -58,7 +58,7 @@ function usePick(variable: Variable) {
  * would say it is gone, but marked in the caution hue as one that conflicts.
  */
 function Options({ variable }: { variable: Variable }) {
-  const { busy, view } = useConfigurator();
+  const { view } = useConfigurator();
   const shown = useShown();
   const pick = usePick(variable);
   const currency = view?.currency ?? "";
@@ -74,26 +74,28 @@ function Options({ variable }: { variable: Variable }) {
           const tip = option.possible
             ? option.note
             : "Conflicts with what has been asserted so far. Picking it puts the conflict to you.";
-          const disabled = busy || option.id === variable.asked;
+          // The current value is pressed rather than disabled: it stays in
+          // reach and keeps its note, and pressing it again changes nothing.
+          const current = option.id === variable.asked;
           const button = (
             <Button
               variant="outline"
               size="xs"
-              disabled={disabled}
+              aria-pressed={current}
               className={cn(
                 "h-auto py-1",
                 !option.possible && "border-dashed text-muted-foreground",
               )}
-              onClick={() => pick(option)}
+              onClick={() => current || pick(option)}
             >
-              {option.id === variable.asked ? (
+              {current ? (
                 <CheckIcon />
               ) : !option.possible ? (
                 <TriangleAlertIcon aria-hidden className="text-caution" />
               ) : null}
               {option.label}
               {/* The tick and the caution mark are for the eye only. */}
-              {option.id === variable.asked ? (
+              {current ? (
                 <span className="sr-only">, the current value</span>
               ) : !option.possible ? (
                 <span className="sr-only">, conflicts with what has been asserted</span>
@@ -117,13 +119,9 @@ function Options({ variable }: { variable: Variable }) {
             </Button>
           );
           if (!tip) return <span key={option.id}>{button}</span>;
-          // A disabled button takes no pointer events, so the tooltip hangs
-          // on a span around it: the current value keeps its note.
           return (
             <Tooltip key={option.id}>
-              <TooltipTrigger asChild>
-                <span tabIndex={disabled ? 0 : undefined}>{button}</span>
-              </TooltipTrigger>
+              <TooltipTrigger asChild>{button}</TooltipTrigger>
               <TooltipContent>{tip}</TooltipContent>
             </Tooltip>
           );
@@ -277,7 +275,7 @@ export function AssertedDetails({
   /** Whether the line's clause names the source it was read from. */
   sourced?: boolean;
 }) {
-  const { gesture, busy, label } = useConfigurator();
+  const { gesture, label } = useConfigurator();
   const shown = useShown();
   const unmet = variable.standing === "unmet";
   const yielded = variable.standing === "yielded";
@@ -344,7 +342,6 @@ export function AssertedDetails({
       <Button
         variant="ghost"
         size="xs"
-        disabled={busy}
         className="-ml-2 text-muted-foreground"
         onClick={() => void gesture({ act: "withdraw", variable: variable.name })}
       >
@@ -468,7 +465,7 @@ export function FollowsRow({
  * the rest. Neither is a pick from the options, which would be the person's
  * own value and read that way. */
 export function OpenRow({ variable }: { variable: Variable }) {
-  const { gesture, busy } = useConfigurator();
+  const { gesture } = useConfigurator();
   const proposed = variable.proposed;
   const id = address.variable(variable.name);
   // Addressed from elsewhere — a clause's answer line, a link in the chat —
@@ -506,7 +503,6 @@ export function OpenRow({ variable }: { variable: Variable }) {
           <Button
             variant="outline"
             size="xs"
-            disabled={busy}
             onClick={() =>
               void gesture({
                 act: "choose",
@@ -521,7 +517,6 @@ export function OpenRow({ variable }: { variable: Variable }) {
           <Button
             variant="ghost"
             size="xs"
-            disabled={busy}
             className="text-muted-foreground"
             onClick={() =>
               void gesture({ act: "decline", request: proposed.request })

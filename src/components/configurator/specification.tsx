@@ -274,7 +274,7 @@ function clausesOf(editor: Editor) {
 // -- one clause, rendered -----------------------------------------------------
 
 function Relax({ clause, onDone }: { clause: Clause; onDone: () => void }) {
-  const { gesture, busy } = useConfigurator();
+  const { gesture } = useConfigurator();
   const [wording, setWording] = useState(clause.text);
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -291,7 +291,7 @@ function Relax({ clause, onDone }: { clause: Clause; onDone: () => void }) {
         onChange={(event) => setWording(event.target.value)}
         aria-label="Relaxed wording"
       />
-      <Button type="submit" size="sm" disabled={busy}>
+      <Button type="submit" size="sm">
         Relax
       </Button>
       <Button type="button" size="sm" variant="ghost" onClick={onDone}>
@@ -309,10 +309,9 @@ function Relax({ clause, onDone }: { clause: Clause; onDone: () => void }) {
 function refocus(clause: string, control?: string, tries = 0) {
   const again = () => setTimeout(() => refocus(clause, control, tries + 1), 50);
   const at = document.getElementById(address.clause(clause));
-  // While the gesture settles, every control is disabled and the node views
-  // are about to be replaced; wait for live, enabled ones.
-  const wanted =
-    control && at?.querySelector<HTMLElement>(`[data-control="${control}"]:not(:disabled)`);
+  // Called once the gesture has settled; the node views may still be
+  // replaced by the write-back, which the check below catches.
+  const wanted = control && at?.querySelector<HTMLElement>(`[data-control="${control}"]`);
   const last = tries >= 40;
   const target = wanted || (last || !control ? at : null);
   if (!target) {
@@ -357,7 +356,7 @@ function clauseAt(editor: Editor): string | null {
  * the clause's identity and is not part of the document.
  */
 function ClauseView({ node, decorations }: NodeViewProps) {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, gesture } = useConfigurator();
   const { answering, setAnswering } = useAnswering();
   const { current, setCurrent, opened, setOpened } = useContext(Current);
   const [relaxing, setRelaxing] = useState(false);
@@ -443,7 +442,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               <Button
                 variant={active ? "default" : "ghost"}
                 size="icon-xs"
-                disabled={busy}
                 aria-pressed={active}
                 title={
                   active
@@ -463,7 +461,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    disabled={busy}
                     title={`${NEGOTIABILITY[clause.negotiability]} — how firmly this is meant`}
                     aria-label={`How firmly this is meant: ${NEGOTIABILITY[clause.negotiability]}`}
                   >
@@ -490,7 +487,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               <Button
                 variant="ghost"
                 size="icon-xs"
-                disabled={busy}
                 title="Strike this clause"
                 aria-label={`Strike: ${plain(clause.text)}`}
                 onClick={() => {
@@ -510,7 +506,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
               <Button
                 size="icon-xs"
                 variant="ghost"
-                disabled={busy}
                 title="The assistant read this; make it your requirement as it stands"
                 aria-label={`Keep: ${plain(clause.text)}`}
                 onClick={() => void gesture({ act: "keep", clause: clause.clause })}
@@ -571,7 +566,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                     ref={relaxButton}
                     size="xs"
                     variant="ghost"
-                    disabled={busy}
                     className="-ml-2 text-muted-foreground"
                     onClick={() => setRelaxing(true)}
                   >
@@ -806,10 +800,11 @@ const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
  * `frame` by gap and choosing everything is `unframe`, so the filter is a
  * fact of `Framing`, the same whichever party set it. While an assertion or
  * a clause frames the canvas, no filter is pressed, and the sticky strip
- * names the frame. A gap with nothing in it cannot be chosen.
+ * names the frame. A gap with nothing in it can be chosen like any other:
+ * its count says it is empty, and the list it opens shows that it is.
  */
 function Filters() {
-  const { view, busy } = useConfigurator();
+  const { view } = useConfigurator();
   // A filter is a place the person goes, and the back button returns from.
   const navigate = useNavigate();
   if (!view) return null;
@@ -822,7 +817,6 @@ function Filters() {
       size="sm"
       spacing={0}
       value={value}
-      disabled={busy}
       aria-label="Show"
       onValueChange={(next) => {
         if (!next || next === value) return;
@@ -840,7 +834,6 @@ function Filters() {
         <ToggleGroupItem
           key={gap}
           value={gap}
-          disabled={!count(view) && value !== gap}
           className={cn("gap-1.5", PRESSED)}
         >
           {title}

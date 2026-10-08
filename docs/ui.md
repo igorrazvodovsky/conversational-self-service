@@ -230,6 +230,13 @@ drop things it knows nothing about. Some of them fail silently:
   `outline` `Badge`, a permission working rather than a fault. `destructive`
   is kept for an action that destroys and for a request that failed.
 - Nothing is smaller than 12px.
+- No control is disabled. A disabled button takes neither pointer nor focus,
+  so it cannot say why it will not act, and the person is left to guess
+  (*Disabled Buttons UX*, Smart Interface Design Patterns, 2022,
+  <https://smart-interface-design-patterns.com/articles/disabled-buttons/>).
+  A control that cannot act yet stays in reach, says why, and does nothing
+  when pressed; a form says what is missing when its button is pressed. The
+  patterns are in `A11Y-DECISIONS.md`.
 
 ## Accessibility
 

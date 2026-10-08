@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,7 @@ function Line({ term, amount }: { term: string; amount: string }) {
  * nothing is left open.
  */
 export function Standing() {
-  const { view, gesture, busy, grid, setGrid } = useConfigurator();
+  const { view, gesture, grid, setGrid } = useConfigurator();
   const shown = useShown();
   if (!view) return null;
   const { price, footprint, currency, counts, quotable } = view;
@@ -74,18 +74,25 @@ export function Standing() {
             {words}
           </Badge>
           <HandedOver />
-          {quotable.ok ? null : <span className="text-sm">{capital(quotable.because)}.</span>}
+          {/* Why not yet is beside the button, and the button stays in reach
+              and names it, as on the quote surface (`quotes.tsx`). */}
+          {quotable.ok ? null : (
+            <span id="standing-why-not" className="text-sm">
+              {capital(quotable.because)}.
+            </span>
+          )}
           <div className="ml-auto flex gap-2">
             <Button
               size="sm"
               variant={quotable.ok ? "default" : "outline"}
-              disabled={busy || !quotable.ok}
+              aria-disabled={!quotable.ok || undefined}
+              aria-describedby={quotable.ok ? undefined : "standing-why-not"}
               title={
                 quotable.ok
                   ? "Freeze the values and the price as they stand, for thirty days"
                   : `Not yet: ${quotable.because}`
               }
-              onClick={() => void gesture({ act: "quote" })}
+              onClick={() => quotable.ok && void gesture({ act: "quote" })}
             >
               Request a quote
             </Button>
@@ -154,7 +161,6 @@ export function Standing() {
                     variant="link"
                     size="xs"
                     className="mt-1 h-auto px-0"
-                    disabled={busy}
                     onClick={() => void gesture({ act: "show", facet: "price" })}
                   >
                     Show what each value adds
@@ -220,9 +226,14 @@ export function Standing() {
  * `APersonHandsOver`; the assistant makes the same one at the person's word.
  */
 function HandOver() {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, gesture } = useConfigurator();
   const [reason, setReason] = useState("");
   const [open, setOpen] = useState(false);
+  // The button is live with the field empty: pressed then, it says what is
+  // missing and puts the cursor where it goes, rather than greying out
+  // without a word about why.
+  const [missing, setMissing] = useState(false);
+  const field = useRef<HTMLTextAreaElement>(null);
   // The rule allows a second handover while one waits; the card offers one
   // while none does. The button comes back once the seller has taken it
   // up, which nothing here records yet.
@@ -230,7 +241,7 @@ function HandOver() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline" disabled={busy}>
+        <Button size="sm" variant="outline">
           Hand to the seller
         </Button>
       </PopoverTrigger>
@@ -243,17 +254,34 @@ function HandOver() {
           </PopoverDescription>
         </PopoverHeader>
         <Textarea
+          ref={field}
           value={reason}
-          onChange={(e) => setReason(e.target.value)}
+          onChange={(e) => {
+            setReason(e.target.value);
+            if (e.target.value.trim()) setMissing(false);
+          }}
           placeholder="A longer validity than the terms allow"
           rows={3}
           className="mt-2"
+          aria-label="What it is handed over for"
+          aria-invalid={missing || undefined}
+          aria-describedby={missing ? "handover-missing" : undefined}
         />
+        {missing ? (
+          <p id="handover-missing" className="mt-1 text-xs">
+            Say what the seller is being handed it for.
+          </p>
+        ) : null}
         <Button
           size="sm"
           className="mt-2"
-          disabled={busy || !reason.trim()}
           onClick={() => {
+            if (!reason.trim()) {
+              setMissing(true);
+              // After the message is drawn, so the field is read with it.
+              requestAnimationFrame(() => field.current?.focus());
+              return;
+            }
             void gesture({ act: "handover", reason: reason.trim() });
             setReason("");
             setOpen(false);

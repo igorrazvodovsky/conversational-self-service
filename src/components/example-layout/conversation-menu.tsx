@@ -165,12 +165,16 @@ export function ConversationMenu({
       <Button
         variant="ghost"
         size="icon-xs"
-        onClick={onNew}
-        disabled={!active}
+        // In a new conversation already, it stays in reach and says so
+        // rather than greying out; pressed, it does nothing.
+        aria-disabled={!active || undefined}
+        onClick={() => active && onNew()}
         title={active ? "New conversation" : "You're in a new conversation now"}
       >
         <MessageSquarePlus />
-        <span className="sr-only">New conversation</span>
+        <span className="sr-only">
+          New conversation{active ? "" : ", you're in one now"}
+        </span>
       </Button>
     </div>
   );

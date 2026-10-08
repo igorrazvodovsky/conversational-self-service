@@ -106,7 +106,7 @@ function WaitingQuestion({
   cancel: () => Promise<unknown>;
 }) {
   const waiting = useContext(Waiting);
-  const { gesture, busy } = useConfigurator();
+  const { gesture } = useConfigurator();
   const answerName = useAnswerName();
   const question = useConflict();
   const status = question?.asked?.status ?? "withdrawn";
@@ -158,7 +158,6 @@ function WaitingQuestion({
               key={index}
               name={answerName((option as { option: string }).option)}
               foreseen={question.foreseen?.[index]}
-              disabled={busy}
               onClick={() =>
                 answer({ act: "choose", request: question.request, option })
               }
@@ -168,7 +167,6 @@ function WaitingQuestion({
             <Button
               variant="ghost"
               size="sm"
-              disabled={busy}
               className="text-muted-foreground"
               onClick={() =>
                 answer({ act: "decline", request: question.request })

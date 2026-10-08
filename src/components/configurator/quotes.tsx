@@ -10,9 +10,9 @@
  * brings to two quotes, and it is `differs`, a read nobody maintains. A
  * comparison (`comparison.tsx`) says what the difference buys and whether
  * anybody chose it, which two proposals read side by side cannot tell you.
- * The request control is disabled with the reason whenever the rule that
- * issues a quote would decline to fire, so that nobody presses a button that
- * goes nowhere. Two of those reasons are about the addressee, so the surface
+ * Whenever the rule that issues a quote would decline to fire, the request
+ * control says why beside it and does nothing when pressed, so that nobody
+ * presses a button that goes nowhere without being told where it would. Two of those reasons are about the addressee, so the surface
  * also carries the form that writes `Profiling` and `Naming`.
  *
  * Which quote is being looked at, which way it is read, and which pair is
@@ -101,7 +101,7 @@ const CUSTOMER: {
  * `entitle` are partial and a field left alone should stay as it was.
  */
 function Addressee() {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, gesture } = useConfigurator();
   const customer = view?.customer ?? {};
   const project = view?.project ?? { title: "", site: "" };
   const missing = !customer.name || !project.site;
@@ -227,7 +227,7 @@ function Addressee() {
                 />
               </label>
               <div className="sm:col-span-2 flex justify-end">
-                <Button id="addressee-save" type="submit" size="sm" disabled={busy}>
+                <Button id="addressee-save" type="submit" size="sm">
                   Save
                 </Button>
               </div>
@@ -355,10 +355,11 @@ function Issued({
 }
 
 function RequestButton() {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, gesture } = useConfigurator();
   if (!view) return null;
-  // Why not yet is said beside the button, not in a tooltip: a disabled
-  // button takes no pointer and no focus, so its tooltip reaches nobody.
+  // Why not yet is said beside the button, not in a tooltip, and the button
+  // is never disabled: a disabled button takes no pointer and no focus, so
+  // neither it nor its tooltip reaches anybody.
   const ok = view.quotable.ok;
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
@@ -370,7 +371,6 @@ function RequestButton() {
       <Button
         size="sm"
         variant={ok ? "default" : "outline"}
-        disabled={busy}
         aria-disabled={!ok || undefined}
         aria-describedby={ok ? undefined : "request-why-not"}
         title={
@@ -378,7 +378,6 @@ function RequestButton() {
             ? "Freeze the specification, the price and the terms as they stand into a proposal"
             : undefined
         }
-        className={cn(!ok && "opacity-50")}
         onClick={() => ok && void gesture({ act: "quote" })}
       >
         Request a quotation
@@ -388,7 +387,7 @@ function RequestButton() {
 }
 
 export function QuoteSurface() {
-  const { view, error, gesture, busy } = useConfigurator();
+  const { view, error, gesture } = useConfigurator();
   const quotes = view?.quotes ?? [];
   const latest = quotes[quotes.length - 1]?.quote ?? null;
   const params = useSearchParams();
@@ -505,6 +504,7 @@ export function QuoteSurface() {
               quote={quote}
               view={view}
               actions={
+                <>
                   {/* An asked-for value moved since the offer was issued
                       (docs/syncs/staling.md). The offer stands as issued;
                       the mark is beside it until the person has looked, or
@@ -534,12 +534,10 @@ export function QuoteSurface() {
                       </Button>
                     </span>
                   ) : null}
-                <>
                   {quote.standing === "open" ? (
                     <>
                       <Button
                         size="sm"
-                        disabled={busy}
                         onClick={() =>
                           void gesture({ act: "commit", quote: quote.quote })
                         }
@@ -549,7 +547,6 @@ export function QuoteSurface() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        disabled={busy}
                         className="text-muted-foreground"
                         onClick={() =>
                           void gesture({ act: "revoke", quote: quote.quote })

@@ -41,7 +41,7 @@ export function useShown(): (facet: string) => boolean {
 }
 
 export function ShowingMenu() {
-  const { view, gesture, busy } = useConfigurator();
+  const { view, gesture } = useConfigurator();
   if (!view) return null;
   const on = view.showing.filter((f) => f.shown).length;
   return (
@@ -62,7 +62,6 @@ export function ShowingMenu() {
           <DropdownMenuCheckboxItem
             key={f.facet}
             checked={f.shown}
-            disabled={busy}
             // Keep the menu open: a person choosing a view sets several.
             onSelect={(event) => event.preventDefault()}
             onCheckedChange={(checked) =>

@@ -81,7 +81,7 @@ N/A — no time-based media. Motion: with `prefers-reduced-motion: reduce`, tran
 ## 📝 Assessment Notes or Known Blockers
 - **Note 1:** No `EXCEPTIONS.md`: no WCAG SC was knowingly left failing.
 - **Note 2:** The project has no ESLint configuration, so `eslint-plugin-jsx-a11y` was not run; axe and `verify-a11y.py` stand in for it.
-- **Note 3:** Lower-severity items left as they are: a clause's source words and the conversation menu's disabled-button explanation exist only in `title` (the words are also on the sources list, and the button is disabled only while already in a new conversation); a clamped clause line on a quote's *Against what was asked* shows its full text only in `title`.
+- **Note 3:** Lower-severity items left as they are: a clause's source words exist only in `title` (the words are also on the sources list); a clamped clause line on a quote's *Against what was asked* shows its full text only in `title`.
 - **Note 4:** The A2UI flight card's logo takes its `alt` from the payload's airline name, next to the same name as text. Whether it is decorative is a human decision not taken here.
 - **Note 5:** The chat transcript's `role="log"` is mounted with the first message: an empty thread shows the welcome screen instead. The first message is the person's own; every later addition, the assistant's replies included, lands in a log already mounted, and the run announcer says when a reply starts and ends.
 - **Note 8:** Loading the page with `#quotes` in the address shows the configuration: `quotes` is not an item address, and the surface is held by the concept layer. A behaviour question, not an accessibility failure.

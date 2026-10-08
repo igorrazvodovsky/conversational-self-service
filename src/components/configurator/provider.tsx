@@ -643,7 +643,10 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
   const { agent } = useAgent();
   const [view, setView] = useState<View | null>(null);
   const [grid, setGrid] = useState<Grid>("today");
-  const [busy, setBusy] = useState(false);
+  // How many gestures and calls are in flight: they can overlap, so the
+  // first to settle must not say the canvas is quiet while another runs.
+  const [inFlight, setInFlight] = useState(0);
+  const busy = inFlight > 0;
   const [error, setError] = useState<string | null>(null);
   const gridRef = useRef(grid);
   gridRef.current = grid;
@@ -714,8 +717,15 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [running, refresh]);
 
-  const gesture = useCallback(async (stimulus: Stimulus) => {
-    setBusy(true);
+  // No control is disabled while a gesture is in flight (`docs/ui.md`), so
+  // the guard against a double press is here: the same gesture pressed again
+  // before the first has settled is the first, and resolves with it. A
+  // question takes one answer, so any second answer to it in that time is
+  // the first too. A different gesture goes ahead, as one a followed link
+  // performs always has; the engine takes actions one at a time.
+  const pending = useRef(new Map<string, Promise<View | null>>());
+  const perform = useCallback(async (stimulus: Stimulus) => {
+    setInFlight((n) => n + 1);
     const ticket = take();
     try {
       const response = await fetch(
@@ -738,13 +748,26 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
       setError(cause instanceof Error ? cause.message : String(cause));
       return null;
     } finally {
-      setBusy(false);
+      setInFlight((n) => n - 1);
     }
   }, [show]);
 
+  const gesture = useCallback(
+    (stimulus: Stimulus) => {
+      const answers = stimulus.act === "choose" || stimulus.act === "decline";
+      const key = JSON.stringify(answers ? ["answer", stimulus.request] : stimulus);
+      const same = pending.current.get(key);
+      if (same) return same;
+      const done = perform(stimulus).finally(() => pending.current.delete(key));
+      pending.current.set(key, done);
+      return done;
+    },
+    [perform],
+  );
+
   const act = useCallback(
     async (stimulus: Stimulus) => {
-      setBusy(true);
+      setInFlight((n) => n + 1);
       const ticket = take();
       try {
         const response = await fetch(
@@ -764,7 +787,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
         setError(cause instanceof Error ? cause.message : String(cause));
         throw cause;
       } finally {
-        setBusy(false);
+        setInFlight((n) => n - 1);
       }
     },
     [show],
@@ -777,7 +800,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
 
   const call = useCallback(
     async (name: string, args: Record<string, unknown>) => {
-      setBusy(true);
+      setInFlight((n) => n + 1);
       try {
         const result = await rpc("tools/call", { name, arguments: args });
         await refresh();
@@ -788,7 +811,7 @@ export function ConfiguratorProvider({ children }: { children: ReactNode }) {
         setError(cause instanceof Error ? cause.message : String(cause));
         throw cause;
       } finally {
-        setBusy(false);
+        setInFlight((n) => n - 1);
       }
     },
     [refresh],
