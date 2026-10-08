@@ -652,6 +652,82 @@ def _steps(engine: Engine, spec: str, variables: list[dict[str, Any]]) -> dict[s
     return {"at": at, "start": start, "steps": steps}
 
 
+def tally(engine: Engine) -> list[dict[str, Any]]:
+    """Each step of the job, as the template names it, and what every
+    specification ever given it did with it: how many were given it, how
+    many took, finished or skipped it, and how many took it *out of order*,
+    which is past a step before it still open at the time.  The plan's
+    instrument for whether the authored steps match practice; read by the
+    case and by nobody in the application.
+
+    Everything is the log's.  Steps leave `Stepping` when the specification
+    closes, and `at` is replaced in place, so the order a person went in
+    survives only as the sequence of `take` completions.  A step's status at
+    the moment of a take is found by walking the completions in order."""
+    stepping = engine.state("Stepping")
+    templates = {t: stepping["called"][t] for t in stepping["templates"]}
+    given: dict[str, set[str]] = {t: set() for t in templates}
+    did: dict[str, dict[str, set[str]]] = {
+        t: {"taken": set(), "finished": set(), "skipped": set(), "outOfOrder": set()}
+        for t in templates
+    }
+    order: dict[str, list[str]] = {}
+    instance_of: dict[str, str] = {}
+    status: dict[str, str] = {}
+    # From the first record, not from `settled_at`: the specification the
+    # boot opens gets its steps in the boot, and it counts.
+    for record in engine.log.records(since=0, limit=1_000_000):
+        if record.kind != "completion" or record.concept != "Stepping":
+            continue
+        out = record.output or {}
+        if "error" in out:
+            continue
+        if record.action == "instantiate":
+            # One step per template, in the templates' order: the concept's
+            # contract, and the only record of which template a step was of
+            # once the specification has closed.
+            order[out["spec"]] = list(out["steps"])
+            for template, step in zip(templates, out["steps"]):
+                status[step] = "open"
+                instance_of[step] = template
+                given[template].add(out["spec"])
+            continue
+        if record.action == "add":
+            order.setdefault(out["spec"], []).append(out["step"])
+            status[out["step"]] = "open"
+            continue
+        if record.action not in ("take", "finish", "skip", "reopen"):
+            continue
+        step, spec = out["step"], out["spec"]
+        counted = did.get(instance_of.get(step, ""))
+        if record.action == "take":
+            before = order.get(spec, [])
+            before = before[: before.index(step)] if step in before else []
+            if counted is not None:
+                counted["taken"].add(spec)
+                if any(status.get(s) == "open" for s in before):
+                    counted["outOfOrder"].add(spec)
+        elif record.action == "finish":
+            status[step] = "finished"
+            if counted is not None:
+                counted["finished"].add(spec)
+        elif record.action == "skip":
+            status[step] = "skipped"
+            if counted is not None:
+                counted["skipped"].add(spec)
+        else:
+            status[step] = "open"
+    return [
+        {
+            "template": t,
+            "name": name,
+            "given": len(given[t]),
+            **{what: len(specs) for what, specs in did[t].items()},
+        }
+        for t, name in templates.items()
+    ]
+
+
 def canvas(engine: Engine, spec: str, grid: str = "today") -> dict[str, Any]:
     with engine.turn:
         return _canvas(engine, spec, grid)

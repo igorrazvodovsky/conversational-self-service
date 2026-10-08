@@ -121,6 +121,17 @@ the same on every step, and the person's delegation is set in their own
 agent. When owner comes to select a rule, it will be a second `where` on
 `TheModelMayAssertAValue`, and nothing in this note changes.
 
+## The instrument
+
+The plan judges the authored steps by what people do with them: the share
+that skip a step, and the share that go past one still open. Both are
+reads over the log, since `at` is replaced in place and the steps leave
+`Stepping` when the specification closes, and `GET /configurator/steps`
+tallies them per template across every specification the journal holds. A
+take is *out of order* when a step before it was open at the time; a skip
+is the status. Nothing on the canvas shows the tally, because it is a
+finding about the template, not about the person's lift.
+
 ## What is not here
 
 _No model permission._ The model has no `take`, `finish` or `skip`. Where

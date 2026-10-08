@@ -5,8 +5,8 @@ in the same process as the graph and shares one engine with the model's tools.
 
 Two kinds of route and no more, because there are only two things to do:
 perform a root action, or read.  This is WYSIWID §6.4's split at the level of
-the wire — `POST /gesture` is the action API, `GET /view`, `GET /at` and `GET /digest`
-are the querying capability, and nothing writes through a read.
+the wire — `POST /gesture` is the action API, `GET /view`, `GET /at`, `GET /digest`
+and `GET /steps` are the querying capability, and nothing writes through a read.
 
 The person's own agent reaches the engine through one more route,
 `/configurator/mcp`: the MCP server in `delegate.py`, each of whose tools is
@@ -36,7 +36,7 @@ from fastapi import Body, FastAPI, HTTPException  # noqa: E402
 
 from delegate import BROWSER, done, server  # noqa: E402
 from instance import SPEC, engine  # noqa: E402
-from views import canvas, digest  # noqa: E402
+from views import canvas, digest, tally  # noqa: E402
 
 # The person's own agent's tools, over streamable HTTP.  Stateless and
 # answering in JSON, so each call is one request and one response, and the
@@ -77,6 +77,14 @@ def review() -> dict[str, Any]:
     returns it without the links: what `converse` reads to see whether a
     question waits on the person."""
     return digest(engine, SPEC, actor=BROWSER)
+
+
+@app.get("/configurator/steps")
+def steps() -> list[dict[str, Any]]:
+    """The case's instrument for the steps: per authored step, how many
+    specifications skipped it or took it out of order.  Read by whoever runs
+    the prototype plan, not by the page or the model."""
+    return tally(engine)
 
 
 ACTORS = {"person", BROWSER}
