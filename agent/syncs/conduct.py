@@ -3,10 +3,11 @@
 What the model may do, stated positively.  MSM §5.3.
 
 The enforcement is in what is absent.  No rule below carries a tool call to
-`Deciding/choose`, `Quoting/commit`, `Pricing`, `Footprinting` or
-`Cataloguing`, so the model cannot adopt a completion, answer the question it
-asked, accept a quote, set a
-price or change the catalogue.  Nor does any carry it to a value held for a
+`Deciding/choose` of a conflict or a proposed value, to `Quoting/commit`, to
+`Pricing`, `Footprinting` or `Cataloguing`, so the model cannot adopt a
+completion, answer the conflict it asked about, accept a quote, set a price
+or change the catalogue.  The one choice a tool reaches is what a completion
+is finished for, at the person's word (`TheModelMayRecordTheGoalThePersonGave`).  Nor does any carry it to a value held for a
 reason: one a requirement the person stated rests on.  Not because it is told not to — because an action reaches the log
 only by way of some synchronization, and there is no rule that would carry the
 invocation through.
@@ -71,29 +72,150 @@ def _unless_held(then: Callable[[Completion, States], list[Invocation]]):
     return where
 
 
-def _the_model_may_propose_a_completion(
-    c: Completion, states: States
-) -> list[Invocation]:
-    """The `where` clause: two other concepts' state, read by the rule.
+# -- what a completion is finished for -- `docs/syncs/conduct.md` -------------
+
+GOAL = "goal"
+GOALS = ("cost", "carbon")
+
+
+def _goal(spec: str) -> dict[str, Any]:
+    """The request that asks what to finish the specification for."""
+    return {"spec": spec, "about": GOAL}
+
+
+def _goal_question(spec: str) -> Invocation:
+    return Invocation(
+        "Deciding",
+        "ask",
+        {
+            "request": _goal(spec),
+            "reason": "what to finish the specification for",
+            "options": [{"goal": g} for g in GOALS],
+        },
+    )
+
+
+def _goal_chosen(states: States, spec: str) -> str | None:
+    """`Deciding: { [ spec: ?s ; about: "goal" ] chosen: [ goal: ?g ] }`."""
+    deciding = states["Deciding"].state()
+    for key, request in deciding["request"].items():
+        if request == _goal(spec):
+            chosen = deciding["chosen"].get(key)
+            return chosen.get("goal") if isinstance(chosen, dict) else None
+    return None
+
+
+def _goal_pending(states: States, spec: str) -> bool:
+    return any(
+        q["request"] == _goal(spec)
+        for q in readings.pending(states["Deciding"].state())
+    )
+
+
+def _cost_for(states: States, spec: str, goal: str) -> dict[str, float]:
+    """`?cost is what each option adds to ?g over the life of the lift`,
+    computed from Pricing or from Footprinting.
 
     Constraining is handed a cost function and never learns that money exists;
     Pricing is never asked to solve anything.  That the two can be coupled at
     all without either knowing the other is WYSIWID §7.2's first and third
     design rules doing their work together.
     """
-    if c.output.get("tool") != "propose":
+    if goal == "carbon":
+        return _carbon_weights(states, spec)
+    return _with_ties_broken(_lifetime_weights(states, spec), _carbon_weights(states, spec))
+
+
+def _a_proposal_asks_what_to_finish_for(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """`where { the call names no goal ; the goal is neither pending nor
+    chosen }`: the question is raised once, the first time a proposal is
+    wanted, and the model puts it with `ask`."""
+    if c.output.get("tool") != "propose" or c.output.get("goal") is not None:
         return []
     spec = c.output["spec"]
-    measure = c.output.get("measure", "cost")
-    if measure == "carbon":
-        cost = _carbon_weights(states, spec)
-    else:
-        cost = _with_ties_broken(_lifetime_weights(states, spec), _carbon_weights(states, spec))
+    if _goal_chosen(states, spec) is not None or _goal_pending(states, spec):
+        return []
+    return [_goal_question(spec)]
+
+
+def _the_model_may_propose_a_completion(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """`where { the call names no goal ; the goal is chosen }`: the
+    completion is computed only for a goal the person chose."""
+    if c.output.get("tool") != "propose" or c.output.get("goal") is not None:
+        return []
+    spec = c.output["spec"]
+    goal = _goal_chosen(states, spec)
+    if goal is None:
+        return []
     return [
         Invocation(
-            "Constraining", "complete", {"spec": c.output["spec"], "cost": cost}
+            "Constraining", "complete", {"spec": spec, "cost": _cost_for(states, spec, goal)}
         )
     ]
+
+
+def _the_model_may_record_the_goal_the_person_gave(
+    c: Completion, _: States
+) -> list[Invocation]:
+    """The person's answer in words, carried onto the record: the request is
+    asked again, so that an earlier choice is discarded, and what they said
+    is chosen.  The rule cannot tell a goal the person named from one the
+    model made up, the finding already recorded against `introduce`."""
+    if c.output.get("tool") != "propose":
+        return []
+    goal = c.output.get("goal")
+    if goal not in GOALS:
+        return []
+    spec = c.output["spec"]
+    return [
+        _goal_question(spec),
+        Invocation("Deciding", "choose", {"request": _goal(spec), "option": {"goal": goal}}),
+    ]
+
+
+def _a_chosen_goal_finishes_the_specification(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """The completion is computed on the choice, in the flow that chose."""
+    if c.failed:
+        return []
+    request = c.output.get("request")
+    option = c.output.get("option")
+    if (
+        not isinstance(request, dict)
+        or request.get("about") != GOAL
+        or not isinstance(option, dict)
+        or option.get("goal") not in GOALS
+    ):
+        return []
+    spec = request["spec"]
+    return [
+        Invocation(
+            "Constraining",
+            "complete",
+            {"spec": spec, "cost": _cost_for(states, spec, option["goal"])},
+        )
+    ]
+
+
+def _a_goal_is_not_asked_once_nothing_is_open(
+    c: Completion, states: States
+) -> list[Invocation]:
+    """`where { the goal is pending ; ?q maps every variable the catalogue
+    offers }`: a question about how to finish what is finished goes."""
+    if c.failed:
+        return []
+    spec = c.output["spec"]
+    if not _goal_pending(states, spec):
+        return []
+    settled = c.output.get("settled", {})
+    if any(v not in settled for v in states["Cataloguing"].state()["offers"]):
+        return []
+    return [Invocation("Deciding", "withdraw", {"request": _goal(spec)})]
 
 
 def _lifetime_weights(states: States, spec: str) -> dict[str, float]:
@@ -623,9 +745,29 @@ rules = [
         _unless_held(_tool("withdraw", "Asserting", "withdraw", "spec", "variable")),
     ),
     Sync(
+        "AProposalAsksWhatToFinishFor",
+        ("Copiloting", "invoke"),
+        _a_proposal_asks_what_to_finish_for,
+    ),
+    Sync(
         "TheModelMayProposeACompletion",
         ("Copiloting", "invoke"),
         _the_model_may_propose_a_completion,
+    ),
+    Sync(
+        "TheModelMayRecordTheGoalThePersonGave",
+        ("Copiloting", "invoke"),
+        _the_model_may_record_the_goal_the_person_gave,
+    ),
+    Sync(
+        "AChosenGoalFinishesTheSpecification",
+        ("Deciding", "choose"),
+        _a_chosen_goal_finishes_the_specification,
+    ),
+    Sync(
+        "AGoalIsNotAskedOnceNothingIsOpen",
+        ("Constraining", "assume"),
+        _a_goal_is_not_asked_once_nothing_is_open,
     ),
     Sync(
         "ACompletionIsPutToThePerson",

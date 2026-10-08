@@ -163,6 +163,7 @@ How much the person delegates is theirs to set, in their own agent.
 | say which requirement a value answers | yes | no | yes |
 | assert or withdraw a value | yes | yes, unless it answers a requirement the person stated | yes |
 | propose a completion | — | yes | yes |
+| say what a completion is to be finished for | yes | yes, at the person's word | yes |
 | talk to the other in the chat | yes | yes | yes, as the person |
 | put a conflict, or who the quote is for, to the person and wait for the answer | — | yes | no |
 | reply to that question in words, leaving it open | yes | no | yes |

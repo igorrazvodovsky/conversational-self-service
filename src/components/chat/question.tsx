@@ -14,11 +14,15 @@
  * another way. See `docs/syncs/conduct.md`, "Asking, and
  * waiting for the answer".
  *
- * The model asks one other question the same way: who a quote is for, when
- * the person's name or the job's site is all a quote lacks. Its card links to
- * the addressee on the quote surface rather than holding the fields, and the
- * wait ends when they are recorded there, by the person's agent, or by the
- * model from a reply ("Asking who the quote is for").
+ * The model asks two other questions the same way. What to finish the
+ * specification for — the lowest cost over the lift's life, or the least
+ * carbon — is a `Deciding` request like a conflict, raised the first time a
+ * proposal is wanted, and answered with the same gestures ("What a completion
+ * is finished for is the person's to say"). Who a quote is for, when the
+ * person's name or the job's site is all a quote lacks, is not: its card
+ * links to the addressee on the quote surface rather than holding the
+ * fields, and the wait ends when they are recorded there, by the person's
+ * agent, or by the model from a reply ("Asking who the quote is for").
  *
  * Words typed in the composer while either question waits are a reply to
  * it, not a new turn: the transport refuses a new run while an interrupt is
@@ -51,15 +55,33 @@ import { Answer, useAnswerName } from "@/components/configurator/question";
 import {
   useConfigurator,
   type AskedAddressee,
+  type Goal,
   type Question,
 } from "@/components/configurator/provider";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-function useConflict(): Question | undefined {
+/** The two `Deciding` requests the model puts in the chat. */
+type Put = "conflict" | "goal";
+
+function useQuestion(about: Put): Question | undefined {
   const { view } = useConfigurator();
-  return view?.questions.find((q) => q.about === "conflict");
+  return view?.questions.find((q) => q.about === about);
 }
+
+/** Whichever of the two the assistant is waiting on, if either. */
+function useAwaitingQuestion(): Question | undefined {
+  const { view } = useConfigurator();
+  return view?.questions.find(
+    (q) => (q.about === "conflict" || q.about === "goal") && q.asked?.status === "awaiting",
+  );
+}
+
+/** How a goal reads as an answer. */
+const GOAL: Record<Goal, string> = {
+  cost: "The lowest cost over the lift's life",
+  carbon: "The least carbon",
+};
 
 function useAddressee(): AskedAddressee | null | undefined {
   const { view } = useConfigurator();
@@ -81,7 +103,7 @@ const Waiting = createContext<{
 
 export function WaitingProvider({ children }: { children: ReactNode }) {
   const mounted = useRef(false);
-  const status = useConflict()?.asked?.status;
+  const status = useAwaitingQuestion()?.asked?.status;
   const [shownIn, setShownIn] = useState<string | null>(null);
   useEffect(() => {
     if (status !== "awaiting") setShownIn(null);
@@ -97,10 +119,12 @@ export function useAskedHere(): boolean {
 }
 
 function WaitingQuestion({
+  about,
   message,
   resolve,
   cancel,
 }: {
+  about: Put;
   message?: string;
   resolve: () => Promise<unknown>;
   cancel: () => Promise<unknown>;
@@ -108,7 +132,7 @@ function WaitingQuestion({
   const waiting = useContext(Waiting);
   const { gesture } = useConfigurator();
   const answerName = useAnswerName();
-  const question = useConflict();
+  const question = useQuestion(about);
   const status = question?.asked?.status ?? "withdrawn";
   const thread = useCopilotChatConfiguration()?.threadId;
   const resumed = useRef(false);
@@ -153,16 +177,30 @@ function WaitingQuestion({
       <AlertDescription>
         <p>{message ?? question.asked?.text}</p>
         <div className="mt-2 flex flex-col gap-2 text-foreground">
-          {question.options.map((option, index) => (
-            <Answer
-              key={index}
-              name={answerName((option as { option: string }).option)}
-              foreseen={question.foreseen?.[index]}
-              onClick={() =>
-                answer({ act: "choose", request: question.request, option })
-              }
-            />
-          ))}
+          {question.options.map((option, index) =>
+            "goal" in option ? (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                className="block h-auto w-full whitespace-normal px-3 py-2 text-left font-normal"
+                onClick={() =>
+                  answer({ act: "choose", request: question.request, option })
+                }
+              >
+                <span className="font-medium">{GOAL[option.goal as Goal]}</span>
+              </Button>
+            ) : (
+              <Answer
+                key={index}
+                name={answerName((option as { option: string }).option)}
+                foreseen={question.foreseen?.[index]}
+                onClick={() =>
+                  answer({ act: "choose", request: question.request, option })
+                }
+              />
+            ),
+          )}
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -250,7 +288,13 @@ function AskedRecord({
   result?: string;
 }) {
   const answerName = useAnswerName();
-  let outcome: { status?: string; given?: string; replied?: string; by?: string } = {};
+  let outcome: {
+    status?: string;
+    given?: string;
+    replied?: string;
+    by?: string;
+    chosen?: { goal?: Goal };
+  } = {};
   try {
     outcome = result ? JSON.parse(result) : {};
   } catch {
@@ -261,7 +305,9 @@ function AskedRecord({
       ? "Answered on the quote surface"
       : addressee && outcome.status === "withdrawn"
         ? "No longer all a quote lacks"
-        : outcome.status === "chosen"
+        : outcome.status === "chosen" && outcome.chosen?.goal
+          ? `Answered: ${GOAL[outcome.chosen.goal].toLowerCase()}`
+          : outcome.status === "chosen"
       ? `Answered: give up ${answerName(outcome.given ?? "")}`
       : outcome.status === "declined"
         ? "Left for now"
@@ -308,7 +354,7 @@ export function useWaitingQuestion() {
   // element, and a second hook would take it from the first.
   useInterrupt({
     enabled: (event) =>
-      ["conflict", "addressee"].includes(
+      ["conflict", "goal", "addressee"].includes(
         (event.value as { reason?: string } | undefined)?.reason ?? "",
       ),
     render: ({ event, interrupt, resolve, cancel }) =>
@@ -316,6 +362,7 @@ export function useWaitingQuestion() {
         <WaitingAddressee message={interrupt?.message} resolve={() => resolve({})} />
       ) : (
         <WaitingQuestion
+          about={(event.value as { reason?: string }).reason === "goal" ? "goal" : "conflict"}
           message={interrupt?.message}
           resolve={() => resolve({})}
           cancel={() => cancel()}
@@ -333,15 +380,10 @@ export function useWaitingQuestion() {
  */
 export function ConfiguratorChatView(props: ComponentProps<typeof CopilotChatView>) {
   const { gesture } = useConfigurator();
-  const question = useConflict();
+  const question = useAwaitingQuestion();
   const addressee = useAddressee();
   const waiting = useContext(Waiting);
-  const awaiting =
-    question?.asked?.status === "awaiting"
-      ? question.asked
-      : addressee?.status === "awaiting"
-        ? addressee
-        : null;
+  const awaiting = question?.asked ?? (addressee?.status === "awaiting" ? addressee : null);
 
   const submit = props.onSubmitMessage;
   const onSubmitMessage = useCallback(

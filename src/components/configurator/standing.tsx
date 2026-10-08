@@ -27,7 +27,7 @@ import { money, tonnes } from "./format";
 import { LIFE, priced } from "./life";
 import { TONE, type Tone } from "./tone";
 import { useShown } from "./showing";
-import { useConfigurator, type Grid, type View } from "./provider";
+import { useConfigurator, type Goal as GoalChoice, type Grid, type View } from "./provider";
 
 /**
  * The state, named after the condition of `APersonRequestsAQuote` that fails
@@ -101,6 +101,7 @@ export function Standing() {
         </div>
 
         <Conflict />
+        <FinishFor />
 
         <Collapsible>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t pt-3 text-sm">
@@ -334,6 +335,61 @@ function HandedOver() {
 
 function capital(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+const GOAL: Record<GoalChoice, string> = {
+  cost: "the lowest cost over its life",
+  carbon: "the least carbon",
+};
+
+/**
+ * What the rest is to be finished for, while the assistant's question about
+ * it stands. Raised the first time a proposal is wanted and put in the chat
+ * like a conflict; answered here or there with the same gesture, and the
+ * completion is computed on the answer (`docs/syncs/conduct.md`, "What a
+ * completion is finished for is the person's to say").
+ */
+function FinishFor() {
+  const { view, gesture } = useConfigurator();
+  const question = view?.questions.find((q) => q.about === "goal");
+  const at = address.question("goal");
+  const isTarget = useTargeted(at);
+  if (!question) return null;
+  const awaiting = question.asked?.status === "awaiting";
+  return (
+    <div
+      id={at}
+      className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t pt-3 text-sm ${addressable} ${isTarget ? targeted : ""}`}
+    >
+      <p>Finish the rest for</p>
+      {question.options.map((option) =>
+        "goal" in option ? (
+          <Button
+            key={option.goal}
+            variant="outline"
+            size="xs"
+            onClick={() => void gesture({ act: "choose", request: question.request, option })}
+          >
+            {GOAL[option.goal as GoalChoice]}
+          </Button>
+        ) : null,
+      )}
+      {awaiting ? (
+        <Button
+          variant="ghost"
+          size="xs"
+          className="ml-auto"
+          onClick={() =>
+            document
+              .getElementById("waiting-question")
+              ?.scrollIntoView({ block: "center", behavior: "smooth" })
+          }
+        >
+          The assistant asked you in the chat
+        </Button>
+      ) : null}
+    </div>
+  );
 }
 
 /**

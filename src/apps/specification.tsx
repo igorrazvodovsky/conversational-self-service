@@ -152,10 +152,15 @@ function Requirement({ host, line }: { host: Host; line: Line }) {
   );
 }
 
+/** A conflict, or what to finish the specification for: the same card, the
+ * verb from the question. */
 function Conflict({ host, question }: { host: Host; question: Question }) {
+  const goal = question.about === "goal";
   return (
     <Alert>
-      <AlertTitle>{question.reason ?? "These cannot all hold"}</AlertTitle>
+      <AlertTitle>
+        {goal ? "What should the rest be finished for?" : (question.reason ?? "These cannot all hold")}
+      </AlertTitle>
       <AlertDescription className="space-y-2">
         {question.asked ? <p>The assistant asks: {question.asked}</p> : null}
         <div className="flex flex-wrap gap-2">
@@ -168,11 +173,11 @@ function Conflict({ host, question }: { host: Host; question: Question }) {
                 host.act(
                   "person_choose",
                   { request: question.request, option: o.option },
-                  `gave up ${o.label} to settle the conflict`,
+                  goal ? `chose to finish for ${o.label}` : `gave up ${o.label} to settle the conflict`,
                 )
               }
             >
-              Give up {o.label}
+              {goal ? `Finish for ${o.label}` : `Give up ${o.label}`}
             </Button>
           ))}
         </div>

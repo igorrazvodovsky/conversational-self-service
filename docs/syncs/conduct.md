@@ -160,12 +160,43 @@ the person asks what is left to do.
 ## Proposing, and not adopting
 
 ```
+sync AProposalAsksWhatToFinishFor
+when  { Copiloting/invoke: [ tool: "propose" ; spec: ?s ] => [] }
+where { the call names no goal
+        [ spec: ?s ; about: "goal" ] is neither pending nor chosen }
+then  { Deciding/ask: [ request: [ spec: ?s ; about: "goal" ] ;
+          reason: "what to finish the specification for" ;
+          options: { [ goal: "cost" ] , [ goal: "carbon" ] } ] }
+
 sync TheModelMayProposeACompletion
-when  { Copiloting/invoke: [ tool: "propose" ;
-          spec: ?s ; measure: ?measure ] => [] }
-where { ?cost is what each option adds to ?measure over the life of the lift,
+when  { Copiloting/invoke: [ tool: "propose" ; spec: ?s ] => [] }
+where { the call names no goal
+        Deciding: { [ spec: ?s ; about: "goal" ] chosen: [ goal: ?g ] }
+        ?cost is what each option adds to ?g over the life of the lift,
           computed from Pricing or from Footprinting — see below }
 then  { Constraining/complete: [ spec: ?s ; cost: ?cost ] }
+
+sync TheModelMayRecordTheGoalThePersonGave
+when  { Copiloting/invoke: [ tool: "propose" ; spec: ?s ; goal: ?g ] => [] }
+where { ?g is cost or carbon }
+then  { Deciding/ask: [ request: [ spec: ?s ; about: "goal" ] ;
+          reason: "what to finish the specification for" ;
+          options: { [ goal: "cost" ] , [ goal: "carbon" ] } ]
+        Deciding/choose: [ request: [ spec: ?s ; about: "goal" ] ;
+          option: [ goal: ?g ] ] }
+
+sync AChosenGoalFinishesTheSpecification
+when  { Deciding/choose: [ request: ?r ; option: [ goal: ?g ] ] => [ request: ?r ] }
+where { ?r is [ spec: ?s ; about: "goal" ]
+        ?cost is what each option adds to ?g over the life of the lift,
+          as above }
+then  { Constraining/complete: [ spec: ?s ; cost: ?cost ] }
+
+sync AGoalIsNotAskedOnceNothingIsOpen
+when  { Constraining/assume: [ spec: ?s ] => [ spec: ?s ; settled: ?q ] }
+where { [ spec: ?s ; about: "goal" ] is pending
+        ?q maps every variable the catalogue offers }
+then  { Deciding/withdraw: [ request: [ spec: ?s ; about: "goal" ] ] }
 
 sync ACompletionIsPutToThePerson
 when  { Constraining/complete: [ spec: ?s ] => [ assignment: ?a ; cost: ?c ] }
@@ -278,6 +309,43 @@ trigger under one name, as in
 [Propagation](propagation.md#a-conflict-resolved-another-way-takes-its-question-with-it):
 actions listed together in a `when` must all occur in the same flow
 (WYSIWID §5.3).
+
+### What a completion is finished for is the person's to say
+
+A completion is the least-cost way to finish the specification, and *cost*
+is one of two things: what the lift will cost over its life, or what it will
+emit. The solver cannot tell which the person wants, and the earlier form of
+`propose` let the model pick, which handed a language model a choice the
+case's third principle keeps from it. So the goal is a `Deciding` request,
+`[ spec ; about: "goal" ]`, offered the two measures, and a completion is
+computed only once it is chosen.
+
+`AProposalAsksWhatToFinishFor` raises the question the first time the model
+proposes with no goal on record, and the model then puts it to the person
+with `ask`, under [`TheModelMayAskThePerson`](#asking-and-waiting-for-the-answer),
+as it puts a conflict: the request with the options `Deciding` holds, and
+the turn waits. The person answers it where they answer a conflict — in the
+chat, on the canvas, or through their own agent — and
+`AChosenGoalFinishesTheSpecification` computes the completion on their
+choice, in the flow of the gesture that chose; the proposed values are on
+the canvas before the model's turn resumes, and what it has left to say is
+what was proposed. Once chosen, the goal stands: every later `propose` reads
+it from `Deciding` and asks nothing, and the question goes
+(`AGoalIsNotAskedOnceNothingIsOpen`) when nothing is left to finish.
+
+A person who answers in words — *cheapest*, *the greener one* — has
+answered, and the model carries the answer onto the record as it records a
+name they gave with `introduce`: `propose` naming the goal is
+`TheModelMayRecordTheGoalThePersonGave`, which asks the request again, so
+that an earlier choice is discarded, and chooses what the person said. That
+is the one invocation of `Deciding/choose` the model's tools reach, and it
+is scoped to this request by the shape of its option: a conflict's answers
+are the person's assertions, and which of those gives way is theirs, so
+no rule carries the model to a `[ variable ; option ]`. The goal's options
+are both open to the person and give nothing up, and the rule cannot tell
+a goal the person named from one the model made up, which is the finding
+already recorded against `introduce`. The same move lets the person change
+their mind in words later, since the re-ask discards the choice on record.
 
 ### The unit of adoption is a value, and the whole is a shortcut
 
@@ -604,8 +672,10 @@ tool, never by a rule:
        and  ?s lacks only some of ?f for a quote
 ```
 
-The first kind of matter is a conflict, and most of what follows is about
-it. The second is the quote's addressee
+The first kind of matter is a `Deciding` request: a conflict, which most of
+what follows is about, or what to finish the specification for
+([above](#what-a-completion-is-finished-for-is-the-persons-to-say)), which
+is put and answered the same way. The second is the quote's addressee
 ([below](#asking-who-the-quote-is-for)).
 
 An answer can leave another conflict behind it. Giving up the glass doors
@@ -675,10 +745,12 @@ for a reason* the withdraw rule reads
 ([the permissions](#the-permissions)),
 so the model learns before it tries what its withdraw would do.
 
-Nothing is answered by the model. No rule carries `Copiloting/invoke` to
-`Deciding/choose`, `Deciding/decline` or a reply, so the model can put the
-question and cannot settle it, any more than it could before it had a way to
-ask.
+A conflict is not answered by the model. No rule carries `Copiloting/invoke`
+to `Deciding/choose` of a conflict, to `Deciding/decline` or to a reply, so
+the model can put the question and cannot settle it, any more than it could
+before it had a way to ask. The one request a tool can choose for is the
+completion's goal, at the person's word
+([above](#what-a-completion-is-finished-for-is-the-persons-to-say)).
 
 ### Asking who the quote is for
 

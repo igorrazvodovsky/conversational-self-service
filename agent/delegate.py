@@ -230,12 +230,14 @@ def sheet(view: dict[str, Any]) -> dict[str, Any]:
                 "request": q["request"],
                 "options": [
                     {"option": o, "label": f"{variables[o['variable']]['heading']}: {label.get(o['option'], o['option'])}"}
+                    if o.get("variable") in variables
+                    else {"option": o, "label": GOAL_LABEL.get(o.get("goal"), o.get("goal"))}
                     for o in q["options"]
-                    if isinstance(o, dict) and o.get("variable") in variables
+                    if isinstance(o, dict) and ("goal" in o or o.get("variable") in variables)
                 ],
             }
             for q in view["questions"]
-            if q["about"] == "conflict"
+            if q["about"] in ("conflict", "goal")
         ],
         "quotable": view["quotable"],
         "currency": view["currency"],
@@ -267,6 +269,9 @@ PLAIN: list[tuple[Any, dict[str, Any]]] = []
 SPECIFICATION = "ui://configurator/specification.html"
 OFFER = "ui://configurator/quote.html"
 READ_ONLY = ToolAnnotations(readOnlyHint=True)
+
+# How the goal question's two answers read to the person's agent.
+GOAL_LABEL = {"cost": "the lowest cost over the lift's life", "carbon": "the least carbon"}
 # The view's URI under the key MCP Apps first used, which hosts still read
 # beside `_meta.ui.resourceUri`; the extension's own server helper writes both.
 LEGACY = {uri: {"ui/resourceUri": uri} for uri in (SPECIFICATION, OFFER)}
@@ -301,7 +306,8 @@ def tool(name: str, description: str):
         "record (`files`); what is asserted, what follows and the rule that "
         "forces it, what cannot be met, and what is open with the options "
         "still possible and any proposed value (`asked`, `follows`, `unmet`, "
-        "`open`); open conflicts (`questions`), with the assistant's question "
+        "`open`); open questions (`questions`): a conflict, or what to finish "
+        "the specification for, with the assistant's question "
         "and any reply under `asked` when it put one to the person; price, carbon, the addressee, "
         "the job, and every quote issued, with its number, where it stands and "
         "which values have moved since (`quotes`); `open_quote` reads one. "
@@ -506,13 +512,17 @@ def withdraw(
 
 @tool(
     "propose",
-    "Work out the cheapest or lowest-carbon way to finish the specification. "
+    "Work out the way to finish the specification for the least cost over "
+    "the lift's life or the least carbon. `goal` is the person's choice: give "
+    "it when the person has said which, which records it and computes the "
+    "completion; leave it out to finish for the goal already on record, or, "
+    "when none is, to raise the question under `questions` for the person. "
     "Every assertion is kept. Each proposed value appears beside its "
     "variable under `open`, to adopt with `adopt`; the whole completion "
     "appears under `questions`, to adopt with `choose`.",
 )
-def propose(measure: Literal["cost", "carbon"] = "cost") -> dict[str, Any]:
-    return invoke("propose", measure=measure)
+def propose(goal: Literal["cost", "carbon"] | None = None) -> dict[str, Any]:
+    return invoke("propose", **({"goal": goal} if goal else {}))
 
 
 @tool("adopt", "Adopt the value proposed for one open variable, as the person.")
@@ -534,9 +544,10 @@ def adopt(
 
 @tool(
     "choose",
-    "Answer an open question as the person: a conflict, or the whole "
-    "proposed completion. `request` and `option` are copied from the "
-    "question under `questions` in `review`.",
+    "Answer an open question as the person: a conflict, what to finish the "
+    "specification for (the lowest cost over its life, or the least carbon), "
+    "or the whole proposed completion. `request` and `option` are copied "
+    "from the question under `questions` in `review`.",
 )
 def choose(
     request: Annotated[dict[str, Any], Field(description="The question's `request`, as given")],

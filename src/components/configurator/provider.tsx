@@ -235,19 +235,22 @@ export interface Source {
   items: ReadItem[];
 }
 
-/** A conflict, a whole completion, or one proposed value; the last names its
- * variable and is carried on the variable's row rather than in `questions`. */
+/** A conflict, what to finish the specification for, a whole completion, or
+ * one proposed value; the last names its variable and is carried on the
+ * variable's row rather than in `questions`. */
 export type Request = {
   spec: string;
-  about: "conflict" | "completion";
+  about: "conflict" | "goal" | "completion";
   variable?: string;
 };
 
+export type Goal = "cost" | "carbon";
+
 export interface Question {
   request: Request;
-  about: "conflict" | "completion";
+  about: "conflict" | "goal" | "completion";
   reason: string;
-  options: ({ variable: string; option: string } | Record<string, string>)[];
+  options: ({ variable: string; option: string } | { goal: Goal } | Record<string, string>)[];
   /** A conflict question only: what each answer would do, in the options'
    * order. The options are what `choose` takes back; this is beside them. */
   foreseen?: Foreseen[];

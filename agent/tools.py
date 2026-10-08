@@ -439,19 +439,41 @@ def look_up(variable: str | None = None) -> dict[str, Any]:
 
 
 @tool
-def propose(measure: Literal["cost", "carbon"] = "cost") -> dict[str, Any]:
-    """Work out the cheapest or lowest-carbon way to finish the specification.
+def propose(goal: Literal["cost", "carbon"] | None = None) -> dict[str, Any]:
+    """Work out the way to finish the specification for the least of what the
+    person wants least: the cost over the lift's life, or the carbon.
+
+    Which of the two is the person's to say, never yours. Call this with no
+    `goal`: the first time, the question is raised and `next` tells you to
+    put it with `ask`; once the person has answered, the completion is
+    computed for the goal they chose. Give `goal` only to record what the
+    person said in words — *cheapest*, *the greener one* — which chooses it
+    on their behalf and computes the completion; never to pick it yourself.
 
     Every assertion already on record is kept. Each value proposed for a
     still-open variable is put to the person beside that variable, to take
     one at a time or all at once — you cannot adopt any of it yourself, and
     saying that you have would be false.
     """
+    given = {"goal": goal} if goal is not None else {}
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="propose",
-        spec=SPEC, measure=measure,
+        spec=SPEC, **given,
     )
-    return _outcome(completion)
+    outcome = _outcome(completion)
+    if not any(e["action"] == "Constraining/complete" for e in outcome["did"]):
+        if _goal_unput():
+            outcome["next"] = (
+                "nobody has said what to finish the specification for: call `ask` "
+                "with options=['cost', 'carbon'] rather than choosing yourself, and "
+                "the turn waits for the answer"
+            )
+        elif _goal_declined():
+            outcome["next"] = (
+                "the person left the question of what to finish for; nothing is "
+                "proposed until they answer it, and it is not asked again this turn"
+            )
+    return outcome
 
 
 @tool
@@ -641,12 +663,35 @@ def unframe() -> dict[str, Any]:
     return _outcome(completion)
 
 
-# The request a conflict on the specification is asked as.
+# The request a conflict on the specification is asked as, and the one that
+# asks what to finish it for.
 CONFLICT = {"spec": SPEC, "about": "conflict"}
+GOAL = {"spec": SPEC, "about": "goal"}
+GOALS = ("cost", "carbon")
 
 
-def _asked() -> dict[str, Any] | None:
-    return put_question(engine, CONFLICT)
+def _asked(request: dict[str, Any] = CONFLICT) -> dict[str, Any] | None:
+    return put_question(engine, request)
+
+
+def _goal_pending() -> dict[str, Any] | None:
+    return next(
+        (q for q in readings.pending(engine.state("Deciding")) if q["request"] == GOAL),
+        None,
+    )
+
+
+def _goal_unput() -> bool:
+    """The goal is pending and the model has not put it as it stands."""
+    if _goal_pending() is None:
+        return False
+    put = _asked(GOAL)
+    return put is None or put["status"] in {"overtaken", "chosen"}
+
+
+def _goal_declined() -> bool:
+    deciding = engine.state("Deciding")
+    return any(deciding["request"].get(k) == GOAL for k in deciding["declined"])
 
 
 def _already_asked(call: str) -> bool:
@@ -722,6 +767,45 @@ def _answered(put: dict[str, Any]) -> dict[str, Any]:
         "with them. Do not ask the question again in this turn",
         "yours_to_withdraw": yours,
         "theirs": theirs,
+    }
+
+
+def _goal_answered(put: dict[str, Any]) -> dict[str, Any]:
+    """What ended the wait for the goal, in words the model can act on."""
+    status = put["status"]
+    if status == "chosen":
+        goal = (put["chosen"] or {}).get("goal")
+        return {
+            "answered": f"the person chose to finish for the least {goal}, and the "
+            "completion is on the canvas: say what was proposed and that it waits "
+            "beside each open value"
+        }
+    if status == "declined":
+        return {"answered": "the person left it for now; nothing is proposed, and "
+                "do not ask it again"}
+    if status == "withdrawn":
+        return {"answered": "nothing is left to finish; the question went"}
+    if status == "passed":
+        return {"answered": "the person talked about something else; the question "
+                "is still open — do not press it"}
+    if status == "overtaken":
+        return {"answered": "the question was asked again; `review` shows it"}
+    reply = put["replies"][-1]
+    source = _reply(reply["utterance"])
+    by = "the person"
+    if source is not None:
+        flow, actor = source
+        follow(flow, reply["utterance"])
+        if actor == "browser":
+            by = "the person's own agent"
+    return {
+        "replied": reply["text"],
+        "by": by,
+        "answered": f"{by} replied in words. If the reply says which to finish for, "
+        "call `propose` with goal='cost' or goal='carbon' as they said, which "
+        "records their answer and computes the completion. If it hands the "
+        "decision to someone else, say you leave it with them. If it says neither, "
+        "answer what they said, and do not ask again in this turn",
     }
 
 
@@ -828,6 +912,57 @@ def _ask_who_the_quote_is_for(
     return {"status": put["status"], **_addressed(put), "state": digest(engine, SPEC)}
 
 
+def _ask_what_to_finish_for(
+    question: str, options: list[str], tool_call_id: str
+) -> dict[str, Any]:
+    """The goal, put as a conflict is: the request with the options `Deciding`
+    holds, under the same rule, and the same wait."""
+    if not _already_asked(tool_call_id):
+        if _goal_pending() is None:
+            if _goal_declined():
+                return {"refused": "the person left this question for now; do not "
+                        "ask it again"}
+            return {"refused": "nothing has asked what to finish for: call `propose` "
+                    "first, with no goal"}
+        before = _asked(GOAL)
+        if before is not None and before["status"] == "awaiting":
+            return {"refused": "already asked, and still waiting on the person"}
+        if before is not None and before["status"] in {"replied", "passed"} and not _goal_unput():
+            conversing = engine.state("Conversing")
+            last = next(
+                (u for u in reversed(conversing["utterances"])
+                 if conversing["by"].get(u) == "person"),
+                None,
+            )
+            if last is not None and conversing["about"].get(last) == before["about"]:
+                return {
+                    "refused": "the person answered this question in words in this "
+                    "turn: answer what they said instead of asking again",
+                }
+        completion = engine.root(
+            "Copiloting", "invoke", actor="model", flow=turn(), tool="ask",
+            spec=SPEC, request=GOAL, offered=[{"goal": g} for g in GOALS],
+            text=question, call=tool_call_id,
+        )
+        if not any(entry["action"] == "Conversing/say" for entry in _did(completion)):
+            return {"refused": "the question offers cost and carbon; ask with "
+                    "options=['cost', 'carbon']"}
+    put = _asked(GOAL)
+    if put is None:
+        return {"refused": "not asked"}
+    if put["status"] == "awaiting":
+        interrupt(
+            {
+                "reason": "goal",
+                "message": put["text"],
+                "toolCallId": tool_call_id,
+                "question": put["about"],
+            }
+        )
+        put = _asked(GOAL) or put
+    return {"status": put["status"], **_goal_answered(put), "state": digest(engine, SPEC)}
+
+
 @tool
 def ask(
     question: str,
@@ -837,7 +972,7 @@ def ask(
 ) -> dict[str, Any]:
     """Put a question the turn cannot go past to the person, and wait for the answer.
 
-    Two questions can be put, each naming its matter. Give exactly one of
+    Three questions can be put, each naming its matter. Give exactly one of
     `options` or `missing`.
 
     The open conflict: `options` is the option ids the question offers to
@@ -846,6 +981,11 @@ def ask(
     asked: other values that cannot be met wait under `unmet`, and come back
     as the question once it is settled. `question` says, in one or two
     sentences, which rule refuses what, and which assertion gives way.
+
+    What to finish the specification for, once `propose` has raised it:
+    `options` is `['cost', 'carbon']`. `question` asks, in a sentence,
+    whether to finish it for the lowest cost over the lift's life or the
+    least carbon. The chat shows the two answers, so do not list them.
 
     Who the quote is for: `missing` is what a quote the person asked for
     lacks and nothing else does, `name` (the person's), `site` (where the
@@ -861,6 +1001,8 @@ def ask(
                 "(who the quote is for)"}
     if missing is not None:
         return _ask_who_the_quote_is_for(question, missing, tool_call_id)
+    if options and set(options) <= set(GOALS):
+        return _ask_what_to_finish_for(question, options, tool_call_id)
     if not _already_asked(tool_call_id):
         open_ = next(
             (
@@ -967,6 +1109,11 @@ def review() -> dict[str, Any]:
             "a conflict is open and has not been put to the person: once you have "
             "done what this turn needs, call `ask` with it instead of asking in "
             "the reply"
+        )
+    elif _goal_unput():
+        state["next"] = (
+            "a proposal is wanted and nobody has said what to finish it for: call "
+            "`ask` with options=['cost', 'carbon'] rather than choosing yourself"
         )
     return state
 
