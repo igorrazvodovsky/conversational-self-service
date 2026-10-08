@@ -603,18 +603,6 @@ def _the_model_may_request_a_quote(c: Completion, states: States) -> list[Invoca
     return [Invocation("Quoting", "quote", input)] if input else []
 
 
-def _the_canvas_is_shown_before_it_changes(
-    c: Completion, _: States
-) -> list[Invocation]:
-    if c.output.get("tool") not in {
-        "assert", "withdraw", "read", "propose", "quote", "handover", "show",
-        "hide", "frame", "unframe",
-    }:
-        return []
-    return [
-        Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
-    ]
-
 
 def _same(named: Any, offered: list[Any]) -> bool:
     if not isinstance(named, list):
@@ -719,11 +707,6 @@ rules = [
     # a quote the model requests ends with the quote surface forward
     # (`AnIssuedQuoteIsShown`), which it would not if this focused the canvas
     # after that rule had run.  The engine fires rules in registration order.
-    Sync(
-        "TheCanvasIsShownBeforeItChanges",
-        ("Copiloting", "invoke"),
-        _the_canvas_is_shown_before_it_changes,
-    ),
     Sync(
         "TheModelMayAssertAValue",
         ("Copiloting", "invoke"),

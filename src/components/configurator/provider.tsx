@@ -55,12 +55,6 @@ export type WorkedOut = Quantity & {
 /** `yielded`: asked for softly, and the rules could not honour it. Still
  * asserted, still answering its clause; the solver's answer is what moved. */
 export type Standing = "asked" | "yielded" | "unmet" | "follows" | "open";
-/** The surfaces `Moding` offers: the specification (`canvas`), where the
- * requirements and the values that answer them share one list, and the
- * offers (`quote`). The chat is not one — where it sits is the
- * person's view state (`example-layout/chat-surface.tsx`), which no rule
- * reaches. */
-export type Surface = "canvas" | "quote";
 export type Grid = "today" | "decarbonising";
 
 export interface Option {
@@ -313,7 +307,9 @@ export interface Foreseen {
   carbon: number | null;
 }
 
-export type QuoteStanding = "open" | "committed" | "revoked" | "lapsed";
+/** `draft` is the deal as it stands, which no one has issued; the rest are
+ * an issued offer's. */
+export type QuoteStanding = "draft" | "open" | "committed" | "revoked" | "lapsed";
 
 /** What a party has said of who they are, from `Profiling`. */
 export interface Party {
@@ -336,6 +332,8 @@ export interface Terms {
   customer: Party;
   title: string;
   site: string;
+  /** The draft only: no term is chosen, so the months are the basis's presumption. */
+  presumed?: boolean;
   validity: number;
   warranty: number;
   approval: number;
@@ -387,16 +385,18 @@ export interface Side {
 }
 
 /**
- * From `Quoting`, with what the read side works out from it today. Its side
- * is as it stood at issue.
+ * The document at one moment: from `Quoting`, with what the read side works
+ * out from it today, its side as it stood at issue; or the draft, the deal
+ * as it stands read the same way (`docs/ui.md`, "One document, read several
+ * ways"). The draft has no number and no validity.
  */
 export interface Quote extends Side {
   quote: string;
-  number: number;
+  number: number | null;
   standing: QuoteStanding;
   terms: Terms;
   issued: string | null;
-  until: string;
+  until: string | null;
   committed: string | null;
   issuedTo: string;
   how: string | null;
@@ -405,6 +405,21 @@ export interface Quote extends Side {
    * `differs` is the detail, recomputed on every read. */
   stale: Basis[];
   footprint: Carbon;
+}
+
+/** The draft: the deal as it stands, with the keys an issued quote has, so
+ * every view lays it out as it lays out an offer. The default moment. */
+export interface Draft extends Quote {
+  quote: "draft";
+  standing: "draft";
+  number: null;
+  until: null;
+  /** The variables still open, which have no line. */
+  open: { name: string; heading: string }[];
+  /** False while anything is open or the term is presumed. */
+  complete: boolean;
+  /** Why it cannot yet be issued, or that it can, in the words the standing gives. */
+  because: string;
 }
 
 /**
@@ -479,7 +494,7 @@ export interface Turn {
   parties: string[];
   /** What it did, by the concepts it reached: each a `kind` in `View.kinds`. */
   kinds: string[];
-  /** Whether it only brought a surface forward. */
+  /** Whether it only narrowed the canvas or changed what is shown beside its items. */
   moved: boolean;
   /** Whether it came after the person last changed the specification
    * themselves, whoever took it. */
@@ -530,7 +545,6 @@ export interface View {
   grid: Grid;
   product: string;
   currency: string;
-  mode: Surface;
   /** Which facts the canvas shows at a glance, and what else it could. */
   showing: Facet[];
   /** Which items the canvas is narrowed to, or null for everything. */
@@ -570,9 +584,8 @@ export interface View {
   stages: Stage[];
   questions: Question[];
   quotes: Quote[];
-  /** The specification read as a quote requested now would freeze it;
-   * `complete` is false while anything is open or the term presumed. */
-  now: Side & { complete: boolean };
+  /** The deal as it stands, read the way a quote requested now would freeze it. */
+  draft: Draft;
   quotable: { ok: boolean; because: string; asked?: AskedAddressee | null };
   handovers: Handover[];
   beyond: Beyond | null;

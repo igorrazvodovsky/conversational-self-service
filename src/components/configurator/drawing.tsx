@@ -261,7 +261,9 @@ function Section({
   );
 }
 
-export function LiftDrawing({ holds, id }: { holds: Held[]; id: string }) {
+/** The sizes the drawing needs, read from what a moment holds; null where
+ * one is missing or does not read as a size, so the view can say so. */
+function sized(holds: Held[]) {
   const label = (name: string) => holds.find((h) => h.name === name)?.label;
   const value = (name: string) => holds.find((h) => h.name === name)?.value;
   const car = pair(label(SIZES.car));
@@ -272,6 +274,19 @@ export function LiftDrawing({ holds, id }: { holds: Held[]; id: string }) {
   const headroom = one(label(SIZES.headroom));
   const doorType = value(SIZES.doorType);
   if (!car || !shaft || !door || !carHeight || !pit || !headroom || !doorType) return null;
+  return { car, shaft, door, carHeight, pit, headroom, doorType, label };
+}
+
+/** Which of the drawing's variables a moment still leaves blank. */
+export function undrawn(holds: Held[]): string[] {
+  return [SIZES.car, SIZES.shaft, SIZES.door, SIZES.carHeight, SIZES.pit, SIZES.headroom, SIZES.doorType]
+    .filter((name) => !holds.some((h) => h.name === name));
+}
+
+export function LiftDrawing({ holds, id }: { holds: Held[]; id: string }) {
+  const sizes = sized(holds);
+  if (!sizes) return null;
+  const { car, shaft, door, carHeight, pit, headroom, doorType, label } = sizes;
   return (
     <figure className="space-y-2">
       <div className="flex flex-wrap items-end gap-8">

@@ -109,13 +109,9 @@ def here(view: dict[str, Any]) -> str:
     """The URL of the view as it stands, every recorded part spelled out, as
     `viewLink` in `link.tsx` writes it."""
     params = {
-        "on": "quotes" if view["mode"] == "quote" else "specification",
         "frame": _frame_word(view["frame"]),
         "show": ",".join(f["facet"] for f in view["showing"] if f["shown"]),
     }
-    # The quote shown, named rather than left to mean the latest, which moves.
-    if view["mode"] == "quote" and view["quotes"]:
-        params["quote"] = view["quotes"][-1]["quote"]
     query = "&".join(f"{k}={escape(v, safe=':,')}" for k, v in params.items())
     return f"{ORIGIN}/?{query}"
 
@@ -278,6 +274,12 @@ LEGACY = {uri: {"ui/resourceUri": uri} for uri in (SPECIFICATION, OFFER)}
 
 Clause = Annotated[str, Field(description="A clause's id, from `required` in `review`")]
 Quote = Annotated[str, Field(description="A quote's id, from `quotes` in `review`")]
+Moment = Annotated[
+    str | None,
+    Field(
+        description="A quote's id, from `quotes` in `review`; none for the draft, the deal as it stands"
+    ),
+]
 Option = Annotated[
     str,
     Field(description="A full option id, such as `rated_load:kg1000`, from `open` in `review`"),
@@ -335,7 +337,10 @@ def review() -> CallToolResult:
     annotations=READ_ONLY,
     description=(
         "Read an issued quote, as the offer was frozen when it was made, to "
-        "check it against what the person asked for before they accept it. "
+        "check it against what the person asked for before they accept it; "
+        "or, with no quote, the draft: the same record over the deal as it "
+        "stands, with what is still open under `open` and why it cannot yet "
+        "be issued under `because`. Call the draft a draft, never a quote. "
         "Returns each requirement as it stood with what answered it, or that "
         "nothing did (`required`); each value with its standing, why it holds "
         "and what it adds to the sum and the monthly charge (`values`); the "
@@ -343,12 +348,12 @@ def review() -> CallToolResult:
         "the customer provides (`programme`, `payments`, `by_others`). "
         "Sentences beside a value are the canvas's, addressed to the person. "
         "`differs` lists the values that have moved in the specification since. "
-        "Each line's `link` is its URL on the quote surface, to link when you "
+        "Each line's `link` is its URL on the canvas, to link when you "
         "report to the person, and `page` is the proposal as it prints, the "
         "link to send someone who should read the offer. Changes nothing."
     ),
 )
-def open_quote(quote: Quote) -> CallToolResult:
+def open_quote(quote: Moment = None) -> CallToolResult:
     view = canvas(engine, SPEC)
     issued = next((q for q in view["quotes"] if q["quote"] == quote), None)
     return shown(
@@ -708,11 +713,6 @@ def skip(
 
 
 # -- what the canvas shows ------------------------------------------------------
-
-
-@tool("focus", "Bring a surface forward: `canvas`, the specification, or `quote`.")
-def focus(surface: str) -> dict[str, Any]:
-    return gesture(act="focus", surface=surface)
 
 
 @tool(

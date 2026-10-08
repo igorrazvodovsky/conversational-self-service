@@ -7,11 +7,11 @@ How `elevator.json` becomes facts. See [the index](README.md).
 The application's start is a stimulus like a click or a tool call: an action
 of the bootstrap concept, [Copiloting](../concepts/copiloting.md), carrying
 the catalogue as it was read, the basis and grids it is reckoned on, the
-workspace with its surfaces and facets, and the specification to open.
+workspace with its facets, and the specification to open.
 
 ```
 Copiloting/boot: [ catalogue ; basis ; grids ; workspace ;
-                   surfaces ; facets ; spec ] => [ … the same … ]
+                   facets ; spec ] => [ … the same … ]
 ```
 
 `agent/wiring.py` performs it once, and invokes no concept action itself.
@@ -108,10 +108,8 @@ then  { Stepping/author: [ template ; name ; needs ; covers ; owner ]
           for each step of ?c, in the catalogue's order }
 
 sync TheWorkspaceIsLaidOut
-when  { Copiloting/boot: [] => [ workspace: ?w ; surfaces: ?s ; facets: ?f ] }
-then  { Moding/offer: [ workspace: ?w ; surface ] for each surface in ?s ;
-        Moding/focus: [ workspace: ?w ; surface: the first of ?s ] ;
-        Showing/offer: [ lens: ?w ; facet ; about ] for each facet in ?f ;
+when  { Copiloting/boot: [] => [ workspace: ?w ; facets: ?f ] }
+then  { Showing/offer: [ lens: ?w ; facet ; about ] for each facet in ?f ;
         Showing/show: [ lens: ?w ; facet ] for each facet in ?f shown to begin with }
 
 sync ASpecificationIsStartedAtBoot

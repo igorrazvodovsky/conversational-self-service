@@ -1,10 +1,12 @@
 "use client";
 
 /**
- * One quote, on its own page, for printing.
+ * One moment of the document, on its own page, for printing: an issued
+ * quote, or `draft`, the deal as it stands, marked as a draft where the
+ * number and the validity would be.
  *
- * The same document the quote surface shows, rendered without the chat
- * session behind it.
+ * The same proposal the canvas shows, rendered without the chat session
+ * behind it.
  */
 
 import { ArrowLeftIcon, PrinterIcon } from "lucide-react";
@@ -27,8 +29,10 @@ export default function QuotePage() {
   useEffect(() => {
     document.title = number
       ? `Quotation No. ${number} · Northline Lifts`
-      : "Quotation · Northline Lifts";
-  }, [number]);
+      : id === "draft"
+        ? "Draft proposal · Northline Lifts"
+        : "Quotation · Northline Lifts";
+  }, [number, id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,7 +72,7 @@ export default function QuotePage() {
       </Empty>
     );
   }
-  const quote = view.quotes.find((q) => q.quote === id);
+  const quote = id === "draft" ? view.draft : view.quotes.find((q) => q.quote === id);
   if (!quote) {
     return (
       <Empty className="h-svh">
@@ -86,7 +90,9 @@ export default function QuotePage() {
             {/* Whoever opens this page may have come straight to it from a
                 link someone sent, so the way into the app names where it
                 goes rather than assuming they came from there. */}
-            <Link href={`/?on=quotes&quote=${encodeURIComponent(id)}#quote:${encodeURIComponent(id)}`}>
+            <Link
+              href={`/?view=proposal${id === "draft" ? "" : `&quote=${encodeURIComponent(id)}`}#quote:${encodeURIComponent(id)}`}
+            >
               <ArrowLeftIcon />
               Open in the configurator
             </Link>
@@ -101,7 +107,17 @@ export default function QuotePage() {
             Print
           </Button>
         </div>
-        <QuoteDocument quote={quote} view={view} />
+        <QuoteDocument
+          quote={quote}
+          view={view}
+          open={
+            id === "draft"
+              ? view.variables
+                  .filter((v) => v.standing === "open")
+                  .map((v) => ({ name: v.name, heading: v.heading, family: v.family }))
+              : []
+          }
+        />
       </main>
     </div>
   );

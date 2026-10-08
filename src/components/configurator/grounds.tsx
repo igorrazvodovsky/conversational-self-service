@@ -70,12 +70,12 @@ export function Decision({
   const { terms } = quote;
   const years = terms.months / 12;
   const provided = quote.holds.filter((h) => terms.byOthers.includes(h.name));
-  const left = quote.standing === "open" ? daysLeft(quote.until) : null;
+  const left = quote.standing === "open" && quote.until ? daysLeft(quote.until) : null;
   return (
     <section aria-labelledby={`${quote.quote}-offer`} className="space-y-4">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h2 id={`${quote.quote}-offer`} className="text-base font-semibold">
-          Quotation No. {quote.number}
+          {quote.number === null ? "Draft proposal" : `Quotation No. ${quote.number}`}
         </h2>
         <Badge variant="secondary"
           className={STANDING_TONE[quote.standing]}>
@@ -83,11 +83,13 @@ export function Decision({
         </Badge>
         <span className="text-xs text-muted-foreground">
           {quote.issued ? `issued ${day(quote.issued)} · ` : ""}
-          {left !== null
+          {left !== null && quote.until
             ? `${left} ${left === 1 ? "day" : "days"} left to accept, until ${day(quote.until)}`
             : quote.standing === "committed" && quote.committed
               ? `accepted ${day(quote.committed)}`
-              : `was valid until ${day(quote.until)}`}
+              : quote.until
+                ? `was valid until ${day(quote.until)}`
+                : "not yet issued"}
         </span>
       </div>
       <div className="grid gap-2 sm:grid-cols-3">

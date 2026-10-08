@@ -41,7 +41,6 @@ it.
 | `APersonDiscardsTheSpecification` | [Gestures](gestures.md) |
 | `APersonAnswersAQuestion` | [Gestures](gestures.md) |
 | `APersonDeclinesToAnswer` | [Gestures](gestures.md) |
-| `APersonFocusesASurface` | [Gestures](gestures.md) |
 | `APersonShowsAFacet` | [Gestures](gestures.md) |
 | `APersonHidesAFacet` | [Gestures](gestures.md) |
 | `APersonFramesTheCanvas` | [Gestures](gestures.md) |
@@ -87,10 +86,7 @@ it.
 | `UnmetAssertionsAreTriedAgain` | [Propagation](propagation.md) |
 | `TheConcededAssertionIsWithdrawn` | [Propagation](propagation.md) |
 | `AResolvedConflictWithdrawsItsQuestion` | [Propagation](propagation.md) |
-| `AnIssuedQuoteIsShown` | [Propagation](propagation.md) |
 | `ANewQuoteSupersedesTheOpenOnes` | [Propagation](propagation.md) |
-| `AFramedRequirementShowsTheConfiguration` | [Propagation](propagation.md) |
-| `AFramedGapShowsTheConfiguration` | [Propagation](propagation.md) |
 | `AWithdrawnAssertionUnframesTheCanvas` | [Propagation](propagation.md) |
 | `AStruckClauseUnframesTheCanvas` | [Propagation](propagation.md) |
 | `ADiscardedSpecificationUnframesTheCanvas` | [Propagation](propagation.md) |
@@ -115,7 +111,6 @@ it.
 | `ADeclinedCompletionIsDeclinedValueByValue` | [Conduct](conduct.md) |
 | `AnOvertakenProposedValueIsRetired` | [Conduct](conduct.md) |
 | `AnEmptiedProposalIsWithdrawn` | [Conduct](conduct.md) |
-| `TheCanvasIsShownBeforeItChanges` | [Conduct](conduct.md) |
 | `TheModelMayAskThePerson` | [Conduct](conduct.md) |
 | `TheModelMayAskWhoTheQuoteIsFor` | [Conduct](conduct.md) |
 | `APersonRepliesToAQuestion` | [Conduct](conduct.md) |
@@ -128,7 +123,6 @@ it.
 | `ADiscardedSpecificationLosesItsSteps` | [Stepping](stepping.md) |
 | `APersonTakesAStep` | [Stepping](stepping.md) |
 | `ATakenStepFramesTheCanvas` | [Stepping](stepping.md) |
-| `AFramedStepShowsTheConfiguration` | [Stepping](stepping.md) |
 | `APersonFinishesAStep` | [Stepping](stepping.md) |
 | `APersonSkipsAStep` | [Stepping](stepping.md) |
 | `APersonReopensAStep` | [Stepping](stepping.md) |
@@ -191,8 +185,7 @@ from without changing. One rule issues it, to the person, when every variable
 is settled, nothing asserted is unmet, the person is named and the job has a
 site; one lets the person accept it; one lets them revoke it; one revokes the
 quotes still open to the same party for the same job when a new one is
-issued, so a new quote is a revision rather than an alternative; and one
-gives the quote surface the viewer's attention when a quote is issued. Others let
+issued, so a new quote is a revision rather than an alternative. Others let
 the person say who they are and where the lift is going, which is what makes
 the proposal addressed. The model may ask for one and may not accept it, which is one of the things
 [only a person may do](gestures.md#the-two-asymmetries).

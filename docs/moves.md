@@ -14,8 +14,12 @@ authority.
 The canvas is a view over concept state (`agent/views.py`). It shows what is
 the case: what the person requires, what was asserted and by whom, what
 follows and from which rule, what is open, what is being asked, what
-was offered. It survives the thread, the reload and the restart, because the
-state it reads is reconstructed from the log.
+was offered. It is one document, the deal as it stands or as it stood when
+an offer was issued, read several ways
+([UI](ui.md#one-document-read-several-ways)): the proposal over the deal as
+it stands is as much the canvas as the ledger is. It survives the thread,
+the reload and the restart, because the state it reads is reconstructed
+from the log.
 
 The chat is where the two parties address each other. The person's message is
 recorded first, as an utterance ([Conversing](concepts/conversing.md)) that
@@ -36,15 +40,16 @@ person needs to *understand*, that is what the chat was for. Neither surface
 does the other's job: the chat does not restate the canvas, and the canvas
 does not carry reasoning about intent. The chat may point at the canvas,
 though: every item there has an address, and a reply that refers to one links
-the word rather than reciting the item. Two offers compared are a place too,
-so a reply can put a comparison in front of the person by linking it, and
-nothing is recorded: which pair is shown stays the viewer's. A link is the
+the word rather than reciting the item. A view of the document at a moment
+is a place too, so a reply can put the proposal as it stands, or two offers
+compared, in front of the person by linking it, and nothing is recorded:
+which view, which moment and which pair are shown stay the viewer's. A link is the
 page's URL too, so the person can send one to a colleague, and their own agent
 can link its work from a chat of its own ([Links](ui.md#links)).
 
 The person's own agent has a chat of its own, and when the person's client
-renders MCP Apps the canvas reaches into it: the specification or an offer,
-rendered beside the agent's reply from the read the agent made, each item in
+renders MCP Apps the canvas reaches into it: the document at a moment, as
+it stands or as offered, rendered beside the agent's reply from the read the agent made, each item in
 its kind and linked back to the page. The test above holds there too. The
 view is the canvas's, holding what is the case, and the agent's reply around
 it is the chat's. A gesture made in that view is the person's
@@ -66,6 +71,7 @@ their request, and reads that way in the log.
 | Keep the assistant's reading of a requirement as their own | canvas | `Specifying/adopt` through [`APersonKeepsAReading`](syncs/reading.md#the-person-keeps-a-reading); rewording a reading keeps it too | nothing; the model cannot make a reading the person's, and cannot change a value that answers a requirement the person stated |
 | Say how firmly a requirement is meant — fixed, negotiable, or left open | canvas | `Specifying/settle`; a value answering only negotiable clauses reaches the solver softly ([Propagation](syncs/propagation.md#which-of-the-first-two-fires-is-a-fact-of-the-state)) and reads as *yielded* where the rules could not honour it | what gave way and why; the model cannot change how firmly a clause is meant, and does not withdraw a yielded value |
 | See what each value is for, and what it forced | canvas | nothing; the specification's one list is the [ledger](syncs/binding.md#the-ledger-is-a-read), each requirement's line holding its words, its choices and their consequences, a line with an empty requirement for each value answering none, and what is open | a link to the choice, at `#choice:<id>`, rather than the answer recited |
+| Look at what this would come to — the proposal, the programme, the drawing, over the deal as it stands | canvas, or chat | nothing; each view is a read over the same state, and the draft is the default moment ([UI](ui.md#one-document-read-several-ways)); the blanks are what is still open, in the seller's format | a link to the view, or to a line of it, rather than the figures recited; the model calls it the draft, or what it would come to, and never a quote |
 | Look at one requirement — what answers it, what that forced, what could still answer it | canvas, or chat | [`Framing`](concepts/framing.md), with a clause as the frame ([Gestures](syncs/gestures.md#the-canvas-is-narrowed-to-one-requirement)); the configuration comes forward ([Propagation](syncs/propagation.md)) | one sentence saying the canvas is narrowed to it; the model may frame a clause and cannot answer one |
 | See what is left — what is open, what nothing answers, what answers nothing | canvas, or chat | [`Framing`](concepts/framing.md), with a gap as the frame ([Gestures](syncs/gestures.md#the-canvas-is-narrowed-to-one-gap)); the configuration comes forward ([Propagation](syncs/propagation.md)) | one sentence saying the canvas is narrowed to it |
 | Say which value answers a clause | canvas | a pick made while a clause frames the canvas is [`Binding`](concepts/binding.md)'s `answer`, then `Asserting` | nothing |
@@ -77,10 +83,10 @@ their request, and reads that way in the log.
 | Talk to the assistant through their own agent — the person's agent says what the person would type | the person's agent, shown in the chat as theirs | `Conversing/say` under the agent's actor, then the assistant's turn in [the flow the words opened](syncs/gestures.md#the-persons-own-agent-speaks-in-the-chat), as for the person's own words | the assistant's reply, returned to the agent as well; a question it put comes back with it, for the agent to answer or hand back |
 | Reply to a question the assistant asked, in words — "keep the hospital", or "that one is for facilities" | chat, or the person's agent | `Conversing/say` about the question as put, through [`APersonRepliesToAQuestion`](syncs/conduct.md#asking-and-waiting-for-the-answer); the question stays on the canvas until something settles it | the model carrying the answer out, or saying it will wait |
 | Take a proposed value, or the whole proposal | canvas only | `Deciding/choose`, then [`AnAdoptedValueBecomesAnAssertion`](syncs/conduct.md#proposing-and-not-adopting) | the model may say what it proposed and that it is waiting; it cannot adopt any of it |
-| Say who they are, where the lift goes | canvas, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote; while the assistant's question about it waits, nothing, because the turn resumes with the quote |
-| Request a quote | canvas, or chat | `Quoting/quote` when the specification is complete and addressed | what is missing, if anything, and where the proposal is; when only the name or the site is, the question, put with `ask` ([Conduct](syncs/conduct.md#asking-who-the-quote-is-for)) |
+| Say who they are, where the lift goes | canvas, in the proposal where the addressee is a line, or chat | `Profiling`, `Naming` | acknowledgement only if something is still missing for a quote; while the assistant's question about it waits, nothing, because the turn resumes with the quote |
+| Request a quote | canvas, from the draft, or chat | `Quoting/quote` when the specification is complete and addressed; the offer is the draft held still, with its number, its validity and its addressee ([Quoting](concepts/quoting.md)) | what is missing, if anything, and where the proposal is; when only the name or the site is, the question, put with `ask` ([Conduct](syncs/conduct.md#asking-who-the-quote-is-for)) |
 | Ask about the product — "which access control systems does the lobby badge work with?", "is the integration in the price?", "does remote monitoring need our network?" | chat | nothing; `look_up` reads what the seller publishes about a variable and its options — [`Detailing`](concepts/detailing.md)'s particulars, and the clauses of [`Stipulating`](concepts/stipulating.md) that hold where an option is chosen | an answer to every part, as the seller, from that record and linked to the variable; where the record is silent, that it is, and never a guess or a referral to "the supplier" |
-| Ask about an offer — "why is the battery backup in No. 2?", "what does it cost me over the term?", "what do I pay on dispatch?", "what do I have to provide?" | chat | nothing; `open_quote` reads the offer as it was frozen at issue | the answer, with the offer's own lines linked — the value, the clause, the milestone — rather than recited |
+| Ask about an offer — "why is the battery backup in No. 2?", "what does it cost me over the term?", "what do I pay on dispatch?", "what do I have to provide?" — or the same of the draft | chat | nothing; `open_quote` reads the offer as it was frozen at issue, or, named no offer, the draft as it stands | the answer, with the offer's own lines linked — the value, the clause, the milestone — rather than recited |
 | Accept or revoke a quote | canvas only | `Quoting/commit`, `revoke` | nothing; the model cannot accept |
 | Hand the specification to the seller — "can I talk to someone about the validity?" | canvas, or chat | `HandingOver/send`, by gesture or by the model's tool at the person's word ([Handover](syncs/handover.md)); the specification stays the person's, and the seller reads it from the log | that it was handed over and what for, linked; unasked, only the offer of it, where the assistant has run out of rule and never where the record answers |
 | Choose what the canvas shows beside each item | canvas, or chat | [`Showing`](concepts/showing.md) | nothing; the point of the move is that the figure is on the canvas rather than recited |
@@ -100,6 +106,7 @@ what the chat exists for. The reply's moves:
 | Consequence | after an assertion, when the rules forced something | what followed and the rule's sentence — the canvas shows the edge, the chat explains it | list every entailment; restate the canvas |
 | Argument | when asked why | the rule, in its own words, and what would have to give | compose a reason no rule states |
 | Explaining an offer | when asked about an issued quote | what the offer holds and why, as it was frozen: the grounds of a value, what a line added, when a payment falls due, what the customer provides — linking the offer's lines at `#quote:` addresses | read the offer against the specification as it stands without saying so; recite the proposal; accept or revoke it |
+| Explaining the draft | when asked what the deal would come to, or what an offer would need | the same lines over the deal as it stands: what a line would add, what the programme would be, what is still blank and why — linking the draft's lines | call it a quote or an offer; present a running sum or a presumed term as fixed; request the quote unasked |
 | Asking | when its own turn ran into a conflict, when a proposal is wanted and nobody has said what to finish it for, or when the quote the person asked for lacks only the name or the site | the question, put with `ask`, and nothing after it: the turn waits until the person answers, replies or leaves it ([Conduct](syncs/conduct.md#asking-and-waiting-for-the-answer)) | answer it; treat its own turn as the person's answer; ask again what was already asked and not yet answered |
 | Proposing | when the specification is incomplete and the person seems done stating context | the offer to work out the rest, or what a proposal assumed; with no goal on record, the question what to finish it for, put with `ask` | say the proposal was adopted; pick the goal itself |
 | Declining | when asked to do something no rule permits — adopt, accept, change a price | that it cannot, and who can | do it another way |
@@ -199,7 +206,8 @@ and the chat carries what it assumed and that it waits.
 person's agent. It returns the same units the canvas arranges, each with the
 address the canvas gives it under `at`: a requirement and the item it was
 read as, a value asserted, followed or open, an open question, a document,
-an item the person struck, and an issued quote. A reply that refers to one
+an item the person struck, an issued quote, and where the document stands.
+A reply that refers to one
 links it rather than reciting it, and the person's agent can name the item
 it means. Like `open_quote`, it records nothing.
 
@@ -208,14 +216,18 @@ it means. Like `open_quote`, it records nothing.
 An issued quote holds what was true when it was made: the values, the
 requirements as they stood with what answered each, why each value held and
 what it added to the price, the programme as the seller reckoned it, and the
-payments and the work by others the terms set. The quote surface lays that
-out for the person. Every other reader reads it through `open_quote`, which
-the assistant has as a tool and the person's agent has on the page's model
-context, and both get the same record: the offer as frozen, its sentences in
-the canvas's own words, addressed to the person. Reading it records nothing and needs no rule,
-because a read is not an action. `review` lists the
-quotes issued with where each stands and which values have moved since, and
-`open_quote` is the offer itself.
+payments and the work by others the terms set. The canvas's views lay that
+out for the person, at the offer's moment. Every other reader reads it
+through `open_quote`, which the assistant has as a tool and the person's
+agent has on the page's model context, and both get the same record: the
+offer as frozen, its sentences in the canvas's own words, addressed to the
+person. Named no offer, `open_quote` returns the draft: the same record over
+the deal as it stands, with its blanks, its running sum and where the
+document stands, so a reader can check halfway what it checks at the end.
+Both readers call the draft a draft. Reading either records nothing and
+needs no rule, because a read is not an action. `review` lists the draft
+and the quotes issued, with where each stands and which values have moved
+since, and `open_quote` is the document at one moment.
 
 The assistant reads an offer to explain it. Why a value is in the offer is
 its grounds: asked for, given way, or following from a rule, with the rule's

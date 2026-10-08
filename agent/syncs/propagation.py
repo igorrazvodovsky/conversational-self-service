@@ -23,17 +23,6 @@ from engine import Completion, Invocation, States, Sync
 WORKSPACE = "workspace"
 
 
-def _an_issued_quote_is_shown(c: Completion, _: States) -> list[Invocation]:
-    """An offer that nobody sees is not an offer that was made.
-
-    Whichever party asked for it, the quote surface takes the viewer's
-    attention when a quote is issued — the same shape as
-    `TheCanvasIsShownBeforeItChanges`, one concept further along.
-    """
-    if c.failed:
-        return []
-    return [Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "quote"})]
-
 
 def _a_new_quote_supersedes_the_open_ones(
     c: Completion, states: States
@@ -64,35 +53,6 @@ def _a_new_quote_supersedes_the_open_ones(
     ]
 
 
-def _a_framed_requirement_shows_the_configuration(
-    c: Completion, _: States
-) -> list[Invocation]:
-    """What a clause frame selects is on the specification, and so is the
-    pick that answers the clause; framing one from the quotes brings the
-    specification forward, whichever party did it."""
-    if c.failed:
-        return []
-    frame = c.output.get("frame")
-    if not isinstance(frame, dict) or frame.get("by") != "clause":
-        return []
-    return [
-        Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
-    ]
-
-
-def _a_framed_gap_shows_the_configuration(
-    c: Completion, _: States
-) -> list[Invocation]:
-    """What a gap frame selects is on the specification; framing one from
-    the quotes brings the specification forward, whichever party did it."""
-    if c.failed:
-        return []
-    frame = c.output.get("frame")
-    if not isinstance(frame, dict) or frame.get("by") != "gap":
-        return []
-    return [
-        Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})
-    ]
 
 
 def _a_withdrawn_assertion_unframes_the_canvas(
@@ -585,21 +545,10 @@ rules = [
         ("Asserting", "withdraw"),
         _a_resolved_conflict_withdraws_its_question,
     ),
-    Sync("AnIssuedQuoteIsShown", ("Quoting", "quote"), _an_issued_quote_is_shown),
     Sync(
         "ANewQuoteSupersedesTheOpenOnes",
         ("Quoting", "quote"),
         _a_new_quote_supersedes_the_open_ones,
-    ),
-    Sync(
-        "AFramedRequirementShowsTheConfiguration",
-        ("Framing", "frame"),
-        _a_framed_requirement_shows_the_configuration,
-    ),
-    Sync(
-        "AFramedGapShowsTheConfiguration",
-        ("Framing", "frame"),
-        _a_framed_gap_shows_the_configuration,
     ),
     Sync(
         "AWithdrawnAssertionUnframesTheCanvas",

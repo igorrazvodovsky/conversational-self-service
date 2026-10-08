@@ -31,7 +31,6 @@ by way of a [synchronization](synchronization.md) or as a root action.
 | `Pricing` | `list`, `span`, `presume`, `finance`, `delist` |
 | `Footprinting` | `attribute`, `meter`, `rate`, `frame` |
 | `Deciding` | `ask`, `choose`, `decline` |
-| `Moding` | `offer`, `focus` |
 | `Copiloting` (root) | `gesture`, `invoke` |
 
 _Names carry the meaning, and here two of them do visible work._

@@ -6,26 +6,30 @@
  * The fragment names an item (`address.tsx`); the query names the view, in
  * the page's own words:
  *
- *   on       specification | quotes                          Moding
+ *   view     asked | proposal | timeline | drawing | compared  which view of the document
+ *   quote    a quote's id; absent for the draft                 which moment it shows
+ *   against  a quote's id, or `now`, the draft                  the other side, when compared
+ *   check    unanswered | changed                               a filter over an offer read as asked
  *   frame    none | gap:<gap> | assertion:<variable> | clause:<id>
- *            | step:<id> | step:<id>:<gap>                    Framing
- *   show     facet names, comma-separated, possibly none     Showing
- *   grid     today | decarbonising                           the read
- *   quote    a quote's id                                    the quote surface
- *   reading  asked | timeline                                the quote surface
- *   check    unanswered | changed                            the quote surface
- *   against  a quote's id, or `now`                          the quote surface
- *   thread   a conversation's id                             the chat
+ *            | step:<id> | step:<id>:<gap>                     Framing
+ *   show     facet names, comma-separated, possibly none       Showing
+ *   grid     today | decarbonising                             the read
+ *   thread   a conversation's id                               the chat
  *
- * `on`, `frame` and `show` are facts every party shares, so opening a link
+ * `frame` and `show` are facts every party shares, so opening a link
  * performs the gestures that bring the recorded view to what the query
  * says, each only where it differs, and an absent one leaves its part as it
  * is; going back to an entry the page wrote reads an absent one as its
  * default, since the page leaves out only defaults. The rest are the
- * viewer's and are never recorded; an absent one is its default. The page writes the view back as it changes, defaults left out:
- * a navigation the person makes pushes an entry, a change anyone else makes
- * replaces it, so the address bar is always a link to what is on screen and
- * the back button returns to where the person was.
+ * viewer's and are never recorded; an absent one is its default: the draft,
+ * read against what was asked, compared with nothing, on today's grid. The
+ * page writes the view back as it changes, defaults left out: a navigation
+ * the person makes pushes an entry, a change anyone else makes replaces it,
+ * so the address bar is always a link to what is on screen and the back
+ * button returns to where the person was.
+ *
+ * Older forms go on working as aliases and are never written: `on=quotes`
+ * opens the latest offer, and `reading=` is `view=`.
  *
  * Readers off the page need links that work off the page: `linked` gives
  * every unit a tool returns its URL beside its address.
@@ -33,28 +37,35 @@
 
 import { useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
 import { CheckIcon, LinkIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { goTo, surfaceOf } from "./address";
+import { arrive, goTo, NOW, placeOf, type Place } from "./address";
 import {
   useConfigurator,
   type Frame,
   type Grid,
   type Stimulus,
-  type Surface,
   type View,
 } from "./provider";
 
 // -- the words ----------------------------------------------------------------
 
-const SURFACE: Record<Surface, string> = { canvas: "specification", quote: "quotes" };
-const surfaceNamed = (word: string | null): Surface | null =>
-  word === "specification" ? "canvas" : word === "quotes" ? "quote" : null;
+export const VIEWS = ["asked", "proposal", "timeline", "drawing", "compared"] as const;
+export type ViewName = (typeof VIEWS)[number];
+/** The views, as the tab, the heading and the nav name them. */
+export const TITLE: Record<ViewName, string> = {
+  asked: "Specification",
+  proposal: "Proposal",
+  timeline: "Along time",
+  drawing: "To scale",
+  compared: "Compared",
+};
+export const CHECKS = ["unanswered", "changed"] as const;
+export type Check = (typeof CHECKS)[number];
 
 const GAPS = ["open", "unanswered", "unbound"];
 const GRIDS: Grid[] = ["today", "decarbonising"];
-export const READINGS = ["asked", "timeline"] as const;
-export type Reading = (typeof READINGS)[number];
 
 type FrameAsked =
   | { by: "assertion"; variable: string }
@@ -93,10 +104,76 @@ function frameNamed(word: string): FrameAsked | null | undefined {
 const shownOf = (view: View) =>
   view.showing.filter((f) => f.shown).map((f) => f.facet);
 
+// -- the moment and the view --------------------------------------------------
+
+/** Which view of the document is open, at which moment, compared with what. */
+export interface Moment {
+  view: ViewName;
+  /** An issued quote's id, or null for the draft. */
+  quote: string | null;
+  against: string | null;
+  check: Check | null;
+}
+
+/** The moment and the view a query names, defaults filled in. `quotes` are
+ * the issued offers, for the older `on=quotes`, which meant the latest. */
+export function momentOf(params: URLSearchParams, quotes: { quote: string }[] = []): Moment {
+  const word = params.get("view") ?? params.get("reading");
+  const view = VIEWS.includes(word as ViewName) ? (word as ViewName) : "asked";
+  let quote = params.get("quote") || null;
+  if (!quote && params.get("on") === "quotes") quote = quotes.at(-1)?.quote ?? null;
+  if (quote === "draft") quote = null;
+  const checked = params.get("check");
+  return {
+    view,
+    quote,
+    against: params.get("against") || null,
+    check: CHECKS.includes(checked as Check) ? (checked as Check) : null,
+  };
+}
+
+/** The moment and the view, read from the URL, and a way to change them:
+ * each change is the person going somewhere, so a new entry in the history. */
+export function useMoment(): Moment & { set: (update: Partial<Moment>) => void } {
+  const params = useSearchParams();
+  const { view } = useConfigurator();
+  const quotes = view?.quotes ?? [];
+  const moment = useMemo(
+    () => momentOf(new URLSearchParams(params.toString()), quotes),
+    // The quotes matter only for the older form, which names the latest.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [params, quotes.length],
+  );
+  // An older form is read once and written back in the current one, so
+  // the address bar is a link in the page's own words.
+  useEffect(() => {
+    if (!params.has("on") && !params.has("reading")) return;
+    if (params.get("on") === "quotes" && !quotes.length) return;
+    setQuery({
+      on: null,
+      reading: null,
+      view: moment.view === "asked" ? null : moment.view,
+      quote: moment.quote,
+    });
+  }, [params, moment, quotes.length]);
+  const set = useCallback((update: Partial<Moment>) => {
+    const next: Record<string, string | null> = {};
+    if ("view" in update) next.view = update.view && update.view !== "asked" ? update.view : null;
+    if ("quote" in update) next.quote = update.quote ?? null;
+    if ("against" in update) next.against = update.against ?? null;
+    if ("check" in update) next.check = update.check ?? null;
+    // The older forms say nothing once the new ones do.
+    next.on = null;
+    next.reading = null;
+    setQuery(next, true);
+  }, []);
+  return { ...moment, set };
+}
+
 // -- reading and writing the URL ----------------------------------------------
 
 /** The order the parameters are written in, so the same view is the same URL. */
-const ORDER = ["on", "frame", "show", "grid", "quote", "reading", "check", "against", "thread"];
+const ORDER = ["view", "quote", "against", "check", "frame", "show", "grid", "thread"];
 
 /** A query, written so a person can read it: `:` and `,` are left as they
  * are, which a query may carry (RFC 3986), rather than `%3A` and `%2C`. */
@@ -123,12 +200,7 @@ export function setQuery(
   for (const [k, v] of Object.entries(update))
     if (v === null) params.delete(k);
     else params.set(k, v);
-  // The person going to the other surface leaves the item they were at: a
-  // link still carrying it would bring that surface back.
-  const hash = decodeURIComponent(window.location.hash.slice(1));
-  const on = push && "on" in update ? surfaceNamed(params.get("on") ?? "specification") : null;
-  const item = hash ? surfaceOf(hash) : null;
-  const fragment = leave || (item && on && item !== on) ? "" : window.location.hash;
+  const fragment = leave ? "" : window.location.hash;
   const next = `${window.location.pathname}${queryOf(params)}${fragment}`;
   const now = `${window.location.pathname}${window.location.search}${window.location.hash}`;
   if (next === now) return;
@@ -141,15 +213,12 @@ export function setQuery(
 function viewParams(view: View, complete: boolean): Record<string, string | null> {
   const usual = view.showing.every((f) => f.shown === f.usual);
   return {
-    on: complete || view.mode !== "canvas" ? SURFACE[view.mode] : null,
     frame: complete || view.frame ? frameWord(view.frame) : null,
     show: complete || !usual ? shownOf(view).join(",") : null,
   };
 }
 
 function paramsOf(stimulus: Stimulus): Record<string, string | null> | null {
-  if (stimulus.act === "focus")
-    return { on: stimulus.surface === "canvas" ? null : SURFACE[stimulus.surface as Surface] };
   if (stimulus.act === "frame") return { frame: frameWord(stimulus.frame as FrameAsked) };
   if (stimulus.act === "unframe") return { frame: null };
   return null;
@@ -162,9 +231,6 @@ export function viewLink(view: View, at = false): string {
   const params = new URLSearchParams(window.location.search);
   for (const [k, v] of Object.entries(viewParams(view, true)))
     if (v !== null) params.set(k, v);
-  // The quote shown, named rather than left to mean the latest, which moves.
-  if (view.mode === "quote" && !params.has("quote") && view.quotes.length)
-    params.set("quote", view.quotes[view.quotes.length - 1].quote);
   return `${window.location.origin}/${queryOf(params)}${at ? window.location.hash : ""}`;
 }
 
@@ -197,7 +263,6 @@ function useBring() {
       let now = latest.current.view;
       if (!now) return;
       if (written) {
-        if (!params.has("on")) params.set("on", SURFACE.canvas);
         if (!params.has("frame")) params.set("frame", "none");
         if (!params.has("show"))
           params.set("show", now.showing.filter((f) => f.usual).map((f) => f.facet).join(","));
@@ -207,9 +272,6 @@ function useBring() {
         const next = await gesture(stimulus);
         if (next) now = next;
       };
-
-      const surface = surfaceNamed(params.get("on"));
-      if (surface && surface !== now.mode) await perform({ act: "focus", surface });
 
       const word = params.get("frame");
       const frame = word === null ? undefined : frameNamed(word);
@@ -277,23 +339,11 @@ export function usePlace(): boolean {
   }, [arrived, bring]);
 
   const params = view ? viewParams(view, false) : null;
-  const key = params ? `${params.on}|${params.frame}|${params.show}` : "";
+  const key = params ? `${params.frame}|${params.show}` : "";
   const thread = chat?.threadId ?? null;
-  // The item the page was at, once its surface has been in front. Another
-  // party bringing the other surface forward leaves it off screen, and the
-  // address bar is to name what is on screen; until then the fragment is
-  // still on its way and is kept.
-  const reached = useRef<string | null>(null);
   useEffect(() => {
     if (!arrived || !params || bringing.current || !view) return;
-    const hash = decodeURIComponent(window.location.hash.slice(1));
-    const item = hash ? surfaceOf(hash) : null;
-    if (item === view.mode) reached.current = hash;
-    setQuery(
-      { ...params, grid: grid === "today" ? null : grid, thread },
-      false,
-      !!item && item !== view.mode && reached.current === hash,
-    );
+    setQuery({ ...params, grid: grid === "today" ? null : grid, thread });
     // `key` stands for `params`.
   }, [arrived, settled, key, grid, thread]);
 
@@ -301,9 +351,87 @@ export function usePlace(): boolean {
 }
 
 /**
- * Perform a gesture that is the person navigating — another surface, a
- * filter, a frame — as a new entry in the history first, so the back button
- * returns to where they were.
+ * Follow the page's fragment, once each time it changes: open the moment and
+ * the view that hold the item, then scroll to it once it has rendered. The
+ * view arrives after the page does, so the browser's own scroll to the
+ * fragment finds nothing; this repeats it when the view has rendered. A
+ * fragment already followed is left alone when the view changes for another
+ * reason, so the address does not pull the person back.
+ */
+export function useFollowAddress(arrived: boolean): string | null {
+  const { view, gesture } = useConfigurator();
+  const hash = useHashWord();
+  const ready = view !== null && arrived;
+  // The address followed last, when nothing was found at it.
+  const [lost, setLost] = useState<string | null>(null);
+  const pending = useRef<string | null>(null);
+  const framed = useRef(false);
+  const isFramed = !!view?.frame;
+  useEffect(() => {
+    framed.current = isFramed;
+  }, [isFramed]);
+  useEffect(() => {
+    pending.current = hash || null;
+    setLost(null);
+  }, [hash]);
+  useEffect(() => {
+    const id = pending.current;
+    if (!ready || !id) return;
+    pending.current = null;
+    const place = placeOf(id);
+    if (place) open(place);
+    let tries = 0;
+    let widened = false;
+    const find = () => {
+      const el = document.getElementById(id);
+      if (el) arrive(el);
+      else if (tries++ < 10) setTimeout(find, 50);
+      else if (framed.current && !widened && place?.view === "asked" && !place.quote) {
+        // Not drawn: the frame leaves it out. Show everything, and look again.
+        widened = true;
+        tries = 0;
+        void gesture({ act: "unframe" }).then(() => setTimeout(find, 50));
+      } else if (tries < 40) setTimeout(find, 50);
+      // Words in the chat render once their conversation has loaded, and go
+      // to themselves then (`chat/index.tsx`).
+      else if (place) setLost(id);
+    };
+    find();
+  }, [ready, hash, gesture]);
+  return lost;
+}
+
+/** Open the moment and the view an item is in, where the ones open do not
+ * hold it. Following the address made the history entry already. */
+function open(place: Place) {
+  const params = new URLSearchParams(window.location.search);
+  const now = momentOf(params);
+  const update: Record<string, string | null> = {};
+  if (now.quote !== place.quote) update.quote = place.quote;
+  if (place.view && now.view !== place.view) update.view = place.view === "asked" ? null : place.view;
+  if (place.against !== undefined && now.against !== place.against) update.against = place.against;
+  if (Object.keys(update).length) {
+    update.on = null;
+    update.reading = null;
+    setQuery(update);
+  }
+}
+
+function useHashWord(): string {
+  const [hash, setHash] = useState("");
+  useEffect(() => {
+    const read = () => setHash(decodeURIComponent(window.location.hash.slice(1)));
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+  return hash;
+}
+
+/**
+ * Perform a gesture that is the person navigating — a filter, a frame — as
+ * a new entry in the history first, so the back button returns to where
+ * they were.
  */
 export function useNavigate() {
   const { gesture } = useConfigurator();
@@ -347,6 +475,8 @@ export function useFollowLink() {
     [bring],
   );
 }
+
+export { NOW };
 
 // -- copying a link -----------------------------------------------------------
 

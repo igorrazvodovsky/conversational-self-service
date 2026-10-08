@@ -1,14 +1,21 @@
 "use client";
 
 import { Fragment } from "react";
+import { ChevronDownIcon } from "lucide-react";
 import { goTo } from "@/components/configurator/address";
-import { CopyViewLink, useNavigate } from "@/components/configurator/link";
+import { CopyViewLink, TITLE, useMoment, type ViewName } from "@/components/configurator/link";
 import { sections } from "@/components/configurator";
-import {
-  useConfigurator,
-  type Surface,
-} from "@/components/configurator/provider";
+import { STANDING } from "@/components/configurator/document";
+import { useConfigurator } from "@/components/configurator/provider";
 import { Log } from "@/components/configurator/log";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -21,60 +28,59 @@ interface Place {
   id: string;
   title: string;
   count?: number;
-  surface: Surface;
-  /** An address on the surface, rather than the surface itself. */
+  /** A view of the document, or, with `at`, an address on it. */
+  view?: ViewName;
   at?: boolean;
 }
 
 /**
- * The way around the panel, in one row. The specification is one list, and
- * what it shows is chosen by the filters above the list, not here.
+ * The way around the document, in one row: the views by name, and the
+ * moment they show. The document is one; a view is a projection of it for
+ * one task, and a moment is the draft or an issued offer (`docs/ui.md`, "One
+ * document, read several ways"). Both are the viewer's, held in the URL,
+ * so an entry here is a URL the person can open in another tab or copy;
+ * followed here, it is a new entry in the history, and the back button
+ * returns to where they were.
  *
- * A surface is reached by `focus`. The question is an address on the
- * specification (`address.tsx`), not a surface.
- *
- * A surface's link is its URL, `?on=quotes`, so it can be opened in another
- * tab or copied as any link can; followed here, it is a new entry in the
- * history, and the back button returns to the surface before.
+ * The question is an address on the document, not a view. The comparison
+ * shows only while there is a pair to compare, which the moment's band
+ * offers.
  */
 export function PanelNav() {
   const { view } = useConfigurator();
-  const navigate = useNavigate();
+  const moment = useMoment();
   if (!view) return null;
-  const mode = view.mode;
   const { questions } = sections(view);
+  const issued = view.quotes;
+  const current = moment.quote ? issued.find((q) => q.quote === moment.quote) : undefined;
   const groups: Place[][] = [
     [
       ...(questions.length
-        ? [
-            {
-              id: "questions",
-              title: "Asked of you",
-              count: questions.length,
-              surface: "canvas" as const,
-              at: true,
-            },
-          ]
+        ? [{ id: "questions", title: "Asked of you", count: questions.length, at: true }]
         : []),
-      { id: "asserted", title: "Specification", surface: "canvas" },
+      { id: "asked", title: TITLE.asked, view: "asked" as const },
     ],
-    // Offered once an offer exists: before that there is nothing to look at,
-    // and the request is made from the specification.
-    view.quotes.length || mode === "quote"
-      ? [{ id: "quotes", title: "Quotes", count: view.quotes.length, surface: "quote" }]
-      : [],
+    [
+      { id: "proposal", title: TITLE.proposal, view: "proposal" as const },
+      { id: "timeline", title: TITLE.timeline, view: "timeline" as const },
+      { id: "drawing", title: TITLE.drawing, view: "drawing" as const },
+      ...(moment.against ? [{ id: "compared", title: TITLE.compared, view: "compared" as const }] : []),
+    ],
   ];
 
   const follow = (place: Place) => {
     if (place.at) goTo(place.id);
-    else if (mode !== place.surface)
-      // Focus follows the person to the surface they asked for, so the keyboard does not stay behind in the header. A surface
-      // a rule brings forward takes no focus: nobody asked to go there.
-      void navigate({ act: "focus", surface: place.surface }).then((next) => {
-        if (next?.mode === place.surface) focusSurface(place.surface);
-      });
-    else focusSurface(place.surface);
+    else if (place.view && place.view !== moment.view) {
+      moment.set({ view: place.view });
+      // Focus follows the person to the view they asked for, so the
+      // keyboard does not stay behind in the header.
+      focusMain(place.view);
+    } else if (place.view) focusMain(place.view);
   };
+
+  const momentWord = current
+    ? `No. ${current.number} · ${STANDING[current.standing]}`
+    : "As it stands";
 
   return (
     // Beside the wordmark while there is room for it, on a line of its own
@@ -95,28 +101,24 @@ export function PanelNav() {
                 <li aria-hidden className="mx-1 h-3.5 w-px shrink-0 bg-border" />
               ) : null}
               {places.map((place) => {
-                const current = !place.at && place.surface === mode;
+                const isCurrent = !place.at && place.view === moment.view;
                 return (
                   <NavigationMenuItem key={place.id}>
                     <NavigationMenuLink
                       href={
                         place.at
                           ? `#${place.id}`
-                          : place.surface === "quote"
-                            ? "/?on=quotes"
-                            : "/?on=specification"
+                          : hrefOf(place.view!, moment.quote)
                       }
-                      active={current}
+                      active={isCurrent}
                       onClick={(event) => {
                         event.preventDefault();
                         follow(place);
                       }}
                       className={cn(
                         "gap-1 hover:text-foreground",
-                        place.surface === mode
-                          ? "text-foreground"
-                          : "text-muted-foreground",
-                        current && "font-medium",
+                        isCurrent ? "text-foreground" : "text-muted-foreground",
+                        isCurrent && "font-medium",
                       )}
                     >
                       {place.title}
@@ -131,6 +133,40 @@ export function PanelNav() {
           ))}
         </NavigationMenuList>
       </NavigationMenu>
+      {/* The moment, once there is more than one: the draft, or an issued
+          offer by its number. With nothing issued the draft is implied, and
+          the band above the view says so. */}
+      {issued.length ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="xs" className="text-muted-foreground">
+              <span className="sr-only">Moment: </span>
+              {momentWord}
+              <ChevronDownIcon />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuRadioGroup
+              value={moment.quote ?? "draft"}
+              onValueChange={(value) =>
+                moment.set({
+                  quote: value === "draft" ? null : value,
+                  against: null,
+                  check: null,
+                })
+              }
+            >
+              <DropdownMenuRadioItem value="draft">As it stands</DropdownMenuRadioItem>
+              {[...issued].reverse().map((q) => (
+                <DropdownMenuRadioItem key={q.quote} value={q.quote}>
+                  No. {q.number} · {STANDING[q.standing]}
+                  {q.stale.length ? " · out of date" : ""}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
       <div className="ml-auto flex shrink-0 items-center gap-1">
         <Log />
         <CopyViewLink />
@@ -139,15 +175,24 @@ export function PanelNav() {
   );
 }
 
-/** Take focus to the panel's `main`, named by the surface's `h1`, once that
- * surface has rendered. The `main` rather than the heading, because a
- * surface's `h1` may be visually hidden and a ring on it would be invisible. */
-function focusSurface(surface: Surface, tries = 0) {
+/** A view's URL at the moment shown, as `link.tsx` writes it. */
+function hrefOf(view: ViewName, quote: string | null): string {
+  const params = new URLSearchParams();
+  if (view !== "asked") params.set("view", view);
+  if (quote) params.set("quote", quote);
+  const query = params.toString();
+  return query ? `/?${query}` : "/";
+}
+
+/** Take focus to the panel's `main`, named by the view's `h1`, once that
+ * view has rendered. The `main` rather than the heading, because the `h1`
+ * is visually hidden and a ring on it would be invisible. */
+function focusMain(view: ViewName, tries = 0) {
   const heading = document.querySelector<HTMLElement>(
-    `#main h1[data-surface="${surface}"]`,
+    `#main h1[data-view="${view}"]`,
   );
   if (!heading) {
-    if (tries < 10) setTimeout(() => focusSurface(surface, tries + 1), 50);
+    if (tries < 10) setTimeout(() => focusMain(view, tries + 1), 50);
     return;
   }
   const main = document.getElementById("main");

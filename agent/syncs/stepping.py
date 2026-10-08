@@ -48,12 +48,6 @@ def _a_taken_step_frames_the_canvas(c: Completion, _: States) -> list[Invocation
     ]
 
 
-def _a_framed_step_shows_the_configuration(c: Completion, _: States) -> list[Invocation]:
-    frame = c.output.get("frame")
-    if c.failed or not isinstance(frame, dict) or frame.get("by") != "step":
-        return []
-    return [Invocation("Moding", "focus", {"workspace": WORKSPACE, "surface": "canvas"})]
-
 
 def _gesture(act: str, action: str, *arguments: str):
     """The person's gesture carried to the action of the same shape, under
@@ -102,11 +96,6 @@ rules = [
     ),
     Sync("APersonTakesAStep", GESTURE, _gesture("take", "take", "spec", "step")),
     Sync("ATakenStepFramesTheCanvas", ("Stepping", "take"), _a_taken_step_frames_the_canvas),
-    Sync(
-        "AFramedStepShowsTheConfiguration",
-        ("Framing", "frame"),
-        _a_framed_step_shows_the_configuration,
-    ),
     Sync("APersonFinishesAStep", GESTURE, _gesture("finish", "finish", "step")),
     Sync("APersonSkipsAStep", GESTURE, _gesture("skip", "skip", "step", "reason")),
     Sync("APersonReopensAStep", GESTURE, _gesture("reopen", "reopen", "step")),

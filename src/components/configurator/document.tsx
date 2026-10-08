@@ -1,16 +1,20 @@
 "use client";
 
 /**
- * One quote, laid out as a commercial proposal.
+ * The document at one moment, laid out as a commercial proposal.
  *
- * A rendering of `Quoting`'s state and nothing else. Every figure and every
- * clause comes from the offer as it was issued — the seller's stipulations,
- * both parties' profiles and the job's name were copied into the quote's
- * terms at that moment — except the carbon annex, which is an estimate
- * recomputed from the frozen values and labelled as one. Labels come from the
- * catalogue, because an option's identity does not change.
+ * A rendering of one moment and nothing else: an issued quote, where every
+ * figure and every clause comes from the offer as it was issued — the
+ * seller's stipulations, both parties' profiles and the job's name were
+ * copied into the quote's terms at that moment — or the draft, the deal as
+ * it stands read the same way, with a blank where each open value goes, a
+ * running sum and a term that may be presumed (`docs/ui.md`, "One document,
+ * read several ways"). The carbon annex is an estimate recomputed from the
+ * values and labelled as one. Labels come from the catalogue, because an
+ * option's identity does not change.
  *
- * The shape follows what a lift manufacturer actually sends.
+ * The shape follows what a lift manufacturer actually sends; the draft
+ * says it is one where the number, the validity and the signature would be.
  *
  * The rendering knows a few of the catalogue's variable names — the handover
  * option, the contract term, the service level — because a proposal puts
@@ -46,6 +50,7 @@ const tonnes = (kg: number) => `${tonnesOf(kg)} CO₂e`;
 const percent = (share: number) => `${Math.round(share * 100)} %`;
 
 export const STANDING: Record<Quote["standing"], string> = {
+  draft: "Draft",
   open: "Open for acceptance",
   committed: "Accepted",
   revoked: "Revoked",
@@ -54,6 +59,7 @@ export const STANDING: Record<Quote["standing"], string> = {
 
 /** An open offer waits on the person, an accepted one is done; the rest are past. */
 export const STANDING_TONE: Record<Quote["standing"], string | undefined> = {
+  draft: undefined,
   open: TONE.info,
   committed: TONE.positive,
   revoked: undefined,
@@ -167,22 +173,33 @@ export function QuoteDocument({
   quote,
   view,
   actions,
+  addressee,
+  open = [],
   level = 1,
 }: {
   quote: Quote;
   view: Pick<View, "product" | "currency" | "footprint">;
   actions?: ReactNode;
+  /** The draft's addressee, editable where a proposal puts it; an issued
+   * offer's is frozen in its terms. */
+  addressee?: ReactNode;
+  /** The draft's open variables, each a blank line in its family. */
+  open?: { name: string; heading: string; family: string }[];
   /** The level of the proposal's title: 1 when the page is the proposal,
-   * lower when it sits inside a surface that has its own headings. */
+   * lower when it sits inside a view that has its own headings. */
   level?: Level;
 }) {
   const Title = tag(level);
   const { currency } = view;
   const { terms } = quote;
+  const draft = quote.standing === "draft";
   const years = terms.months / 12;
   const byOthers = new Set(terms.byOthers);
   const held = new Map<string, Held>(quote.holds.map((h) => [h.name, h]));
-  const say = (variable: string) => held.get(variable)?.label ?? "";
+  // A blank where the draft has no value yet, so the sentence reads with
+  // its gaps rather than closing over them.
+  const say = (variable: string) => held.get(variable)?.label ?? (draft ? "…" : "");
+  const blanks = (family: string) => open.filter((o) => o.family === family);
   const scope = new Map<string, Held[]>();
   for (const h of quote.holds) {
     if (byOthers.has(h.name)) continue;
@@ -213,9 +230,9 @@ export function QuoteDocument({
             ))}
         </div>
         <dl className="min-w-48 space-y-0.5 text-xs">
-          <Line term="Quotation" amount={`No. ${quote.number}`} />
+          <Line term="Quotation" amount={quote.number === null ? "Draft" : `No. ${quote.number}`} />
           {quote.issued ? <Line term="Date" amount={day(quote.issued)} /> : null}
-          <Line term="Valid until" amount={day(quote.until)} />
+          <Line term="Valid until" amount={quote.until ? day(quote.until) : "not yet issued"} />
           <Line
             term="Standing"
             amount={
@@ -232,16 +249,20 @@ export function QuoteDocument({
 
       <Separator className="my-6" />
 
-      <section className="grid gap-6 sm:grid-cols-2">
-        <Address party={terms.customer} role="To" />
-        <div className="text-sm">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Project
-          </p>
-          {terms.title ? <p className="font-medium">{terms.title}</p> : null}
-          <p>{terms.site}</p>
-        </div>
-      </section>
+      {addressee ? (
+        <section>{addressee}</section>
+      ) : (
+        <section className="grid gap-6 sm:grid-cols-2">
+          <Address party={terms.customer} role="To" />
+          <div className="text-sm">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Project
+            </p>
+            {terms.title ? <p className="font-medium">{terms.title}</p> : null}
+            <p>{terms.site}</p>
+          </div>
+        </section>
+      )}
 
       {/* The proposal, in one sentence, the way a bid letter opens. */}
       <section className="mt-6 space-y-3">
@@ -252,12 +273,22 @@ export function QuoteDocument({
           {sellerName} proposes to supply and install one (1){" "}
           {say(SENTENCED.platform)} passenger lift, {say(SENTENCED.load)},{" "}
           {say(SENTENCED.speed)}, serving {say(SENTENCED.stops)} over a travel
-          of {say(SENTENCED.travel)}, at {terms.site}, for the sum of{" "}
+          of {say(SENTENCED.travel)}, at {terms.site || "…"}, for the sum of{" "}
           <span className="font-semibold tabular-nums">
             {money(quote.amount, currency)}
-          </span>{" "}
-          excluding VAT, on the terms below.
+          </span>
+          {draft && open.length ? " so far" : ""} excluding VAT, on the terms below.
         </p>
+        {draft ? (
+          <p className="text-xs text-muted-foreground">
+            A draft: what the deal would come to as it stands. Nothing here is
+            offered until the seller issues a quotation
+            {open.length
+              ? `, and ${open.length === 1 ? "one value is" : `${open.length} values are`} still open`
+              : ""}
+            .
+          </p>
+        ) : null}
         {actions ? (
           <div className="flex flex-wrap gap-2 print:hidden">{actions}</div>
         ) : null}
@@ -329,8 +360,9 @@ export function QuoteDocument({
           </TableHeader>
           <TableBody>
             {SCOPE.map(([family, heading]) => {
-              const lines = scope.get(family);
-              if (!lines?.length) return null;
+              const lines = scope.get(family) ?? [];
+              const missing = blanks(family);
+              if (!lines.length && !missing.length) return null;
               return (
                 <Fragment key={family}>
                   <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -355,6 +387,18 @@ export function QuoteDocument({
                       <TableCell>{line.label}</TableCell>
                     </TableRow>
                   ))}
+                  {/* The draft's blanks: the gap, in the seller's format. */}
+                  {missing.map((o) => (
+                    <TableRow key={o.name}>
+                      <TableHead
+                        scope="row"
+                        className="h-auto py-2 align-top font-normal whitespace-normal text-muted-foreground"
+                      >
+                        {o.heading}
+                      </TableHead>
+                      <TableCell className="text-muted-foreground">— open</TableCell>
+                    </TableRow>
+                  ))}
                 </Fragment>
               );
             })}
@@ -376,8 +420,8 @@ export function QuoteDocument({
           </p>
           <p className="text-xs text-muted-foreground">
             for the equipment supplied and installed, with the works and the
-            arrangement for the end of its life stated, excluding VAT, firm
-            for the validity period
+            arrangement for the end of its life stated, excluding VAT,{" "}
+            {draft ? "running, and not yet offered" : "firm for the validity period"}
           </p>
         </div>
         <div>
@@ -476,7 +520,14 @@ export function QuoteDocument({
                 amount={say(SENTENCED.maintainability)}
               />
             ) : null}
-            <Line term="Term" amount={say(SENTENCED.term) || `${years} years`} />
+            <Line
+              term="Term"
+              amount={
+                terms.presumed
+                  ? `${years} years, presumed until a term is chosen`
+                  : say(SENTENCED.term) || `${years} years`
+              }
+            />
             <Line
               term="Charge, per month, excluding VAT"
               amount={money(terms.recurring, currency)}
@@ -588,11 +639,18 @@ export function QuoteDocument({
       {/* 13. Acceptance */}
       <section>
         <Heading level={level + 1}>13. Acceptance</Heading>
-        <p>
-          This proposal is open for acceptance until {day(quote.until)}. On
-          acceptance it, with the conditions above, constitutes the whole
-          agreement for the supply and installation of the lift described.
-        </p>
+        {quote.until ? (
+          <p>
+            This proposal is open for acceptance until {day(quote.until)}. On
+            acceptance it, with the conditions above, constitutes the whole
+            agreement for the supply and installation of the lift described.
+          </p>
+        ) : (
+          <p>
+            A draft is not open for acceptance. Once the seller issues a
+            quotation, it is, until the date the quotation gives.
+          </p>
+        )}
         {quote.standing === "committed" && quote.committed ? (
           <p className="mt-2 font-medium">
             Accepted by {customerName} on {day(quote.committed)}.

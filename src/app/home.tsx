@@ -4,7 +4,6 @@ import { ExampleLayout } from "@/components/example-layout";
 import { ConfiguratorCanvas } from "@/components/configurator";
 import { AnsweringProvider } from "@/components/configurator/clauses";
 import { ConfiguratorProvider } from "@/components/configurator/provider";
-import { QuoteSurface } from "@/components/configurator/quotes";
 import { BrowserAgentTools } from "@/components/configurator/webmcp";
 import { ConfiguratorChat } from "@/components/chat";
 import { ConverseTools } from "@/components/chat/converse";
@@ -50,7 +49,6 @@ export function HomeRoot({ canvasPercent }: { canvasPercent: number }) {
             canvasPercent={canvasPercent}
             chatContent={<ConfiguratorChat />}
             appContent={<ConfiguratorCanvas />}
-            quoteContent={<QuoteSurface />}
           />
         </AnsweringProvider>
       </ConfiguratorProvider>

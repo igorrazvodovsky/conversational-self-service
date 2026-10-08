@@ -224,8 +224,8 @@ function WaitingQuestion({
 
 const FIELD = { name: "your name", site: "the site" } as const;
 
-/** The fields are on the quote surface, where they are edited whether or
- * not anybody asked; the card links there. */
+/** The fields are the proposal's own "To" and "Project" lines, edited there
+ * whether or not anybody asked; the card links there. */
 function WaitingAddressee({
   message,
   resolve,
@@ -302,7 +302,7 @@ function AskedRecord({
   }
   const answer =
     addressee && outcome.status === "recorded"
-      ? "Answered on the quote surface"
+      ? "Answered in the proposal"
       : addressee && outcome.status === "withdrawn"
         ? "No longer all a quote lacks"
         : outcome.status === "chosen" && outcome.chosen?.goal

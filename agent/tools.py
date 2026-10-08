@@ -30,7 +30,7 @@ separate calls.
 `review`, `look_up`, `open_file` and `open_quote` are readings: each returns a
 projection of state and records nothing, so the model asking what an offer
 holds is not an action anybody performed.  `open_quote` is the offer as it
-was frozen at issue, the record the quote surface lays out and the person's
+was frozen at issue, the record the canvas lays out as a proposal and the person's
 own agent reads through `open_quote` in `delegate.py`.
 
 `show`, `hide`, `frame` and `unframe` are the four that change no fact: they
@@ -393,12 +393,16 @@ def open_file(file: str) -> dict[str, Any]:
 
 
 @tool
-def open_quote(quote: str) -> dict[str, Any]:
-    """Read an issued quote, as the offer was frozen when it was made.
+def open_quote(quote: str | None = None) -> dict[str, Any]:
+    """Read an issued quote, as the offer was frozen when it was made, or,
+    with no quote, the draft: the deal as it stands, read the same way.
 
     `quote` is an id from the `quotes` list `review` returns, where each
-    quote's `number` is what the person calls it ("No. 2"). Returns what the
-    offer holds: each requirement as it stood with what answered it, or that
+    quote's `number` is what the person calls it ("No. 2"); leave it out
+    for the draft, which `review` lists under `draft` with what is still
+    open and why it cannot yet be issued. Explain the draft as what the deal
+    would come to, and call it a draft, never a quote or an offer: a running
+    sum or a presumed term is not fixed. Returns what the moment holds: each requirement as it stood with what answered it, or that
     nothing did; each value with its standing, why it holds — who asked for
     it, in the canvas's words to the person, or the rules that force it —
     and what it adds to the sum and the monthly charge; the programme's
@@ -408,7 +412,7 @@ def open_quote(quote: str) -> dict[str, Any]:
 
     Every line carries its address under `at`: link it when you explain the
     line, rather than reciting the offer. You cannot accept or revoke a
-    quote; the person does, on the quote surface.
+    quote; the person does, on the canvas.
     """
     return quoted(engine, SPEC, quote)
 

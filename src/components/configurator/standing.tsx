@@ -29,6 +29,7 @@ import { LIFE, priced } from "./life";
 import { TONE, type Tone } from "./tone";
 import { useShown } from "./showing";
 import { useConfigurator, type Goal as GoalChoice, type Grid, type Party, type View } from "./provider";
+import { CompareMenu } from "./quotes";
 
 /**
  * The state, named after the condition of `APersonRequestsAQuote` that fails
@@ -76,10 +77,18 @@ export function Standing() {
           </Badge>
           <HandedOver />
           {/* Why not yet is beside the button, and the button stays in reach
-              and names it, as on the quote surface (`quotes.tsx`). */}
+              and names it. The addressee is a line of the proposal, so a
+              reason that names it links there. */}
           {quotable.ok ? null : (
             <span id="standing-why-not" className="text-sm">
-              {capital(quotable.because)}.
+              {capital(quotable.because)}
+              {quotable.because.startsWith("no name") || quotable.because.startsWith("no site") ? (
+                <>
+                  {": "}
+                  <To id={address.addressee}>say who it is for</To>
+                </>
+              ) : null}
+              .
             </span>
           )}
           <div className="ml-auto flex gap-2">
@@ -98,12 +107,14 @@ export function Standing() {
               Request a quote
             </Button>
             <HandOver />
+            {/* The draft set against an issued offer; an offer's own band
+                carries the same menu (`quotes.tsx`). */}
+            <CompareMenu />
           </div>
         </div>
 
         <Conflict />
         <FinishFor />
-        <Addressee />
 
         <Collapsible>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t pt-3 text-sm">
@@ -353,16 +364,16 @@ const CUSTOMER: {
 ];
 
 /**
- * Who the specification is for and where the lift goes, as a line of where
- * it stands: the last thing shaping needs before an offer can be asked
- * for, beside the reason that names it when it is missing. The form is
- * behind the line, as the handover's reason is behind its button. Each
- * field is sent only when it changed, because `introduce` and `entitle`
- * are partial and a field left alone should stay as it was. Arrived at
- * from the assistant's question in the chat, the form opens with the
- * keyboard in the first field a quote still needs.
+ * Who the proposal is for and where the lift goes, as the proposal's own
+ * "To" and "Project" lines, editable where a proposal puts them: the last
+ * thing shaping needs before an offer can be asked for. The form is behind
+ * the line, as the handover's reason is behind its button. Each field is
+ * sent only when it changed, because `introduce` and `entitle` are partial
+ * and a field left alone should stay as it was. Arrived at from the
+ * assistant's question in the chat, or from the standing's reason, the form
+ * opens with the keyboard in the first field a quote still needs.
  */
-function Addressee() {
+export function Addressee() {
   const { view, gesture } = useConfigurator();
   const customer = view?.customer ?? {};
   const project = view?.project ?? { title: "", site: "" };
@@ -408,11 +419,11 @@ function Addressee() {
   return (
     <div
       id={address.addressee}
-      className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t pt-3 text-sm ${addressable} ${isTarget ? targeted : ""}`}
+      className={`flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm ${addressable} ${isTarget ? targeted : ""}`}
     >
       {who ? (
         <p>
-          <span className="text-muted-foreground">For </span>
+          <span className="text-xs uppercase tracking-wide text-muted-foreground">To </span>
           {who}
           {where ? <span className="text-muted-foreground"> · {where}</span> : null}
         </p>

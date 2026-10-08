@@ -23,8 +23,7 @@ In code, values are primitives and collections — MSM §5.2 calls them value-ob
 | `scope` — what the carbon estimate covers and omits | `agent/concepts/footprinting.py` |
 | a retraction candidate, `{variable, option}` | `agent/syncs/propagation.py` |
 | an assignment, `Variable -> Option` | `agent/concepts/constraining.py`, `complete` |
-| `act` ∈ {`start`, `say`, `assert`, `withdraw`, `discard`, `choose`, `decline`, `focus`} | `agent/engine/bootstrap.py` |
-| `surface` ∈ {`chat`, `canvas`} | `agent/concepts/moding.py` |
+| `act` ∈ {`start`, `say`, `assert`, `withdraw`, `discard`, `choose`, `decline`} | `agent/engine/bootstrap.py` |
 
 Two are worth arguing about, because both look like individuals at first.
 

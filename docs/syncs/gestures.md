@@ -44,10 +44,6 @@ sync APersonDeclinesToAnswer
 when  { Copiloting/gesture: [ act: "decline" ; request: ?r ] => [] }
 then  { Deciding/decline: [ request: ?r ] }
 
-sync APersonFocusesASurface
-when  { Copiloting/gesture: [ act: "focus" ; surface: ?surface ] => [] }
-then  { Moding/focus: [ workspace: workspace ; surface: ?surface ] }
-
 sync APersonShowsAFacet
 when  { Copiloting/gesture: [ act: "show" ; facet: ?f ] => [] }
 then  { Showing/show: [ lens: workspace ; facet: ?f ] }
@@ -292,9 +288,9 @@ expose their relations, and assembling a record from them is the reader's
 business, as it is in WYSIWID §5.5's `RegistrationResponse`. The rule reads
 `Naming`'s title and site the same way. `agent/syncs/readings.py` holds the
 one implementation the rules and the canvas share. The canvas also reads the
-requirements and the grounds of the specification as it stands, so the quote
-surface can compare an issued offer with what a quote requested now would
-freeze.
+requirements and the grounds of the specification as it stands, so the
+document compared at two moments can set an issued offer against what a
+quote requested now would freeze.
 
 The case catalogue's `Quoting.quote` *requires `valid` and `priced`*, and this
 `where` is what that means here, with z3 standing in for the real solver: every variable settled,
@@ -366,8 +362,8 @@ does the comparison. `APersonRevokesAQuote` carries nothing but the identity.
 `APersonShowsAFacet` and `APersonHidesAFacet` carry a tick in a menu into
 [Showing](../concepts/showing.md). They change no
 fact of the specification: a facet names something a concept already holds,
-and the act decides whether the canvas reads it. The lens is the workspace,
-as the surface's workspace is in `APersonFocusesASurface`. Both have
+and the act decides whether the canvas reads it. The lens is the workspace:
+the choice is the page's, whichever view of the document is open. Both have
 counterparts in [Conduct](conduct.md#what-the-canvas-shows) on identical
 terms, which makes them permissions both actors hold alike.
 
@@ -468,7 +464,7 @@ it fires is a fact of that concept's state. It is the counterpart of
 
 `Copiloting/gesture` takes whatever the browser sends and returns it; it holds
 no state and decides nothing. So the `act` values above — `start`, `say`,
-`file`, `assert`, `withdraw`, `discard`, `choose`, `decline`, `focus`, `introduce`,
+`file`, `assert`, `withdraw`, `discard`, `choose`, `decline`, `introduce`,
 `entitle`, `quote`, `commit`, `revoke`, `require`, `settle`, `relax`, `strike`,
 `reword`, `move`, `show`, `hide`, `frame`, `unframe`, `answer` in
 [Binding](binding.md), `keep` in [Reading](reading.md), and `reply` in

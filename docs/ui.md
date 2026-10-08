@@ -56,12 +56,9 @@ and what did that cost*, so a line is a requirement in the person's words,
 editable where it stands, beside the values answering it and their
 consequences; a requirement nothing answers is a line with a gap where its
 answer goes, and the values answering nothing share a last line. The clause
-and its answer are one line on one surface rather than two items linked
-across surfaces: nearly everything a person does crosses between them, and
-that relation is what the case's design is about. So the panel has two
-surfaces, the specification and the quotes, and the question that separates
-them is the moment — the specification as it stands, an offer as it was
-made — not which concept holds the facts.
+and its answer are one line in one view rather than two items linked
+across views: nearly everything a person does crosses between them, and
+that relation is what the case's design is about.
 
 The log is read by turn. Every record carries the flow it ran in, and a flow
 is one occasion: the person's words and the calls the model made in reply,
@@ -75,7 +72,8 @@ a turn did is computed from its records, and a turn is usually several
 things at once: it may read a requirement, answer it and put a question. So
 what it did, like who took part in it, is a filter over one list, and the
 notification center is that list with everyone else's changes chosen. A
-turn that only brought a surface forward is still a turn, and true, but it
+turn that only narrowed the document, or changed what is shown beside its
+items, is still a turn, and true, but it
 answers nothing about the specification, so a run of them folds into one
 line. So does a run of gestures by the same party with no words behind them:
 a person working down the open variables answers them a turn at a time, and
@@ -84,36 +82,79 @@ run did and opens onto each turn. The words that opened a
 turn are in the chat too, at `#said:<utterance>`, and the log and the sources
 link to them. Words said in another conversation are reached by opening that
 conversation first, which is a viewer's convenience like the chat's geometry.
-The chat is no `Moding` surface, so following an address there records
-nothing.
+The chat is not a view of the document, so following an address there
+records nothing.
 
-The quote document is the arrangement for leaving the app: the package that is
-sent, printed and signed, shaped like what a lift manufacturer sends. It
-answers the questions a recipient brings to paper and no others, and its
-sections are a fixed list (`SCOPE` and `SENTENCED` in `document.tsx`) for that
-reason, and it renders the frozen values as one scope, without the asserted
-and the entailed told apart. The quote surface
-therefore reads a quote in more ways than the document does. *Against what was
-asked* is the canvas's question put to the specification as it stood when the
-offer was made: the requirements, then the values asserted and those that
-followed, each with its reason and what it added to the sum, every line
-addressed as the offer holds it. *As the proposal* is the document. Above
-the readings, the offer as a decision.
+## One document, read several ways
 
-Two things the principle leaves open:
+The panel is one document: the deal between the person and the seller, as
+it stands or as it stood when an offer was issued. The requirement list, the
+proposal, the programme and the drawing are not sections of it, and not
+surfaces beside it. They are views of it — the same facts projected for
+different tasks — and a person opens whichever their task needs:
 
-- *Which moment a view shows.* Looking at the specification as it stood at a
-  quote, rather than now, changes what a view is about. That is neither
-  `Moding`, which chooses a surface, nor `Framing`, which narrows one. Which
-  quote is being looked at, and which pair is being compared, is a viewer's
-  convenience held in the page's URL ([Links](#links)), not in the log. A
-  comparison has an address, so the assistant can put one in front of the
-  person by linking it without setting anything; if a party other than the
-  viewer is to set either, it is a candidate concept.
-- *Where `Showing` and `Framing` reach.* Both serve the configuration only
-  (`showing.tsx`, `panel-nav.tsx`). A surface gets a frame or a facet when it
-  has a question that needs one, and each such extension is a change to the
-  concept's note first.
+- *Against what was asked.* By requirement: each clause in the person's
+  words, what answers it and what that forced, a blank where nothing answers
+  yet, the values answering nothing on a last line. The task is checking,
+  and this is the ledger.
+- *As the proposal.* The seller's format, shaped like what a lift
+  manufacturer sends: the scope as one list, the price, the programme, the
+  terms, the payment stages, the work by others, the acceptance block. The
+  task is reading what one would get and sending it on, so it answers the
+  questions a recipient brings to paper and no others, and its sections are
+  a fixed list (`SCOPE` and `SENTENCED` in `document.tsx`) for that reason.
+  It does not tell the asserted from the entailed; the first view does, one
+  link away at the same item.
+- *Along time.* The milestones, and the payment stages on them. The task is
+  knowing what happens when.
+- *To scale.* The car and the shaft, a plan and a section. The task is
+  seeing whether it fits.
+- *Compared.* Two moments, only the values that differ and whose choice
+  each was. The task is deciding between offers, which two proposals side by
+  side cannot answer.
+
+Every view takes a moment. The default is the draft, the deal as it stands,
+which moves as the person decides; the others are the issued offers, each
+the document held still at the moment the seller committed to it
+([Quoting](concepts/quoting.md)). A view over the draft is as available
+halfway through as at the end, and its blanks are the point: the proposal
+over a half-finished deal has gaps where the car size and the addressee go,
+a presumed term and a running sum; the timeline has an order and nothing
+after it; the drawing has a shaft and no car. Those are the gaps in the
+seller's format, and the reason the views are worth opening early.
+
+What is not a view sits above them all, the same in every view: where the
+document stands. A draft, and why it cannot yet be issued; an offer, open
+until a date; accepted; out of date since a value the person asked for moved
+([Staling](syncs/staling.md)). The state is a fact of the deal, not a
+projection of it, and the words for it are exact: *draft* and *as it stands*
+name the moving moment, *quote* and *offer* name an issued one, and
+accepting is a move on an issued one and nowhere else. The seller's figures
+are read-only in every view; a person who wants a term changed hands the
+document over ([Handover](syncs/handover.md)).
+
+Editing lives in the view whose unit it is. A clause is typed in the first
+view, where the clause is the line. A value is a gesture in any view that
+shows it. The addressee is filled in the proposal, where a proposal puts it.
+Requesting a quote is asking the seller to hold the current moment still, so
+it is made from the draft, where the number will appear.
+
+A view fills; it does not rearrange. Blanks take values, lines gain a reason,
+a section that was one sentence grows a table. Which filter is on, and which
+view and moment are open, are the reader's, and nothing in the state moves
+them. A document that reshuffles under the person's hands is the arrangement
+by extension the principle rules out.
+
+So which view, which moment and which pair are compared are a viewer's
+convenience held in the page's URL ([Links](#links)), not in the log, and
+nothing on the page chooses a surface, because there is one. A comparison
+has an address, so the assistant can put one in front of the person by
+linking it without setting anything; if a party other than the viewer is to
+set the view or the moment, that is a candidate concept. `Showing` and
+`Framing` reach every view where their question applies: a facet is shown
+beside an item wherever the item is, and the gap filter narrows the document
+to what is still blank, which the proposal shows as blanks and the ledger as
+lines with a gap.
 
 ## Links
 
@@ -128,15 +169,15 @@ The URL has two parts, and they name different things:
 - *The fragment names an item*: `#variable:<name>`, `#clause:<id>`,
   `#choice:<id>`, `#quote:<id>:variable:<name>` and the rest in `address.tsx`.
   An item's address is what a link to the item carries, and nothing else, so
-  following one never changes how the canvas is presented beyond bringing
-  the item's surface forward and, when a frame leaves the item out, taking
-  the frame off.
-- *The query names the view*, in words the page itself uses — the
-  surface, the frame, the facets shown, the grid, the quote and how it is
-  read, the comparison, the conversation (`link.tsx`).
+  following one never changes how the document is presented beyond opening
+  a view that holds the item, when the one open does not, and, when a frame
+  leaves the item out, taking the frame off.
+- *The query names the view*, in words the page itself uses — which view,
+  which moment, the frame, the facets shown, the grid, the comparison, the
+  conversation (`link.tsx`).
 
 Opening a link performs the gestures that bring the recorded view to what
-the query says: `focus`, `frame` or `unframe`, `show` and `hide`, each only
+the query says: `frame` or `unframe`, `show` and `hide`, each only
 where the recorded view differs, so a reload records nothing. The same
 happens when a link to this page is followed from the chat. A parameter that
 is absent leaves its part of the view as it is: the view is a fact every
@@ -145,13 +186,13 @@ Going back through the browser's history follows the query too, but an
 entry in the history was written by the page, which leaves out only
 defaults, so there an absent parameter is its default. The rest are
 viewer conveniences and are not recorded; an absent one is its default — the
-latest quote, read against what was asked, compared with nothing, on
+draft, read against what was asked, compared with nothing, on
 today's grid.
 
 The page writes the view back into the address bar as it changes, whoever
 changed it, so the address bar is always a link to what is on screen.
 Defaults are left out of it. A change the person makes by navigating —
-another surface, a filter, another quote, another reading, a comparison — is
+another view, another moment, a filter, a comparison — is
 a new entry in the history, so the back button returns to where they were;
 one another party makes replaces the entry. A link copied to send on spells
 out every recorded part, defaults included, so whoever opens it sees exactly
@@ -161,16 +202,17 @@ Links outlive their items. An item can be struck, withdrawn or never
 issued, and a link to it still arrives somewhere: the page says, visibly and
 to a screen reader, that nothing is at that address now, and stays where it
 landed. Arriving by a link assumes nothing about how the person got there
-(Nielsen 2002): the item is ringed and takes focus on its surface, inside the
+(Nielsen 2002): the item is ringed and takes focus in its view, inside the
 panel's header and its way around.
 
 The addresses are kept. Each one is made of the page's own words — a
-variable's name, a clause's id, a quote's id, a surface's name — and never of
+variable's name, a clause's id, a quote's id, a view's name — and never of
 how the page is built, so none has to change when the implementation does
 (Berners-Lee 1998). An address once given out goes on working; a scheme that
-changes keeps the old form as an alias. A quote has a page of its own,
+changes keeps the old form as an alias. A moment has a page of its own,
 `/quotes/<id>`, the proposal as it prints, which is the link to send someone
-who should read the offer and nothing else.
+who should read the offer and nothing else; the draft prints the same way,
+marked as a draft where the number and the validity would be.
 
 Readers off the page need links that work off the page. `review` and
 `open_quote` give every unit its address under `at`, which the in-app chat
@@ -216,10 +258,10 @@ drop things it knows nothing about. Some of them fail silently:
 
 ## Decisions a reader might trip over
 
-- Contrast between surfaces comes from neutral levels, not colour, so a
-  thing's place in the scale reads before its words do.
+- Contrast between parts of the page comes from neutral levels, not colour,
+  so a thing's place in the scale reads before its words do.
 - Colour marks status, and only on a status badge (`tone.ts`): where the
-  specification or an offer stands. A badge in zinc alone is a dark block
+  document stands. A badge in zinc alone is a dark block
   beside a dark button, so a status reads as a control. It is a tint
   instead: green where the person can go on, amber where something is in the
   way, blue where an offer waits for them. Everything else stays in zinc.

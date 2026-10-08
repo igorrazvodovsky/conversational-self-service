@@ -375,15 +375,7 @@ def _the_catalogue_sets_the_rules(c: Completion, _: States) -> list[Invocation]:
 
 def _the_workspace_is_laid_out(c: Completion, _: States) -> list[Invocation]:
     workspace = c.output["workspace"]
-    surfaces = c.output.get("surfaces", [])
-    out = [
-        Invocation("Moding", "offer", {"workspace": workspace, "surface": surface})
-        for surface in surfaces
-    ]
-    if surfaces:
-        out.append(
-            Invocation("Moding", "focus", {"workspace": workspace, "surface": surfaces[0]})
-        )
+    out: list[Invocation] = []
     for facet in c.output.get("facets", []):
         out.append(
             Invocation(

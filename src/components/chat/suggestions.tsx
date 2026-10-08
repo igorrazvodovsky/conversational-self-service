@@ -188,6 +188,15 @@ export function suggestionsFor(view: View | null, label: Label): Suggestion[] {
     });
   }
 
+  // Under way: what it would come to. The draft is a read, and the model
+  // calls it a draft.
+  if (counts.open > 0 && (counts.asked > 0 || clauses.length > 0))
+    out.push({
+      title: "What would this come to?",
+      message:
+        "Read the draft: what would the proposal come to as it stands, and what does a quote still need?",
+    });
+
   // Complete: ask for a quote. The model says what is still missing, if anything.
   if (counts.open === 0 && counts.unmet === 0) {
     const open = quotes.find((q) => q.standing === "open");

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Addresses on the surfaces.
+ * Addresses on the document.
  *
  * An address is the id of the element that renders an item, so it names the
  * item rather than a place: the same variable is an answer on a requirement's
@@ -11,18 +11,21 @@
  * else, so a reply in the chat can put one in front of the person without
  * anything being recorded.
  *
- * Following an address to the other surface performs `focus`, and following
- * one the frame leaves out performs `unframe`. Those two are recorded; the
- * address itself records nothing. The fragment is half of the URL, and the
- * query (`link.tsx`) is followed first. An address with nothing at it still
- * arrives, and the page says so, because a link given out goes on working
- * (`docs/ui.md`, "Links").
+ * Following an address opens the moment and the view that hold the item,
+ * which are the viewer's and recorded nowhere (`link.tsx`), and following
+ * one the frame leaves out performs `unframe`, which is recorded. The
+ * fragment is half of the URL, and the query is followed first. An address
+ * with nothing at it still arrives, and the page says so, because a link
+ * given out goes on working (`docs/ui.md`, "Links").
  */
 
 import { useAgent, useCopilotChatConfiguration } from "@copilotkit/react-core/v2";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useConfigurator, type Surface } from "./provider";
+import { useConfigurator } from "./provider";
+
+/** The draft, as the other side of a comparison names it. */
+export const NOW = "now";
 
 export const address = {
   variable: (name: string) => `variable:${name}`,
@@ -72,67 +75,29 @@ export function useTargeted(id: string): boolean {
   return useHash() === id;
 }
 
-/** The surface an address is on; none for the chat, which is always there. */
-export function surfaceOf(id: string): Surface | null {
-  if (id.startsWith("said:") || id.startsWith("turn:")) return null;
-  if (id.startsWith("quote:") || id.startsWith("compare:")) return "quote";
-  return "canvas";
+/** Where an item is: the moment and the view of the document that hold it.
+ * `view` null leaves the view as it is, since the item is in every view; the
+ * chat's items are in none, and give null. */
+export interface Place {
+  quote: string | null;
+  view: "asked" | "proposal" | "timeline" | "drawing" | "compared" | null;
+  against?: string;
 }
 
-/**
- * Follow the page's fragment, once each time it changes: bring the surface it
- * is on forward, then scroll to the item once it has rendered. The view
- * arrives after the page does, so the browser's own scroll to the fragment
- * finds nothing; this repeats it when the surface has rendered. A fragment
- * already followed is left alone when the surface changes for another
- * reason — a rule bringing the specification forward, the toggle — so the
- * address does not pull the person back.
- */
-export function useFollowAddress(arrived: boolean): string | null {
-  const { view, gesture } = useConfigurator();
-  const hash = useHash();
-  const mode = view?.mode ?? null;
-  const ready = view !== null && arrived;
-  // The address followed last, when nothing was found at it.
-  const [lost, setLost] = useState<string | null>(null);
-  const pending = useRef<string | null>(null);
-  const framed = useRef(false);
-  const isFramed = !!view?.frame;
-  useEffect(() => {
-    framed.current = isFramed;
-  }, [isFramed]);
-  useEffect(() => {
-    pending.current = hash || null;
-    setLost(null);
-  }, [hash]);
-  useEffect(() => {
-    const id = pending.current;
-    if (!ready || !id || !mode) return;
-    const surface = surfaceOf(id);
-    if (surface && mode !== surface) {
-      void gesture({ act: "focus", surface });
-      return;
-    }
-    pending.current = null;
-    let tries = 0;
-    let widened = false;
-    const find = () => {
-      const el = document.getElementById(id);
-      if (el) arrive(el);
-      else if (tries++ < 10) setTimeout(find, 50);
-      else if (framed.current && !widened && surface === "canvas") {
-        // Not drawn: the frame leaves it out. Show everything, and look again.
-        widened = true;
-        tries = 0;
-        void gesture({ act: "unframe" }).then(() => setTimeout(find, 50));
-      } else if (tries < 40) setTimeout(find, 50);
-      // Words in the chat render once their conversation has loaded, and go
-      // to themselves then (`chat/index.tsx`).
-      else if (surface) setLost(id);
+export function placeOf(id: string): Place | null {
+  if (id.startsWith("said:") || id.startsWith("turn:")) return null;
+  const pair = compareOf(id);
+  if (pair) return { quote: pair[0] === "draft" ? null : pair[0], against: pair[1], view: "compared" };
+  const quote = quoteOf(id);
+  if (quote) {
+    const kind = quoteKindOf(id);
+    return {
+      quote: quote === "draft" ? null : quote,
+      view: kind === "event" ? "timeline" : kind ? "asked" : null,
     };
-    find();
-  }, [ready, hash, mode, gesture]);
-  return lost;
+  }
+  if (id === address.addressee) return { quote: null, view: "proposal" };
+  return { quote: null, view: "asked" };
 }
 
 export function Lost({ id }: { id: string | null }) {
@@ -167,10 +132,10 @@ export function arrive(el: HTMLElement) {
     }
 }
 
-/** An item at the address the page is already at may be on the other
- * surface — followed once, then the surfaces toggled — and setting the same
- * fragment again fires nothing, so the fragment is cleared first and the
- * change is followed as any other. */
+/** An item at the address the page is already at may be in another view
+ * or at another moment — followed once, then the view changed — and setting
+ * the same fragment again fires nothing, so the fragment is cleared first
+ * and the change is followed as any other. */
 export function goTo(id: string) {
   if (window.location.hash === `#${id}` || window.location.hash === `#${encodeURIComponent(id)}`) {
     const el = document.getElementById(id);
@@ -186,7 +151,7 @@ export function goTo(id: string) {
 /** The classes an addressable item carries: room under the sticky header. The
  * tint while it is the target, and the flash it arrives with, come from
  * `useTargeted`, since `:target` is not re-evaluated for an element mounted after the fragment was set — which
- * is what happens when a link changes surface. */
+ * is what happens when a link changes the view. */
 export const addressable = "scroll-mt-28";
 export const targeted = "bg-muted/60 animate-arrive";
 

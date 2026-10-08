@@ -32,7 +32,6 @@ from concepts.filing import Filing
 from concepts.footprinting import Footprinting
 from concepts.framing import Framing
 from concepts.handing_over import HandingOver
-from concepts.moding import Moding
 from concepts.naming import Naming
 from concepts.pricing import Pricing
 from concepts.profiling import Profiling
@@ -63,9 +62,9 @@ GRIDS = {"grid_factor": "today", "grid_factor_decarbonising": "decarbonising"}
 BASIS = "catalogue"
 
 # What is on by default is where a value comes from, which is what the canvas
-# exists to tell apart; the rest waits to be asked for.  Seeded at boot like
-# `Moding`'s surfaces: what a lens *can* show is the application's, what it
-# *does* show is the viewer's.  See docs/concepts/showing.md.
+# exists to tell apart; the rest waits to be asked for.  Seeded at boot: what
+# a lens *can* show is the application's, what it *does* show is the
+# viewer's.  See docs/concepts/showing.md.
 FACETS: list[tuple[str, str, bool]] = [
     ("price", "what each option adds to the price, beside its label", False),
     ("carbon", "what each option adds to the carbon over the lift's life", False),
@@ -110,7 +109,6 @@ def build(path: Path = CATALOGUE) -> Engine:
         Profiling(),
         Naming(),
         Stipulating(),
-        Moding(),
         Showing(),
         # Nothing to seed: a lens with no frame shows everything.
         Framing(),
@@ -138,12 +136,10 @@ def build(path: Path = CATALOGUE) -> Engine:
         basis=BASIS,
         grids=GRIDS,
         workspace=WORKSPACE,
-        # The specification first: it is the one given attention, and it
-        # holds what is asked for beside what answers it.  The quote is the
-        # other: the offers, as they were made.  The conversation is not a
-        # surface; where the chat sits is the person's view state, which no
-        # rule reaches (docs/concepts/moding.md).
-        surfaces=["canvas", "quote"],
+        # The canvas is one document, read several ways; which view and
+        # which moment are open is the viewer's, held in the page's URL,
+        # which no rule reaches (docs/ui.md).  Where the chat sits is view
+        # state too.
         facets=[{"facet": f, "about": a, "shown": s} for f, a, s in FACETS],
         spec=SPEC,
     )

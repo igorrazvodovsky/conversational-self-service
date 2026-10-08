@@ -53,11 +53,6 @@ then  { Framing/frame: [ lens: workspace ; frame: ?f ] }
 sync TheModelMayUnframeTheCanvas
 when  { Copiloting/invoke: [ tool: "unframe" ] => [] }
 then  { Framing/unframe: [ lens: workspace ] }
-
-sync TheCanvasIsShownBeforeItChanges
-when  { Copiloting/invoke: [ tool: ?t ] => [] }
-where { ?t is one of assert, withdraw, read, propose, quote, handover, show, hide, frame, unframe }
-then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
 ```
 
 The `party` in the first rule is what distinguishes it from
@@ -117,13 +112,13 @@ distinguishes the two is the provenance edge, which is what the canvas reads.
 The model asking for a quote is the model computing a number on the person's
 behalf, like proposing a completion; what it cannot do is the next thing.
 
-`TheCanvasIsShownBeforeItChanges` is the rule the CopilotKit starter writes as
-the sentence `Todos: enable app mode first, then manage todos` in a system
-prompt. It is ordinary application logic — a person who cannot see the canvas
-watches nothing happen — and there it is enforced by asking a language model
-nicely. Here it fires
-because a value was asserted, or the canvas reshaped, whatever the model does
-or does not remember about it.
+No rule brings the canvas forward when a tool changes it. The canvas is one
+document, and the person is looking at some view of it; what a tool changed
+shows where it stands, in every view, and where the document stands is
+above them all ([UI](../ui.md#one-document-read-several-ways)). The
+CopilotKit starter writes `Todos: enable app mode first, then manage todos`
+in a system prompt for the same need, and enforces it by asking a language
+model nicely; here there is no second mode to enable.
 
 ## What the canvas shows
 
@@ -774,11 +769,11 @@ end it the same way: the model records the name or the site from the
 person's reply with `introduce` or `entitle`, which it is permitted, and
 requests the quote.
 
-The chat shows the question and links to the addressee on the quote
-surface; it does not hold the fields. A conflict's answers moved into the
+The chat shows the question and links to the addressee in the proposal; it
+does not hold the fields. A conflict's answers moved into the
 chat because they are answers to the question and exist only while it is
 open. The name and the site are not answers to anything: they are the
-person's profile and the job's, entered on the quote surface whether or not
+person's profile and the job's, entered in the proposal whether or not
 anybody asked, and two places to type them would be two editors for one
 fact.
 
@@ -994,8 +989,8 @@ that* into *was chosen*, which is the conflation the canvas exists to
 prevent. So when the person's client renders MCP Apps, `review` and
 `open_quote` come with views: the host shows the specification, or the
 offer, beside the agent's reply, rendered from the same read the tool
-returned, each item in its kind. The view is a surface of the canvas's,
-holding what is the case ([The moves](../moves.md#the-surfaces)), set inside
+returned, each item in its kind. The view is the canvas's, holding what is
+the case ([The moves](../moves.md#the-surfaces)), set inside
 the person's conversation with their own agent, and its items link back to
 the page.
 

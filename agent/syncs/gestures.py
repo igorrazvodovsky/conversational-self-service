@@ -161,15 +161,6 @@ def _carry(act: str, concept: str, action: str, *arguments: str, **fixed: Any):
     return then
 
 
-def _a_person_focuses_a_surface(c: Completion, _: States) -> list[Invocation]:
-    if c.output.get("act") != "focus":
-        return []
-    return [
-        Invocation(
-            "Moding", "focus", {"workspace": WORKSPACE, "surface": c.output["surface"]}
-        )
-    ]
-
 
 DETAILS = ("name", "organisation", "address", "email", "phone")
 
@@ -263,9 +254,6 @@ rules = [
         "APersonDeclinesToAnswer",
         ("Copiloting", "gesture"),
         _carry("decline", "Deciding", "decline", "request"),
-    ),
-    Sync(
-        "APersonFocusesASurface", ("Copiloting", "gesture"), _a_person_focuses_a_surface
     ),
     # Which facts the canvas shows beside each item.  The lens is the
     # workspace, as the surface's workspace is; the choice changes no fact.

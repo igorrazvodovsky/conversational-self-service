@@ -22,11 +22,6 @@ sync ATakenStepFramesTheCanvas
 when  { Stepping/take: [] => [ spec: ?s ; step: ?st ] }
 then  { Framing/frame: [ lens: workspace ; frame: [ by: "step" ; step: ?st ] ] }
 
-sync AFramedStepShowsTheConfiguration
-when  { Framing/frame: [ lens: workspace ; frame: [ by: "step" ; step: ?st ] ]
-          => [ lens: workspace ; frame: ?f ] }
-then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
-
 sync APersonFinishesAStep
 when  { Copiloting/gesture: [ act: "finish" ; step: ?st ] => [] }
 then  { Stepping/finish: [ party: person ; step: ?st ] }

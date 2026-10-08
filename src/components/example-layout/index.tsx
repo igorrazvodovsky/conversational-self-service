@@ -11,22 +11,18 @@ import { RefetchWhenRunEnds, useConversations } from "./conversation-menu";
 import { CanvasAnnouncer, RunAnnouncer } from "./announcer";
 import { DiscussingProvider } from "@/components/chat/discussing";
 import { Split } from "./split";
-import { Lost, useFollowAddress } from "@/components/configurator/address";
-import { usePlace } from "@/components/configurator/link";
+import { Lost } from "@/components/configurator/address";
 import {
-  useConfigurator,
-  type Surface,
-} from "@/components/configurator/provider";
-
-const TITLE: Record<Surface, string> = {
-  canvas: "Specification",
-  quote: "Quote",
-};
+  TITLE,
+  useFollowAddress,
+  useMoment,
+  usePlace,
+} from "@/components/configurator/link";
+import { useConfigurator } from "@/components/configurator/provider";
 
 interface ExampleLayoutProps {
   chatContent: ReactNode;
   appContent: ReactNode;
-  quoteContent: ReactNode;
   /** The division the server read from the cookie, so both sides agree. */
   canvasPercent: number;
 }
@@ -34,43 +30,33 @@ interface ExampleLayoutProps {
 /**
  * Two surfaces: the artifact panel and the chat.
  *
- * Which artifact is on the panel — the specification or the offers — is a
- * fact of `Moding`, held behind the concept layer, and this component renders
- * it rather than owning it. Both the person's navigation and the model's tool call
- * reach it through `Moding/focus`, by a rule; the one that fires when the
- * assistant is about to change the canvas is `TheCanvasIsShownBeforeItChanges`,
- * which the starter wrote as a sentence in a system prompt.
+ * The panel is one document, the deal as it stands or as it stood when an
+ * offer was issued, read several ways (`docs/ui.md`, "One document, read
+ * several ways"). Which view and which moment are open are the viewer's,
+ * held in the URL (`configurator/link.tsx`); no rule reaches them.
  *
  * Where the chat sits against that panel — beside it, floating over it, over
- * the whole surface, or put away — is not a `Moding` surface. It is the
- * person's view state, reset on every load, and no rule reaches it
- * (`chat-surface.tsx`). The chat used to be a third `Moding` surface, which
- * conflated the two: a rule that meant *show the person the canvas* also
- * decided how wide their transcript was.
+ * the whole surface, or put away — is the person's view state too, reset on
+ * every load (`chat-surface.tsx`).
  */
 export function ExampleLayout({
   chatContent,
   appContent,
-  quoteContent,
   canvasPercent,
 }: ExampleLayoutProps) {
   const { view, busy } = useConfigurator();
-  // Any surface the layout does not draw reads as the specification, so a
-  // focus on a surface no longer offered, replayed from a journal, lands
-  // somewhere.
-  const mode: Surface = view?.mode === "quote" ? "quote" : "canvas";
+  const moment = useMoment();
   // The URL is the page's state: its query names the view, followed when
   // the page opens and written back as the view changes
-  // (`configurator/link.tsx`); its fragment names an item on one of the
-  // surfaces, and following one brings that surface forward and scrolls to
-  // the item (`configurator/address.tsx`).
+  // (`configurator/link.tsx`); its fragment names an item, and following
+  // one opens the view and the moment that hold it and scrolls to it.
   const arrived = usePlace();
   const lost = useFollowAddress(arrived);
-  // The tab names the surface in front, most specific first: a screen
-  // reader announces the title, and a surface is this page's route.
+  // The tab names the view in front, most specific first: a screen reader
+  // announces the title, and a view is this page's route.
   useEffect(() => {
-    document.title = `${TITLE[mode]} · Northline Lifts`;
-  }, [mode]);
+    document.title = `${TITLE[moment.view]} · Northline Lifts`;
+  }, [moment.view]);
   const chatSurface = useChatSurface();
   const conversations = useConversations();
 
@@ -91,7 +77,7 @@ export function ExampleLayout({
           artifact={
             <>
               {/* The panel's own header: the wordmark and the way around the
-                  panel, surfaces and sections in one row. */}
+                  document, views and moments in one row. */}
               <header className="flex min-h-9 shrink-0 flex-wrap items-center gap-x-4 border-b bg-frame pr-3 pl-3">
                 <div className="flex shrink-0 items-center gap-1.5">
                   {/* The seller's mark: an up arrow, north, cut out of a
@@ -116,21 +102,21 @@ export function ExampleLayout({
               </header>
               <CanvasAnnouncer />
               <Lost id={lost} />
-              {/* Named by the surface's `h1`; focus lands here when the person
-                  changes surface (`panel-nav.tsx`) or skips to it. */}
+              {/* Named by the view's `h1`; focus lands here when the person
+                  changes view (`panel-nav.tsx`) or skips to it. */}
               <main
                 id="main"
                 aria-labelledby="surface-title"
                 aria-busy={busy || undefined}
                 className="min-h-0 flex-1"
               >
-                {/* The surface's name, in every state it can be in — loading,
+                {/* The view's name, in every state it can be in — loading,
                     empty, refused — for a screen reader; the eye has the nav. */}
-                <h1 id="surface-title" data-surface={mode} className="sr-only">
-                  {TITLE[mode]}
+                <h1 id="surface-title" data-view={moment.view} className="sr-only">
+                  {TITLE[moment.view]}
                   {view ? ` of ${view.product}` : ""}
                 </h1>
-                {mode === "quote" ? quoteContent : appContent}
+                {appContent}
               </main>
             </>
           }
@@ -169,7 +155,7 @@ export function ExampleLayout({
  * The first stops in the tab order, shown only while focused: past the
  * panel's header to the surface, or straight to the chat's composer. They
  * move focus by script rather than by fragment, because a fragment on this
- * page is an item's address and following one may change the surface.
+ * page is an item's address and following one may change the view.
  */
 function SkipLinks() {
   const skip = (event: MouseEvent, find: () => HTMLElement | null) => {

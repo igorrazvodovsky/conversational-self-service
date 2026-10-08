@@ -309,8 +309,8 @@ function Choice({
   );
 }
 
-/** What a turn folds into a run with: surfaces brought forward, or values
- * answered and withdrawn by gesture with no words behind them. */
+/** What a turn folds into a run with: the canvas narrowed or reshaped, or
+ * values answered and withdrawn by gesture with no words behind them. */
 function foldOf(turn: Turn) {
   if (turn.moved) return "moved";
   const bare =
@@ -399,7 +399,7 @@ function Run({ turns, hash }: { turns: Turn[]; hash: string }) {
   const withdrew = turns.reduce((n, t) => n + t.withdrawn.length, 0);
   const values = (n: number) => (n === 1 ? "one value" : `${n} values`);
   const what = turns[0].moved
-    ? `Switched surface ${turns.length === 1 ? "once" : `${turns.length} times`}`
+    ? `Reshaped the canvas ${turns.length === 1 ? "once" : `${turns.length} times`}`
     : [
         answered ? `answered ${values(answered)}` : "",
         withdrew ? `withdrew ${values(withdrew)}` : "",

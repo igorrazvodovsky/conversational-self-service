@@ -22,8 +22,8 @@
  * own.
  *
  * Every line is addressed as a line of this comparison
- * (`address.compare`). The pair is the viewer's, held on the quote surface
- * and named by the address; nothing here is recorded.
+ * (`address.compare`). The pair is the viewer's, held in the URL and named
+ * by the address; nothing here is recorded.
  */
 
 import type { ReactNode } from "react";
@@ -37,7 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { address, addressable, targeted, To, useTargeted } from "./address";
+import { address, addressable, NOW, targeted, To, useTargeted } from "./address";
 import { ClauseText, plain } from "./clauses";
 import { change, money } from "./format";
 import type { Ground, Quote, Side, View } from "./provider";
@@ -53,7 +53,7 @@ interface Named {
   quote?: Quote;
 }
 
-export const NOW = "now";
+export { NOW };
 
 const years = (months: number) =>
   months % 12 ? `${months} months` : `${months / 12} years`;
@@ -111,7 +111,7 @@ export function Comparison({
   const left: Named = { id: a.quote, name: `No. ${a.number}`, side: a, quote: a };
   const right: Named =
     b === NOW
-      ? { id: NOW, name: "Now", side: view.now }
+      ? { id: NOW, name: "As it stands", side: view.draft }
       : { id: b.quote, name: `No. ${b.number}`, side: b, quote: b };
   const at = (kind: "variable" | "clause", id: string) =>
     address.compare(left.id, right.id, kind, id);
@@ -131,13 +131,13 @@ export function Comparison({
   const gb = right.side.grounds;
   const dAmount = right.side.amount - a.amount;
   const dMonthly = right.side.terms.recurring - a.terms.recurring;
-  const unfinished = b === NOW && !view.now.complete;
+  const unfinished = b === NOW && !view.draft.complete;
 
   const header = (
     <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2 text-xs">
       <h3 className="font-medium">
         <To id={address.compare(left.id, right.id)}>
-          {left.name} against {b === NOW ? "the specification now" : right.name}
+          {left.name} against {b === NOW ? "the draft, as it stands" : right.name}
         </To>
       </h3>
       <span className="text-muted-foreground">

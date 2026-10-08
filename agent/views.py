@@ -32,7 +32,7 @@ from typing import Any
 from engine import Engine, States
 from wiring import BASIS, FACETS, WORKSPACE
 from syncs import readings
-from syncs.gestures import unaddressed
+from syncs.gestures import PERSON, SELLER, unaddressed
 
 # Which rule put an assertion on record, in words, with no field anywhere
 # recording which: the difference between them is
@@ -661,7 +661,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     catalogue = engine.state("Cataloguing")
     constraining = engine.state("Constraining")
     asserting = engine.state("Asserting")
-    moding = engine.state("Moding")
     showing = engine.state("Showing")
     pricing = engine.concepts["Pricing"]
     footprinting = engine.concepts["Footprinting"]
@@ -1116,7 +1115,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         "grid": grid,
         "product": engine.catalogue.get("name", ""),
         "currency": engine.catalogue.get("currency", ""),
-        "mode": moding["active"].get("workspace", "canvas"),
         "showing": facets,
         "frame": (
             {
@@ -1175,15 +1173,23 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         "stages": _stages(catalogue, pricing, chosen),
         "questions": questions,
         "quotes": quotes,
-        # The specification read as a quote would freeze it, for comparing an
-        # issued offer with where things stand.
-        "now": _now(
+        # The draft: the deal as it stands, read the way an issued quote is,
+        # so every view lays it out and a comparison can set an issued offer
+        # against it.  The default moment (docs/ui.md).
+        "draft": _draft(
             engine,
             spec,
+            grid,
             settled,
             how,
             price,
             {v["name"] for v in variables if v["standing"] == "unmet"},
+            [
+                {"name": v["name"], "heading": v["heading"]}
+                for v in variables
+                if v["standing"] == "open"
+            ],
+            quotable,
         ),
         "quotable": quotable,
         # Each time the specification was put into the seller's hands, and
@@ -1282,7 +1288,6 @@ ACTS = {
     "revoke": "Revoked a quote",
     "clear": "Took an out-of-date mark off",
     "handover": "Handed the specification to the seller",
-    "focus": "Switched surface",
     "show": "Showed a fact beside each item",
     "hide": "Hid a fact beside each item",
     "frame": "Narrowed the canvas",
@@ -1323,7 +1328,6 @@ _KIND_OF = {
     "HandingOver": "handover",
     "Profiling": "party",
     "Naming": "party",
-    "Moding": "view",
     "Showing": "view",
     "Framing": "view",
 }
@@ -1421,11 +1425,9 @@ def turns(engine: Engine, spec: str, latest: int = 200) -> list[dict[str, Any]]:
             # before, they have seen.
             fresh = False
         flow["fresh"] = fresh
-        # A turn that only brought a surface forward: true, and about no
-        # fact of the specification.
-        flow["moved"] = flow["kinds"] == {"view"} and all(
-            r["concept"] in {"Copiloting", "Moding"} for r in flow["records"]
-        )
+        # A turn that only narrowed the document or changed what is shown
+        # beside its items: true, and about no fact of the specification.
+        flow["moved"] = flow["kinds"] == {"view"}
         out.append(
             {
                 **flow,
@@ -1669,21 +1671,27 @@ def _side(
     }
 
 
-def _now(
+def _draft(
     engine: Engine,
     spec: str,
+    grid: str,
     settled: dict[str, str],
     how: dict[str, dict[str, Any]],
     price: dict[str, Any],
     unmet: set[str],
+    open_: list[dict[str, str]],
+    quotable: dict[str, Any],
 ) -> dict[str, Any]:
-    """The specification as it stands, read the way a quote is: what an offer
-    requested now would freeze, so the quote surface can compare an issued
-    offer with it.  The same readings the rule that issues a quote copies,
-    read live and recorded nowhere.  The specification may be unfinished:
-    a variable still open has no line, and the sum is incomplete until every
-    value is settled and the term chosen.  A value asserted and not met is
-    `unmet` here, which no issued quote can hold."""
+    """The draft: the deal as it stands, read the way an issued quote is,
+    with the same keys, so the proposal, the programme, the drawing and a
+    comparison lay it out as they lay out an offer.  The same readings the
+    rule that issues a quote copies, read live and recorded nowhere: what a
+    quote requested now would freeze.  The deal may be unfinished: a
+    variable still open is in `open` and has no line, the term may be
+    presumed, and the sum is incomplete until every value is settled and the
+    term chosen.  A value asserted and not met is `unmet` here, which no
+    issued quote can hold.  `standing` is `draft`, and `because` says why it
+    cannot yet be issued, or that it can."""
     side = _side(
         engine,
         settled,
@@ -1701,12 +1709,44 @@ def _now(
     )
     for name in unmet & set(side["grounds"] or {}):
         side["grounds"][name]["standing"] = "unmet"
+    stipulating = engine.concepts["Stipulating"]
+    profiling = engine.state("Profiling")
+    naming = engine.state("Naming")
+    chosen = list(settled.values())
     return {
+        "quote": "draft",
+        "number": None,
+        "standing": "draft",
         **side,
         "amount": price["capital"],
-        "terms": {"months": price["term"], "recurring": price["recurring"]},
+        "terms": {
+            "basis": price["basis"],
+            "months": price["term"],
+            "recurring": price["recurring"],
+            "presumed": price["presumed"],
+            "seller": readings.profile(profiling, SELLER),
+            "customer": readings.profile(profiling, PERSON),
+            "title": naming["title"].get(spec, ""),
+            "site": naming["site"].get(spec, ""),
+            "programme": stipulating.programme(BASIS, chosen, price["term"]),
+            **readings.terms(
+                engine.state("Stipulating"),
+                BASIS,
+                stipulating.terms(BASIS, chosen)["clauses"],
+            ),
+        },
+        "issued": None,
+        "until": None,
+        "committed": None,
+        "issuedTo": PERSON,
+        "how": None,
+        "differs": [],
+        "stale": [],
+        "open": open_,
+        "footprint": engine.concepts["Footprinting"].footprint(chosen, grid, BASIS),
         "complete": price["complete"]
         and all(v in settled for v in engine.state("Constraining")["range"]),
+        "because": quotable["because"],
     }
 
 
@@ -2002,6 +2042,17 @@ def digest(
         "customer": view["customer"],
         "project": view["project"],
         "quotable": view["quotable"],
+        # The draft, where it stands and why; `open_quote` with no quote
+        # reads it.
+        "draft": {
+            "standing": "draft",
+            "because": view["draft"]["because"],
+            "complete": view["draft"]["complete"],
+            "amount": view["draft"]["amount"],
+            "open": [o["heading"] for o in view["draft"]["open"]],
+            "at": "#quote:draft",
+            "page": "/quotes/draft",
+        },
         # Each quote issued, with where it stands and which values have moved
         # since; `open_quote` reads the offer itself.
         "quotes": [
@@ -2031,21 +2082,29 @@ def digest(
     }
 
 
-def quoted(engine: Engine, spec: str, quote: str) -> dict[str, Any]:
-    """An issued offer's contents, small enough to hand a language model:
-    the quote the canvas lays out as a proposal, read the way `digest` reads
-    the specification.  Both the model and the person's own agent read it,
-    and nothing here depends on which.
+def quoted(engine: Engine, spec: str, quote: str | None) -> dict[str, Any]:
+    """The document at one moment, small enough to hand a language model:
+    an issued offer as the canvas lays it out as a proposal, or, named no
+    offer, the draft, read the way `digest` reads the specification.  Both
+    the model and the person's own agent read it, and nothing here depends
+    on which.
 
-    Everything is as the offer froze it, except the catalogue's labels and
-    `differs`, which compares the offer with the specification now.  The
-    sentence beside a value is the canvas's, addressed to the person.  Each
-    line carries its address on the quote surface under `at`, for a reply to
-    link rather than recite.
+    An offer is as it froze, except the catalogue's labels and `differs`,
+    which compares the offer with the specification now.  The draft is the
+    deal as it stands, with its blanks under `open` and why it cannot yet be
+    issued under `because`; both readers call it a draft.  The sentence
+    beside a value is the canvas's, addressed to the person.  Each line
+    carries its address under `at`, for a reply to link rather than recite.
     """
-    q = next((q for q in canvas(engine, spec)["quotes"] if q["quote"] == quote), None)
+    view = canvas(engine, spec)
+    if quote in (None, "", "draft"):
+        quote = "draft"
+        q = view["draft"]
+    else:
+        q = next((q for q in view["quotes"] if q["quote"] == quote), None)
     if q is None:
         return {"error": f"there is no quote {quote}; `review` lists them under `quotes`"}
+    frozen = engine.state("Quoting")["from"].get(quote, {}) if quote != "draft" else None
     terms = q["terms"]
     at = f"#quote:{quote}"
     heading = {h["name"]: h["heading"] for h in q["holds"]}
@@ -2103,6 +2162,16 @@ def quoted(engine: Engine, spec: str, quote: str) -> dict[str, Any]:
         "at": at,
         "page": f"/quotes/{quote}",
         "standing": q["standing"],
+        **(
+            {
+                "because": q["because"],
+                "complete": q["complete"],
+                "open": [o["heading"] for o in q["open"]],
+                "presumed_term": terms.get("presumed", False),
+            }
+            if quote == "draft"
+            else {}
+        ),
         "issued": q["issued"],
         "how": q["how"],
         "until": q["until"],
@@ -2113,7 +2182,7 @@ def quoted(engine: Engine, spec: str, quote: str) -> dict[str, Any]:
         "monthly": terms["recurring"],
         "months": terms["months"],
         # The sum and the maintenance over the term, before financing, as the
-        # quote surface shows it.
+        # proposal shows it.
         "over_term": q["amount"] + terms["recurring"] * terms["months"],
         "currency": engine.catalogue.get("currency", ""),
         "differs": q["differs"],
@@ -2129,7 +2198,7 @@ def quoted(engine: Engine, spec: str, quote: str) -> dict[str, Any]:
                 }
                 for c in q["requires"]
             ]
-            if "requires" in engine.state("Quoting")["from"][quote]
+            if frozen is None or "requires" in frozen
             else "not recorded: the offer was issued before requirements were frozen with it"
         ),
         # Every value supplied, why it holds and what it adds.  An offer

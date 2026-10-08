@@ -43,7 +43,6 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | Concept | Purpose |
 |---|---|
 | [Deciding](deciding.md) | to obtain a person's choice on a matter the system cannot settle on its own |
-| [Moding](moding.md) | to give one of several surfaces a viewer's attention |
 | [Showing](showing.md) | to let a viewer choose which facts about an item are shown at a glance, and keep the choice |
 | [Framing](framing.md) | to let a viewer narrow what is shown to the items that bear on one question, and keep the choice |
 

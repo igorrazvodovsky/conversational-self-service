@@ -27,10 +27,8 @@ person's own agent reaches the gesture under its own actor, as it reaches
 every other ([Conduct](conduct.md#the-persons-own-agent-acting-as-the-person)),
 so a handover it makes reads as its.
 
-`handover` joins the tools
-[`TheCanvasIsShownBeforeItChanges`](conduct.md#the-permissions) names: a
-handover is a fact the canvas shows, and a person who cannot see the canvas
-watches nothing happen.
+A handover is a fact the canvas shows, where the document stands, in every
+view of it.
 
 ## What travels
 

@@ -468,23 +468,6 @@ Without it, `refused` would go stale rather than transient — a value explained
 by rules that no longer refuse anything, which is worse than no
 explanation.
 
-## An issued quote is shown
-
-```
-sync AnIssuedQuoteIsShown
-when  { Quoting/quote: [] => [ quote: ?q ] }
-then  { Moding/focus: [ workspace: workspace ; surface: quote ] }
-```
-
-The offer is a surface of its own, offered at boot beside the canvas
-([Seeding](seeding.md)), and it takes the viewer's attention when a
-quote is issued, whichever party asked for it. An offer nobody sees is not an
-offer that was made. This is
-[`TheCanvasIsShownBeforeItChanges`](conduct.md) one concept further along, and
-it lives here rather than in [Conduct](conduct.md) because its `when` is a
-concept's completion and not a tool call: it fires the same way for a click
-and for the model.
-
 ## A new quote supersedes the open ones
 
 ```
@@ -515,33 +498,11 @@ concept's completion. A quote the model requests revokes the open ones as
 well. That is the only way the model's conduct reaches `Quoting/revoke`, and
 it withdraws the seller's offer, never the person's acceptance.
 
-```
-sync AFramedRequirementShowsTheConfiguration
-when  { Framing/frame: [ lens: workspace ; frame: [ by: "clause" ; clause: ?c ] ]
-          => [ lens: workspace ; frame: ?f ] }
-then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
-```
-
-A clause is framed from its line in the ledger, which is on the
-specification, and the rule then changes nothing. It is there for a frame
-put from anywhere else — the model's tool while the person reads an offer, or
-their own agent's: what the frame selects — the clause's answers, what they
-forced, what could still answer it — is on the specification, and so is the
-pick that answers it
-([Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement)), so
-framing a requirement brings the specification forward, whichever party did
-it.
-
-```
-sync AFramedGapShowsTheConfiguration
-when  { Framing/frame: [ lens: workspace ; frame: [ by: "gap" ; gap: ?g ] ]
-          => [ lens: workspace ; frame: ?f ] }
-then  { Moding/focus: [ workspace: workspace ; surface: canvas ] }
-```
-
-The same for a [gap](gestures.md#the-canvas-is-narrowed-to-one-gap): what is
-open, unanswered or answering nothing is on the specification, so the
-model asked what is left to do brings it forward when it narrows to it.
+An issued quote is shown by no rule. Where the document stands is above
+every view of it, so the offer reads as issued whichever view the person has
+open, and a reply that requested it links the offer
+([The moves](../moves.md#an-offer-read)). Which view and which moment are
+open stay the viewer's ([UI](../ui.md#one-document-read-several-ways)).
 
 ## A frame goes with what it framed
 
