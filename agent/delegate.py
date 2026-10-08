@@ -671,6 +671,42 @@ def clear(
     return gesture(act="clear", item=item)
 
 
+@tool(
+    "take",
+    "Say which step of the job the person is at. `review` lists the steps "
+    "under `stepping`, each with what it still wants; `at` is the step the "
+    "person took and `start` the first still wanting something. Taking a "
+    "step prevents nothing and changes no step's status.",
+)
+def take(
+    step: Annotated[str, Field(description="A step's id from `stepping.steps`")],
+) -> dict[str, Any]:
+    return gesture(act="take", step=step)
+
+
+@tool(
+    "finish",
+    "Mark a step of the job finished, as the person, whether or not what it "
+    "wants has been given. The mark is the person's claim and gates nothing.",
+)
+def finish(
+    step: Annotated[str, Field(description="A step's id from `stepping.steps`")],
+) -> dict[str, Any]:
+    return gesture(act="finish", step=step)
+
+
+@tool(
+    "skip",
+    "Mark a step of the job skipped, with the person's reason, which is kept "
+    "as a deviation from the seller's template. Gates nothing.",
+)
+def skip(
+    step: Annotated[str, Field(description="A step's id from `stepping.steps`")],
+    reason: Annotated[str, Field(description="Why, in the person's words")],
+) -> dict[str, Any]:
+    return gesture(act="skip", step=step, reason=reason)
+
+
 # -- what the canvas shows ------------------------------------------------------
 
 

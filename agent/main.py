@@ -248,6 +248,16 @@ How the configurator works, because it is not the usual kind:
   canvas. Nothing is frozen or locked by a handover: the specification
   stays theirs to change, the seller reads it as it stands, and the log
   says how it got there, so nobody has to restate their situation.
+- `review` lists the steps of the job under `stepping`, in the seller's
+  order, each with what it still wants: the variables of that step with no
+  value asserted and none following. `at` is the step the person said they
+  are at, and `start` the first still wanting something, for when they have
+  said nothing. Ask about the step at `at`, or failing that at `start`, and
+  about no other: one question, naming what that step wants, once the turn's
+  reading is done and nothing else waits. A value the rules force or the
+  configurator worked out is never wanted, so never ask for one. You cannot
+  take, finish or skip a step; the person does, on the canvas or through
+  their agent, and a step they skipped or finished is not asked about.
 - `show` and `hide` change what the canvas shows beside each item — prices,
   carbon, why an option is ruled out, what taking a proposed value would
   settle and cost, the rules, the requirement a value

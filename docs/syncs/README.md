@@ -29,6 +29,7 @@ it.
 | `TheCatalogueIsFootprinted` | [Seeding](seeding.md) |
 | `TheCatalogueSetsTheRules` | [Seeding](seeding.md) |
 | `TheCatalogueSaysHowToWorkThingsOut` | [Seeding](seeding.md) |
+| `TheCatalogueSetsTheSteps` | [Seeding](seeding.md) |
 | `TheWorkspaceIsLaidOut` | [Seeding](seeding.md) |
 | `ASpecificationIsStartedAtBoot` | [Seeding](seeding.md) |
 | `TheCatalogueSeedsTheSolver` | [Seeding](seeding.md) |
@@ -123,6 +124,15 @@ it.
 | `AChangedClauseStalesItsAnswers` | [Staling](staling.md) |
 | `AMovedAssertionStalesTheOpenOffers` | [Staling](staling.md) |
 | `APersonClearsAStaleItem` | [Staling](staling.md) |
+| `AStartedSpecificationGetsItsSteps` | [Stepping](stepping.md) |
+| `ADiscardedSpecificationLosesItsSteps` | [Stepping](stepping.md) |
+| `APersonTakesAStep` | [Stepping](stepping.md) |
+| `APersonFinishesAStep` | [Stepping](stepping.md) |
+| `APersonSkipsAStep` | [Stepping](stepping.md) |
+| `APersonReopensAStep` | [Stepping](stepping.md) |
+| `APersonReassignsAStep` | [Stepping](stepping.md) |
+| `APersonRenamesAStep` | [Stepping](stepping.md) |
+| `APersonAddsAStep` | [Stepping](stepping.md) |
 
 ## Seeding
 
@@ -195,6 +205,17 @@ but the specification itself: what the seller needs in order to take it up
 is already on the log, as provenance and as utterances. No rule receives a
 handover, because the seller has no surface here. See
 [Handover](handover.md).
+
+## Where the person is in the job
+
+The seller's template of steps arrives with the catalogue, and a
+specification gets one step of each when it is opened. The person takes a
+step, finishes or skips one with a reason, reopens, reassigns, renames or
+adds one, and every gesture is recorded as made: no rule has a step's
+status in its `where`, so the steps are a map and not a script. What a step
+still wants is a read over the variables' standing, and the model asks
+about the step the person is at, in its turn, from `review`. See
+[Stepping](stepping.md).
 
 ## What is out of date is marked
 

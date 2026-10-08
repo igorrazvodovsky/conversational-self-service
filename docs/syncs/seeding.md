@@ -102,6 +102,11 @@ then  { Deriving/describe: [ quantity ; meaning ; unit ]
         Deriving/define: [ method ; yields ; formula ; needs ; presumes ]
           for each method of ?c, in the order the catalogue prefers them }
 
+sync TheCatalogueSetsTheSteps
+when  { Copiloting/boot: [] => [ catalogue: ?c ] }
+then  { Stepping/author: [ template ; name ; needs ; owner ]
+          for each step of ?c, in the catalogue's order }
+
 sync TheWorkspaceIsLaidOut
 when  { Copiloting/boot: [] => [ workspace: ?w ; surfaces: ?s ; facets: ?f ] }
 then  { Moding/offer: [ workspace: ?w ; surface ] for each surface in ?s ;

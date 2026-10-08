@@ -614,6 +614,44 @@ def _beyond(
     return None
 
 
+def _steps(engine: Engine, spec: str, variables: list[dict[str, Any]]) -> dict[str, Any]:
+    """Where the person is in the job, read off `Stepping` and the variables'
+    standing.  `at` is the step the person took, or none; `start` is the
+    first open step still wanting something, offered as the place to begin
+    while they have taken none, and recorded by nobody."""
+    stepping = engine.state("Stepping")
+    standing = {v["name"]: v["standing"] for v in variables}
+    heading = {v["name"]: v["heading"] for v in variables}
+    wanting = readings.wanting(stepping, standing, spec)
+    steps = [
+        {
+            "step": step,
+            "at": f"#step:{step}",
+            "name": stepping["name"][step],
+            "template": stepping["instanceOf"].get(step),
+            "owner": stepping["owner"][step],
+            "status": stepping["status"][step],
+            "needs": [
+                {
+                    "variable": n,
+                    "heading": heading.get(n, n),
+                    "standing": standing.get(n, "open"),
+                    "at": f"#variable:{n}",
+                }
+                for n in stepping["needs"].get(step, [])
+            ],
+            "wanting": wanting[step],
+            "deviation": stepping["deviation"].get(step, []),
+        }
+        for step in stepping["steps"].get(spec, [])
+    ]
+    at = stepping["at"].get(spec)
+    start = next(
+        (s["step"] for s in steps if s["status"] == "open" and s["wanting"]), None
+    )
+    return {"at": at, "start": start, "steps": steps}
+
+
 def canvas(engine: Engine, spec: str, grid: str = "today") -> dict[str, Any]:
     with engine.turn:
         return _canvas(engine, spec, grid)
@@ -1068,6 +1106,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             else None
         ),
         "variables": variables,
+        "stepping": _steps(engine, spec, variables),
         "clauses": clauses,
         "sources": _sources(engine, clauses, trace["stated"]),
         # The flows the person's own agent opened by speaking in the chat;
@@ -1881,6 +1920,18 @@ def digest(
         ],
         # What the canvas shows beside each item, and what else it could.
         # The model may change this with `show` and `hide`, and nothing else.
+        # Where the person is in the job: the steps with their needs, which
+        # of them still want a value, the step they took, and the one to
+        # start at while they have taken none.  Ask about that step and no
+        # other (docs/syncs/stepping.md).
+        "stepping": {
+            "at": view["stepping"]["at"],
+            "start": view["stepping"]["start"],
+            "steps": [
+                {k: s[k] for k in ("step", "at", "name", "owner", "status", "wanting")}
+                for s in view["stepping"]["steps"]
+            ],
+        },
         "showing": view["showing"],
         # Which items the canvas is narrowed to, if any — `frame` and
         # `unframe` change it.  `framed` lists what the frame selects.

@@ -36,6 +36,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Staling](staling.md) | to mark an item whose basis has changed without changing the item, so that nothing a person committed is silently re-decided |
 | [Profiling](profiling.md) | to hold what a party says of who they are, so that a document can name and address them |
 | [Naming](naming.md) | to identify an item the way a document names it, by its title and the site it is for |
+| [Stepping](stepping.md) | to show a person where they are in a recurring piece of work, what the step they are at still needs and who owns it, without preventing them from acting out of order |
 
 ## The rest of the surface — ours, fully specified
 
@@ -112,6 +113,11 @@ reason, for what the assistant has no rule to do.
 
 [Showing](showing.md) and [Framing](framing.md) are the viewer's-choice
 concepts — which facts appear beside an item, and which items appear at all.
+
+[Stepping](stepping.md) is the job's side: the seller's template of steps,
+and where the person says they are in it. It holds labels and nothing else;
+what a step still wants is read off the specification, and no step gates
+anything.
 
 ## What was here before
 

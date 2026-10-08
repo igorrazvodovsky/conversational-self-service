@@ -840,6 +840,18 @@
     { "method": "travel_from_storeys", "yields": "travel", "formula": "(storeys - 1 + basements) * storey_height", "needs": ["storeys", "basements", "storey_height"], "presumes": { "basements": 0, "storey_height": 3.5 } },
     { "method": "travel_from_upper_floors", "yields": "travel", "formula": "(upper_floors + basements) * storey_height", "needs": ["upper_floors", "basements", "storey_height"], "presumes": { "basements": 0, "storey_height": 3.5 } }
   ],
+  "steps": [
+    { "step": "building", "name": "The building", "needs": ["building_type", "region", "installation"], "owner": "person" },
+    { "step": "journey", "name": "The journey", "needs": ["stops", "travel"], "owner": "person" },
+    { "step": "fit", "name": "What must fit", "needs": ["rated_load", "car_size"], "owner": "person" },
+    { "step": "shaft", "name": "The shaft", "needs": ["shaft", "pit_depth"], "owner": "person" },
+    { "step": "safety", "name": "Safety", "needs": ["rescue_operation"], "owner": "person" },
+    { "step": "car", "name": "The car and its doors", "needs": [], "owner": "model" },
+    { "step": "drive", "name": "Drive and energy", "needs": [], "owner": "model" },
+    { "step": "installing", "name": "Installing it", "needs": ["lead_time", "site_hours"], "owner": "person" },
+    { "step": "maintaining", "name": "Maintaining it", "needs": ["service_level", "contract_term"], "owner": "person" },
+    { "step": "ending", "name": "At the end of its life", "needs": ["end_of_life"], "owner": "person" }
+  ],
   "constraints": [
     {
       "id": "R01",
