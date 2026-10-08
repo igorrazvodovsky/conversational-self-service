@@ -83,6 +83,7 @@ import {
   type View,
 } from "./provider";
 import { useNavigate } from "./link";
+import { StepTabs } from "./steps";
 import {
   Answers,
   AnswersDetails,
@@ -873,7 +874,10 @@ export function AskedFor() {
       <h2 id="asserted-title" className="sr-only">
         The specification
       </h2>
-      <header className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      {/* The steps of the job, then the gaps within the step: one place
+          for what the list shows. */}
+      <header className="mb-2 space-y-2">
+        <StepTabs />
         <Filters />
       </header>
       {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,

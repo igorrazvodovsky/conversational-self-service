@@ -1,25 +1,21 @@
 "use client";
 
 /**
- * The step bar: where the person is in the job, and what the step there
- * still wants (`Stepping`, docs/syncs/stepping.md).
+ * The steps of the job as tabs over the one list (`Stepping`,
+ * docs/syncs/stepping.md).
  *
- * One row, the seller's steps in the seller's order, each a segment that
- * is `take`: the person saying they are at it. Taking a step also frames
- * the canvas to what the step is about, so the segment is one gesture
- * with the whole canvas as its consequence, and the step's own controls —
- * finish, skip, reopen — are in the frame's banner (`index.tsx`) with the
- * other frames'. The pressed segment is the step the person took, which
- * is a claim and not a frame: showing everything again leaves it pressed.
- * It is a toggle group and not a stepper — a stepper's pressed segment is
- * where the form has let you get to, and this one is where you said you
- * are. While no step is taken, the first still wanting something is named
- * as the place to start, in words, and nothing is pressed.
- *
- * What a step wants is the fact beside it: the count on the segment, and
- * its status mark. No step is ever greyed out: the map gates nothing, and
- * a step finished with something still wanting says so rather than
- * refusing.
+ * The seller's steps in the seller's order, and "All" first. The active
+ * tab is what the list is narrowed to, and choosing a step is `take`: the
+ * person saying they are at it, recorded, and the canvas framed to what
+ * the step is about in the same gesture. "All" is `unframe`, and the claim
+ * stands in the log: the assistant still asks about the step taken. The
+ * tab's panel is the list itself, under the gap filters, which work
+ * within the step; the step's status, what it still wants and its
+ * controls are the panel's header, so the choice and its state are in
+ * one place. Tabs rather than a stepper, because a stepper's active
+ * segment is where the form let you get to, and this one is where you
+ * said you are: no tab is ever disabled, and a step finished with
+ * something still wanting says so rather than refusing.
  */
 
 import { useRef, useState } from "react";
@@ -35,58 +31,88 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TONE } from "./tone";
 import { address, addressable, targeted, To, useTargeted } from "./address";
 import { useNavigate } from "./link";
 import { useConfigurator, type Step } from "./provider";
 
-export function Steps() {
+export function StepTabs() {
   const { view } = useConfigurator();
   // A step is a place the person goes, and the back button returns from.
   const navigate = useNavigate();
   if (!view?.stepping.steps.length) return null;
   const { at, start, steps } = view.stepping;
-  // While the step frames the canvas, the banner says all this.
   const framed = view.frame?.by === "step" ? view.frame.step : null;
-  const here = steps.find((s) => s.step === at && s.step !== framed);
-  const starting = at ? null : steps.find((s) => s.step === start);
-
+  const active = framed ?? "all";
+  const here = steps.find((s) => s.step === framed);
+  const starting = !framed && !at ? steps.find((s) => s.step === start) : null;
   return (
-    <div className="mt-4 space-y-2">
-      <ToggleGroup
-        type="single"
-        variant="outline"
-        size="sm"
-        spacing={0}
-        value={at ?? ""}
-        // The pressed segment is the person's claim, and pressing it again
-        // does not unsay it: the group's own change is ignored, and each
-        // segment's click is the take, so pressing the taken step while
-        // the canvas shows everything frames it again.
-        onValueChange={() => undefined}
-        aria-label="Where you are in the job"
-        className="flex-wrap"
+    <Tabs
+      value={active}
+      onValueChange={(next) =>
+        next !== active && void navigate(next === "all" ? { act: "unframe" } : { act: "take", step: next })
+      }
+      className="gap-1"
+    >
+      {/* Ten steps wrap at the panel's width; the primitive's one-line
+          height is lifted so the rows stack, with room for the active
+          underline under each. */}
+      <TabsList
+        variant="line"
+        className="h-auto flex-wrap justify-start gap-y-2 py-1 group-data-horizontal/tabs:h-auto"
       >
+        <TabsTrigger value="all" className="flex-none">
+          All
+        </TabsTrigger>
         {steps.map((step) => (
-          <Segment
-            key={step.step}
-            step={step}
-            take={() => void navigate({ act: "take", step: step.step })}
-          />
+          <Tab key={step.step} step={step} taken={step.step === at} />
         ))}
-      </ToggleGroup>
-      <p className="text-xs text-muted-foreground">
-        {here ? (
-          <Wants step={here} lead={`You are at ${here.name.toLowerCase()}`} />
-        ) : starting ? (
+      </TabsList>
+      {here ? (
+        <StepHeader step={here} />
+      ) : starting ? (
+        <p className="text-xs text-muted-foreground">
           <Wants step={starting} lead={`Start with ${starting.name.toLowerCase()}`} />
-        ) : framed || at ? null : (
-          "Every step has what it needs."
-        )}
-      </p>
-    </div>
+        </p>
+      ) : null}
+    </Tabs>
   );
+}
+
+/**
+ * One step's tab: its status mark, its name, and the count of what it
+ * still wants. The tab carries the step's address. The step the person
+ * took is underlined faintly when another tab is active, so the claim is
+ * visible without a second control.
+ */
+function Tab({ step, taken }: { step: Step; taken: boolean }) {
+  const at = address.step(step.step);
+  const isTarget = useTargeted(at);
+  return (
+    <TabsTrigger
+      id={at}
+      value={step.step}
+      title={step.status}
+      className={`flex-none ${addressable} ${isTarget ? targeted : ""} ${
+        step.status === "skipped" ? "text-muted-foreground/60" : ""
+      } ${taken ? "underline decoration-foreground/30 underline-offset-4" : ""}`}
+    >
+      <Mark status={step.status} />
+      {/* The name is struck, not the count: what a skipped step still
+          wants is still a fact. */}
+      <span className={step.status === "skipped" ? "line-through" : ""}>{step.name}</span>
+      {step.wanting.length ? (
+        <span className="font-normal tabular-nums text-muted-foreground">{step.wanting.length}</span>
+      ) : null}
+    </TabsTrigger>
+  );
+}
+
+function Mark({ status }: { status: Step["status"] }) {
+  if (status === "finished") return <CheckIcon aria-hidden />;
+  if (status === "skipped") return <MinusIcon aria-hidden />;
+  return <span className="size-1.5 rounded-full border border-current" aria-hidden />;
 }
 
 /** What a step still wants, as links, after a lead-in. */
@@ -119,61 +145,17 @@ function WantList({ step }: { step: Step }) {
 }
 
 /**
- * One step: the segment is `take`; the mark before its name is its status
- * and the count after it is what it still wants. The segment carries the
- * step's address.
+ * The panel's header: the step's status, what it still wants, and the
+ * gestures that change it. A skip needs a reason, so that button opens a
+ * field the way the handover's does (`standing.tsx`); pressed empty, it
+ * says what is missing rather than greying out.
  */
-function Segment({ step, take }: { step: Step; take: () => void }) {
-  const at = address.step(step.step);
-  const isTarget = useTargeted(at);
-  return (
-    <ToggleGroupItem
-      id={at}
-      value={step.step}
-      onClick={take}
-      aria-label={`You are at ${step.name}`}
-      title={step.status}
-      className={`gap-1.5 ${addressable} ${isTarget ? targeted : ""} ${
-        step.status === "skipped" ? "text-muted-foreground" : ""
-      }`}
-    >
-      <Mark status={step.status} />
-      {/* The name is struck, not the count: what a skipped step still
-          wants is still a fact. */}
-      <span className={step.status === "skipped" ? "line-through" : ""}>{step.name}</span>
-      {step.wanting.length ? (
-        <span className="text-muted-foreground tabular-nums">{step.wanting.length}</span>
-      ) : null}
-    </ToggleGroupItem>
-  );
-}
-
-export function Mark({ status }: { status: Step["status"] }) {
-  if (status === "finished") return <CheckIcon aria-hidden />;
-  if (status === "skipped") return <MinusIcon aria-hidden />;
-  return <span className="size-2 rounded-full border border-current" aria-hidden />;
-}
-
-/**
- * The step as the frame's banner: what the list is narrowed to, what the
- * step still wants, its status, and the gestures that change it. A skip
- * needs a reason, so that button opens a field the way the handover's
- * does (`standing.tsx`); pressed empty, it says what is missing rather
- * than greying out. The way out, showing everything, is the banner's as
- * for every frame, and it leaves the step taken.
- */
-export function StepBanner({ step }: { step: Step }) {
+function StepHeader({ step }: { step: Step }) {
   const { gesture } = useConfigurator();
   const tone =
     step.status === "finished" ? TONE.positive : step.status === "skipped" ? TONE.caution : "";
   return (
-    <>
-      <span className="min-w-0">
-        <span className="text-muted-foreground">Working on </span>
-        <To id={address.step(step.step)} className="font-medium">
-          {step.name}
-        </To>
-      </span>
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
       <Badge variant="secondary" className={tone}>
         {step.status}
       </Badge>
@@ -199,11 +181,8 @@ export function StepBanner({ step }: { step: Step }) {
             Reopen
           </Button>
         )}
-        <Button variant="ghost" size="xs" onClick={() => void gesture({ act: "unframe" })}>
-          Show everything
-        </Button>
       </span>
-    </>
+    </div>
   );
 }
 

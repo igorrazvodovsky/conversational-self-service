@@ -13,7 +13,6 @@ import { address, To } from "./address";
 import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
 import { Standing } from "./standing";
-import { StepBanner, Steps } from "./steps";
 import { framedAsserted } from "./ledger";
 import { AskedFor } from "./specification";
 
@@ -51,22 +50,13 @@ function Section({
  * Shown while an assertion or a clause frames the canvas — an assertion only
  * by the assistant or the person's own agent, since the page's own way to
  * what one forced is the card itself. A frame on a clause is also the answering mode, and the strip says so. A gap
- * frame is a filter, shown pressed above the list it filters. A step frame
- * carries the step's own controls, since the step is what the list is
- * narrowed to (`steps.tsx`).
+ * frame is a filter, shown pressed above the list it filters, and so is a
+ * step frame: a tab (`steps.tsx`).
  */
 function FrameBanner() {
   const { view, gesture, label } = useConfigurator();
-  if (!view?.frame || view.frame.by === "gap") return null;
+  if (!view?.frame || view.frame.by === "gap" || view.frame.by === "step") return null;
   const { frame } = view;
-  if (frame.by === "step") {
-    const step = view.stepping.steps.find((s) => s.step === frame.step);
-    return (
-      <div className="flex flex-wrap items-center gap-2 border bg-muted/40 px-3 py-1.5 text-xs">
-        {step ? <StepBanner step={step} /> : null}
-      </div>
-    );
-  }
   const inside = view.variables.filter((v) => v.framed);
   const count = (standing: string) =>
     inside.filter((v) => v.standing === standing).length;
@@ -129,7 +119,7 @@ function FrameBanner() {
  */
 function Header() {
   const { view } = useConfigurator();
-  if (!view?.frame || view.frame.by === "gap") return null;
+  if (!view?.frame || view.frame.by === "gap" || view.frame.by === "step") return null;
   return (
     <div className="sticky top-0 z-10 -mx-6 border-b bg-ground/95 px-6 py-2 backdrop-blur">
       <FrameBanner />
@@ -193,8 +183,6 @@ export function ConfiguratorCanvas() {
           <div className="mt-4">
             <Standing />
           </div>
-
-          <Steps />
 
           {/* Only while something waits on the person: an empty section
               here would read as a question nobody asked. */}
