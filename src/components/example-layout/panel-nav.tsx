@@ -9,7 +9,6 @@ import {
   type Surface,
 } from "@/components/configurator/provider";
 import { Log } from "@/components/configurator/log";
-import { ShowingMenu } from "@/components/configurator/showing";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -33,9 +32,6 @@ interface Place {
  *
  * A surface is reached by `focus`. The question is an address on the
  * specification (`address.tsx`), not a surface.
- *
- * The `Showing` menu is there only while the specification is showing: it
- * has nothing to say about the quotes.
  *
  * A surface's link is its URL, `?on=quotes`, so it can be opened in another
  * tab or copied as any link can; followed here, it is a new entry in the
@@ -132,7 +128,6 @@ export function PanelNav() {
         </NavigationMenuList>
       </NavigationMenu>
       <div className="ml-auto flex shrink-0 items-center gap-1">
-        {mode === "canvas" ? <ShowingMenu /> : null}
         <Log />
         <CopyViewLink />
       </div>

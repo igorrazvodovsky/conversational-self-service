@@ -186,12 +186,33 @@ function Group({
   );
 }
 
+/** The checks a person runs on an offer before accepting it. */
+export type Check = "unanswered" | "changed";
+export const CHECKS: { check: Check; title: string }[] = [
+  { check: "unanswered", title: "Unanswered" },
+  { check: "changed", title: "Changed since" },
+];
+
+const unanswered = (r: Quote["requires"][number]) =>
+  !r.answeredBy.length && r.negotiability !== "open";
+
+/** What each check would leave: the requirements nothing in the offer
+ * answers, and the values the specification has moved away from. */
+export function checks(quote: Quote): Record<Check, number> {
+  return {
+    unanswered: quote.requires.filter(unanswered).length,
+    changed: quote.differs.length,
+  };
+}
+
 export function AsIssued({
   quote,
   view,
+  check = null,
 }: {
   quote: Quote;
   view: Pick<View, "currency">;
+  check?: Check | null;
 }) {
   const { currency } = view;
   const at = (kind: "variable" | "clause", id: string) =>
@@ -211,8 +232,21 @@ export function AsIssued({
     quote.holds
       .filter((h) => grounds?.[h.name] && filter(grounds[h.name]))
       .map((h) => ({ held: h, ground: grounds![h.name] }));
-  const asserted = rows((g) => g.standing !== "follows");
-  const follows = rows((g) => g.standing === "follows");
+  // Under a check only what it asks about is drawn: a requirement nothing
+  // answers has no value lines, and a value that moved is drawn with the
+  // requirements it answered.
+  const keepValue = (name: string) =>
+    check === "unanswered" ? false : check === "changed" ? moved.has(name) : true;
+  const requires = quote.requires.filter((r) =>
+    check === "unanswered"
+      ? unanswered(r)
+      : check === "changed"
+        ? r.answeredBy.some((a) => moved.has(variableOf.get(a.value) ?? ""))
+        : true,
+  );
+  const asserted = rows((g) => g.standing !== "follows").filter(({ held }) => keepValue(held.name));
+  const follows = rows((g) => g.standing === "follows").filter(({ held }) => keepValue(held.name));
+  const empty = !requires.length && !asserted.length && !follows.length;
 
   // The badge has a column of its own, so the values stay aligned.
   const valueCell = (h: Held) => (
@@ -225,7 +259,14 @@ export function AsIssued({
 
   return (
     <div className="text-sm">
-      {quote.requires.length ? (
+      {check && empty ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {check === "unanswered"
+            ? "The offer answers every requirement."
+            : "Nothing has moved since this was issued."}
+        </p>
+      ) : null}
+      {requires.length ? (
         <Group title="Required" hint="in your words, as they stood at issue">
           <Table>
             <TableHeader>
@@ -235,7 +276,7 @@ export function AsIssued({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {quote.requires.map((r) => (
+              {requires.map((r) => (
                 <Row key={r.clause} id={at("clause", r.clause)}>
                   <TableCell className="align-top whitespace-normal">
                     <ClauseText text={r.text} />
@@ -272,8 +313,9 @@ export function AsIssued({
         </Group>
       ) : null}
 
-      {grounds === null ? null : (
+      {grounds === null || (check && !asserted.length && !follows.length) ? null : (
         <>
+          {asserted.length ? (
           <Group title="Asserted" hint="what you, the assistant or your agent asked for">
             <Table>
               <TableHeader>
@@ -317,6 +359,7 @@ export function AsIssued({
               </TableBody>
             </Table>
           </Group>
+          ) : null}
 
           {follows.length ? (
             <Group title="Follows from that" hint="a rule forced each">

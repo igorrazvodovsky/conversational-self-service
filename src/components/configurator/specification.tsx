@@ -65,6 +65,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted, To, useTargeted } from "./address";
 import {
+  ClauseText,
   NEGOTIABILITY,
   plain,
   segments,
@@ -84,6 +85,7 @@ import {
 } from "./provider";
 import { useNavigate } from "./link";
 import { StepHeading, StepTabs } from "./steps";
+import { ShowingMenu } from "./showing";
 import {
   Answers,
   AnswersDetails,
@@ -798,21 +800,32 @@ const GAPS: { gap: Gap; title: string }[] = [
 const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
 
 /**
- * Which kind of fact the list shows: everything, or one gap. Choosing one is
- * `frame` by gap and choosing everything is `unframe`, so the filter is a
- * fact of `Framing`, the same whichever party set it. While an assertion or
- * a clause frames the canvas, no filter is pressed, and the sticky strip
- * names the frame. While a step does, the filters work within it: each is
- * the same step frame with the gap beside it, and the counts are the
- * step's. A gap with nothing in it can be chosen like any other: its count
- * says it is empty, and the list it opens shows that it is.
+ * What the list is narrowed to, said once, in one line above it: the gap it
+ * is filtered to, or the assertion or clause that frames it; and beside
+ * that, which facts are shown next to each item. Four questions used to be
+ * answered in four places — the gaps here, the steps beside, the
+ * assertion and clause frames in a banner of their own, the facets up in
+ * the panel's header — and a person asking *what am I looking at* had to
+ * read them all. The steps stay beside the list: they are what the list is
+ * about, a different axis, and the rail reads as a sequence.
+ *
+ * Choosing a gap is `frame` by gap and choosing everything is `unframe`,
+ * so the filter is a fact of `Framing`, the same whichever party set it.
+ * While a step frames the list the gaps work within it: each is the same
+ * step frame with the gap beside it, and the counts are the step's. A gap
+ * with nothing in it can be chosen like any other: its count says it is
+ * empty, and the list it opens shows that it is. An assertion or a clause
+ * frame is not a gap, so the gaps give way to the sentence that says what
+ * the frame is, with the way out beside it; a frame on a clause is also
+ * the answering mode, and the sentence says so.
  */
-function Filters() {
-  const { view } = useConfigurator();
+function Narrowing() {
+  const { view, gesture, label } = useConfigurator();
   // A filter is a place the person goes, and the back button returns from.
   const navigate = useNavigate();
   if (!view) return null;
   const frame = view.frame;
+  const sentence = frame?.by === "assertion" || frame?.by === "clause";
   const step = frame?.by === "step" ? frame : null;
   const value = !frame ? "all" : frame.by === "gap" ? frame.gap : step ? step.gap ?? "all" : "";
   const counts = step ? step.counts : view.counts;
@@ -822,37 +835,97 @@ function Filters() {
       : next === "all"
         ? { act: "unframe" }
         : { act: "frame", frame: { by: "gap", gap: next } };
+  const inside = view.variables.filter((v) => v.framed);
+  const count = (standing: string) => inside.filter((v) => v.standing === standing).length;
+  // Only the counts that say something: a frame with nothing forced, open
+  // or given way does not list them as zeros.
+  const tally = (parts: [number, string][]) =>
+    parts.filter(([n]) => n).map(([n, word]) => `${n} ${word}`).join(" · ");
   return (
-    <ToggleGroup
-      type="single"
-      variant="outline"
-      size="sm"
-      spacing={0}
-      value={value}
-      aria-label="Show"
-      onValueChange={(next) => {
-        if (!next || next === value) return;
-        void navigate(to(next));
-      }}
-    >
-      {/* Pressed is solid: the primitive's muted fill all but vanishes on
-          the panel's ground, and which filter is on is the list's meaning. */}
-      <ToggleGroupItem value="all" className={PRESSED}>
-        All
-      </ToggleGroupItem>
-      {GAPS.map(({ gap, title }) => (
-        <ToggleGroupItem
-          key={gap}
-          value={gap}
-          className={cn("gap-1.5", PRESSED)}
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      {sentence ? (
+        <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 text-xs">
+          {frame.by === "assertion" ? (
+            <>
+              <span>
+                <span className="text-muted-foreground">From </span>
+                <To id={address.variable(frame.variable)} className="font-medium">
+                  {frame.heading}
+                </To>
+                {frame.asked ? (
+                  <>
+                    <span className="text-muted-foreground">: </span>
+                    <span className="font-medium">{label(frame.asked)}</span>
+                  </>
+                ) : null}
+              </span>
+              <span className="text-muted-foreground">
+                {tally([
+                  [count("follows"), "forced"],
+                  [count("open"), "open"],
+                  [count("yielded"), "gave way"],
+                  [count("unmet"), "unmet"],
+                ]) || "nothing forced"}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="min-w-0">
+                <span className="text-muted-foreground">About </span>
+                <To id={address.clause(frame.clause)} className="font-medium">
+                  “<ClauseText text={frame.text} />”
+                </To>
+              </span>
+              <span className="text-muted-foreground">
+                {tally([
+                  [count("asked") + count("yielded") + count("unmet"), "answering"],
+                  [count("follows"), "followed"],
+                  [count("open"), "open could answer it"],
+                ]) || "nothing answers it"}
+                {" · a value picked now does"}
+              </span>
+            </>
+          )}
+        </span>
+      ) : (
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          spacing={0}
+          value={value}
+          aria-label="Show"
+          onValueChange={(next) => {
+            if (!next || next === value) return;
+            void navigate(to(next));
+          }}
         >
-          {title}
-          <span className="tabular-nums text-muted-foreground group-data-[state=on]/toggle:text-background/70">
-            {counts[gap]}
-          </span>
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+          {/* Pressed is solid: the primitive's muted fill all but vanishes on
+              the panel's ground, and which filter is on is the list's meaning. */}
+          <ToggleGroupItem value="all" className={PRESSED}>
+            All
+          </ToggleGroupItem>
+          {GAPS.map(({ gap, title }) => (
+            <ToggleGroupItem key={gap} value={gap} className={cn("gap-1.5", PRESSED)}>
+              {title}
+              <span className="tabular-nums text-muted-foreground group-data-[state=on]/toggle:text-background/70">
+                {counts[gap]}
+              </span>
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      )}
+      {/* The way out and the facets stay together at the end of the line,
+          whatever the sentence's length. */}
+      <span className="ml-auto flex shrink-0 items-center gap-1">
+        {sentence ? (
+          <Button variant="ghost" size="xs" onClick={() => void gesture({ act: "unframe" })}>
+            Show everything
+          </Button>
+        ) : null}
+        <ShowingMenu />
+      </span>
+    </div>
   );
 }
 
@@ -878,9 +951,11 @@ export function AskedFor() {
           under them: the step it is narrowed to, and the gaps within it
           (`steps.tsx`). */}
       <StepTabs>
-        <header className="mb-2 space-y-2">
+        {/* Sticky, so what the list is narrowed to, and the way out of it,
+            stay in view down a long list. */}
+        <header className="sticky top-0 z-10 -mt-2 space-y-2 bg-ground/95 pt-2 pb-2 backdrop-blur">
           <StepHeading />
-          <Filters />
+          <Narrowing />
         </header>
         {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
             it is read, and a frame that leaves nothing says so. */}

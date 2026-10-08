@@ -8,9 +8,6 @@ import {
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
 import { useConfigurator, type View } from "./provider";
-import { Button } from "@/components/ui/button";
-import { address, To } from "./address";
-import { ClauseText } from "./clauses";
 import { PendingQuestions, waiting } from "./question";
 import { Standing } from "./standing";
 import { framedAsserted } from "./ledger";
@@ -43,87 +40,6 @@ function Section({
         </Empty>
       )}
     </section>
-  );
-}
-
-/**
- * Shown while an assertion or a clause frames the canvas — an assertion only
- * by the assistant or the person's own agent, since the page's own way to
- * what one forced is the card itself. A frame on a clause is also the answering mode, and the strip says so. A gap
- * frame is a filter, shown pressed above the list it filters, and so is a
- * step frame: a tab (`steps.tsx`).
- */
-function FrameBanner() {
-  const { view, gesture, label } = useConfigurator();
-  if (!view?.frame || view.frame.by === "gap" || view.frame.by === "step") return null;
-  const { frame } = view;
-  const inside = view.variables.filter((v) => v.framed);
-  const count = (standing: string) =>
-    inside.filter((v) => v.standing === standing).length;
-  const unmet = count("unmet");
-  const yielded = count("yielded");
-  const asked = count("asked") + yielded + unmet;
-  return (
-    <div className="flex flex-wrap items-center gap-2 border bg-muted/40 px-3 py-1.5 text-xs">
-      {frame.by === "assertion" ? (
-        <>
-          <span>
-            <span className="text-muted-foreground">Narrowed to </span>
-            <To id={address.variable(frame.variable)} className="font-medium uppercase tracking-wide">
-              {frame.heading}
-            </To>
-            {frame.asked ? (
-              <>
-                <span className="text-muted-foreground">: </span>
-                <span className="font-medium">{label(frame.asked)}</span>
-              </>
-            ) : null}
-          </span>
-          <span className="text-muted-foreground">
-            · forced {count("follows")}
-            {count("open") ? ` · narrowed ${count("open")} open` : ""}
-            {yielded ? ` · ${yielded} gave way` : ""}
-            {unmet ? ` · ${unmet} unmet` : ""}
-          </span>
-        </>
-      ) : (
-        <>
-          <span className="min-w-0">
-            <span className="text-muted-foreground">About </span>
-            <To id={address.clause(frame.clause)} className="font-medium">
-              “<ClauseText text={frame.text} />”
-            </To>
-          </span>
-          <span className="text-muted-foreground">
-            · answered by {asked} · {count("follows")} followed · {count("open")} open
-            could answer it · a value picked now does
-          </span>
-        </>
-      )}
-      <Button
-        variant="ghost"
-        size="xs"
-        className="ml-auto"
-        onClick={() => void gesture({ act: "unframe" })}
-      >
-        Show everything
-      </Button>
-    </div>
-  );
-}
-
-/**
- * Sticky, so a mode begun anywhere is visible, and its way out reachable,
- * from anywhere. What the other party changed is in the log, behind the bell in
- * the panel's header (`log.tsx`).
- */
-function Header() {
-  const { view } = useConfigurator();
-  if (!view?.frame || view.frame.by === "gap" || view.frame.by === "step") return null;
-  return (
-    <div className="sticky top-0 z-10 -mx-6 border-b bg-ground/95 px-6 py-2 backdrop-blur">
-      <FrameBanner />
-    </div>
   );
 }
 
@@ -178,8 +94,6 @@ export function ConfiguratorCanvas() {
     <div className="@container h-full">
       <div className="relative h-full overflow-y-auto">
         <div className="px-6 pb-6">
-          <Header />
-
           <div className="mt-4">
             <Standing />
           </div>

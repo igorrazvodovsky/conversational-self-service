@@ -12,7 +12,8 @@
  *   show     facet names, comma-separated, possibly none     Showing
  *   grid     today | decarbonising                           the read
  *   quote    a quote's id                                    the quote surface
- *   reading  asked | timeline | proposal                     the quote surface
+ *   reading  asked | timeline                                the quote surface
+ *   check    unanswered | changed                            the quote surface
  *   against  a quote's id, or `now`                          the quote surface
  *   thread   a conversation's id                             the chat
  *
@@ -52,7 +53,7 @@ const surfaceNamed = (word: string | null): Surface | null =>
 
 const GAPS = ["open", "unanswered", "unbound"];
 const GRIDS: Grid[] = ["today", "decarbonising"];
-export const READINGS = ["asked", "timeline", "proposal"] as const;
+export const READINGS = ["asked", "timeline"] as const;
 export type Reading = (typeof READINGS)[number];
 
 type FrameAsked =
@@ -95,7 +96,7 @@ const shownOf = (view: View) =>
 // -- reading and writing the URL ----------------------------------------------
 
 /** The order the parameters are written in, so the same view is the same URL. */
-const ORDER = ["on", "frame", "show", "grid", "quote", "reading", "against", "thread"];
+const ORDER = ["on", "frame", "show", "grid", "quote", "reading", "check", "against", "thread"];
 
 /** A query, written so a person can read it: `:` and `,` are left as they
  * are, which a query may carry (RFC 3986), rather than `%3A` and `%2C`. */

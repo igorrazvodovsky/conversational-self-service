@@ -22,7 +22,7 @@
  * That a quote exists, and its standing, is `Quoting`'s.
  */
 
-import { ChevronDownIcon, PrinterIcon } from "lucide-react";
+import { ChevronDownIcon, FileTextIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
@@ -71,8 +71,9 @@ import {
 } from "./address";
 import { Comparison, NOW } from "./comparison";
 import { CopyLink, READINGS, linkTo, setQuery, type Reading } from "./link";
-import { QuoteDocument, STANDING } from "./document";
-import { AsIssued, Decision } from "./grounds";
+import { STANDING } from "./document";
+import { AsIssued, CHECKS, checks, Decision, type Check } from "./grounds";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import { day, money } from "./format";
 import { TONE } from "./tone";
@@ -386,6 +387,8 @@ function RequestButton() {
   );
 }
 
+const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
+
 export function QuoteSurface() {
   const { view, error, gesture } = useConfigurator();
   const quotes = view?.quotes ?? [];
@@ -395,6 +398,9 @@ export function QuoteSurface() {
   const against = params.get("against");
   const asked = params.get("reading") as Reading | null;
   const reading: Reading = asked && READINGS.includes(asked) ? asked : "asked";
+  const checked = params.get("check");
+  const check: Check | null = CHECKS.some((c) => c.check === checked) ? (checked as Check) : null;
+  const setCheck = (next: Check | null) => setQuery({ check: next }, true);
   // Each choice is the person going somewhere, so a new history entry.
   const setSelected = (quote: string) => setQuery({ quote }, true);
   const setAgainst = (other: string | null) => setQuery({ against: other }, true);
@@ -452,6 +458,7 @@ export function QuoteSurface() {
   }
 
   const quote = quotes.find((q) => q.quote === selected) ?? quotes.at(-1);
+  const counts = quote ? checks(quote) : { unanswered: 0, changed: 0 };
   const other =
     against === NOW
       ? NOW
@@ -562,10 +569,13 @@ export function QuoteSurface() {
                     className="ml-auto"
                     url={() => linkTo(`quote:${quote.quote}`)}
                   />
+                  {/* The proposal is the package that leaves the app, and
+                      it is read where it prints: on its own page, not as
+                      a third reading here. */}
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/quotes/${quote.quote}`} target="_blank">
-                      <PrinterIcon />
-                      Print
+                      <FileTextIcon />
+                      Open the proposal
                       <span className="sr-only"> (opens in a new tab)</span>
                     </Link>
                   </Button>
@@ -580,16 +590,41 @@ export function QuoteSurface() {
               <TabsList aria-label="Readings of this quotation">
                 <TabsTrigger value="asked">Against what was asked</TabsTrigger>
                 <TabsTrigger value="timeline">Along time</TabsTrigger>
-                <TabsTrigger value="proposal">As the proposal</TabsTrigger>
               </TabsList>
               <TabsContent value="asked">
-                <AsIssued quote={quote} view={view} />
+                {/* The questions a person brings to an offer before
+                    accepting it: what did it leave unanswered, and what
+                    has moved since. Each is a filter over the reading,
+                    the viewer's, held in the URL like the reading. */}
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
+                  size="sm"
+                  spacing={0}
+                  value={check ?? "all"}
+                  aria-label="Check"
+                  className="mt-3"
+                  onValueChange={(next) => {
+                    if (!next || next === (check ?? "all")) return;
+                    setCheck(next === "all" ? null : (next as Check));
+                  }}
+                >
+                  <ToggleGroupItem value="all" className={PRESSED}>
+                    All
+                  </ToggleGroupItem>
+                  {CHECKS.map(({ check: c, title }) => (
+                    <ToggleGroupItem key={c} value={c} className={cn("gap-1.5", PRESSED)}>
+                      {title}
+                      <span className="tabular-nums text-muted-foreground group-data-[state=on]/toggle:text-background/70">
+                        {counts[c]}
+                      </span>
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+                <AsIssued quote={quote} view={view} check={check} />
               </TabsContent>
               <TabsContent value="timeline">
                 <Timeline quote={quote} view={view} />
-              </TabsContent>
-              <TabsContent value="proposal" className="pt-4">
-                <QuoteDocument quote={quote} view={view} level={3} />
               </TabsContent>
             </Tabs>
           </Card>
