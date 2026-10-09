@@ -124,6 +124,22 @@ class Binding:
             "replaced": choice,
         }
 
+    def adopt(self, choice: str, party: str) -> dict[str, Any]:
+        selection = self._selection_of(choice)
+        if selection is None:
+            return {"error": f"there is no choice {choice} in any selection"}
+        formerly = self._decided_by[choice]
+        if formerly == party:
+            return {"error": f"{party} decided {choice} already"}
+        self._decided_by[choice] = party
+        return {
+            "choice": choice,
+            "selection": selection,
+            "requirement": self._answers[choice],
+            "party": party,
+            "formerly": formerly,
+        }
+
     def retract(self, choice: str) -> dict[str, Any]:
         selection = self._selection_of(choice)
         if selection is None:

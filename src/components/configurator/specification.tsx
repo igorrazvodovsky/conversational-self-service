@@ -2,16 +2,20 @@
 
 /**
  * The ledger, edited as a document: the requirements of the specification's
- * one list.
+ * one list, above the values (`ledger.tsx`).
  *
  * A Tiptap editor whose schema is a sequence of clause nodes and nothing
  * else. Each node carries the clause's identity from `Specifying` as an
  * attribute and is one line of the requirement ledger, read as a question
- * and its answer: the text is editable in place, and beneath it the values
- * answering it with what each forced (`ledger.tsx`). Everything else about
- * the clause — its source, its negotiability, how each answer came to be —
- * is drawn while the line is open, which it is while the caret is in it.
- * None of it is text. Nothing is asked of a line as it is typed: it is a clause the moment it has words. The words may name the
+ * and its answer: the text is editable in place, and beneath it the rows
+ * answering it, each a link to where the value stands. Everything else
+ * about the clause — its source, what the assistant read it as, its
+ * negotiability — is drawn while the line is open, which it is while the
+ * caret is in it. None of it is text. The last line is always blank, the
+ * place to add a requirement: a line is a clause the moment it has words,
+ * and nothing is asked of it as it is typed. Once a clause is stated the
+ * assistant is run on it (`stating.tsx`), and what it read the clause as
+ * lands on the line as its answers. The words may name the
  * catalogue — `@` offers it — and a reference so placed is part of the text,
  * written as a token (`references.tsx`).
  *
@@ -81,25 +85,17 @@ import {
   type Negotiability,
   type Quantity,
   type Stimulus,
+  type Variable,
   type View,
 } from "./provider";
 import { useNavigate } from "./link";
 import { StepTabs } from "./steps";
 import { TONE } from "./tone";
 import { ShowingMenu } from "./showing";
-import {
-  Answers,
-  AnswersDetails,
-  Details,
-  framedAsserted,
-  ledger,
-  lineAddresses,
-  Loose,
-  Open,
-  Unbound,
-  useOpened,
-} from "./ledger";
+import { FoldAll, FoldingProvider } from "./variables";
+import { Answers, Details, ledger, lineAddresses, useOpened, Values } from "./ledger";
 import { Sources } from "./sources";
+import { useStating } from "./stating";
 
 // -- the schema ---------------------------------------------------------------
 
@@ -189,7 +185,7 @@ const ClauseDocument = Document.extend({ content: "clause+" });
  */
 const ClausePlaceholder = Placeholder.configure({
   showOnlyCurrent: false,
-  placeholder: "Requirement"
+  placeholder: "Add requirement"
 });
 
 function hintOf(decorations: NodeViewProps["decorations"]): string | null {
@@ -208,17 +204,19 @@ function inlineOf(text: string) {
   );
 }
 
+/** The clauses, and a blank line after them: where the next one is typed. */
 function documentOf(view: View | null) {
   const clauses = view?.clauses ?? [];
   return {
     type: "doc",
-    content: clauses.length
-      ? clauses.map((c) => ({
-          type: "clause",
-          attrs: { clause: c.clause },
-          content: inlineOf(c.text),
-        }))
-      : [{ type: "clause", attrs: { clause: null } }],
+    content: [
+      ...clauses.map((c) => ({
+        type: "clause",
+        attrs: { clause: c.clause },
+        content: inlineOf(c.text),
+      })),
+      { type: "clause", attrs: { clause: null } },
+    ],
   };
 }
 
@@ -375,31 +373,29 @@ function ClauseView({ node, decorations }: NodeViewProps) {
   const hint = hintOf(decorations);
   const open = clause?.negotiability === "open";
   const isTarget = useTargeted(clause ? address.clause(clause.clause) : "");
-  const lines = view ? ledger(view, framedAsserted(view)) : null;
+  const lines = view ? ledger(view) : null;
   const outside = !!view?.frame && (!clause || !lines?.shown.has(clause.clause));
   const order = view?.clauses.map((c) => c.clause) ?? [];
   const at = clause ? order.indexOf(clause.clause) : -1;
-  const drawn = (clause && lines?.lines.get(clause.clause)) || [];
-  // Open while the caret is in it, or once opened from its value or an
-  // address, until closed.
-  const [pinned, setPinned] = useOpened(
-    clause ? [address.clause(clause.clause), ...lineAddresses(drawn)] : [],
+  // Open while the caret is in it, or once opened from an address, until
+  // closed.
+  const [pinned] = useOpened(
+    clause ? lineAddresses(clause) : [],
     [!!id && opened.has(id), (open) => id && setOpened(id, open)],
   );
   const reading = !!clause && current === clause.clause;
   const expanded = !!clause && (pinned || reading || relaxing);
-  const toggle = () => {
-    if (expanded) {
-      setPinned(false);
-      if (reading) setCurrent(null);
-    } else setPinned(true);
-  };
+  // What a count or a measure in the words was worked out into, whether the
+  // clause was read from a source or read as itself.
+  const workedOut = clause
+    ? [...(clause.source?.workedOut ?? []), ...clause.read.flatMap((r) => r.workedOut)]
+    : [];
 
   return (
     <NodeViewWrapper
       id={clause ? address.clause(clause.clause) : undefined}
       className={cn(
-        "group/clause relative border-b py-3 last:border-b-0",
+        "group/clause relative border-b py-3 px-3 last:border-b-0",
         clause && addressable,
         "scroll-mt-28",
         (active || isTarget) && targeted,
@@ -520,10 +516,22 @@ function ClauseView({ node, decorations }: NodeViewProps) {
       </div>
       {clause && lines ? (
         <div contentEditable={false} className="mt-1 min-w-0 pl-4">
-          <Answers clause={clause} drawn={drawn} open={expanded} onToggle={toggle} />
+          <Answers clause={clause} />
           {expanded ? (
             <Details>
               <div className="space-y-1 text-xs text-muted-foreground">
+                {/* What the assistant read the clause as, when the person
+                    stated it and the assistant read it: its claim, beside
+                    the answers the person may since have changed. */}
+                {clause.read.map((r) => (
+                  <p key={r.item} title={r.words}>
+                    {r.answer.length
+                      ? `The assistant read this as ${r.answer.map((a) => a.label).join(", ")}.`
+                      : r.workedOut.length
+                        ? "The assistant read a quantity from this, worked out below."
+                        : "The assistant found nothing in the catalogue for this."}
+                  </p>
+                ))}
                 {/* Where the words came from, when the model read them. */}
                 {clause.source ? (
                   <p title={clause.source.words}>
@@ -543,7 +551,7 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                 {/* A count or a measure in the words was not answered by
                     the assistant but worked out by the catalogue's method,
                     so what it rests on, and what it assumed, is said here. */}
-                {clause.source?.workedOut.map((w) => (
+                {workedOut.map((w) => (
                   <p key={w.derivation} title={`${w.method}: ${w.formula}`}>
                     {sentence(w.meaning)} {amount(w)}, from{" "}
                     {w.stated.map((q, i) => (
@@ -589,7 +597,6 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                   </Button>
                 ) : null}
               </div>
-              <AnswersDetails clause={clause.clause} drawn={drawn} sourced={!!clause.source} />
             </Details>
           ) : null}
         </div>
@@ -691,6 +698,8 @@ const SETTLE_AFTER = 700;
 
 export function Specification() {
   const { view, gesture } = useConfigurator();
+  // The assistant's turn on a clause just stated.
+  const stating = useStating();
   const viewRef = useRef(view);
   viewRef.current = view;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -787,6 +796,10 @@ export function Specification() {
         const added = next?.clauses.find((c) => !before.has(c.clause));
         if (!added) continue;
         given.current.add(added.clause);
+        // The clause is stated; the assistant reads it, in the flow the
+        // gesture opened, which the view maps to the clause.
+        const flow = Object.entries(next?.required ?? {}).find(([, c]) => c === added.clause)?.[0];
+        if (flow) stating(flow, n.text);
         // The node is now that clause. Found again by position, since the
         // document may have moved under us while the gesture was in flight.
         const node = editor.state.doc.nodeAt(n.pos);
@@ -816,7 +829,7 @@ export function Specification() {
       // written back; the one standing now is.
       writeBack(viewRef.current);
     }
-  }, [editor, gesture, writeBack]);
+  }, [editor, gesture, stating, writeBack]);
 
   const schedule = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -865,12 +878,10 @@ export function Specification() {
   );
 }
 
-/** The mismatches a person can narrow the list to, offered only while
- * there are any. */
-const MISMATCHES: { gap: Gap; title: string }[] = [
-  { gap: "unanswered", title: "unanswered" },
-  { gap: "unbound", title: "answering nothing" },
-];
+/** The mismatch a person can narrow the list to, offered only while there
+ * is one: a requirement nothing answers. A value answering no requirement
+ * is not one (docs/syncs/gestures.md, "The canvas is narrowed to one gap"). */
+const MISMATCHES: { gap: Gap; title: string }[] = [{ gap: "unanswered", title: "unanswered" }];
 
 const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
 
@@ -886,12 +897,11 @@ const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
  *
  * The gaps are of two kinds, so they are two controls. *Open* is how far
  * the work has come, so *All* and *Open* are a pair to switch between.
- * *Unanswered* and *Answering nothing* are mismatches between what was
- * asked and what was set: usually there are none, and a row of tabs
- * counting zeros reads as a menu of empty places. They appear only while
- * there is something in them, tinted as something in the way, and the one
- * chosen stays while it is chosen, so a person who has just emptied it
- * sees that it is empty and the way back. The pair follows the same rule:
+ * *Unanswered* is a mismatch between what was asked and what was set:
+ * usually there is none, and a tab counting zero reads as a menu of empty
+ * places. It appears only while there is something in it, tinted as
+ * something in the way, and stays while it is chosen, so a person who has
+ * just emptied it sees that it is empty and the way back. The pair follows the same rule:
  * before anything is asked for or set, everything is open and *Open*
  * would narrow nothing, so the pair waits until the list holds something
  * else.
@@ -905,7 +915,7 @@ const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
  * the frame is, with the way out beside it; a frame on a clause is also
  * the answering mode, and the sentence says so.
  */
-function Narrowing() {
+function Narrowing({ open }: { open: Variable[] }) {
   const { view, gesture, label } = useConfigurator();
   // A filter is a place the person goes, and the back button returns from.
   const navigate = useNavigate();
@@ -1042,6 +1052,7 @@ function Narrowing() {
             Show everything
           </Button>
         ) : null}
+        <FoldAll open={open} />
         <ShowingMenu />
       </span>
     </div>
@@ -1049,18 +1060,18 @@ function Narrowing() {
 }
 
 /**
- * The specification as one list: a line per requirement with what answers
- * it and, beneath each answer, what it forced; then a line per value
- * answering none, with an empty requirement; then what is still open. Then
- * the sources the assistant read requirements from. Its id is `asserted`,
- * and the document's is `required`, the two places the chat links to.
+ * The specification as one list: the requirements, a line each with the
+ * rows answering it and a blank line to add one; then the values, a row
+ * per variable in the catalogue's order, each saying which kind of fact it
+ * is. Then the sources the assistant read requirements from. Its id is
+ * `asserted`, and the document's is `required`, the two places the chat
+ * links to.
  */
 export function AskedFor() {
   const { view } = useConfigurator();
   if (!view) return null;
-  const asserted = framedAsserted(view);
-  const { unbound, loose, open, shown } = ledger(view, asserted);
-  const empty = !shown.size && !unbound.length && !loose.length && !open.length;
+  const { rows, open, shown } = ledger(view);
+  const empty = !shown.size && !rows.length;
   return (
     <section id="asserted" className="mt-6 scroll-mt-28" aria-labelledby="asserted-title">
       <h2 id="asserted-title" className="sr-only">
@@ -1069,38 +1080,37 @@ export function AskedFor() {
       {/* The steps of the job beside the list, and the list's own header
           under them: the gaps, within the step it is narrowed to
           (`steps.tsx`). */}
-      <StepTabs>
-        {/* Sticky, so what the list is narrowed to, and the way out of it,
-            stay in view down a long list. */}
-        <header className="sticky top-0 z-10 -mt-2 space-y-2 bg-ground/95 pt-2 pb-2 backdrop-blur">
-          <Narrowing />
-        </header>
-        {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
-            it is read, and a frame that leaves nothing says so. */}
-        {/* The ring is drawn inside the edge: outside it, the sticky header
-            above paints over the card's top. */}
-        <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-(--field) ring-inset">
-          {/* With the clauses hidden, the first line has nothing above it to
-              be ruled off from. */}
-          <CardContent
-            className={cn(
-              "px-3 py-1",
-              view.frame &&
-                !shown.size &&
-                "[&_.tiptap]:hidden [&>[data-line]:not([data-line]~[data-line])]:border-t-0",
-            )}
-          >
-            <Specification />
-            <Unbound unbound={unbound} />
-            <Loose loose={loose} />
-            <Open open={open} />
-            {view.frame && empty ? (
-              <p className="py-3 text-xs text-muted-foreground">Nothing here.</p>
-            ) : null}
-          </CardContent>
-        </Card>
-        <Sources />
-      </StepTabs>
+      <FoldingProvider>
+        <StepTabs>
+          {/* Sticky, so what the list is narrowed to, and the way out of it,
+              stay in view down a long list. */}
+          <header className="sticky top-0 z-10 -mt-2 space-y-2 bg-ground/95 pt-2 pb-2 backdrop-blur">
+            <Narrowing open={open} />
+          </header>
+          {/* No edge: the card's ground sets the ledger off from the panel,
+              and a drawn border boxed in a list that is read more than typed
+              in. Framed, it is read, and a frame that leaves nothing says so. */}
+          <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-0">
+            {/* With the clauses hidden, the first line has nothing above it to
+                be ruled off from. */}
+            <CardContent
+              className={cn(
+                "px-3 py-3",
+                view.frame &&
+                  !shown.size &&
+                  "[&_.tiptap]:hidden [&>[data-line]:not([data-line]~[data-line])]:border-t-0",
+              )}
+            >
+              <Specification />
+              <Values rows={rows} />
+              {view.frame && empty ? (
+                <p className="py-3 text-xs text-muted-foreground">Nothing here.</p>
+              ) : null}
+            </CardContent>
+          </Card>
+          <Sources />
+        </StepTabs>
+      </FoldingProvider>
     </section>
   );
 }

@@ -50,6 +50,18 @@ actions
     if there is no such choice in any selection
     return the error description
 
+  adopt [ choice: Choice ; party: Party ]
+    => [ choice: Choice ; selection: Selection ; requirement: Requirement ;
+         party: Party ; formerly: Party ]
+    record the party as having decided the choice, in place of
+    whoever decided it before, and return who that was
+
+  adopt [ choice: Choice ; party: Party ]
+    => [ error: string ]
+    if there is no such choice in any selection,
+    or the party decided it already
+    return the error description
+
   retract [ choice: Choice ]
     => [ choice: Choice ; selection: Selection ;
          requirement: Requirement ; value: Value ]
@@ -77,7 +89,13 @@ operational principle
   then choices of sel holds ch' and not ch
   and answers of ch' is c, replaces of ch' is ch,
       reason of ch' is "the porter rides with the bed"
+  and after propose [ party: m ; selection: sel ; requirement: d ; value: hospital ; choice: ch2 ]
+    => [ choice: ch2 ; selection: sel ; requirement: d ; value: hospital ; party: m ]
+  and adopt [ choice: ch2 ; party: p ]
+    => [ choice: ch2 ; selection: sel ; requirement: d ; party: p ; formerly: m ]
+  then decidedBy of ch2 is p
+  and adopt [ choice: ch2 ; party: p ] => [ error: e ]
   and after retract [ choice: ch' ] => [ choice: ch' ; selection: sel ;
                                          requirement: c ; value: kg1250 ]
-  then choices of sel is empty
+  then choices of sel is [ch2]
 ```

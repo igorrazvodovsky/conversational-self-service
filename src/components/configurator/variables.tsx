@@ -4,6 +4,8 @@ import {
   BotIcon,
   CheckIcon,
   ChevronDownIcon,
+  ChevronsDownUpIcon,
+  ChevronsUpDownIcon,
   SparklesIcon,
   TriangleAlertIcon,
   UserIcon,
@@ -17,7 +19,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
 import { ClauseText, useAnswering } from "./clauses";
@@ -172,7 +174,7 @@ const MARKS = {
   model: { Icon: SparklesIcon, who: "the assistant" },
 } as const;
 
-function ByMark({ variable }: { variable: Variable }) {
+export function ByMark({ variable }: { variable: Variable }) {
   const shown = useShown();
   if (!shown("how") || !variable.by) return null;
   const { Icon, who } = MARKS[variable.by];
@@ -424,43 +426,24 @@ export function FollowsPair({
   );
 }
 
-export function FollowsWhy({ variable }: { variable: Variable }) {
-  const shown = useShown();
-  if (!shown("rules") || !variable.owing.length) return null;
-  return (
-    <div className="space-y-0.5 text-xs text-muted-foreground">
-      <p>
-        <span className="text-foreground">{variable.heading}</span> follows:
-      </p>
-      <Rules rules={variable.owing} />
-    </div>
-  );
-}
-
 /**
  * A variable nobody chose, whose value the rules leave no room to argue with,
- * drawn beneath an assertion it rests on. It is drawn under each, and
- * `addressed` under one, so its address is on the page once.
+ * on its own row. The row says what it follows from, each a link to the
+ * assertion's row, so the kind of fact reads without opening anything; the
+ * rule's own sentence is a facet (`rules`).
  */
-export function FollowsRow({
-  variable,
-  addressed = true,
-}: {
-  variable: Variable;
-  addressed?: boolean;
-}) {
+export function FollowsRow({ variable }: { variable: Variable }) {
   const { label } = useConfigurator();
   const shown = useShown();
   const isTarget = useTargeted(address.variable(variable.name));
   return (
     <Item
-      id={addressed ? address.variable(variable.name) : undefined}
+      id={address.variable(variable.name)}
       size="xs"
       variant="muted"
-      role="listitem"
       // Set into the panel's ground, on a line of its own. The
       // variant's own half-strength muted all but vanishes on that ground.
-      className={cn("items-start bg-sunken", addressable, addressed && isTarget && targetedRing)}
+      className={cn("items-start bg-sunken", addressable, isTarget && targetedRing)}
     >
       <ItemContent className="gap-1">
         {/* Not `ItemTitle`: it clamps to one line, and undoing the clamp
@@ -471,25 +454,71 @@ export function FollowsRow({
             {variable.heading}
           </span>
           <span className="text-sm">{label(variable.value)}</span>
-        </div>
-        {shown("rules") ? (
-          <>
-            <Rules rules={variable.owing} />
+          <span className="font-normal text-muted-foreground">
+            follows
             {variable.following.length ? (
-              <p className="text-xs text-muted-foreground">
-                from{" "}
+              <>
+                {" from "}
                 {variable.following.map((f, i) => (
                   <span key={f.variable}>
                     {i ? ", " : ""}
                     <To id={address.variable(f.variable)}>{f.heading}</To>
                   </span>
                 ))}
-              </p>
-            ) : null}
-          </>
-        ) : null}
+              </>
+            ) : (
+              " from the rules alone"
+            )}
+          </span>
+        </div>
+        {shown("rules") ? <Rules rules={variable.owing} /> : null}
       </ItemContent>
     </Item>
+  );
+}
+
+/** Which open rows the person has folded away. A row stands open: what is
+ * open is a question, and its options are the way to answer it, so they are
+ * shown until the person puts them away, one row or all at once. Folded is
+ * what is kept, so a variable newly open arrives unfolded. */
+const Folding = createContext<{
+  folded: ReadonlySet<string>;
+  fold: (names: string[], folded: boolean) => void;
+}>({ folded: new Set(), fold: () => {} });
+
+export function FoldingProvider({ children }: { children: ReactNode }) {
+  const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
+  const fold = useCallback((names: string[], to: boolean) => {
+    setFolded((prev) => {
+      const next = new Set(prev);
+      for (const name of names) {
+        if (to) next.add(name);
+        else next.delete(name);
+      }
+      return next;
+    });
+  }, []);
+  const value = useMemo(() => ({ folded, fold }), [folded, fold]);
+  return <Folding.Provider value={value}>{children}</Folding.Provider>;
+}
+
+/** Folds or unfolds every open row in view at once: collapse while any of
+ * them stands open, expand once all are folded. */
+export function FoldAll({ open }: { open: Variable[] }) {
+  const { folded, fold } = useContext(Folding);
+  if (!open.length) return null;
+  const names = open.map((v) => v.name);
+  const anyOpen = names.some((name) => !folded.has(name));
+  return (
+    <Button
+      variant="ghost"
+      size="xs"
+      className="text-muted-foreground"
+      onClick={() => fold(names, anyOpen)}
+    >
+      {anyOpen ? <ChevronsDownUpIcon /> : <ChevronsUpDownIcon />}
+      {anyOpen ? "Collapse all" : "Expand all"}
+    </Button>
   );
 }
 
@@ -503,25 +532,31 @@ export function OpenRow({ variable }: { variable: Variable }) {
   const { gesture } = useConfigurator();
   const proposed = variable.proposed;
   const id = address.variable(variable.name);
+  const { folded, fold } = useContext(Folding);
+  const open = !folded.has(variable.name);
+  const setOpen = (next: boolean) => fold([variable.name], !next);
   // Addressed from elsewhere — a clause's answer line, a link in the chat —
   // the row opens, since what was wanted is the choice, not the heading.
   const targeted = useTargeted(id);
-  const [open, setOpen] = useState(false);
   useEffect(() => {
-    if (targeted) setOpen(true);
-  }, [targeted]);
+    if (targeted) fold([variable.name], false);
+  }, [targeted, fold, variable.name]);
 
   return (
     <Collapsible
       id={id}
       open={open}
       onOpenChange={setOpen}
-      className={cn("border-t first:border-t-0", addressable, targeted && targetedRing)}
+      className={cn("group/row border-t first:border-t-0", addressable, targeted && targetedRing)}
     >
+      {/* The ghost button fills itself while expanded; with every row open
+          by default that striped the list. A question is held apart by the
+          rule above it and the space around it instead, and its heading
+          set heavier than the options under it. */}
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="-mx-3 h-auto w-[calc(100%+1.5rem)] justify-between gap-2 px-3 py-2.5 text-left text-sm font-normal"
+          className="-mx-3 h-auto w-[calc(100%+1.5rem)] justify-between gap-2 px-3 pt-4 pb-2 text-left text-sm font-medium group-data-[state=closed]/row:pb-4 aria-expanded:bg-transparent hover:aria-expanded:bg-muted"
         >
           <span>{variable.heading}</span>
           <span className="ml-auto flex shrink-0 items-center gap-2">
@@ -567,7 +602,7 @@ export function OpenRow({ variable }: { variable: Variable }) {
           ) : null}
         </div>
       ) : null}
-      <CollapsibleContent className="pb-3">
+      <CollapsibleContent className="pb-5">
         <Options variable={variable} />
       </CollapsibleContent>
     </Collapsible>

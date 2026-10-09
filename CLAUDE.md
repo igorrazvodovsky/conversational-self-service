@@ -71,9 +71,9 @@ layer beside the agent.
 │   │   ├── configurator/                 # the canvas
 │   │   │   ├── provider.tsx              # reads /view, performs gestures
 │   │   │   ├── index.tsx                 # the specification surface: one list, filtered by gap
-│   │   │   ├── ledger.tsx                # what answers each clause, on its line: the choices and what they forced; the values answering none; what is open
+│   │   │   ├── ledger.tsx                # the values: one row per variable in the catalogue's order, each saying which kind of fact it is and for which requirement
 │   │   │   ├── standing.tsx              # where the specification stands: quotable or not, and the running price and carbon
-│   │   │   ├── specification.tsx         # the one list and its filters: the ledger as a Tiptap document, a clause and its answers per line; edits become gestures
+│   │   │   ├── specification.tsx         # the one list and its filters: the requirements as a Tiptap document, a clause and the rows answering it per line; edits become gestures, a stated clause runs the assistant
 │   │   │   ├── sources.tsx               # the documents and words the model read from, item by item, under the ledger
 │   │   │   ├── clauses.tsx               # the clause vocabulary, and the answering mode (the clause frame)
 │   │   │   ├── question.tsx              # the open Deciding questions
@@ -157,7 +157,7 @@ How much the person delegates is theirs to set, in their own agent.
 |  | person | model | person's agent |
 |---|---|---|---|
 | state, relax or strike a requirement, in their own words | yes | no | yes |
-| read a requirement from a document or the person's words, cited to its source | — | yes | yes, from a document it filed |
+| read a requirement from a document, the person's words, or a clause they stated, cited to its source | — | yes | yes, from a document it filed or a clause it stated |
 | keep a reading as the person's own | yes | no | yes |
 | attach a document | yes | no | yes |
 | say which requirement a value answers | yes | no | yes |

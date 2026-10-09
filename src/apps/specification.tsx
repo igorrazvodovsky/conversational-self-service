@@ -49,7 +49,8 @@ type Question = {
 };
 type Sheet = {
   lines: Line[];
-  unbound: Value[];
+  /** Every value asserted, with the requirements it answers, if any. */
+  values: (Value & { for: string[] })[];
   open: { heading: string; possible: number; proposed: string | null; link: string }[];
   questions: Question[];
   quotable: { ok: boolean; because: string };
@@ -219,15 +220,26 @@ function Specification({ host, result }: { host: Host; result: Result }) {
         {sheet.lines.map((line) => (
           <Requirement key={line.clause} host={host} line={line} />
         ))}
-        {sheet.unbound.map((value) => (
-          <li key={value.heading} className="space-y-2 border-t py-3">
-            <p className="text-sm text-muted-foreground">No stated requirement</p>
-            <div className="pl-4">
-              <Asserted host={host} value={value} />
-            </div>
-          </li>
-        ))}
       </ol>
+
+      {sheet.values.length ? (
+        <section className="space-y-2">
+          <Separator />
+          <h2 className="text-sm font-medium">The values</h2>
+          <ul className="space-y-2">
+            {sheet.values.map((value) => (
+              <li key={value.heading} className="space-y-1">
+                <Asserted host={host} value={value} />
+                {value.for.length ? (
+                  <p className="pl-4 text-xs text-muted-foreground">
+                    for {value.for.map((t) => `“${t}”`).join("; ")}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {sheet.open.length ? (
         <section className="space-y-2">

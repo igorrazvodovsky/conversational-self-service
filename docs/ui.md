@@ -49,16 +49,20 @@ grouped by where they were read from. A second arrangement is a second
 question, not a duplicate.
 
 The ledger is the requirement document and the
-[Binding](syncs/binding.md#the-ledger-is-a-read) read at once, and its unit
-is the choice: a value bound to the clause it answers, with what the value
-forced. The question it answers is *what is asked for, what answers each,
-and what did that cost*, so a line is a requirement in the person's words,
-editable where it stands, beside the values answering it and their
-consequences; a requirement nothing answers is a line with a gap where its
-answer goes, and the values answering nothing share a last line. The clause
-and its answer are one line in one view rather than two items linked
-across views: nearly everything a person does crosses between them, and
-that relation is what the case's design is about.
+[Binding](syncs/binding.md#the-ledger-is-a-read) read at once, and it has
+two units: the clause and the variable. The question it answers is *what
+is asked for, what answers each, and what did that cost*. The variables are
+the spine — one row each, in the catalogue's order, whatever the row's
+standing, so a value picked stays where it was clicked and the row says
+what changed: asked for, by whom and for which requirement; following, from
+which assertion by which rule; or open, with its options. The requirements
+are the person's words above the rows, in the order they were written,
+editable where they stand, each naming the rows that answer it and a gap
+where nothing does; a requirement is a reason the person gives for a value,
+and a value with none is not short of anything. The two are linked across
+rather than merged into one line: the clause links to its rows and the row
+to its clauses, so a person reading either way finds the other one step
+away, and neither list reorders under their hands.
 
 The log is read by turn. Every record carries the flow it ran in, and a flow
 is one occasion: the person's words and the calls the model made in reply,

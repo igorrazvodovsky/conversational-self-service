@@ -158,10 +158,11 @@ export interface Variable {
  * requirement, or to one gap, from `Framing`. The membership test is the
  * read side's; each variable carries `framed`. A clause frame is also the
  * answering mode: a pick made while it is on answers the clause. A gap frame
- * is a filter over the one list: what is still open, the requirements
- * nothing answers, or the values answering none.
+ * is a filter over the one list: what is still open, or the requirements
+ * nothing answers. A value answering no requirement is not a gap
+ * (docs/syncs/gestures.md).
  */
-export type Gap = "open" | "unanswered" | "unbound";
+export type Gap = "open" | "unanswered";
 
 export type Frame =
   | { by: "assertion"; variable: string; heading: string; asked: string | null }
@@ -175,7 +176,7 @@ export type Frame =
       step: string;
       name: string;
       gap: Gap | null;
-      counts: { open: number; unanswered: number; unbound: number };
+      counts: { open: number; unanswered: number };
     };
 
 export type Negotiability = "fixed" | "negotiable" | "open";
@@ -236,6 +237,17 @@ export interface Clause {
      * and the option whose range holds the result, if one does. */
     workedOut: WorkedOut[];
   } | null;
+  /** What the assistant read from this clause itself, when the person
+   * stated it: what it took the words to answer, or that nothing in the
+   * catalogue does, and what a quantity was worked out into. Shown on the
+   * line, not under the sources (docs/syncs/reading.md). */
+  read: {
+    item: string;
+    words: string;
+    answer: { option: string; label: string }[];
+    unanswerable: boolean;
+    workedOut: WorkedOut[];
+  }[];
   /** The answer this clause had, and the later assertion for the same
    * variable that displaced it. Only while the clause is unanswered. */
   displaced: {
@@ -627,10 +639,12 @@ export interface View {
   project: { title: string; site: string };
   counts: Record<Standing, number> & {
     unanswered: number;
-    unbound: number;
     /** Clauses the model read, from a document or the person's words. */
     read: number;
   };
+  /** The clause each stated-clause message in the chat is, by the message's
+   * id, which is the `require` gesture's flow (`stating.tsx`). */
+  required: Record<string, string>;
   /** The log, read by turn, latest activity first. */
   turns: Turn[];
   /** Who has taken a turn, with their name and the side of the sale they

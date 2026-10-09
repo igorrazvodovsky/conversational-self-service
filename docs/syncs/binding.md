@@ -94,8 +94,9 @@ attribute–value pairs. Here the value *is* an option, the variable that offers
 it is a read of [Cataloguing](../concepts/cataloguing.md), and the mapping is
 the identity — which is what *mapping is done by the person* means in code.
 That is a finding and not a shortcut: a choice whose value is already in
-the model's vocabulary restates the value, and whether `answers` is worth a
-relation on its own is what the `unbound` read below shows.
+the model's vocabulary restates the value, and `answers` earns its relation
+by what it carries — a substitution with its reason, and a quote's basis
+of design — not by every value having one.
 
 From `Asserting/assert` on, one thing is new: the value reaches
 [Constraining](../concepts/constraining.md) hard through
@@ -186,19 +187,25 @@ ledger(s)   =  for each clause c in Specifying.clauses(s), in order:
                  (met as Propagation defines it: assumed, or inclined with
                   nothing refused against the variable)
 
-unbound(s)  =  { v | Asserting asserts o for v in s, and no choice holds o }
+values(s)   =  for each variable v the catalogue offers, in its order:
+                 its standing — asked, yielded, unmet, follows or open —
+                 the option asserted and by whom, the clauses whose
+                 choices hold that option, the rules and assertions a
+                 settled value rests on, and what is proposed for an open one
 ```
 
-A variable asserted with no clause behind it is a value in the model's
-vocabulary that answers nothing. The canvas renders the read whole, as the
-specification's one list: the requirement document, a line per clause in the person's words, with the
-choices answering it beside the words, each at `#choice:<id>` with what its
-value forced beneath it, and then a line for each unbound value, its
-requirement empty. A clause nothing answers and a value answering nothing
-are in the same list, each with a filter of its own
-([Gestures](gestures.md#the-canvas-is-narrowed-to-one-gap)), so the share is
-something a person can see rather than something a script has to count, and
-with no clause stated every value is on a line with no requirement.
+The canvas renders both reads, as the specification's one list: the
+requirement document above, a line per clause in the person's words with
+the rows answering it named beside the words, each answer at
+`#choice:<id>`; and the values beneath, one row per variable in the
+catalogue's order whatever its standing, each saying which kind of fact it
+is, for which requirement, and what it forced. A variable asserted with no
+clause behind it is the ordinary case — a value in the model's vocabulary
+the person wanted, with no reason given — and its row says who asked for
+it and nothing more. A clause nothing answers is the one mismatch, with a
+filter of its own ([Gestures](gestures.md#the-canvas-is-narrowed-to-one-gap)),
+so the share is something a person can see rather than something a script
+has to count.
 
 The same read, frozen, goes into a quote. The item a quote holds gains the
 clauses as they stood at issue, each with the option that answered it, and

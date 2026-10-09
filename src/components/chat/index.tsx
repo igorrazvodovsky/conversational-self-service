@@ -48,6 +48,7 @@ import {
   arrive,
   goTo,
   targeted,
+  To,
   useTargeted,
 } from "@/components/configurator/address";
 import { useFollowLink } from "@/components/configurator/link";
@@ -417,11 +418,26 @@ function AgentBubble({ content }: { content?: string }) {
   );
 }
 
+/** A requirement stated on the canvas, which the assistant was run on as on
+ * a message (`stating.tsx`). Not words said: the clause is on the canvas,
+ * so the chat points at it rather than repeating it in a bubble. */
+function StatedBubble({ clause, content }: { clause: string; content?: string }) {
+  return (
+    <p className="self-end text-xs text-muted-foreground">
+      Stated on the canvas:{" "}
+      <To id={address.clause(clause)} className="text-foreground">
+        “{content}”
+      </To>
+    </p>
+  );
+}
+
 /** A message the person sent, at the address of the utterance it became
  * (`#said:<utterance>`), which the trace and the sources link to. */
 function OneUserMessage(props: ComponentProps<typeof CopilotChatUserMessage>) {
   const { view } = useConfigurator();
   const agents = view?.agentSaid.includes(props.message.id) ?? false;
+  const stated = view?.required[props.message.id];
   const utterance = view?.said[props.message.id];
   const id = utterance ? address.said(utterance) : undefined;
   const isTarget = useTargeted(id ?? "");
@@ -438,7 +454,13 @@ function OneUserMessage(props: ComponentProps<typeof CopilotChatUserMessage>) {
         // The library's 2.5rem above a turn is replaced by the space its
         // predecessor's actions leave, and this.
         className="group/turn pt-4!"
-        messageRenderer={agents ? AgentBubble : UserBubble}
+        messageRenderer={
+          stated
+            ? (p) => <StatedBubble clause={stated} content={p.content} />
+            : agents
+              ? AgentBubble
+              : UserBubble
+        }
         copyButton={CopyYours}
         toolbar={YourActions}
       />

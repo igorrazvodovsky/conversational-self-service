@@ -406,12 +406,19 @@ front of the person; it cannot answer one, because no rule carries its
 ### The canvas is narrowed to one gap
 
 A gap is what the specification still lacks, and each kind is a frame value:
-`open`, the variables nothing has settled; `unanswered`, the
-clauses nothing answers, those left open on purpose excepted; and `unbound`,
-the values asserted with no clause behind them, with what they forced. Each
+`open`, the variables nothing has settled; and `unanswered`, the
+clauses nothing answers, those left open on purpose excepted. Each
 is a rule over the current state, read in `agent/views.py`, so a frame on a
 gap follows the state as it moves: answer the last unanswered clause and the
 frame selects nothing.
+
+A value asserted with no clause behind it is not a gap. The requirement is
+the person's reason for a value, in their own words, and a reason is
+theirs to give or not: the region picked by hand needs no clause to say
+why. So nothing counts those values, and nothing narrows the canvas to
+them; the row says who asked for it and, where a clause answers it, which.
+The gap runs one way only: words nothing answers are something asked for
+and not met, which the seller must act on, and that is the filter.
 
 <a id="the-canvas-is-narrowed-to-one-step-of-the-job"></a>
 ### The canvas is narrowed to one step of the job
@@ -445,10 +452,12 @@ a finding about the catalogue, not about the person's lift.
 
 What was asked for, what follows from it and what is open are kinds
 of fact, not places on the canvas. Each item says which it is where it
-stands — a value that follows sits under the assertions it
-rests on, with the rule — but they are not three places. The specification
-is one list: a line per requirement with what answers it, a line per value
-answering none, and the open variables at its tail. A kind of fact is a
+stands, and they are not three places: a variable has one row, in the
+catalogue's order, whatever its kind, and the row says which it is — asked
+for by whom and for which requirement, following from which assertion by
+which rule, or open — so a pick changes what the row says and not where
+it is. The requirements are the person's words, above the rows in the order
+they were written, each saying which rows answer it. A kind of fact is a
 filter over that list, and a filter is a frame because it is a choice about
 which items are shown, recorded, and the same for both parties.
 
@@ -460,7 +469,10 @@ clause as fixed until it is settled otherwise, and refuses a relax on a
 fixed clause itself. Nothing is asked of a clause as it is typed. What it is
 for and how firmly it is meant come later, if at all: a line is a clause the
 moment it has words, and the structure is added where it matters rather than
-at entry. `APersonStatesAClause` names the party in its `then`, as
+at entry. What answers it is the model's reading, after: a clause stated is
+words, the page runs the assistant on them as on a message, and the answer
+it reads is proposed to the clause
+([Reading](reading.md#a-clause-the-person-stated-is-answered)). `APersonStatesAClause` names the party in its `then`, as
 `APersonAssertsAValue` does, because `statedBy` is a fact the concept holds
 and a rule that says who is stating is the readable form of it.
 

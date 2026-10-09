@@ -145,11 +145,11 @@ WHO = {"person": "you", BROWSER: "your agent", "model": "the assistant"}
 def sheet(view: dict[str, Any]) -> dict[str, Any]:
     """The specification as the canvas lays it out, for a view: each
     requirement on its own line with the values asserted to answer it and
-    what each forced beneath it, then the values answering nothing, then
-    what is open.  The digest says the same things in sentences for an
-    agent to read; a view needs them in place, so that a value that follows
-    sits under the assertion it rests on.  Read from the canvas, so the kind
-    of each item is the canvas's."""
+    what each forced beneath it, then every value asserted, with the
+    requirements it answers if any, then what is open.  The digest says the
+    same things in sentences for an agent to read; a view needs them in
+    place, so that a value that follows sits under the assertion it rests
+    on.  Read from the canvas, so the kind of each item is the canvas's."""
     variables = {v["name"]: v for v in view["variables"]}
     label = {o["id"]: o["label"] for v in view["variables"] for o in v["options"]}
 
@@ -203,10 +203,14 @@ def sheet(view: dict[str, Any]) -> dict[str, Any]:
     asserted = ("asked", "yielded", "unmet")
     return {
         "lines": lines,
-        "unbound": [
+        # One entry per value asserted, in the catalogue's order, with the
+        # requirements it answers: a value with none is the ordinary case,
+        # not a gap (docs/syncs/gestures.md).
+        "values": [
             value(v, f"#variable:{v['name']}")
+            | {"for": [plain(a["text"]) for a in v["answers"]]}
             for v in view["variables"]
-            if v["standing"] in asserted and v["name"] not in answering
+            if v["standing"] in asserted
         ],
         "open": [
             {
@@ -403,29 +407,40 @@ def file(
 
 @tool(
     "read",
-    "Record a requirement read from a filed document, with the words it was "
-    "read from and the options that answer it. `words` is copied from the "
-    "document as one unbroken passage: trim either end, never cut the "
-    "middle, never paraphrase; words the document does not contain read "
+    "Record a requirement read from a filed document, or from a clause the "
+    "person stated, with the words it was read from and the options that "
+    "answer it. `words` is copied from the "
+    "source as one unbroken passage: trim either end, never cut the "
+    "middle, never paraphrase; words the source does not contain read "
     "nothing. `answer` is the option ids that answer it, possibly none. A "
     "count or a measure goes in `states` instead, as the words give it, "
     "under a name from `quantities` in `review`, such as `{\"storeys\": 13}`: "
     "the configurator works out the stops and the travel from it. Quantities "
     "worked out together, such as the floors and the basements, go in one "
-    "item. The clause "
+    "item. From a document, the clause "
     "is stated as a reading, cited to the document; `keep` makes it the "
-    "person's own.",
+    "person's own. From a clause (`clause`, from `required`, one the person "
+    "stated), no clause is stated: the answer is proposed to that clause as "
+    "a reading of its words, which the person corrects. Give `file` or "
+    "`clause`, never both.",
 )
 def read(
-    file: Annotated[str, Field(description="A document's id, from `files` in `review`")],
-    words: Annotated[str, Field(description="The requirement, copied from the document")],
+    words: Annotated[str, Field(description="The requirement, copied from the source")],
+    file: Annotated[
+        str | None, Field(description="A document's id, from `files` in `review`")
+    ] = None,
+    clause: Annotated[
+        str | None, Field(description="A clause's id, from `required` in `review`")
+    ] = None,
     answer: list[Option] = [],  # noqa: B006 — a schema default, never mutated
     states: Annotated[
         dict[str, float],
         Field(description="The counts and measures the words state, by quantity name"),
     ] = {},  # noqa: B006 — a schema default, never mutated
 ) -> dict[str, Any]:
-    return invoke("read", file=file, words=words, answer=answer, states=states)
+    if bool(file) == bool(clause):
+        return refused("read", "give a file or a clause, not both and not neither")
+    return invoke("read", file=file, clause=clause, words=words, answer=answer, states=states)
 
 
 @tool(
@@ -726,14 +741,14 @@ def hide(facet: str) -> dict[str, Any]:
     "frame",
     "Narrow the canvas to one assertion (`variable`, from `asked`), one "
     "requirement (`clause`, from `required`), one gap (`gap`: `open`, "
-    "`unanswered` or `unbound`), or one step of the job (`step`, from "
+    "or `unanswered`), or one step of the job (`step`, from "
     "`steps`), with a `gap` beside a step to filter within it. A step is "
     "narrowed to, never taken, finished or skipped.",
 )
 def frame(
     variable: str | None = None,
     clause: str | None = None,
-    gap: Literal["open", "unanswered", "unbound"] | None = None,
+    gap: Literal["open", "unanswered"] | None = None,
     step: str | None = None,
 ) -> dict[str, Any]:
     given = [g for g in (variable, clause, step, gap) if g]

@@ -120,13 +120,17 @@ def follow(flow: str, utterance: str) -> None:
 
 
 # Whether a message id is the flow of words already on record, and whose:
-# the utterance and the actor, or nothing.  Read off the log once per id.
-_on_record: dict[str, tuple[str, str] | None] = {}
+# the kind of record, its identity and the actor, or nothing.  Read off the
+# log once per id.  Two kinds: words said in the chat by gesture (`say`, the
+# utterance), and a clause stated on the canvas (`require`, the clause),
+# which the page runs the assistant on as on a message
+# (`docs/syncs/reading.md`, "A clause the person stated is answered").
+_on_record: dict[str, tuple[str, str, str] | None] = {}
 
 
-def _said_already(message: HumanMessage) -> tuple[str, str] | None:
-    """The utterance and its actor, when the message's words were said by
-    gesture before the run, in the flow its id names."""
+def _said_already(message: HumanMessage) -> tuple[str, str, str] | None:
+    """The record and its actor, when the message's words were said or
+    stated by gesture before the run, in the flow its id names."""
     identity = getattr(message, "id", None)
     if not isinstance(identity, str) or not identity.startswith("flow-"):
         return None
@@ -134,13 +138,19 @@ def _said_already(message: HumanMessage) -> tuple[str, str] | None:
         text = _text(message)
         _on_record[identity] = next(
             (
-                (record.output["utterance"], record.actor)
+                ("say", record.output["utterance"], record.actor)
+                if record.concept == "Conversing"
+                else ("require", record.output["clause"], record.actor)
                 for record in engine.log.flow(identity)
                 if record.kind == "completion"
-                and record.concept == "Conversing"
-                and record.action == "say"
-                and (record.output or {}).get("text") == text
-                and (record.output or {}).get("utterance")
+                and (
+                    (record.concept, record.action) == ("Conversing", "say")
+                    and (record.output or {}).get("text") == text
+                    and (record.output or {}).get("utterance")
+                    or (record.concept, record.action) == ("Specifying", "require")
+                    and (record.output or {}).get("party") == "person"
+                    and (record.output or {}).get("clause")
+                )
             ),
             None,
         )
@@ -283,10 +293,15 @@ async def hearing(state: dict[str, Any], runtime: Any) -> None:
     thread = _thread()
     already = await asyncio.to_thread(_said_already, said)
     if already is not None:
-        # Words said by gesture before the run: the turn is theirs.
+        # Words said, or a clause stated, by gesture before the run: the
+        # turn is theirs.  A clause is no utterance, so a reading in that
+        # turn cites the clause, not words said.
         if thread is not None:
             _turn[thread] = said.id
-            _said[thread] = already[0]
+            if already[0] == "say":
+                _said[thread] = already[1]
+            else:
+                _said.pop(thread, None)
         return
     await asyncio.to_thread(_hear, said, thread)
 
@@ -374,9 +389,19 @@ def _attributed(message: Any) -> Any:
     if not isinstance(message, HumanMessage):
         return message
     already = _said_already(message)
-    if already is None or already[1] != BROWSER:
+    if already is None:
         return message
     text = _text(message)
+    if already[0] == "require":
+        who = "the person's own agent" if already[2] == BROWSER else "the person"
+        return message.model_copy(
+            update={
+                "content": f"[A requirement {who} stated on the canvas, clause "
+                f"`{already[1]}`; read it with `read`, passing `clause`:] {text}"
+            }
+        )
+    if already[2] != BROWSER:
+        return message
     return message.model_copy(
         update={"content": f"[The person's own agent, speaking for them:] {text}"}
     )
@@ -384,12 +409,15 @@ def _attributed(message: Any) -> Any:
 
 @wrap_model_call
 async def attributing(request: Any, handler: Any) -> Any:
-    """The model is told when it is the person's own agent speaking.
+    """The model is told when it is the person's own agent speaking, and
+    when the words are a clause stated on the canvas.
 
     The thread holds the words as they were said; who said them is the
     `say`'s actor, and the model reads it here, on every call, so it can put
     each decision to the party it belongs to.  See `docs/syncs/conduct.md`,
-    "The person's own agent, acting as the person".
+    "The person's own agent, acting as the person".  A stated clause is
+    marked with its id, so the model reads it with `clause` and the answer
+    lands on that clause rather than on a new one.
     """
     messages = await asyncio.to_thread(lambda: [_attributed(m) for m in request.messages])
     return await handler(request.override(messages=messages))

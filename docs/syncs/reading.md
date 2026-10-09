@@ -67,14 +67,31 @@ where { Conversing: { ?u text: ?t }
         bind a fresh identity as ?i }
 then  { Reading/read: [ source: [ utterance: ?u ] ; words: ?w ; answer: ?a ;
           states: ?q ; item: ?i ] }
+
+sync TheModelMayReadARequirement
+when  { Copiloting/invoke: [ tool: "read" ; clause: ?c ;
+          words: ?w ; answer: ?a ; states: ?q ] => [] }
+where { Specifying: { ?c text: ?t ; ?c statedBy: person }
+        ?w occurs in ?t
+        ?a names at most one option per variable, read from Cataloguing
+        ?q names only quantities some method in Deriving needs
+        ?a names no option of a variable ?q is worked out into
+        bind a fresh identity as ?i }
+then  { Reading/read: [ source: [ clause: ?c ] ; words: ?w ; answer: ?a ;
+          states: ?q ; item: ?i ] }
 ```
 
-One rule with two triggers, on the shape of the source. The utterance is the
+One rule with three triggers, on the shape of the source. The utterance is the
 one that opened the turn, handed to the tool by `agent/hearing.py` as the
 flow token is, so a reading of the person's words names the words it read.
-A call with no file and no utterance reads nothing: there is no source to
-check it against. The person's own agent has no message in the chat, so it
-reads only from a file, which it files first as the person
+A clause the person stated is their words too, typed in the ledger rather
+than in the composer, and the model reads it the same way: the source is
+the clause, and the check is against the clause's text. Only a clause the
+person stated is a source; one the model stated is a reading already.
+A call with no file, no utterance and no clause reads nothing: there is no
+source to check it against. The person's own agent has no message in the
+chat, so it reads from a file, which it files first as the person, or from a
+clause it stated as the person
 ([Conduct](conduct.md#the-persons-own-agent-acting-as-the-person)).
 
 The `where` is that check. A reading cites its source, and a citation the
@@ -135,8 +152,9 @@ option, and a reading that cannot tell leaves the item to be read again.
 
 ```
 sync AReadItemBecomesAClause
-when  { Reading/read: [] => [ item: ?i ; words: ?w ] }
-where { Specifying: { ?s in open } }
+when  { Reading/read: [] => [ item: ?i ; source: ?src ; words: ?w ] }
+where { ?src is not [ clause: _ ]
+        Specifying: { ?s in open } }
 then  { Specifying/require: [ spec: ?s ; party: model ; text: ?w ; clause: ?i ] }
 
 sync AReadAnswerIsProposed
@@ -167,7 +185,9 @@ individual in two concepts, as a specification is one identity in
 and from where, `Specifying` holds it as a clause in the ledger, and neither
 knows the other holds it. So the second rule finds the item's answer under
 the clause's own identity, and a rule that asks which clause an item became
-asks nothing, since it is the same one. An option the catalogue does not
+asks nothing, since it is the same one. A reading whose source is a clause
+becomes no clause, since the clause is already stated; what becomes of it
+is [below](#a-clause-the-person-stated-is-answered). An option the catalogue does not
 offer binds no variable and is not proposed. An option whose variable holds a
 value held for a reason is not proposed either
 ([Conduct](conduct.md#the-permissions)), nor one whose variable is a fact
@@ -178,6 +198,69 @@ reading is not the model's way round that. The
 clause is stated and stays unanswered, its answer on record in `Reading`
 beside it, and the tool tells the model which option it did not assert, so
 it can say so and leave the choice to the person.
+
+## A clause the person stated is answered
+
+<a id="a-clause-the-person-stated-is-answered"></a>
+```
+sync AReadClauseIsAnswered
+when  { Reading/read: [ source: [ clause: ?c ] ] => [ item: ?i ; answer: ?a* ] }
+where { Specifying: { ?s clauses: ?c }
+        Binding: { ?sel for: ?s }
+        ?o in ?a*
+        Cataloguing: { ?v offers: ?o }
+        no choice of ?sel answers ?c with an option ?v offers
+        ?v is not held for a reason in ?s
+        ?v is not given by the person in ?s
+        bind a fresh identity as ?ch }
+then  { Binding/propose: [ party: model ; selection: ?sel ;
+          requirement: ?c ; value: ?o ; choice: ?ch ] }
+
+sync AReadClauseQuantityIsWorkedOut
+when  { Reading/read: [ source: [ clause: ?c ] ] => [ item: ?i ; states: ?q ] }
+where { Specifying: { ?s clauses: ?c }
+        ?stated maps each quantity ?s gives to its value,
+          read from Situating
+        Deriving: { ?m in methods ; ?m yields: ?y }
+        ?m is the first method yielding ?y that ?stated is enough for,
+          and it needs a quantity ?q states
+        bind a fresh identity as ?d }
+then  { Deriving/derive: [ method: ?m ; for: ?c ; stated: ?stated ; derivation: ?d ] }
+```
+
+The same two moves as for a clause the model stated, with the clause
+already there: the answer is proposed to the person's clause, and a
+quantity it states is worked out for it, from where
+`AWorkedOutQuantityIsProposed` answers it as it answers any clause. The
+difference is whose the clause is and whose the answer is. The clause is
+the person's, stated in their words, and the choice is the model's reading
+of those words, `decidedBy: model`, which the person corrects by picking
+another option on the row, and the model may correct too, since a value is
+held for a reason only once the person has decided its choice
+([Conduct](conduct.md#the-permissions)). That is better provenance than the
+chat route gives: there the clause is the model's until kept, here it was
+the person's from the first.
+
+A clause already answered on the variable is not answered again. The
+person who typed *a six-storey block* and picked the building type before
+the model's turn has decided, and the reading records what the model took
+the words to say beside that, for the canvas to show and the tool to
+report.
+
+The model's turn is the page's doing. A gesture runs no turn
+([Moves](../moves.md#the-models-moves)), and a rule cannot invoke the model;
+but a clause stated is words, and words are what a turn is opened on. So the
+page, once `APersonStatesAClause` has completed, runs the assistant with the
+clause as the turn's stimulus, as it runs it on the person's agent's words
+([Gestures](gestures.md#the-persons-own-agent-speaks-in-the-chat)): the
+message carries the gesture's flow as its id, `agent/hearing.py` finds the
+`Specifying/require` in that flow, records nothing again, and makes the
+flow the turn's, so the reading and what it asserts carry the clause's
+flow, and the canvas says *the assistant read this from the requirement*.
+The chat shows the clause as stated on the canvas, linked, and the model's
+reply is its interpretation, which is what the chat is for. A reworded
+clause is not read again: the person rewording has the answer in front of
+them, and [Staling](staling.md) marks it out of date beside the new words.
 
 ## A quantity read is worked out
 
@@ -276,6 +359,12 @@ sync ARewordedReadingIsKept
 when  { Specifying/reword: [ clause: ?c ] => [ clause: ?c ] }
 where { Specifying: { ?c statedBy: model } }
 then  { Specifying/adopt: [ clause: ?c ; party: person ] }
+
+sync AKeptReadingKeepsItsAnswers
+when  { Specifying/adopt: [ party: person ] => [ clause: ?c ; spec: ?s ] }
+where { Binding: { ?sel for: ?s ; ?ch in choices of ?sel ;
+                   ?ch answers: ?c ; ?ch decidedBy: model } }
+then  { Binding/adopt: [ choice: ?ch ; party: person ] }
 ```
 
 A clause the model read reads as the assistant's reading until the person
@@ -284,8 +373,12 @@ it, and so does rewording: a clause in the person's own words is theirs,
 whoever first read it. Only the person rewords
 ([`APersonRewordsAClause`](gestures.md)), so the second rule needs no actor
 in its `when`, and no rule carries the model's call to `Specifying/adopt`.
-Once a reading is the person's, the value answering it is held for a reason,
-and the model can no longer change it.
+Keeping a clause keeps its answers too: the person had the value in front
+of them when they kept the words, so the third rule makes each choice
+answering it theirs, one `Binding/adopt` per choice. From then the value is
+held for a reason, and the model can no longer change it; a clause kept
+by rewording is the same, since the rule fires on the adopt whichever
+gesture caused it.
 
 ## The gate is a rule, and it is not written
 
@@ -354,7 +447,11 @@ an item there, with its source and its words. The words behind an assertion
 are a read over the log. The sources
 themselves are `Filing` and `Conversing`, and beside each the canvas lists
 what was read from it and what became of each item, so a reading can be
-checked against its source whole.
+checked against its source whole. A clause the person stated is a source
+too, and what the model read from it is shown on the clause's own line —
+what it was read as, or that nothing in the catalogue answers it — rather
+than under the sources, since the clause is already where the person
+checks it.
 
 ## See also
 

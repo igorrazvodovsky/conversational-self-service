@@ -152,6 +152,11 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
     reading can say it became a clause that is gone.  Which reading a clause
     came from needs no trace: the clause is the item (`docs/syncs/reading.md`).
 
+    `required` — the clause each `require` gesture of the person's stated, by
+    the gesture's flow.  The page runs the assistant on a stated clause with
+    that flow as the message's id, and the chat reads this to show the
+    message as the clause, stated on the canvas, rather than as words said.
+
     `displaced` — for each clause whose answer was retracted because a
     different value was asserted for its variable, what displaced it: the
     assertion in that flow, with its words.  Cleared when the clause is
@@ -181,6 +186,7 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
     asserting: dict[str, dict[str, Any]] = {}
     how: dict[str, dict[str, Any]] = {}
     stated: set[str] = set()
+    required: dict[str, str] = {}
     displaced: dict[str, dict[str, Any]] = {}
     for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
         while marks and marks[0] < record.seq:
@@ -210,6 +216,8 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
             }
         elif record.concept == "Specifying" and record.action == "require":
             stated.add(output["clause"])
+            if output.get("party") == "person" and record.via == "APersonStatesAClause":
+                required[record.flow] = output["clause"]
         elif record.concept == "Specifying" and record.action == "strike":
             displaced.pop(output["clause"], None)
         elif record.concept == "Binding" and record.action in {"propose", "substitute"}:
@@ -252,6 +260,7 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
         "how": how,
         "asOf": as_of,
         "stated": stated,
+        "required": required,
         "displaced": displaced,
         "agentSaid": sorted(f for f, actor in spoke.items() if actor == BROWSER),
         "said": said,
@@ -261,7 +270,7 @@ def _trace(engine: Engine, spec: str, at: tuple[int, ...] = ()) -> dict[str, Any
 
 def _source_name(engine: Engine, source: Any) -> str | None:
     """A source, named the way the canvas names it: the file's name, or nothing
-    for the person's own words."""
+    for the person's own words, said or typed as a clause."""
     if isinstance(source, dict) and source.get("file"):
         return engine.state("Filing")["name"].get(source["file"], source["file"])
     return None
@@ -286,10 +295,13 @@ def _how(engine: Engine, entry: dict[str, Any], cited: bool = False) -> str:
     if words and via in {"AChoiceReachesTheAssertions", "ASubstituteReachesTheAssertions"}:
         who = "your agent" if actor == BROWSER else "the assistant"
         name = _source_name(engine, entry.get("source"))
+        from_clause = isinstance(entry.get("source"), dict) and entry["source"].get("clause")
         if cited:
             where = (
                 f"in {name}"
                 if name
+                else "from the requirement"
+                if from_clause
                 else "from what your agent said"
                 if agent_said
                 else "from what you said"
@@ -456,8 +468,17 @@ def worked_out(engine: Engine, item: str) -> list[dict[str, Any]]:
     `Binding`; see docs/syncs/reading.md, "A quantity read is worked out"."""
     deriving = engine.state("Deriving")
     cataloguing = engine.state("Cataloguing")
+    reading = engine.state("Reading")
+    # The clause the derivations were made for: the item itself, when it
+    # became a clause, or the clause the item was read from.  In the second
+    # case the clause may have been read more than once, so only the
+    # derivations by a method that needs a quantity this item states are
+    # this item's.
+    source = reading["source"].get(item)
+    clause = source["clause"] if isinstance(source, dict) and source.get("clause") else item
+    states = reading["states"].get(item) or {}
     spec = next(
-        (s for s, clauses in engine.state("Specifying")["clauses"].items() if item in clauses),
+        (s for s, clauses in engine.state("Specifying")["clauses"].items() if clause in clauses),
         None,
     )
 
@@ -476,9 +497,11 @@ def worked_out(engine: Engine, item: str) -> list[dict[str, Any]]:
 
     out = []
     for derivation, target in deriving["for"].items():
-        if target != item:
+        if target != clause:
             continue
         method = deriving["method"][derivation]
+        if clause != item and not any(q in states for q in deriving["needs"][method]):
+            continue
         yields = deriving["yields"][method]
         result = deriving["result"][derivation]
         option = next(
@@ -817,7 +840,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         frame.get("gap")
         if isinstance(frame, dict)
         and frame.get("by") == "gap"
-        and frame.get("gap") in ("open", "unanswered", "unbound")
+        and frame.get("gap") in ("open", "unanswered")
         else None
     )
     # A step frames the canvas to the variables it is about, and a gap
@@ -832,16 +855,13 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
     )
     step_gap = (
         frame.get("gap")
-        if framed_step is not None and frame.get("gap") in ("open", "unanswered", "unbound")
+        if framed_step is not None and frame.get("gap") in ("open", "unanswered")
         else None
     )
     step_vars = set(steps[framed_step]["about"]) if framed_step is not None else set()
     # The variables whose asserted value answers the framed clause, read
     # from the ledger below once it exists; filled before `variables` is built.
     answering_clause: set[str] = set()
-
-    def unbound(name: str) -> bool:
-        return name in asserted and not answering.get(asserted[name])
 
     def in_frame(name: str, offered: list[str], allowed: set[str]) -> bool:
         if framed_step is not None:
@@ -851,21 +871,12 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 return name not in asserted and name not in settled
             if step_gap == "unanswered":
                 return False
-            if step_gap == "unbound":
-                return unbound(name)
             return True
         if framed_gap == "open":
             return name not in asserted and name not in settled
         if framed_gap == "unanswered":
             # The gap is clauses; no variable is in it.
             return False
-        if framed_gap == "unbound":
-            # The values answering no clause, and what they forced.
-            if unbound(name):
-                return True
-            return name not in asserted and any(
-                unbound(v) for v in following.get(name, [])
-            )
         if framed_clause is not None:
             # Its answers, what they forced, and anything still open.
             if name in answering_clause:
@@ -930,6 +941,26 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             if origin
             else None
         )
+        # What the model read from the clause itself, when the person
+        # stated it and the model read it: what it took the words to
+        # answer, or that nothing in the catalogue does.  Shown on the
+        # clause's line, not under the sources (docs/syncs/reading.md).
+        clause["read"] = [
+            {
+                "item": item,
+                "words": reading["words"][item],
+                "answer": [
+                    {"option": o, "label": catalogue["label"].get(o, o)}
+                    for o in reading["answer"].get(item, [])
+                ],
+                "unanswerable": not reading["answer"].get(item)
+                and not reading["states"].get(item),
+                "workedOut": worked_out(engine, item),
+            }
+            for item in reading["heard"].get(
+                json.dumps({"clause": clause["clause"]}, sort_keys=True), []
+            )
+        ]
         gone = trace["displaced"].get(clause["clause"])
         clause["displaced"] = (
             {
@@ -1237,10 +1268,6 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                     "unanswered": sum(
                         1 for c in clauses if not c["answers"] and c["negotiability"] != "open"
                     ),
-                    "unbound": sum(
-                        1 for v in variables
-                        if v["name"] in step_vars and v["asked"] and not v["answers"]
-                    ),
                 },
             }
             if framed_step is not None
@@ -1254,6 +1281,9 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         # its message there carries the flow as its id, so the chat can say
         # whose words they were.
         "agentSaid": trace["agentSaid"],
+        # The clause each stated-clause message is, by the message's id (the
+        # `require` gesture's flow), so the chat shows it as the clause.
+        "required": trace["required"],
         # The utterance each chat message became, by the message's id, so
         # the words in the chat carry the utterance's address.
         "said": trace["said"],
@@ -1300,15 +1330,13 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             "open": sum(1 for v in variables if v["standing"] == "open"),
             "unmet": sum(1 for v in variables if v["standing"] == "unmet"),
             "yielded": sum(1 for v in variables if v["standing"] == "yielded"),
-            # Clauses nobody has answered (the ones left open on purpose
-            # excluded), and values asserted with no clause behind them.
+            # Clauses nobody has answered, the ones left open on purpose
+            # excluded.  A value asserted with no clause behind it is not
+            # counted: it is not a gap (docs/syncs/gestures.md).
             "unanswered": sum(
                 1
                 for c in clauses
                 if not c["answers"] and c["negotiability"] != "open"
-            ),
-            "unbound": sum(
-                1 for v in variables if v["asked"] and not v["answers"]
             ),
             # Clauses the model read.  Those the person struck are in `sources`, item by item.
             "read": sum(1 for c in clauses if c["source"]),

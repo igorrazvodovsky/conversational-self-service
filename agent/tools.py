@@ -249,6 +249,7 @@ class Requirement(TypedDict):
     answer: NotRequired[list[str]]
     states: NotRequired[dict[str, float]]
     file: NotRequired[str]
+    clause: NotRequired[str]
 
 
 @tool
@@ -275,6 +276,12 @@ def read(items: list[Requirement]) -> dict[str, Any]:
     hidden in an answered clause.
     `file` is the id of the document the words are from, as `review` lists
     it under `files`; leave it out when they are from the person's message.
+    `clause` is the id of a requirement the person stated on the canvas, as
+    `review` lists it under `required`, when the words are that clause's:
+    a message marked as stated on the canvas names it. Then no new clause is
+    stated; the answer is proposed to that clause as your reading of the
+    person's words, which they correct on the row, and `states` is worked
+    out for it. Pass `file` or `clause`, never both.
 
     Each item is read in turn and comes back under `read`, in the same
     order, with what the rules did with it. Words the cited source does not
@@ -311,8 +318,10 @@ def read(items: list[Requirement]) -> dict[str, Any]:
     # the log see one reading per requirement; what an item did
     # is read before the next is performed, or it would claim the next's.
     outcome: dict[str, Any] = {"read": [_read(item) for item in items]}
-    if any("refused" not in item for item in outcome["read"]):
-        # Whose the clause is, said where the model learns it was stated.
+    if any("refused" not in item and "clause" not in item for item in outcome["read"]):
+        # Whose the clause is, said where the model learns it was stated.  A
+        # reading of a clause the person stated states none: that clause is
+        # theirs already.
         outcome["yours"] = (
             "each clause read is your reading of their words, not their "
             "requirement: call it that until they keep it on the canvas"
@@ -322,6 +331,7 @@ def read(items: list[Requirement]) -> dict[str, Any]:
 
 def _read(item: Requirement) -> dict[str, Any]:
     words, answer, file = item["words"], list(item.get("answer") or []), item.get("file")
+    clause = item.get("clause")
     stated = dict(item.get("states") or {})
     offers = engine.state("Cataloguing")["offers"]
     variable_of = {o: v for v, options in offers.items() for o in options}
@@ -334,13 +344,15 @@ def _read(item: Requirement) -> dict[str, Any]:
         for q in stated
         if readings.given_by_person(situating, SPEC, q)
     }
-    utterance = None if file else heard()
+    utterance = None if file or clause else heard()
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
         spec=SPEC, words=words, answer=answer, states=stated, file=file,
-        utterance=utterance,
+        clause=clause, utterance=utterance,
     )
     outcome: dict[str, Any] = {"words": words, "did": _did(completion)}
+    if clause:
+        outcome["clause"] = clause
     named = Counter(variable_of[o] for o in dict.fromkeys(answer) if o in variable_of)
     twice = sorted(v for v, times in named.items() if times > 1)
     if not any(entry["action"] == "Reading/read" for entry in outcome["did"]):
@@ -348,6 +360,8 @@ def _read(item: Requirement) -> dict[str, Any]:
         # words that are a reply to a question, or words the cited source does
         # not bear out, which includes there being no source to check.
         reply = utterance is not None and utterance in engine.state("Conversing")["about"]
+        specifying = engine.state("Specifying")
+        own = clause is not None and specifying["statedBy"].get(clause) == "model"
         deriving = engine.state("Deriving")
         needed = {q for needs in deriving["needs"].values() for q in needs}
         unknown = sorted(q for q in stated if q not in needed)
@@ -371,8 +385,12 @@ def _read(item: Requirement) -> dict[str, Any]:
             "and a reply is not a requirement. If it says which assertion gives "
             "way, withdraw that one; otherwise answer it in words"
             if reply
+            else "nothing was read: that clause is your own reading already, "
+            "not a requirement the person stated; nothing to read from it"
+            if own
             else "nothing was read: the words are not in the cited source; "
-            "copy them as one passage, and pass `file` if they are from the document"
+            "copy them as one passage, and pass `file` if they are from the "
+            "document or `clause` if they are a requirement on the canvas"
         )
     else:
         if given:
@@ -694,9 +712,8 @@ def frame(
     still open that could answer it. Use it when the conversation is about
     one requirement. You cannot answer the clause; the person picks.
 
-    With `gap`, one of `open` (the variables nothing has settled),
-    `unanswered` (the requirements nothing answers) or `unbound` (the values
-    answering no requirement, with what they forced): the canvas shows only
+    With `gap`, one of `open` (the variables nothing has settled) or
+    `unanswered` (the requirements nothing answers): the canvas shows only
     that. Use it when the person asks what is left to do.
 
     Exactly one of the three. `review` reports the frame under `frame` and
@@ -708,10 +725,10 @@ def frame(
         value: dict[str, Any] = {"by": "clause", "clause": clause}
     elif given == ["variable"]:
         value = {"by": "assertion", "variable": variable}
-    elif given == ["gap"] and gap in ("open", "unanswered", "unbound"):
+    elif given == ["gap"] and gap in ("open", "unanswered"):
         value = {"by": "gap", "gap": gap}
     else:
-        return {"did": [{"action": "frame", "refused": "give exactly one of a variable, a clause or a gap (open, unanswered, unbound)"}]}
+        return {"did": [{"action": "frame", "refused": "give exactly one of a variable, a clause or a gap (open, unanswered)"}]}
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="frame", frame=value,
     )

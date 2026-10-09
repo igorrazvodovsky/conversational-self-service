@@ -70,13 +70,14 @@ utterance, and the canvas reads the words off it: *the assistant asked for
 this in reply to "hospital, six storeys"*. That is a fact of the trace and not of any
 concept — see [The turn is one flow](gestures.md#the-turn-is-one-flow).
 
-A value is *held for a reason* when a clause the person stated rests on it:
+A value is *held for a reason* when a clause the person stated rests on it
+by a choice the person decided:
 
 ```
 ?v is held for a reason in ?s
   iff  Asserting: { ?s asserted: ?v -> ?x }
   and  Binding: { ?sel for: ?s ; ?ch in choices of ?sel ;
-                  ?ch value: ?x ; ?ch answers: ?c }
+                  ?ch value: ?x ; ?ch answers: ?c ; ?ch decidedBy: person }
   and  Specifying: { ?c statedBy: person }
 ```
 
@@ -84,8 +85,14 @@ The first two rules do not fire on such a value. A value the person chose
 for a requirement they wrote is not the model's to swap or take back, so the
 model asks them in the chat and the person changes it on the canvas, where
 changing it retracts the answer it gave
-([Binding](binding.md#what-takes-a-choice-away)). A value with no requirement
-behind it, or one answering only a reading the person has not kept, the
+([Binding](binding.md#what-takes-a-choice-away)). Both conjuncts are needed.
+The model reads a clause the person typed and proposes its answer to it
+([Reading](reading.md#a-clause-the-person-stated-is-answered)); that choice
+is the model's reading of the person's words, and a reading is the model's
+to correct until the person has decided it, by picking on the row or by
+keeping the clause, which adopts its answers. A value with no requirement
+behind it, one answering only a reading the person has not kept, or one
+answering the person's clause only by the model's own reading, the
 model may change as before. The canvas marks a held value with the
 requirement it answers, and the tool reads the same condition from state to
 tell the model why nothing happened, since an absence has no reason on
@@ -159,9 +166,9 @@ open to answer it — for when the conversation is about that requirement; the
 model may frame a clause and may not answer one, as
 [Gestures](gestures.md#the-canvas-is-narrowed-to-one-requirement) says. The
 third, `[ by: "gap" ; gap: ?g ]`, narrows it to one
-[gap](gestures.md#the-canvas-is-narrowed-to-one-gap) — what is open,
-the requirements nothing answers, or the values answering none — for when
-the person asks what is left to do.
+[gap](gestures.md#the-canvas-is-narrowed-to-one-gap) — what is open, or
+the requirements nothing answers — for when the person asks what is left
+to do.
 
 ## Proposing, and not adopting
 
@@ -847,7 +854,8 @@ in its `then`. What the model may do is *read*: `TheModelMayReadARequirement`
 ([Reading](reading.md)) records a requirement with the words it was read from
 and the options it took to answer them, and only when those words are a
 passage of the source it cites. The rules there state the words
-as a clause and propose the answer. A clause so stated carries the
+as a clause and propose the answer, or, when the source is a clause the
+person typed, propose the answer to that clause. A clause so stated carries the
 model as its stater and its source beside it, and only the person's gestures
 change, keep or remove it. No rule carries the model's call to `Specifying/adopt`,
 so only the person makes a reading theirs, and none to `Binding/substitute`,

@@ -64,7 +64,7 @@ export const TITLE: Record<ViewName, string> = {
 export const CHECKS = ["unanswered", "changed"] as const;
 export type Check = (typeof CHECKS)[number];
 
-const GAPS = ["open", "unanswered", "unbound"];
+const GAPS = ["open", "unanswered"];
 const GRIDS: Grid[] = ["today", "decarbonising"];
 
 type FrameAsked =

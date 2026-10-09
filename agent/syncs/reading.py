@@ -17,6 +17,11 @@ with one trigger moved, and the note says where.
 A reading stated as a requirement is one individual in two concepts: the
 clause's identity is the item's (`docs/syncs/reading.md`, "A reading becomes
 a clause, and its answer a choice").
+
+A clause the person typed is a source too.  The model reads it as it reads
+a message, the reading cites the clause, and its answer is proposed to that
+clause as the model's reading of the person's words — theirs once they pick
+or keep ("A clause the person stated is answered").
 """
 
 from __future__ import annotations
@@ -140,19 +145,27 @@ def worked_out_by(
 
 
 def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Invocation]:
-    """One rule, two triggers, on the shape of the source.  A call naming
-    neither a file nor an utterance reads nothing: there is no source to
+    """One rule, three triggers, on the shape of the source.  A call naming
+    no file, utterance or clause reads nothing: there is no source to
     check it against.  Nor does one whose words the source does not bear
-    out — `Filing: { ?f text: ?t }` or `Conversing: { ?u text: ?t }`, and
-    `?w occurs in ?t` — or whose answer names two options on one variable.
-    An utterance said about something, a reply to a question, is not a
-    source: `Conversing: { ?u about: _ }` does not bind."""
+    out — `Filing: { ?f text: ?t }`, `Conversing: { ?u text: ?t }` or
+    `Specifying: { ?c text: ?t }`, and `?w occurs in ?t` — or whose answer
+    names two options on one variable.  An utterance said about something,
+    a reply to a question, is not a source: `Conversing: { ?u about: _ }`
+    does not bind.  Only a clause the person stated is one: `Specifying:
+    { ?c statedBy: person }`."""
     if c.output.get("tool") != "read":
         return []
     words = c.output.get("words", "")
     if c.output.get("file"):
         source: dict[str, Any] = {"file": c.output["file"]}
         text = states["Filing"].state()["text"].get(c.output["file"])
+    elif c.output.get("clause"):
+        source = {"clause": c.output["clause"]}
+        specifying = states["Specifying"].state()
+        if specifying["statedBy"].get(c.output["clause"]) != PERSON:
+            return []
+        text = specifying["text"].get(c.output["clause"])
     elif c.output.get("utterance"):
         source = {"utterance": c.output["utterance"]}
         conversing = states["Conversing"].state()
@@ -199,8 +212,9 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
 
 def _a_read_item_becomes_a_clause(c: Completion, states: States) -> list[Invocation]:
     """`Specifying: { ?s in open }` — the one open specification.  The clause
-    is the item."""
-    if c.failed:
+    is the item.  A reading from a clause becomes none: `?src is not
+    [ clause: _ ]`."""
+    if c.failed or c.output["source"].get("clause"):
         return []
     return [
         Invocation(
@@ -222,24 +236,29 @@ def _given(states: States, spec: str, variable: str) -> bool:
     return readings.given_by_person(states["Situating"].state(), spec, variable)
 
 
-def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation]:
-    """`Reading: { ?c answer: ?a* }` — the clause is the item, so its answer is
-    read under its own identity.  An option the catalogue does not offer binds
-    no variable and is not proposed; nor is one whose variable is held for a
-    reason or is a fact of the situation the person gave, which leaves the
-    clause unanswered for the person.
-    """
-    if c.failed or c.input.get("party") != MODEL:
-        return []
-    spec, clause = c.output["spec"], c.output["clause"]
+def _proposed_to(
+    states: States, spec: str, clause: str, answer: list[Any], answered: bool = False
+) -> list[Invocation]:
+    """Each option of the answer proposed as answering the clause.  An option
+    the catalogue does not offer binds no variable and is not proposed; nor
+    is one whose variable is held for a reason or is a fact of the situation
+    the person gave, which leaves the clause unanswered for the person; nor,
+    with `answered`, one whose variable a choice already answers the clause
+    on."""
     selection = _selection_for(states, spec)
     if selection is None:
         return []
-    answer = states["Reading"].state()["answer"].get(clause, [])
+    binding = states["Binding"].state()
+    offers = states["Cataloguing"].state()["offers"]
     out = []
     for option in answer:
         variable = _variable_offering(states, option)
         if variable is None or _held(states, spec, variable) or _given(states, spec, variable):
+            continue
+        if answered and any(
+            binding["answers"][ch] == clause and binding["value"][ch] in offers.get(variable, [])
+            for ch in binding["choices"].get(selection, [])
+        ):
             continue
         out.append(
             Invocation(
@@ -257,18 +276,46 @@ def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation
     return out
 
 
-def _a_read_quantity_is_worked_out(c: Completion, states: States) -> list[Invocation]:
-    """`Reading: { ?c states: ?q }`, `?stated maps each quantity ?s gives to
-    its value`, and for each quantity the first method yielding it that
-    ?stated is enough for and that needs a quantity ?q states.  The givens
-    were recorded before the clause was stated (`situating.py`)."""
+def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation]:
+    """`Reading: { ?c answer: ?a* }` — the clause is the item, so its answer is
+    read under its own identity."""
     if c.failed or c.input.get("party") != MODEL:
         return []
-    clause, spec = c.output["clause"], c.output["spec"]
-    states_ = states["Reading"].state()["states"].get(clause) or {}
+    spec, clause = c.output["spec"], c.output["clause"]
+    answer = states["Reading"].state()["answer"].get(clause, [])
+    return _proposed_to(states, spec, clause, answer)
+
+
+def _spec_of(states: States, clause: str) -> str | None:
+    """`Specifying: { ?s clauses: ?c }`."""
+    return next(
+        (s for s, clauses in states["Specifying"].state()["clauses"].items() if clause in clauses),
+        None,
+    )
+
+
+def _a_read_clause_is_answered(c: Completion, states: States) -> list[Invocation]:
+    """A reading whose source is a clause the person stated: its answer is
+    proposed to that clause, as the model's reading of the person's words.
+    `no choice of ?sel answers ?c with an option ?v offers` — a clause the
+    person answered on the variable before the model's turn stands."""
+    if c.failed or not c.output["source"].get("clause"):
+        return []
+    clause = c.output["source"]["clause"]
+    spec = _spec_of(states, clause)
+    if spec is None:
+        return []
+    return _proposed_to(states, spec, clause, list(c.output.get("answer") or []), answered=True)
+
+
+def _worked_out_for(states: States, spec: str, clause: str, stated: dict[str, Any]) -> list[Invocation]:
+    """`?stated maps each quantity ?s gives to its value`, and for each
+    quantity the first method yielding it that ?stated is enough for and
+    that needs a quantity the reading states.  The givens were recorded
+    off the reading before this runs (`situating.py`)."""
     deriving = states["Deriving"].state()
     gives = readings.situation_gives(states["Situating"].state(), deriving, spec)
-    into = worked_out_by(deriving, states_, gives)
+    into = worked_out_by(deriving, stated, gives)
     return [
         Invocation(
             "Deriving",
@@ -284,6 +331,27 @@ def _a_read_quantity_is_worked_out(c: Completion, states: States) -> list[Invoca
     ]
 
 
+def _a_read_quantity_is_worked_out(c: Completion, states: States) -> list[Invocation]:
+    """`Reading: { ?c states: ?q }` — the clause is the item."""
+    if c.failed or c.input.get("party") != MODEL:
+        return []
+    clause, spec = c.output["clause"], c.output["spec"]
+    stated = states["Reading"].state()["states"].get(clause) or {}
+    return _worked_out_for(states, spec, clause, stated)
+
+
+def _a_read_clause_quantity_is_worked_out(c: Completion, states: States) -> list[Invocation]:
+    """A quantity read from a clause the person stated is worked out for
+    that clause, from where `AWorkedOutQuantityIsProposed` answers it."""
+    if c.failed or not c.output["source"].get("clause"):
+        return []
+    clause = c.output["source"]["clause"]
+    spec = _spec_of(states, clause)
+    if spec is None:
+        return []
+    return _worked_out_for(states, spec, clause, dict(c.output.get("states") or {}))
+
+
 def _a_worked_out_quantity_is_proposed(c: Completion, states: States) -> list[Invocation]:
     """`Specifying: { ?s clauses: ?c }`, `Binding: { ?sel for: ?s }`, and the
     option of the variable the method yields whose range contains the
@@ -295,10 +363,7 @@ def _a_worked_out_quantity_is_proposed(c: Completion, states: States) -> list[In
     if c.failed:
         return []
     clause, variable, result = c.output["for"], c.output["yields"], c.output["result"]
-    spec = next(
-        (s for s, clauses in states["Specifying"].state()["clauses"].items() if clause in clauses),
-        None,
-    )
+    spec = _spec_of(states, clause)
     if spec is None:
         return []
     selection = _selection_for(states, spec)
@@ -348,6 +413,24 @@ def _a_reworded_reading_is_kept(c: Completion, states: States) -> list[Invocatio
     return [Invocation("Specifying", "adopt", {"clause": clause, "party": PERSON})]
 
 
+def _a_kept_reading_keeps_its_answers(c: Completion, states: States) -> list[Invocation]:
+    """`Binding: { ?sel for: ?s ; ?ch in choices of ?sel ; ?ch answers: ?c ;
+    ?ch decidedBy: model }` — each choice answering the kept clause that the
+    model decided becomes the person's, one `adopt` per choice."""
+    if c.failed or c.input.get("party") != PERSON:
+        return []
+    spec, clause = c.output["spec"], c.output["clause"]
+    selection = _selection_for(states, spec)
+    if selection is None:
+        return []
+    binding = states["Binding"].state()
+    return [
+        Invocation("Binding", "adopt", {"choice": ch, "party": PERSON})
+        for ch in binding["choices"].get(selection, [])
+        if binding["answers"][ch] == clause and binding["decidedBy"].get(ch) == MODEL
+    ]
+
+
 rules = [
     Sync("APersonFilesADocument", ("Copiloting", "gesture"), _a_person_files_a_document),
     Sync(
@@ -360,9 +443,18 @@ rules = [
     Sync(
         "AReadQuantityIsWorkedOut", ("Specifying", "require"), _a_read_quantity_is_worked_out
     ),
+    Sync("AReadClauseIsAnswered", ("Reading", "read"), _a_read_clause_is_answered),
+    Sync(
+        "AReadClauseQuantityIsWorkedOut",
+        ("Reading", "read"),
+        _a_read_clause_quantity_is_worked_out,
+    ),
     Sync(
         "AWorkedOutQuantityIsProposed", ("Deriving", "derive"), _a_worked_out_quantity_is_proposed
     ),
     Sync("APersonKeepsAReading", ("Copiloting", "gesture"), _a_person_keeps_a_reading),
     Sync("ARewordedReadingIsKept", ("Specifying", "reword"), _a_reworded_reading_is_kept),
+    Sync(
+        "AKeptReadingKeepsItsAnswers", ("Specifying", "adopt"), _a_kept_reading_keeps_its_answers
+    ),
 ]

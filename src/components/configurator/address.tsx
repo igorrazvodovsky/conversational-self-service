@@ -71,8 +71,11 @@ export function useHash(): string {
   return hash;
 }
 
+/** Whether the page is at this address. An item with no address yet — a
+ * clause line still being typed — is never the target, whatever the hash. */
 export function useTargeted(id: string): boolean {
-  return useHash() === id;
+  const hash = useHash();
+  return !!id && hash === id;
 }
 
 /** Where an item is: the moment and the view of the document that hold it.

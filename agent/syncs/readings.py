@@ -283,11 +283,13 @@ def held_for_reason(
     variable: str,
 ) -> bool:
     """`?v is held for a reason in ?s`: a clause the person stated rests on the
-    value asserted of it.
+    value asserted of it, by a choice the person decided.
 
     `Asserting: { ?s asserted: ?v -> ?x }`, a current choice of the spec's
-    selection whose value is `?x` and which answers `?c`, and
-    `Specifying: { ?c statedBy: person }`.
+    selection whose value is `?x`, which answers `?c` and was decided by the
+    person, and `Specifying: { ?c statedBy: person }`.  The model's reading
+    of a clause the person typed is a choice the model decided, and is not a
+    hold until the person picks or keeps (`docs/syncs/conduct.md`).
     """
     value = asserting["asserted"].get(spec, {}).get(variable)
     if value is None:
@@ -297,6 +299,7 @@ def held_for_reason(
         return False
     return any(
         binding["value"][choice] == value
+        and binding["decidedBy"].get(choice) == "person"
         and specifying["statedBy"].get(binding["answers"][choice]) == "person"
         for choice in binding["choices"].get(selection, [])
     )
@@ -309,7 +312,8 @@ def reasons(
     spec: str,
 ) -> dict[str, list[str]]:
     """For each variable held for a reason, the clauses the person stated that
-    rest on its value, for the canvas to mark it with."""
+    rest on its value by a choice they decided, for the canvas to mark it
+    with."""
     asserted = asserting["asserted"].get(spec, {})
     selection = next((s for s, of in binding["for"].items() if of == spec), None)
     if selection is None:
@@ -319,7 +323,11 @@ def reasons(
     for choice in binding["choices"].get(selection, []):
         clause = binding["answers"][choice]
         variable = by_value.get(binding["value"][choice])
-        if variable is not None and specifying["statedBy"].get(clause) == "person":
+        if (
+            variable is not None
+            and binding["decidedBy"].get(choice) == "person"
+            and specifying["statedBy"].get(clause) == "person"
+        ):
             out.setdefault(variable, []).append(clause)
     return out
 
