@@ -467,7 +467,8 @@ no state and decides nothing. So the `act` values above — `start`, `say`,
 `file`, `assert`, `withdraw`, `discard`, `choose`, `decline`, `introduce`,
 `entitle`, `quote`, `commit`, `revoke`, `require`, `settle`, `relax`, `strike`,
 `reword`, `move`, `show`, `hide`, `frame`, `unframe`, `answer` in
-[Binding](binding.md), `keep` in [Reading](reading.md), and `reply` in
+[Binding](binding.md), `keep` in [Reading](reading.md), `survey` and `drop`
+in [Situating](situating.md), and `reply` in
 [Conduct](conduct.md#asking-and-waiting-for-the-answer) — are not defined in the bootstrap
 concept, and there is nowhere else they could be defined either. This file is
 their definition.

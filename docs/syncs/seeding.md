@@ -102,6 +102,12 @@ then  { Deriving/describe: [ quantity ; meaning ; unit ]
         Deriving/define: [ method ; yields ; formula ; needs ; presumes ]
           for each method of ?c, in the order the catalogue prefers them }
 
+sync TheCatalogueNamesTheSituation
+when  { Copiloting/boot: [] => [ catalogue: ?c ] }
+then  { Situating/describe: [ fact ; meaning ]
+          for each variable ?c lists under situation, with its heading,
+          and for each quantity some method of ?c needs, with its meaning }
+
 sync TheCatalogueSetsTheSteps
 when  { Copiloting/boot: [] => [ catalogue: ?c ] }
 then  { Stepping/author: [ template ; name ; needs ; covers ; owner ]

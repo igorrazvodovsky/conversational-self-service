@@ -9,14 +9,16 @@ What the model may do, stated positively. See [the index](README.md) and
 sync TheModelMayAssertAValue
 when  { Copiloting/invoke: [ tool: "assert" ;
           spec: ?s ; variable: ?v ; option: ?o ] => [] }
-where { ?v is not held for a reason in ?s }
+where { ?v is not held for a reason in ?s
+        ?v is not given by the person in ?s }
 then  { Asserting/assert: [ party: model ;
           spec: ?s ; variable: ?v ; option: ?o ] }
 
 sync TheModelMayWithdrawAnAssertion
 when  { Copiloting/invoke: [ tool: "withdraw" ;
           spec: ?s ; variable: ?v ] => [] }
-where { ?v is not held for a reason in ?s }
+where { ?v is not held for a reason in ?s
+        ?v is not given by the person in ?s }
 then  { Asserting/withdraw: [ spec: ?s ; variable: ?v ] }
 
 sync TheModelMayIntroduceThePerson
@@ -89,6 +91,15 @@ requirement it answers, and the tool reads the same condition from state to
 tell the model why nothing happened, since an absence has no reason on
 record. The same condition keeps a reading's answer off a held value
 ([Reading](reading.md#a-reading-becomes-a-clause-and-its-answer-a-choice)).
+
+The second conjunct is the same shape for a fact of the situation. A value
+on a variable the catalogue lists under `situation` is a given, recorded off
+the assertion with the party it came from
+([Situating](situating.md#a-value-asserted-of-a-fact-is-a-given)), and one the
+person gave is not the model's to assert over or take back: the building is
+what the person says it is, whether or not a requirement rests on it. The
+reading is the same one the conflict question uses to leave such a fact out
+of its options, and the tool says it, as it says the hold.
 
 There is no `TheModelMayPreferAnOption`. `Asserting` has no `prefer`: how
 firmly a value is meant is a clause's negotiability, the person's own tag,
@@ -167,6 +178,8 @@ sync TheModelMayProposeACompletion
 when  { Copiloting/invoke: [ tool: "propose" ; spec: ?s ] => [] }
 where { the call names no goal
         Deciding: { [ spec: ?s ; about: "goal" ] chosen: [ goal: ?g ] }
+        every fact of the situation that Cataloguing offers options for
+          is given in ?s, read from Situating
         ?cost is what each option adds to ?g over the life of the lift,
           computed from Pricing or from Footprinting — see below }
 then  { Constraining/complete: [ spec: ?s ; cost: ?cost ] }
@@ -183,6 +196,7 @@ then  { Deciding/ask: [ request: [ spec: ?s ; about: "goal" ] ;
 sync AChosenGoalFinishesTheSpecification
 when  { Deciding/choose: [ request: ?r ; option: [ goal: ?g ] ] => [ request: ?r ] }
 where { ?r is [ spec: ?s ; about: "goal" ]
+        every fact of the situation the solver takes is given in ?s, as above
         ?cost is what each option adds to ?g over the life of the lift,
           as above }
 then  { Constraining/complete: [ spec: ?s ; cost: ?cost ] }
@@ -341,6 +355,17 @@ are both open to the person and give nothing up, and the rule cannot tell
 a goal the person named from one the model made up, which is the finding
 already recorded against `introduce`. The same move lets the person change
 their mind in words later, since the re-ask discards the choice on record.
+
+Neither rule computes a completion while a fact of the situation is open.
+The optimiser picks the cheapest option for every variable nobody has
+settled, and the cheapest building type, code regime or shaft is not a
+finding about the building; the person has to say, and the step that wants
+it is already the first ([Stepping](stepping.md)). So the `where` reads
+[Situating](situating.md#a-completion-waits-for-the-situation) for every fact
+the solver takes, the tool names the ones still open under `next`, and the
+model asks. A fact the model estimated, such as the region a city implies,
+counts as given: it is on record as the model's, and the person corrects it
+on the canvas.
 
 ### The unit of adoption is a value, and the whole is a shortcut
 

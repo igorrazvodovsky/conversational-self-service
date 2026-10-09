@@ -33,13 +33,44 @@ import {
   type ReactNode,
 } from "react";
 
+/**
+ * A fact of the situation's given (Situating): who it comes from and whether
+ * anyone has measured it on site. On a value the rules hold, or on a quantity
+ * a derivation rested on; a fact the person gave is not the assistant's to
+ * change and not a conflict's to offer up (`docs/syncs/situating.md`).
+ */
+export interface Given {
+  given: string;
+  value: number | string;
+  certainty: "estimated" | "measured";
+  by: "person" | "browser" | "model";
+  /** The option's label, for a fact the rules hold as a value. */
+  label?: string;
+  /** The clause whose reading recorded it, when one did. */
+  at?: string;
+}
+
 /** A quantity, with what it is and the unit it is counted or measured in. */
 export type Quantity = {
   quantity: string;
   meaning: string;
   value: number;
   unit: string;
+  /** The situation's given of the quantity, on one a derivation rested on
+   * or assumed; null while nobody has given it, which is what a presumed
+   * value is. */
+  given?: Given | null;
 };
+
+/** One fact of the situation, as the catalogue names it, with its given or none. */
+export interface Fact {
+  fact: string;
+  meaning: string;
+  unit: string;
+  kind: "variable" | "quantity";
+  at: string | null;
+  given: Given | null;
+}
 
 /** One derivation (Deriving): a quantity worked out from stated ones. */
 export type WorkedOut = Quantity & {
@@ -116,6 +147,9 @@ export interface Variable {
   /** The requirements the person stated that rest on this value. A value
    * held for a reason is one the assistant cannot change. */
   held: string[];
+  /** The fact of the situation this variable is, with its given, or null
+   * for a variable that is not one. */
+  given: Given | null;
   options: Option[];
 }
 
@@ -151,7 +185,7 @@ export type Negotiability = "fixed" | "negotiable" | "open";
  * was issued (`docs/syncs/staling.md`). The mark stays until the person
  * clears it.
  */
-export type Basis = { clause: string } | { variable: string };
+export type Basis = { clause: string } | { variable: string } | { given: string };
 
 /** A choice currently answering a clause, read against the assertions. */
 export interface Answer {
@@ -541,6 +575,8 @@ export interface Step {
 }
 
 export interface View {
+  /** The facts of the situation, each with its given or none (Situating). */
+  situation: Fact[];
   spec: string;
   grid: Grid;
   product: string;

@@ -822,6 +822,7 @@
       ]
     }
   ],
+  "situation": ["building_type", "region", "installation"],
   "quantities": [
     { "name": "stop_count", "meaning": "stops, counted outright", "unit": "" },
     { "name": "storeys", "meaning": "storeys from the ground floor up", "unit": "" },

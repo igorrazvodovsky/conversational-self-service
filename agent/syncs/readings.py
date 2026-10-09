@@ -335,3 +335,41 @@ def wanting(stepping: dict[str, Any], standing: dict[str, str], spec: str) -> di
         step: [n for n in stepping["needs"].get(step, []) if standing.get(n) == "open"]
         for step in stepping["steps"].get(spec, [])
     }
+
+
+def given_of(situating: dict[str, Any], spec: str, fact: str) -> str | None:
+    """`Situating: { ?g in givens of ?s ; ?g of: ?f }`: the situation's given
+    of the fact, or none."""
+    return next(
+        (g for g in situating["givens"].get(spec, []) if situating["of"].get(g) == fact),
+        None,
+    )
+
+
+def given_by_person(situating: dict[str, Any], spec: str, fact: str) -> bool:
+    """`?v is given by the person in ?s`: a given of the fact in the situation,
+    recorded by the person (`docs/syncs/situating.md`)."""
+    given = given_of(situating, spec, fact)
+    return given is not None and situating["recordedBy"].get(given) == "person"
+
+
+def situation_gives(
+    situating: dict[str, Any], deriving: dict[str, Any], spec: str
+) -> dict[str, Any]:
+    """`?stated maps each quantity ?s gives to its value`: the givens of the
+    situation whose fact is a quantity some method needs."""
+    needed = {q for needs in deriving["needs"].values() for q in needs}
+    return {
+        situating["of"][g]: situating["is"][g]
+        for g in situating["givens"].get(spec, [])
+        if situating["of"].get(g) in needed
+    }
+
+
+def situation_open(
+    situating: dict[str, Any], cataloguing: dict[str, Any], spec: str
+) -> list[str]:
+    """The facts of the situation that Cataloguing offers options for and
+    nobody has given, in the catalogue's order."""
+    given = {situating["of"][g] for g in situating["givens"].get(spec, [])}
+    return [f for f in situating["facts"] if f in cataloguing["offers"] and f not in given]

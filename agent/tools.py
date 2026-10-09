@@ -157,12 +157,37 @@ def _held(variable: str) -> list[str]:
     return [specifying["text"].get(c, c) for c in clauses]
 
 
+def _given(variable: str) -> bool:
+    """`?v is given by the person in ?s`, read from state as the rules read
+    it (docs/syncs/situating.md)."""
+    return readings.given_by_person(engine.state("Situating"), SPEC, variable)
+
+
+def _situation_open() -> list[str]:
+    """The facts of the situation the solver takes that nobody has given,
+    by their headings."""
+    heading = engine.state("Cataloguing")["heading"]
+    return [
+        heading.get(f, f)
+        for f in readings.situation_open(
+            engine.state("Situating"), engine.state("Cataloguing"), SPEC
+        )
+    ]
+
+
 def _not_done(
-    outcome: dict[str, Any], held: list[str], already: bool = False
+    outcome: dict[str, Any], held: list[str], already: bool = False, given: bool = False
 ) -> dict[str, Any]:
     """A call on a held value records nothing; say why, so the model neither
     retries nor claims the change.  Asserting the value it already holds
     changes nothing either, and there is nothing to ask the person."""
+    if given and not held and not any(e["action"].startswith("Asserting/") for e in outcome["did"]):
+        outcome["unchanged" if already else "refused"] = (
+            "the value is already this, and is a fact of the situation the person gave"
+            if already
+            else "not done: the value is a fact of the situation the person gave, "
+            "so it is theirs to change; ask them to change it on the canvas"
+        )
     if held and not any(e["action"].startswith("Asserting/") for e in outcome["did"]):
         quoted = "; ".join(f"“{text}”" for text in held)
         if already:
@@ -187,15 +212,17 @@ def assert_value(variable: str, option: str) -> dict[str, Any]:
     and comes back with the rules that refuse it. A value that answers a
     requirement the person stated is theirs: the call does nothing, and comes
     back under `refused` saying so, or under `unchanged` when it already is
-    the option asked for.
+    the option asked for. So is a fact of the situation the person gave,
+    listed under `situation` in `review`.
     """
     held = _held(variable)
+    given = _given(variable)
     already = engine.state("Asserting")["asserted"].get(SPEC, {}).get(variable) == option
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="assert",
         spec=SPEC, variable=variable, option=option,
     )
-    return _not_done(_outcome(completion), held, already)
+    return _not_done(_outcome(completion), held, already, given)
 
 
 @tool
@@ -207,11 +234,12 @@ def withdraw(variable: str) -> dict[str, Any]:
     requirement the person stated is theirs, as for `assert_value`.
     """
     held = _held(variable)
+    given = _given(variable)
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="withdraw",
         spec=SPEC, variable=variable,
     )
-    return _not_done(_outcome(completion), held)
+    return _not_done(_outcome(completion), held, given=given)
 
 
 class Requirement(TypedDict):
@@ -271,7 +299,10 @@ def read(items: list[Requirement]) -> dict[str, Any]:
     travel from it, and each result comes back under `worked_out`, with the
     option it falls in and what was assumed, such as the storey height. Leave
     out of `answer` any option of a variable the stated quantities are worked
-    out into. A value that cannot be met is
+    out into. Each quantity is a fact of the situation: `review` lists it
+    under `situation` with who gave it, and a quantity the person has given
+    or measured stands over what you read, which comes back under `stands`.
+    A value that cannot be met is
     still recorded and comes back under `unmet` with the rules that refuse it; keep reading
     the rest of the source before raising it. Use `assert_value` for context
     that is not a requirement, such as the region a city implies.
@@ -296,6 +327,13 @@ def _read(item: Requirement) -> dict[str, Any]:
     variable_of = {o: v for v, options in offers.items() for o in options}
     asserted = engine.state("Asserting")["asserted"].get(SPEC, {})
     held = {o: _held(variable_of[o]) for o in answer if o in variable_of}
+    given = {o for o in answer if o in variable_of and _given(variable_of[o])}
+    situating = engine.state("Situating")
+    stands = {
+        q: situating["is"][readings.given_of(situating, SPEC, q)]
+        for q in stated
+        if readings.given_by_person(situating, SPEC, q)
+    }
     utterance = None if file else heard()
     completion = engine.root(
         "Copiloting", "invoke", actor="model", flow=turn(), tool="read",
@@ -313,7 +351,7 @@ def _read(item: Requirement) -> dict[str, Any]:
         deriving = engine.state("Deriving")
         needed = {q for needs in deriving["needs"].values() for q in needs}
         unknown = sorted(q for q in stated if q not in needed)
-        into = worked_out_by(deriving, stated)
+        into = worked_out_by(deriving, stated, readings.situation_gives(situating, deriving, SPEC))
         doubled = sorted(o for o in answer if variable_of.get(o) in into)
         outcome["refused"] = (
             "nothing was read: the answer names more than one option for "
@@ -337,9 +375,21 @@ def _read(item: Requirement) -> dict[str, Any]:
             "copy them as one passage, and pass `file` if they are from the document"
         )
     else:
-        kept = {o: texts for o, texts in held.items() if texts}
-        if kept:
+        if given:
             outcome["not_asserted"] = [
+                f"{o}: its variable is a fact of the situation the person gave; "
+                "this clause stays unanswered until they change it on the canvas"
+                for o in sorted(given)
+            ]
+        if stands:
+            outcome["stands"] = [
+                f"{q}: the person gave {v}, which stands over the {stated[q]} read; "
+                "worked out from theirs"
+                for q, v in stands.items()
+            ]
+        kept = {o: texts for o, texts in held.items() if texts and o not in given}
+        if kept:
+            outcome.setdefault("not_asserted", []).extend([
                 (
                     f"{o}: already the value, for "
                     + "; ".join(f"“{t}”" for t in texts)
@@ -351,7 +401,7 @@ def _read(item: Requirement) -> dict[str, Any]:
                     + ", which the person stated; tell them, and leave the choice to them"
                 )
                 for o, texts in kept.items()
-            ]
+            ])
         if stated:
             item = next(
                 record.output["item"]
@@ -454,6 +504,9 @@ def propose(goal: Literal["cost", "carbon"] | None = None) -> dict[str, Any]:
     person said in words — *cheapest*, *the greener one* — which chooses it
     on their behalf and computes the completion; never to pick it yourself.
 
+    Nothing is proposed while a fact of the situation the rules take is
+    open — the building's type, the region, whether there is a shaft — since
+    the optimiser would pick the cheapest; `next` names them, and you ask.
     Every assertion already on record is kept. Each value proposed for a
     still-open variable is put to the person beside that variable, to take
     one at a time or all at once — you cannot adopt any of it yourself, and
@@ -466,7 +519,14 @@ def propose(goal: Literal["cost", "carbon"] | None = None) -> dict[str, Any]:
     )
     outcome = _outcome(completion)
     if not any(e["action"] == "Constraining/complete" for e in outcome["did"]):
-        if _goal_unput():
+        if (open_facts := _situation_open()) and not _goal_unput():
+            outcome["next"] = (
+                "nothing is proposed while a fact of the situation is open: "
+                + ", ".join(open_facts)
+                + ". The optimiser would pick the cheapest, which is not a finding "
+                "about the building; ask the person, or read what their words state"
+            )
+        elif _goal_unput():
             outcome["next"] = (
                 "nobody has said what to finish the specification for: call `ask` "
                 "with options=['cost', 'carbon'] rather than choosing yourself, and "
@@ -1087,6 +1147,11 @@ def review() -> dict[str, Any]:
     """Read the specification: what the person requires in their own words,
     what is asserted and which requirement each value answers, what follows,
     and what is open.
+
+    `situation` lists the facts of the situation: what the building is,
+    where it is, whether the shaft exists, and the counts and measures read,
+    each with who gave it and whether it was measured on site, or open. A
+    fact the person gave is theirs to change, as a held value is.
 
     `required` lists the person's clauses. You cannot state or answer one —
     the person does both on the canvas — but an assertion you make should

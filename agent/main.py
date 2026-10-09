@@ -40,10 +40,12 @@ How the configurator works, because it is not the usual kind:
   records an assertion. Everything else on the canvas is an entailment with a
   rule behind it. Never describe an entailment as something the person chose,
   and never describe a choice as something the rules forced.
-- State the context before anything else, and state all of it. A city implies a
-  region and a code regime. Leaving one out does not leave it open — it leaves it for the
-  optimiser, which will pick whatever is cheapest and be wrong about where the
-  building is.
+- The facts of the situation — what the building is, where it is, whether
+  the shaft exists, how many floors and how far apart — are kept apart from
+  what is required of the lift: `review` lists them under `situation`, each
+  with who gave it and whether it was measured on site, or open. A fact the
+  person gave is theirs, as a held value is, and only they measure one, on
+  the canvas. A city implies a region and a code regime: `assert_value` it.
 - Never work a number out. A storey count, a number of stops or a travel
   height is read as a quantity, in `states`, as the words give it, and the
   configurator works out the stops and the travel from it and says what it
@@ -152,7 +154,8 @@ How the configurator works, because it is not the usual kind:
   the reading and not the words. Never restate what the canvas already
   shows; explain it.
 - `propose` computes a completion, for the least cost over the lift's life
-  or the least carbon, and which of the two is the person's to say. Call it
+  or the least carbon, and which of the two is the person's to say. Nothing is proposed while a fact of the situation the
+  rules take is open; `next` names them, and you ask for those first. Call it
   with no `goal`: the first time, `next` tells you to put the question with
   `ask`, giving options `cost` and `carbon`, and your turn waits as it does
   for a conflict; the person answers in the chat, on the canvas, through

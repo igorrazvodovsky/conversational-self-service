@@ -24,6 +24,7 @@ from its neighbours is said by the [rules](../syncs/README.md) between them.
 | [Conversing](conversing.md) | to keep a record of what each party said, to whom and about what, in the order it was said |
 | [Filing](filing.md) | to keep a document a party brought, as it was brought, so that a passage of it can be cited |
 | [Reading](reading.md) | to hold what a source was read as, so that the reading can be checked against the source and corrected |
+| [Situating](situating.md) | to hold the facts of the situation that the outcome must fit and cannot trade, with how firmly each is known and who it comes from |
 | [Deriving](deriving.md) | to work a quantity out from stated ones by a method a person can inspect, so that they can see what the number rests on and what was assumed |
 | [Constraining](constraining.md) | to work out what a specification can still become under the rules that say what can be built, given what is asked of it firmly and what only as a preference |
 | [Cataloguing](cataloguing.md) | to say what may be ordered, in terms a person can recognise |
@@ -100,9 +101,13 @@ document a person brought, and what the model read from it or from their
 words, held as a reading so that it can be checked against its source. A
 reading becomes a clause and an answer by the rules in
 [Reading](../syncs/reading.md), and the person corrects it with the gestures
-they already have. [Deriving](deriving.md) works out what a quantity
-read from the words comes to, by a method the catalogue publishes, so the
-number and what it assumed are on record rather than in the model's head.
+they already have. [Situating](situating.md) holds the facts of the
+situation apart from the requirement: what the building is and how far the
+lift travels are things the outcome must fit, recorded with who said so and
+whether anyone has measured them, and not things to give up in a conflict.
+[Deriving](deriving.md) works out what a quantity the situation gives comes
+to, by a method the catalogue publishes, so the number and what it assumed
+are on record rather than in the model's head.
 
 [Quoting](quoting.md) is where the configuration stops being the point: an
 offer, frozen as issued, that the specification can move away from without
@@ -161,9 +166,13 @@ item; a concept holding it again would be `answers` under a second name. A
 quantity is not translated either: the model reads it from the words, and
 which option's range contains it is worked out by
 [Deriving](deriving.md) and the range [Cataloguing](cataloguing.md)
-publishes. It becomes a concept the day a clause carries a standard's class,
-or a quantity no option publishes a range for, that has to be translated
-into an option.
+publishes. Nor is a standard: the catalogue names the standard an option is
+the regime for in the option's own label, so *EN 81-70* is read as *1250 kg*
+is, by finding the words the seller publishes, and the reading is checked
+against the source like any other. It becomes a concept the day a clause
+carries a class the catalogue does not publish beside an option, or a
+quantity no option publishes a range for, that has to be translated into
+one.
 
 _Installing, Servicing, Decommissioning._ Each is a stage of the lift's
 life, not a concept. What the specification commits to at each stage is a

@@ -65,7 +65,9 @@ export function Offer({ quote }: { quote: Quote }) {
                   .map((b) =>
                     "variable" in b
                       ? (view.variables.find((v) => v.name === b.variable)?.heading ?? b.variable)
-                      : b.clause,
+                      : "clause" in b
+                        ? b.clause
+                        : b.given,
                   )
                   .join(", ")}{" "}
                 moved since issue

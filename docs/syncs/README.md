@@ -29,6 +29,7 @@ it.
 | `TheCatalogueIsFootprinted` | [Seeding](seeding.md) |
 | `TheCatalogueSetsTheRules` | [Seeding](seeding.md) |
 | `TheCatalogueSaysHowToWorkThingsOut` | [Seeding](seeding.md) |
+| `TheCatalogueNamesTheSituation` | [Seeding](seeding.md) |
 | `TheCatalogueSetsTheSteps` | [Seeding](seeding.md) |
 | `TheWorkspaceIsLaidOut` | [Seeding](seeding.md) |
 | `ASpecificationIsStartedAtBoot` | [Seeding](seeding.md) |
@@ -119,6 +120,15 @@ it.
 | `AChangedClauseStalesItsAnswers` | [Staling](staling.md) |
 | `AMovedAssertionStalesTheOpenOffers` | [Staling](staling.md) |
 | `APersonClearsAStaleItem` | [Staling](staling.md) |
+| `AnAssertedFactIsAGiven` | [Situating](situating.md) |
+| `AWithdrawnFactIsStruck` | [Situating](situating.md) |
+| `AReadQuantityIsAGiven` | [Situating](situating.md) |
+| `AKeptReadingVouchesForItsGivens` | [Situating](situating.md) |
+| `APersonSurveysAFact` | [Situating](situating.md) |
+| `ASurveyedFactReachesTheAssertions` | [Situating](situating.md) |
+| `ASurveyedQuantityIsWorkedOutAgain` | [Situating](situating.md) |
+| `AChangedGivenStalesWhatRestsOnIt` | [Situating](situating.md) |
+| `APersonDropsAGiven` | [Situating](situating.md) |
 | `AStartedSpecificationGetsItsSteps` | [Stepping](stepping.md) |
 | `ADiscardedSpecificationLosesItsSteps` | [Stepping](stepping.md) |
 | `APersonTakesAStep` | [Stepping](stepping.md) |
@@ -176,6 +186,20 @@ same rules with one trigger moved. A reading is the assistant's until the
 person keeps or rewords it, which makes it theirs. Whether a reading was wrong is not a fact
 any rule establishes, and the note says what is read instead. See
 [Reading](reading.md).
+
+## The situation is given
+
+What the building is, where it is, and how far the lift travels are facts
+the outcome must fit, not requirements and not choices. They live in
+[Situating](../concepts/situating.md): a value asserted of a variable the
+catalogue lists under `situation` is recorded as a given off the assertion,
+with the party it came from; a quantity a reading states is recorded as one
+before the clause is stated, and what it is worked out into rests on
+everything the situation gives. A fact the person gave is left out of a
+conflict's options and out of the model's reach, and a completion is not
+computed while one the solver takes is open. The person surveys a fact,
+which marks what rested on it and works it out again without replacing
+anything, or drops it. See [Situating](situating.md).
 
 ## An offer is held still
 

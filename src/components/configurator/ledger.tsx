@@ -185,9 +185,19 @@ function Gone({ answer }: { answer: Answer }) {
 function Stale({ answer }: { answer: Answer }) {
   const { gesture, busy } = useConfigurator();
   if (!answer.stale.length) return null;
+  // Two kinds of basis here: the clause it answers, reworded or relaxed,
+  // and a fact of the situation it was worked out from, measured or dropped
+  // since (`docs/syncs/situating.md`). The clause line shows what it now
+  // comes to.
+  const measured = answer.stale.some((b) => "given" in b);
+  const reworded = answer.stale.some((b) => "clause" in b);
   return (
     <p className="flex flex-wrap items-baseline gap-x-2 text-xs text-caution">
-      The requirement changed since this was chosen.
+      {measured && reworded
+        ? "The requirement changed, and a fact this was worked out from was measured, since this was chosen."
+        : measured
+          ? "A fact this was worked out from changed since this was chosen; the line says what it now comes to."
+          : "The requirement changed since this was chosen."}
       <Button
         variant="link"
         size="xs"

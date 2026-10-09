@@ -548,10 +548,23 @@ function ClauseView({ node, decorations }: NodeViewProps) {
                 {clause.source?.workedOut.map((w) => (
                   <p key={w.derivation} title={`${w.method}: ${w.formula}`}>
                     {sentence(w.meaning)} {amount(w)}, from{" "}
-                    {w.stated.map(given).join(", ")}
+                    {w.stated.map((q, i) => (
+                      <span key={q.quantity}>
+                        {i ? ", " : null}
+                        {given(q)}
+                        <Measured quantity={q} />
+                      </span>
+                    ))}
                     {w.assumed.length ? (
                       <>
-                        ; assumed {w.assumed.map(given).join(", ")}
+                        ; assumed{" "}
+                        {w.assumed.map((q, i) => (
+                          <span key={q.quantity}>
+                            {i ? ", " : null}
+                            {given(q)}
+                            <Measured quantity={q} />
+                          </span>
+                        ))}
                       </>
                     ) : null}
                     {w.label ? null : "; no option is offered for that"}
@@ -584,6 +597,70 @@ function ClauseView({ node, decorations }: NodeViewProps) {
         </div>
       ) : null}
     </NodeViewWrapper>
+  );
+}
+
+/**
+ * A quantity a derivation rested on or assumed is a fact of the situation,
+ * and the person is the one who can measure it: a presumed storey height
+ * becomes a measured one here, and what rested on it is worked out again
+ * and marked (`docs/syncs/situating.md`). The given shown is the situation's
+ * now, which may differ from the value the derivation used.
+ */
+function Measured({ quantity }: { quantity: Quantity }) {
+  const { gesture, busy } = useConfigurator();
+  const [measuring, setMeasuring] = useState(false);
+  const [value, setValue] = useState("");
+  const given = quantity.given ?? null;
+  if (given?.certainty === "measured") {
+    const since = given.value !== quantity.value ? `, since measured at ${given.value}` : "";
+    return <span className="text-muted-foreground"> (measured{since})</span>;
+  }
+  if (!measuring) {
+    return (
+      <Button
+        variant="link"
+        size="xs"
+        className="h-auto px-1 text-xs"
+        disabled={busy}
+        title={given ? "As stated; say what you measured on site" : "Presumed; say what you measured on site"}
+        onClick={() => {
+          setValue(String(given?.value ?? quantity.value));
+          setMeasuring(true);
+        }}
+      >
+        measure
+      </Button>
+    );
+  }
+  return (
+    <form
+      className="inline-flex items-baseline gap-1"
+      onSubmit={(e: FormEvent) => {
+        e.preventDefault();
+        const n = Number(value);
+        if (!Number.isFinite(n)) return;
+        setMeasuring(false);
+        void gesture({ act: "survey", fact: quantity.quantity, value: n });
+      }}
+    >
+      <Input
+        autoFocus
+        inputMode="decimal"
+        aria-label={`${quantity.meaning}, as measured`}
+        className="h-6 w-20 px-1 text-xs"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setMeasuring(false);
+        }}
+      />
+      {quantity.unit ? <span>{quantity.unit}</span> : null}
+      <Button type="submit" variant="ghost" size="xs" className="h-6 px-1 text-xs" disabled={busy}>
+        <CheckIcon aria-hidden className="size-3" />
+        <span className="sr-only">Record the measurement</span>
+      </Button>
+    </form>
   );
 }
 

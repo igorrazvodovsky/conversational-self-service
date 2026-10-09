@@ -38,6 +38,7 @@ from concepts.profiling import Profiling
 from concepts.quoting import Quoting
 from concepts.reading import Reading
 from concepts.showing import Showing
+from concepts.situating import Situating
 from concepts.specifying import Specifying
 from concepts.staling import Staling
 from concepts.stepping import Stepping
@@ -45,7 +46,8 @@ from concepts.stipulating import Stipulating
 from engine import Engine
 from engine.bootstrap import Copiloting
 from syncs import (
-    binding, conduct, gestures, handover, propagation, reading, seeding, staling, stepping,
+    binding, conduct, gestures, handover, propagation, reading, seeding, situating,
+    staling, stepping,
 )
 
 CATALOGUE = Path(__file__).parent / "catalogue" / "elevator.json"
@@ -93,6 +95,9 @@ def build(path: Path = CATALOGUE) -> Engine:
         # their words.  Neither is seeded: both start empty.
         Filing(),
         Reading(),
+        # The facts of the situation, seeded with which variables and
+        # quantities are facts; the givens themselves start empty.
+        Situating(),
         # How a quantity read from the words is worked out, seeded with the
         # catalogue's methods.
         Deriving(),
@@ -117,6 +122,10 @@ def build(path: Path = CATALOGUE) -> Engine:
     _alias_assert(engine)
     engine.react(
         *seeding.rules,
+        # Before propagation and reading: a given is recorded before the
+        # conflict question reads it, and before the clause a reading
+        # becomes is worked out over the situation (syncs/situating.py).
+        *situating.rules,
         *propagation.rules,
         *binding.rules,
         *reading.rules,

@@ -146,6 +146,7 @@ where { Binding: { ?sel for: ?s }
         ?o in ?a*
         Cataloguing: { ?v offers: ?o }
         ?v is not held for a reason in ?s
+        ?v is not given by the person in ?s
         bind a fresh identity as ?ch }
 then  { Binding/propose: [ party: model ; selection: ?sel ;
           requirement: ?c ; value: ?o ; choice: ?ch ] }
@@ -169,8 +170,11 @@ the clause's own identity, and a rule that asks which clause an item became
 asks nothing, since it is the same one. An option the catalogue does not
 offer binds no variable and is not proposed. An option whose variable holds a
 value held for a reason is not proposed either
-([Conduct](conduct.md#the-permissions)): the person chose it for a
-requirement they stated, and a reading is not the model's way round that. The
+([Conduct](conduct.md#the-permissions)), nor one whose variable is a fact
+of the situation the person gave
+([Situating](situating.md#the-person-vouches-for-a-given)): the person chose
+it for a requirement they stated, or said what the building is, and a
+reading is not the model's way round that. The
 clause is stated and stays unanswered, its answer on record in `Reading`
 beside it, and the tool tells the model which option it did not assert, so
 it can say so and leave the choice to the person.
@@ -179,20 +183,25 @@ it can say so and leave the choice to the person.
 
 ```
 sync AReadQuantityIsWorkedOut
-when  { Specifying/require: [ party: model ] => [ clause: ?c ] }
+when  { Specifying/require: [ party: model ] => [ clause: ?c ; spec: ?s ] }
 where { Reading: { ?c states: ?q }
+        ?stated maps each quantity ?s gives to its value,
+          read from Situating
         Deriving: { ?m in methods ; ?m yields: ?y }
-        ?m is the first method yielding ?y that ?q is enough for
+        ?m is the first method yielding ?y that ?stated is enough for,
+          and it needs a quantity ?q states
         bind a fresh identity as ?d }
-then  { Deriving/derive: [ method: ?m ; for: ?c ; stated: ?q ; derivation: ?d ] }
+then  { Deriving/derive: [ method: ?m ; for: ?c ; stated: ?stated ; derivation: ?d ] }
 
 sync AWorkedOutQuantityIsProposed
 when  { Deriving/derive: [] => [ for: ?c ; yields: ?v ; result: ?n ] }
 where { Specifying: { ?s clauses: ?c }
         Binding: { ?sel for: ?s }
+        no choice of ?sel answers ?c with an option ?v offers
         Cataloguing: { ?v offers: ?o ; ?o covers: ?r }
         ?n in ?r
         ?v is not held for a reason in ?s
+        ?v is not given by the person in ?s
         bind a fresh identity as ?ch }
 then  { Binding/propose: [ party: model ; selection: ?sel ;
           requirement: ?c ; value: ?o ; choice: ?ch ] }
@@ -209,12 +218,21 @@ the second answers the clause with the option whose range contains the
 result. The number and what it rests on are then on record, and the canvas
 shows them beside the answer: *5 upper floors × 3.5 m, assumed*.
 
-A method is enough when it needs at least one quantity the reading states and
-every other it needs is presumed. Without the first condition a method that
-presumes everything would run on every reading. Where several methods yield
-the same quantity, the catalogue lists them in the order it prefers, and the
-first that is enough runs: a stop count stated outright is worked out from
-that, not from floors stated beside it.
+The quantities a method works from are the situation's, not the passage's.
+Every quantity a reading states is a fact of the situation, recorded as a
+given before the clause is stated ([Situating](situating.md#a-quantity-read-is-a-given)),
+and the derivation is made over everything the situation gives: a storey
+height stated in one item and the floors in another come together, and a
+height the person has measured stands over one the words state. A method
+is enough when every quantity it needs is given or presumed, and it runs
+for this clause only when it needs a quantity this reading states, since
+the clause is about those words. Where several methods yield the same
+quantity, the catalogue lists them in the order it prefers, and the first
+that is enough runs: a stop count stated outright is worked out from that,
+not from floors stated beside it. A clause that already has an answer on
+the variable is not answered again: a derivation made after a survey
+([Situating](situating.md#what-rests-on-a-given-is-worked-out-again-and-marked))
+is on record beside the marked answer, for the person to take up.
 
 `?n in ?r` is a calculation, as `occurs in` is: a range is the seller's own
 statement of what an option is offered for, and whether a number falls in it
@@ -231,13 +249,14 @@ the second would displace the first for no reason the source gives, so the
 first rule reads nothing, as it does for an answer naming two options on one
 variable, and the tool says which.
 
-Quantities are worked out together only when one reading states them all.
-The words are one unbroken passage, so a document that gives the floors in
-one item and the floor-to-floor height in another yields two readings, and
-the travel worked out from the first presumes the method's storey height
-while the second states another. The second is recorded as a clause like
-any other, so the difference is on the canvas for the person to see; no rule
-brings the two together.
+A document that gives the floors in one item and the floor-to-floor height
+in another yields two readings, each a clause. The travel worked out for
+the first presumes the method's storey height; the second states one, and
+its derivation, over both givens, answers the second clause with the
+travel that follows, which displaces the first clause's answer as any
+later assertion on the variable does
+([below](#a-later-requirement-displaces-an-earlier-one)). The canvas shows
+which words each rests on.
 
 A result no option's range contains answers nothing: twenty-six stops, for a
 product offered for at most twenty-four, leaves the clause stated and
@@ -342,4 +361,5 @@ checked against its source whole.
 - [Conduct](conduct.md) — the model's other permissions, and the absences this note narrows
 - [Gestures](gestures.md) — the `file` act beside `say`
 - [Binding](binding.md) — where a proposed answer goes, and what takes it away
+- [Situating](situating.md) — the quantities a reading states, held as facts of the situation
 - [Reading](../concepts/reading.md) · [Filing](../concepts/filing.md) · [Deriving](../concepts/deriving.md)

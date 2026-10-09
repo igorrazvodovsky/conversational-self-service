@@ -108,25 +108,33 @@ def _named_twice(states: States, answer: list[Any]) -> list[str]:
     return twice
 
 
-def _enough(deriving: dict[str, Any], method: str, stated: dict[str, Any]) -> bool:
-    """`?q is enough for ?m`: the method needs at least one quantity the
-    reading states, and every other it needs is presumed."""
+def _enough(
+    deriving: dict[str, Any], method: str, states: dict[str, Any], pool: dict[str, Any]
+) -> bool:
+    """`?m is enough for ?stated, and needs a quantity ?q states`: every
+    quantity the method needs is in the pool or presumed, and at least one
+    is among those this reading states."""
     needs = deriving["needs"][method]
     presumes = deriving["presumes"][method]
-    return any(q in stated for q in needs) and all(
-        q in stated or q in presumes for q in needs
+    return any(q in states for q in needs) and all(
+        q in pool or q in presumes for q in needs
     )
 
 
-def worked_out_by(deriving: dict[str, Any], stated: dict[str, Any]) -> dict[str, str]:
-    """For each quantity the stated ones can be worked out into, the first
-    method yielding it that they are enough for, in the catalogue's order."""
+def worked_out_by(
+    deriving: dict[str, Any], states: dict[str, Any], pool: dict[str, Any] | None = None
+) -> dict[str, str]:
+    """For each quantity the reading's states can be worked out into, the
+    first method yielding it that the pool is enough for, in the catalogue's
+    order.  The pool is the situation's givens, which include what the
+    reading states once recorded; before that, the states themselves."""
     chosen: dict[str, str] = {}
-    if not stated:
+    if not states:
         return chosen
+    pool = {**states, **(pool or {})} if pool is not None else states
     for method in deriving["methods"]:
         yields = deriving["yields"][method]
-        if yields not in chosen and _enough(deriving, method, stated):
+        if yields not in chosen and _enough(deriving, method, states, pool):
             chosen[yields] = method
     return chosen
 
@@ -165,7 +173,13 @@ def _the_model_may_read_a_requirement(c: Completion, states: States) -> list[Inv
     needed = {q for needs in deriving["needs"].values() for q in needs}
     if any(q not in needed for q in stated):
         return []
-    into = worked_out_by(deriving, stated)
+    spec = next(iter(states["Specifying"].state()["open"]), None)
+    gives = (
+        readings.situation_gives(states["Situating"].state(), deriving, spec)
+        if spec is not None
+        else {}
+    )
+    into = worked_out_by(deriving, stated, gives)
     if any(_variable_offering(states, option) in into for option in answer):
         return []
     return [
@@ -203,11 +217,17 @@ def _a_read_item_becomes_a_clause(c: Completion, states: States) -> list[Invocat
     ]
 
 
+def _given(states: States, spec: str, variable: str) -> bool:
+    """`?v is given by the person in ?s`."""
+    return readings.given_by_person(states["Situating"].state(), spec, variable)
+
+
 def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation]:
     """`Reading: { ?c answer: ?a* }` — the clause is the item, so its answer is
     read under its own identity.  An option the catalogue does not offer binds
     no variable and is not proposed; nor is one whose variable is held for a
-    reason, which leaves the clause unanswered for the person.
+    reason or is a fact of the situation the person gave, which leaves the
+    clause unanswered for the person.
     """
     if c.failed or c.input.get("party") != MODEL:
         return []
@@ -219,7 +239,7 @@ def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation
     out = []
     for option in answer:
         variable = _variable_offering(states, option)
-        if variable is None or _held(states, spec, variable):
+        if variable is None or _held(states, spec, variable) or _given(states, spec, variable):
             continue
         out.append(
             Invocation(
@@ -238,13 +258,17 @@ def _a_read_answer_is_proposed(c: Completion, states: States) -> list[Invocation
 
 
 def _a_read_quantity_is_worked_out(c: Completion, states: States) -> list[Invocation]:
-    """`Reading: { ?c states: ?q }`, and for each quantity ?q can be worked
-    out into, the first method yielding it that ?q is enough for."""
+    """`Reading: { ?c states: ?q }`, `?stated maps each quantity ?s gives to
+    its value`, and for each quantity the first method yielding it that
+    ?stated is enough for and that needs a quantity ?q states.  The givens
+    were recorded before the clause was stated (`situating.py`)."""
     if c.failed or c.input.get("party") != MODEL:
         return []
-    clause = c.output["clause"]
-    stated = states["Reading"].state()["states"].get(clause) or {}
-    into = worked_out_by(states["Deriving"].state(), stated)
+    clause, spec = c.output["clause"], c.output["spec"]
+    states_ = states["Reading"].state()["states"].get(clause) or {}
+    deriving = states["Deriving"].state()
+    gives = readings.situation_gives(states["Situating"].state(), deriving, spec)
+    into = worked_out_by(deriving, states_, gives)
     return [
         Invocation(
             "Deriving",
@@ -252,7 +276,7 @@ def _a_read_quantity_is_worked_out(c: Completion, states: States) -> list[Invoca
             {
                 "method": method,
                 "for": clause,
-                "stated": dict(stated),
+                "stated": dict(gives),
                 "derivation": readings.fresh("d"),
             },
         )
@@ -264,8 +288,10 @@ def _a_worked_out_quantity_is_proposed(c: Completion, states: States) -> list[In
     """`Specifying: { ?s clauses: ?c }`, `Binding: { ?sel for: ?s }`, and the
     option of the variable the method yields whose range contains the
     result: `?n in ?r` is more than `above` and at most `upTo`.  A result no
-    range contains proposes nothing, and nor does a variable held for a
-    reason."""
+    range contains proposes nothing; nor does a variable held for a reason
+    or given by the person, nor a clause a choice already answers on that
+    variable, which is the marked answer a survey's derivation stands
+    beside."""
     if c.failed:
         return []
     clause, variable, result = c.output["for"], c.output["yields"], c.output["result"]
@@ -276,9 +302,16 @@ def _a_worked_out_quantity_is_proposed(c: Completion, states: States) -> list[In
     if spec is None:
         return []
     selection = _selection_for(states, spec)
-    if selection is None or _held(states, spec, variable):
+    if selection is None or _held(states, spec, variable) or _given(states, spec, variable):
         return []
     cataloguing = states["Cataloguing"].state()
+    binding = states["Binding"].state()
+    if any(
+        binding["answers"][ch] == clause
+        and binding["value"][ch] in cataloguing["offers"].get(variable, [])
+        for ch in binding["choices"].get(selection, [])
+    ):
+        return []
     for option in cataloguing["offers"].get(variable, []):
         covers = cataloguing["covers"].get(option)
         if covers and covers[0] < result <= covers[1]:

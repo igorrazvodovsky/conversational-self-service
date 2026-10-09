@@ -128,8 +128,14 @@ that skip a step, and the share that go past one still open. Both are
 reads over the log, since `at` is replaced in place and the steps leave
 `Stepping` when the specification closes, and `GET /configurator/steps`
 tallies them per template across every specification the journal holds. A
-take is *out of order* when a step before it was open at the time; a skip
-is the status. Nothing on the canvas shows the tally, because it is a
+take is *out of order* when a step before it still wanted something at
+the time, which is the canvas's read of wanting made over the log: the
+assertions followed through `Asserting`'s completions and the settled
+values through the solver's. A step's status alone would not do, because
+finishing is a gesture nobody owes and a reading can answer a step's needs
+with the step never taken. A skip is the status. A specification counts
+once per start, not per id, since a discarded one is started again under
+the same id. Nothing on the canvas shows the tally, because it is a
 finding about the template, not about the person's lift.
 
 ## What is not here

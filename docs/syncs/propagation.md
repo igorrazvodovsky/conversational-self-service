@@ -271,7 +271,8 @@ when  { Constraining/assume: [ spec: ?s ; variable: ?v' ; option: ?o' ]
 where { ?candidates is the set of [ variable: ?v ; option: ?o ]
           such that ?v is in ?vars
           and Asserting: { ?s asserted: ?v -> ?o },
-          together with [ variable: ?v' ; option: ?o' ]
+          together with [ variable: ?v' ; option: ?o' ],
+          leaving out any ?v given by the person in ?s
         ?candidates has at least two members
         ?reason is the because of each rule in ?rules,
           read from Constraining }
@@ -293,6 +294,16 @@ got there. And a question needs at least two answers: with one candidate there
 is nothing to choose between, so no question is asked. The refusal is still
 recorded in `Constraining.refused` and still reaches the value, which is why the
 person is not left without an account.
+
+A fact of the situation the person gave is not a candidate
+([Situating](situating.md#the-person-vouches-for-a-given)). The building
+being a hospital is what the lift must fit, not a thing to give up, so the
+question offers the assertions that conflict with it; where only one does,
+the question has one answer and is not asked, the refusal stands on the
+value, and the person withdraws the assertion that cannot hold with the
+building as it is. A fact the model estimated and nobody has kept is
+offered like any other assertion, since the estimate may be wrong, and
+conceding it withdraws it and strikes the given.
 
 The `where` clause discards `?why` and keeps the rules' own sentences. The
 error `Constraining` composes names variables and options by identity, because

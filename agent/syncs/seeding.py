@@ -202,6 +202,23 @@ def _the_catalogue_says_how_to_work_things_out(c: Completion, _: States) -> list
     return out
 
 
+def _the_catalogue_names_the_situation(c: Completion, _: States) -> list[Invocation]:
+    """The variables the catalogue lists under `situation`, with their
+    headings, and the quantities some method needs, with their meanings.  A
+    quantity a method yields is what the facts come to, not a fact."""
+    catalogue = _catalogue(c)
+    headings = {v["name"]: v["label"] for v in catalogue.get("variables", [])}
+    meanings = {q["name"]: q["meaning"] for q in catalogue.get("quantities", [])}
+    needed = list(dict.fromkeys(q for m in catalogue.get("methods", []) for q in m["needs"]))
+    return [
+        Invocation("Situating", "describe", {"fact": f, "meaning": headings.get(f, f)})
+        for f in catalogue.get("situation", [])
+    ] + [
+        Invocation("Situating", "describe", {"fact": q, "meaning": meanings.get(q, q)})
+        for q in needed
+    ]
+
+
 def _the_catalogue_is_detailed(c: Completion, _: States) -> list[Invocation]:
     """The seller's particulars of each variable and each option, in the
     order the file gives them.  Nothing else is read off them."""
@@ -455,6 +472,7 @@ rules = [
         BOOT,
         _the_catalogue_says_how_to_work_things_out,
     ),
+    Sync("TheCatalogueNamesTheSituation", BOOT, _the_catalogue_names_the_situation),
     Sync("TheCatalogueSetsTheSteps", BOOT, _the_catalogue_sets_the_steps),
     Sync("TheWorkspaceIsLaidOut", BOOT, _the_workspace_is_laid_out),
     Sync("ASpecificationIsStartedAtBoot", BOOT, _a_specification_is_started),

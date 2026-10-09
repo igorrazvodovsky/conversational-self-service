@@ -677,6 +677,34 @@ def clear(
 
 
 @tool(
+    "survey",
+    "Record a fact of the situation as measured on site, as the person: the "
+    "floor-to-floor height, the floors, the building's type. `review` lists "
+    "the facts under `situation`, with who gave each and whether it was "
+    "measured. What rested on the fact is worked out again and marked out of "
+    "date, not replaced, and a fact the person gave is left out of a "
+    "conflict's options and out of the assistant's reach.",
+)
+def survey(
+    fact: Annotated[str, Field(description="A fact's name from `situation`, such as `storey_height` or `building_type`")],
+    value: Annotated[str | float, Field(description="The measurement: a number for a quantity, an option id for a variable")],
+) -> dict[str, Any]:
+    return gesture(act="survey", fact=fact, value=value)
+
+
+@tool(
+    "drop",
+    "Take a fact of the situation off the record, as the person. A fact the "
+    "rules hold is withdrawn; a quantity is struck, and what rested on it is "
+    "marked out of date.",
+)
+def drop(
+    given: Annotated[str, Field(description="The given's id, from `situation`")],
+) -> dict[str, Any]:
+    return gesture(act="drop", given=given)
+
+
+@tool(
     "take",
     "Say which step of the job the person is at. `review` lists the steps "
     "under `stepping`, each with what it still wants; `at` is the step the "

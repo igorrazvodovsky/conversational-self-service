@@ -60,16 +60,31 @@ def _held(states: States, spec: str, variable: str) -> bool:
     )
 
 
+def _given(states: States, spec: str, variable: str) -> bool:
+    """`?v is given by the person in ?s`."""
+    return readings.given_by_person(states["Situating"].state(), spec, variable)
+
+
 def _unless_held(then: Callable[[Completion, States], list[Invocation]]):
-    """`where { ?v is not held for a reason in ?s }`: a value the person chose
-    for a requirement they stated is not the model's to change."""
+    """`where { ?v is not held for a reason in ?s ; ?v is not given by the
+    person in ?s }`: a value the person chose for a requirement they stated,
+    or a fact of the situation they gave, is not the model's to change."""
 
     def where(c: Completion, states: States) -> list[Invocation]:
-        if _held(states, c.output.get("spec"), c.output.get("variable")):
+        spec, variable = c.output.get("spec"), c.output.get("variable")
+        if _held(states, spec, variable) or _given(states, spec, variable):
             return []
         return then(c, states)
 
     return where
+
+
+def _situation_open(states: States, spec: str) -> list[str]:
+    """`every fact of the situation that Cataloguing offers options for is
+    given in ?s`, as the facts that are not."""
+    return readings.situation_open(
+        states["Situating"].state(), states["Cataloguing"].state(), spec
+    )
 
 
 # -- what a completion is finished for -- `docs/syncs/conduct.md` -------------
@@ -143,13 +158,15 @@ def _a_proposal_asks_what_to_finish_for(
 def _the_model_may_propose_a_completion(
     c: Completion, states: States
 ) -> list[Invocation]:
-    """`where { the call names no goal ; the goal is chosen }`: the
-    completion is computed only for a goal the person chose."""
+    """`where { the call names no goal ; the goal is chosen ; every fact of
+    the situation the solver takes is given }`: the completion is computed
+    only for a goal the person chose, and never for a building nobody has
+    described."""
     if c.output.get("tool") != "propose" or c.output.get("goal") is not None:
         return []
     spec = c.output["spec"]
     goal = _goal_chosen(states, spec)
-    if goal is None:
+    if goal is None or _situation_open(states, spec):
         return []
     return [
         Invocation(
@@ -180,7 +197,8 @@ def _the_model_may_record_the_goal_the_person_gave(
 def _a_chosen_goal_finishes_the_specification(
     c: Completion, states: States
 ) -> list[Invocation]:
-    """The completion is computed on the choice, in the flow that chose."""
+    """The completion is computed on the choice, in the flow that chose, and
+    only once every fact of the situation the solver takes is given."""
     if c.failed:
         return []
     request = c.output.get("request")
@@ -193,6 +211,8 @@ def _a_chosen_goal_finishes_the_specification(
     ):
         return []
     spec = request["spec"]
+    if _situation_open(states, spec):
+        return []
     return [
         Invocation(
             "Constraining",

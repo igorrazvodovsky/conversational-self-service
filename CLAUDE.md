@@ -99,7 +99,7 @@ layer beside the agent.
 │   └── hooks/
 ├── agent/
 │   ├── concepts/          # one module per concept — MSM §5.2.1
-│   ├── syncs/             # seeding, gestures, binding, propagation, reading, conduct, handover, staling
+│   ├── syncs/             # seeding, gestures, binding, propagation, reading, situating, conduct, handover, staling
 │   │   └── readings.py    # named readings over exposed state, shared by the rules and the read side
 │   ├── engine/            # log, flows, provenance, dispatch — never edited for a behaviour
 │   ├── catalogue/         # elevator.json
@@ -173,6 +173,7 @@ How much the person delegates is theirs to set, in their own agent.
 | accept or revoke one | yes | no | yes |
 | hand the specification to the seller, with the reason | yes | yes, at the person's word | yes |
 | take the out-of-date mark off an answer or an offer | yes | no | yes |
+| say a fact of the situation was checked on site, or drop one | yes | no | yes |
 | choose which facts the canvas shows beside each item | yes | yes | yes |
 | narrow the canvas to what followed from one assertion, or to one gap | yes | yes | yes |
 | change a price, the catalogue, or the seller's terms | no | no | no |

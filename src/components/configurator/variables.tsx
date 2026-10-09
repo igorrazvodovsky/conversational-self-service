@@ -188,6 +188,40 @@ function ByMark({ variable }: { variable: Variable }) {
 }
 
 /**
+ * A fact of the situation, said beside its value: the building is what the
+ * person says it is, not a choice, so the line says whose word it rests on
+ * and lets them say they checked it on site. Checking records the value as
+ * measured and makes it theirs, which takes it out of the assistant's reach
+ * and out of a conflict's options (`docs/syncs/situating.md`).
+ */
+function GivenLine({ variable }: { variable: Variable }) {
+  const { gesture, busy } = useConfigurator();
+  const given = variable.given;
+  if (!given || !variable.asked) return null;
+  const who = MARKS[given.by].who;
+  return (
+    <p className="flex flex-wrap items-baseline gap-x-2">
+      {given.certainty === "measured"
+        ? `A fact of the building, measured on site by ${who}.`
+        : given.by === "model"
+          ? "A fact of the building, as the assistant took it; not checked."
+          : `A fact of the building, as ${who} stated it; the assistant cannot change it.`}
+      {given.certainty !== "measured" ? (
+        <Button
+          variant="link"
+          size="xs"
+          className="h-auto px-0 text-xs"
+          disabled={busy}
+          onClick={() => void gesture({ act: "survey", fact: variable.name, value: variable.asked })}
+        >
+          I checked this on site
+        </Button>
+      ) : null}
+    </p>
+  );
+}
+
+/**
  * A value a party asserted, on a line of the ledger. The value is the line's
  * way into the rest, which `AssertedDetails` draws while the line is open.
  * What stands
@@ -303,6 +337,7 @@ export function AssertedDetails({
       {under !== null && held.has(under) ? (
         <p>Yours: the assistant cannot change it.</p>
       ) : null}
+      <GivenLine variable={variable} />
       {others.length && shown("answers") ? (
         <ul className="space-y-0.5">
           {others.map((answer) => (

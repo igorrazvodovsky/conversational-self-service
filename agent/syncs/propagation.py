@@ -18,6 +18,7 @@ import json
 from datetime import date
 from typing import Any
 
+from . import readings
 from engine import Completion, Invocation, States, Sync
 
 WORKSPACE = "workspace"
@@ -376,15 +377,19 @@ def _a_conflict_is_put_to_the_person(c: Completion, states: States) -> list[Invo
     conceding = c.output.get("conceding") or []
     constraining = states["Constraining"].state()
     asserted = states["Asserting"].state()["asserted"].get(spec, {})
+    situating = states["Situating"].state()
+    # A fact of the situation the person gave is not a thing to give up
+    # (docs/syncs/situating.md): the question offers what conflicts with it.
+    given = lambda v: readings.given_by_person(situating, spec, v)
     candidates: list[dict[str, Any]] = []
     for variable in conceding:
         was = asserted.get(variable)
-        if was is not None:
+        if was is not None and not given(variable):
             candidates.append({"variable": variable, "option": was})
     # The option that was just refused is not in `asserted` — it never got
     # there — so offer it explicitly as the thing to give up.
     refused = {"variable": c.input["variable"], "option": c.input["option"]}
-    if refused not in candidates:
+    if refused not in candidates and not given(c.input["variable"]):
         candidates.append(refused)
     # A question needs at least two answers.  With one candidate there is
     # nothing to choose between, so none is asked — the refusal is still

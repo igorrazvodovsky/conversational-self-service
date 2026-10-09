@@ -49,6 +49,7 @@ HOW = {
     "TheModelMayRequestAQuote": "the assistant asked for this",
     "APersonHandsOver": "you handed this to the seller",
     "TheModelMayHandOver": "the assistant handed this to the seller, at your word",
+    "ASurveyedFactReachesTheAssertions": "you measured this on site",
 }
 
 # The same edge under a second actor.  The person's own agent performs the
@@ -64,7 +65,68 @@ SAID = {
     ("APersonHandsOver", BROWSER): "your agent handed this to the seller",
     ("AChoiceReachesTheAssertions", BROWSER): "your agent chose this",
     ("ASubstituteReachesTheAssertions", BROWSER): "your agent chose this, in place of an earlier value",
+    ("ASurveyedFactReachesTheAssertions", BROWSER): "your agent recorded this as measured on site",
 }
+
+
+def given_of(engine: Engine, spec: str, fact: str) -> dict[str, Any] | None:
+    """The situation's given of a fact, for the canvas: who it comes from and
+    whether anyone has measured it.  Off `Situating`; see docs/syncs/situating.md."""
+    situating = engine.state("Situating")
+    given = readings.given_of(situating, spec, fact)
+    if given is None:
+        return None
+    return {
+        "given": given,
+        "value": situating["is"][given],
+        "certainty": situating["certainty"][given],
+        "by": situating["recordedBy"][given],
+    }
+
+
+def situation(engine: Engine, spec: str) -> list[dict[str, Any]]:
+    """Every fact of the situation, as the catalogue names them, with the
+    given each has or none: what the building is and how far the lift
+    travels, apart from what is required of it.  A quantity's given links to
+    the clause whose reading recorded it, found on the log by its flow."""
+    situating = engine.state("Situating")
+    cataloguing = engine.state("Cataloguing")
+    deriving = engine.state("Deriving")
+    read_in: dict[str, str] = {}
+    for record in engine.log.records(since=engine.settled_at, limit=1_000_000):
+        if record.kind != "completion" or "error" in (record.output or {}):
+            continue
+        if record.concept == "Situating" and record.action == "record":
+            item = next(
+                (
+                    r.output["item"]
+                    for r in engine.log.flow(record.flow)
+                    if r.kind == "completion" and r.concept == "Reading" and r.action == "read"
+                    and "item" in (r.output or {})
+                ),
+                None,
+            )
+            if item:
+                read_in[record.output["given"]] = item
+    out = []
+    for fact in situating["facts"]:
+        offered = fact in cataloguing["offers"]
+        given = given_of(engine, spec, fact)
+        if given and offered:
+            given["label"] = cataloguing["label"].get(given["value"], given["value"])
+        if given and given["given"] in read_in:
+            given["at"] = f"#clause:{read_in[given['given']]}"
+        out.append(
+            {
+                "fact": fact,
+                "meaning": situating["meaning"].get(fact, fact),
+                "unit": deriving["unit"].get(fact, "") if not offered else "",
+                "kind": "variable" if offered else "quantity",
+                "at": f"#variable:{fact}" if offered else None,
+                "given": given,
+            }
+        )
+    return out
 
 
 def said(via: str | None, actor: str | None, default: str | None = None) -> str | None:
@@ -394,14 +456,22 @@ def worked_out(engine: Engine, item: str) -> list[dict[str, Any]]:
     `Binding`; see docs/syncs/reading.md, "A quantity read is worked out"."""
     deriving = engine.state("Deriving")
     cataloguing = engine.state("Cataloguing")
+    spec = next(
+        (s for s, clauses in engine.state("Specifying")["clauses"].items() if item in clauses),
+        None,
+    )
 
-    def quantity(name: str, value: Any) -> dict[str, Any]:
+    def quantity(name: str, value: Any, rested: bool = False) -> dict[str, Any]:
         return {
             "quantity": name,
             "meaning": deriving["meaning"].get(name, name),
             # A count reads as 5, though a tool's schema may have carried it as 5.0.
             "value": int(value) if float(value).is_integer() else value,
             "unit": deriving["unit"].get(name, ""),
+            # The situation's given of the quantity, for a quantity the
+            # derivation rested on or assumed: who gave it, and whether it
+            # has been measured since, which may differ from what was used.
+            "given": given_of(engine, spec, name) if rested and spec else None,
         }
 
     out = []
@@ -426,8 +496,8 @@ def worked_out(engine: Engine, item: str) -> list[dict[str, Any]]:
                 "method": method,
                 "formula": deriving["formula"][method],
                 **quantity(yields, result),
-                "stated": [quantity(q, v) for q, v in deriving["stated"][derivation].items()],
-                "assumed": [quantity(q, v) for q, v in deriving["assumed"][derivation].items()],
+                "stated": [quantity(q, v, True) for q, v in deriving["stated"][derivation].items()],
+                "assumed": [quantity(q, v, True) for q, v in deriving["assumed"][derivation].items()],
                 "option": option,
                 "label": cataloguing["label"].get(option) if option else None,
             }
@@ -656,41 +726,79 @@ def tally(engine: Engine) -> list[dict[str, Any]]:
     """Each step of the job, as the template names it, and what every
     specification ever given it did with it: how many were given it, how
     many took, finished or skipped it, and how many took it *out of order*,
-    which is past a step before it still open at the time.  The plan's
-    instrument for whether the authored steps match practice; read by the
-    case and by nobody in the application.
+    which is past a step before it that still wanted something at the time.
+    The plan's instrument for whether the authored steps match practice;
+    read by the case and by nobody in the application.
 
     Everything is the log's.  Steps leave `Stepping` when the specification
     closes, and `at` is replaced in place, so the order a person went in
-    survives only as the sequence of `take` completions.  A step's status at
-    the moment of a take is found by walking the completions in order."""
+    survives only as the sequence of `take` completions.  Whether a step
+    still wanted something at that moment is the canvas's read made over
+    the log instead of the state: a need stands open while nothing is
+    asserted for it and the solver has not settled it, so the assertions
+    are followed through `Asserting`'s completions and the settled values
+    through the solver's, which carry them.  Finishing a step is a gesture
+    nobody owes, so a step's status alone would call every second take out
+    of order; a step finished or skipped is closed whatever it wants.
+
+    A specification is counted by its opening, not its id: the one
+    specification a session holds is started again under the same id after
+    a discard, and each start is a person going through the steps afresh."""
     stepping = engine.state("Stepping")
     templates = {t: stepping["called"][t] for t in stepping["templates"]}
+    wants = {t: list(stepping["wants"].get(t, [])) for t in templates}
     given: dict[str, set[str]] = {t: set() for t in templates}
     did: dict[str, dict[str, set[str]]] = {
         t: {"taken": set(), "finished": set(), "skipped": set(), "outOfOrder": set()}
         for t in templates
     }
     order: dict[str, list[str]] = {}
+    opening: dict[str, str] = {}
     instance_of: dict[str, str] = {}
     status: dict[str, str] = {}
+    asserted: dict[str, set[str]] = {}
+    settled: dict[str, set[str]] = {}
+
+    def wanting(spec: str, step: str) -> bool:
+        if status.get(step) != "open":
+            return False
+        standing = asserted.get(spec, set()) | settled.get(spec, set())
+        return any(n not in standing for n in wants.get(instance_of.get(step, ""), []))
+
     # From the first record, not from `settled_at`: the specification the
     # boot opens gets its steps in the boot, and it counts.
     for record in engine.log.records(since=0, limit=1_000_000):
-        if record.kind != "completion" or record.concept != "Stepping":
+        if record.kind != "completion":
             continue
         out = record.output or {}
         if "error" in out:
+            continue
+        if record.concept == "Asserting":
+            if record.action == "assert":
+                asserted.setdefault(out["spec"], set()).add(out["variable"])
+            elif record.action == "withdraw":
+                asserted.get(out["spec"], set()).discard(out["variable"])
+            elif record.action == "discard":
+                asserted.pop(out["spec"], None)
+            continue
+        if record.concept == "Constraining":
+            if "settled" in out:
+                settled[out["spec"]] = set(out["settled"])
+            elif record.action == "forget":
+                settled.pop(out["spec"], None)
+            continue
+        if record.concept != "Stepping":
             continue
         if record.action == "instantiate":
             # One step per template, in the templates' order: the concept's
             # contract, and the only record of which template a step was of
             # once the specification has closed.
             order[out["spec"]] = list(out["steps"])
+            opening[out["spec"]] = record.id
             for template, step in zip(templates, out["steps"]):
                 status[step] = "open"
                 instance_of[step] = template
-                given[template].add(out["spec"])
+                given[template].add(record.id)
             continue
         if record.action == "add":
             order.setdefault(out["spec"], []).append(out["step"])
@@ -699,22 +807,23 @@ def tally(engine: Engine) -> list[dict[str, Any]]:
         if record.action not in ("take", "finish", "skip", "reopen"):
             continue
         step, spec = out["step"], out["spec"]
+        opened = opening.get(spec, spec)
         counted = did.get(instance_of.get(step, ""))
         if record.action == "take":
             before = order.get(spec, [])
             before = before[: before.index(step)] if step in before else []
             if counted is not None:
-                counted["taken"].add(spec)
-                if any(status.get(s) == "open" for s in before):
-                    counted["outOfOrder"].add(spec)
+                counted["taken"].add(opened)
+                if any(wanting(spec, s) for s in before):
+                    counted["outOfOrder"].add(opened)
         elif record.action == "finish":
             status[step] = "finished"
             if counted is not None:
-                counted["finished"].add(spec)
+                counted["finished"].add(opened)
         elif record.action == "skip":
             status[step] = "skipped"
             if counted is not None:
-                counted["skipped"].add(spec)
+                counted["skipped"].add(opened)
         else:
             status[step] = "open"
     return [
@@ -1026,6 +1135,10 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
                 "framed": in_frame(name, offered, allowed),
                 "proposed": proposed.get(name),
                 "held": held.get(name, []),
+                # A fact of the situation: given, by whom, and whether
+                # measured (docs/syncs/situating.md).  Null for a variable
+                # that is not one.
+                "given": given_of(engine, spec, name),
                 "refused": [
                     {"rule": rule, "because": constraining["because"].get(rule, rule)}
                     for rule in refused.get(name, [])
@@ -1273,6 +1386,8 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         # can do, which is when the chat offers the seller.
         "handovers": handovers,
         "beyond": beyond,
+        # The facts of the situation, each with its given or none.
+        "situation": situation(engine, spec),
         "customer": customer,
         "seller": seller,
         "project": project,
@@ -1959,6 +2074,35 @@ def digest(
         # What a count or a measure in the words is read as, under `states`
         # in `read`: the quantities the catalogue's methods work from.
         "quantities": _quantities(engine),
+        # The facts of the situation (docs/syncs/situating.md): what the
+        # building is, where, whether the shaft exists, and the counts and
+        # measures read, each with who gave it and whether it was measured
+        # on site, or `open`.  A fact the person gave is theirs.
+        "situation": [
+            {
+                "fact": f["fact"],
+                "meaning": f["meaning"],
+                **({"at": f["at"]} if f["at"] else {}),
+                **(
+                    {
+                        "given": (
+                            f["given"].get("label", f["given"]["value"])
+                            if f["kind"] == "variable"
+                            else _amount({"value": f["given"]["value"], "unit": f["unit"]})
+                        ),
+                        "by": f["given"]["by"],
+                        "certainty": (
+                            "measured on site"
+                            if f["given"]["certainty"] == "measured"
+                            else "as stated, not measured"
+                        ),
+                    }
+                    if f["given"]
+                    else {"open": True}
+                ),
+            }
+            for f in view["situation"]
+        ],
         # The documents the person attached, to read with `open_file` and
         # cite in `read`.
         "files": [
@@ -1999,6 +2143,21 @@ def digest(
                     " — the person's requirement rests on it: you cannot change it; ask them"
                     if v["held"] and not agent
                     else ""
+                )
+                + (
+                    ""
+                    if not v["given"]
+                    else " — a fact of the situation, as the assistant estimated it"
+                    if v["given"]["by"] == "model" and agent
+                    else " — a fact of the situation, as you estimated it"
+                    if v["given"]["by"] == "model"
+                    else " — a fact of the situation the person gave"
+                    + (
+                        ", measured on site"
+                        if v["given"]["certainty"] == "measured"
+                        else ""
+                    )
+                    + ("" if agent else ": you cannot change it; ask them")
                 ),
             }
             for v in view["variables"]
