@@ -4,7 +4,11 @@
   "currency": "EUR",
   "pricing": {
     "financing_factor": 1.25,
-    "term_months": { "y5": 60, "y10": 120, "y15": 180 },
+    "term_months": {
+      "y5": 60,
+      "y10": 120,
+      "y15": 180
+    },
     "default_term": "y10"
   },
   "vendor": {
@@ -100,11 +104,31 @@
       "label": "Building type",
       "group": "context",
       "options": [
-        { "value": "residential", "label": "Residential", "co2": 0 },
-        { "value": "office", "label": "Office", "co2": 0 },
-        { "value": "hotel", "label": "Hotel", "co2": 0 },
-        { "value": "hospital", "label": "Hospital", "co2": 0 },
-        { "value": "retail", "label": "Retail", "co2": 0 }
+        {
+          "value": "residential",
+          "label": "Residential",
+          "co2": 0
+        },
+        {
+          "value": "office",
+          "label": "Office",
+          "co2": 0
+        },
+        {
+          "value": "hotel",
+          "label": "Hotel",
+          "co2": 0
+        },
+        {
+          "value": "hospital",
+          "label": "Hospital",
+          "co2": 0
+        },
+        {
+          "value": "retail",
+          "label": "Retail",
+          "co2": 0
+        }
       ]
     },
     {
@@ -113,8 +137,16 @@
       "group": "context",
       "note": "Drives applicable code: EN 81-20/50 + EN 81-70 in Europe, ASME A17.1 + ADA in North America.",
       "options": [
-        { "value": "europe", "label": "Europe (EN 81-20)", "co2": 0 },
-        { "value": "north_america", "label": "North America (ASME A17.1)", "co2": 0 }
+        {
+          "value": "europe",
+          "label": "Europe (EN 81-20)",
+          "co2": 0
+        },
+        {
+          "value": "north_america",
+          "label": "North America (ASME A17.1)",
+          "co2": 0
+        }
       ]
     },
     {
@@ -122,8 +154,16 @@
       "label": "Installation type",
       "group": "context",
       "options": [
-        { "value": "new_build", "label": "New building", "co2": 0 },
-        { "value": "modernization", "label": "Modernization (existing shaft)", "co2": 0 }
+        {
+          "value": "new_build",
+          "label": "New building",
+          "co2": 0
+        },
+        {
+          "value": "modernization",
+          "label": "Modernization (existing shaft)",
+          "co2": 0
+        }
       ]
     },
     {
@@ -131,7 +171,11 @@
       "label": "Accessibility package",
       "group": "context",
       "options": [
-        { "value": "none", "label": "None", "co2": 0 },
+        {
+          "value": "none",
+          "label": "None",
+          "co2": 0
+        },
         {
           "value": "en81_70",
           "label": "EN 81-70 accessibility",
@@ -163,13 +207,55 @@
       "label": "Rated load",
       "group": "performance",
       "options": [
-        { "value": "kg630", "label": "630 kg / 8 persons", "price": 0, "co2": 0, "note": "no stretcher fits" },
-        { "value": "kg800", "label": "800 kg / 10 persons", "price": 1500, "co2": 40, "note": "a wheelchair and a companion turn inside" },
-        { "value": "kg1000", "label": "1000 kg / 13 persons", "price": 3000, "co2": 90, "note": "a stretcher fits" },
-        { "value": "kg1250", "label": "1250 kg / 16 persons", "price": 5000, "co2": 140, "note": "furniture moves in one trip" },
-        { "value": "kg1600", "label": "1600 kg / 21 persons", "price": 8000, "co2": 220, "note": "a bed with attendants" },
-        { "value": "kg2000", "label": "2000 kg / 26 persons", "price": 12000, "co2": 320, "note": "beds and goods trolleys together" },
-        { "value": "kg2500", "label": "2500 kg / 33 persons", "price": 17000, "co2": 430, "note": "loading-dock traffic" }
+        {
+          "value": "kg630",
+          "label": "630 kg / 8 persons",
+          "price": 0,
+          "co2": 0,
+          "note": "no stretcher fits"
+        },
+        {
+          "value": "kg800",
+          "label": "800 kg / 10 persons",
+          "price": 1500,
+          "co2": 40,
+          "note": "a wheelchair and a companion turn inside"
+        },
+        {
+          "value": "kg1000",
+          "label": "1000 kg / 13 persons",
+          "price": 3000,
+          "co2": 90,
+          "note": "a stretcher fits"
+        },
+        {
+          "value": "kg1250",
+          "label": "1250 kg / 16 persons",
+          "price": 5000,
+          "co2": 140,
+          "note": "furniture moves in one trip"
+        },
+        {
+          "value": "kg1600",
+          "label": "1600 kg / 21 persons",
+          "price": 8000,
+          "co2": 220,
+          "note": "a bed with attendants"
+        },
+        {
+          "value": "kg2000",
+          "label": "2000 kg / 26 persons",
+          "price": 12000,
+          "co2": 320,
+          "note": "beds and goods trolleys together"
+        },
+        {
+          "value": "kg2500",
+          "label": "2500 kg / 33 persons",
+          "price": 17000,
+          "co2": 430,
+          "note": "loading-dock traffic"
+        }
       ]
     },
     {
@@ -177,11 +263,41 @@
       "label": "Rated speed",
       "group": "performance",
       "options": [
-        { "value": "mps0_63", "label": "0.63 m/s", "price": 0, "co2": 0, "note": "fine for a few floors, noticeable above six" },
-        { "value": "mps1_0", "label": "1.0 m/s", "price": 1000, "co2": 20, "note": "comfortable to about ten floors" },
-        { "value": "mps1_6", "label": "1.6 m/s", "price": 4000, "co2": 60, "note": "keeps waits short in a mid-rise" },
-        { "value": "mps2_5", "label": "2.5 m/s", "price": 12000, "co2": 150, "note": "express service in a tower" },
-        { "value": "mps3_0", "label": "3.0 m/s", "price": 22000, "co2": 250, "note": "top-of-tower express" }
+        {
+          "value": "mps0_63",
+          "label": "0.63 m/s",
+          "price": 0,
+          "co2": 0,
+          "note": "fine for a few floors, noticeable above six"
+        },
+        {
+          "value": "mps1_0",
+          "label": "1.0 m/s",
+          "price": 1000,
+          "co2": 20,
+          "note": "comfortable to about ten floors"
+        },
+        {
+          "value": "mps1_6",
+          "label": "1.6 m/s",
+          "price": 4000,
+          "co2": 60,
+          "note": "keeps waits short in a mid-rise"
+        },
+        {
+          "value": "mps2_5",
+          "label": "2.5 m/s",
+          "price": 12000,
+          "co2": 150,
+          "note": "express service in a tower"
+        },
+        {
+          "value": "mps3_0",
+          "label": "3.0 m/s",
+          "price": 22000,
+          "co2": 250,
+          "note": "top-of-tower express"
+        }
       ]
     },
     {
@@ -189,11 +305,61 @@
       "label": "Travel height",
       "group": "performance",
       "options": [
-        { "value": "low_0_15", "label": "Up to 15 m", "range": [0, 15], "co2": 1300, "co2_installed": 150, "co2_ended": 120 },
-        { "value": "mid_15_30", "label": "15–30 m", "range": [15, 30], "co2": 2600, "co2_installed": 300, "co2_ended": 220 },
-        { "value": "high_30_50", "label": "30–50 m", "range": [30, 50], "co2": 4300, "co2_installed": 500, "co2_ended": 350 },
-        { "value": "very_high_50_75", "label": "50–75 m", "range": [50, 75], "co2": 6400, "co2_installed": 750, "co2_ended": 500 },
-        { "value": "tower_75_100", "label": "75–100 m", "range": [75, 100], "co2": 8500, "co2_installed": 1000, "co2_ended": 650 }
+        {
+          "value": "low_0_15",
+          "label": "Up to 15 m",
+          "range": [
+            0,
+            15
+          ],
+          "co2": 1300,
+          "co2_installed": 150,
+          "co2_ended": 120
+        },
+        {
+          "value": "mid_15_30",
+          "label": "15–30 m",
+          "range": [
+            15,
+            30
+          ],
+          "co2": 2600,
+          "co2_installed": 300,
+          "co2_ended": 220
+        },
+        {
+          "value": "high_30_50",
+          "label": "30–50 m",
+          "range": [
+            30,
+            50
+          ],
+          "co2": 4300,
+          "co2_installed": 500,
+          "co2_ended": 350
+        },
+        {
+          "value": "very_high_50_75",
+          "label": "50–75 m",
+          "range": [
+            50,
+            75
+          ],
+          "co2": 6400,
+          "co2_installed": 750,
+          "co2_ended": 500
+        },
+        {
+          "value": "tower_75_100",
+          "label": "75–100 m",
+          "range": [
+            75,
+            100
+          ],
+          "co2": 8500,
+          "co2_installed": 1000,
+          "co2_ended": 650
+        }
       ]
     },
     {
@@ -201,9 +367,33 @@
       "label": "Number of stops",
       "group": "performance",
       "options": [
-        { "value": "s2_6", "label": "2–6 stops", "range": [1, 6], "co2": 550 },
-        { "value": "s7_12", "label": "7–12 stops", "range": [6, 12], "co2": 1350 },
-        { "value": "s13_24", "label": "13–24 stops", "range": [12, 24], "co2": 2600 }
+        {
+          "value": "s2_6",
+          "label": "2–6 stops",
+          "range": [
+            1,
+            6
+          ],
+          "co2": 550
+        },
+        {
+          "value": "s7_12",
+          "label": "7–12 stops",
+          "range": [
+            6,
+            12
+          ],
+          "co2": 1350
+        },
+        {
+          "value": "s13_24",
+          "label": "13–24 stops",
+          "range": [
+            12,
+            24
+          ],
+          "co2": 2600
+        }
       ]
     },
     {
@@ -211,10 +401,38 @@
       "label": "Product platform",
       "group": "platform",
       "options": [
-        { "value": "hydro_s300", "label": "S300 (hydraulic, low-rise)", "price": 45000, "co2": 2200, "co2_installed": 600, "co2_ended": 450 },
-        { "value": "mrl_m500", "label": "M500 (machine-room-less, mid-rise)", "price": 58000, "co2": 2350, "co2_installed": 700, "co2_ended": 380 },
-        { "value": "mrl_m700", "label": "M700 (machine-room-less, high-rise)", "price": 78000, "co2": 2600, "co2_installed": 850, "co2_ended": 450 },
-        { "value": "highrise_h900", "label": "H900 (machine room, tower)", "price": 125000, "co2": 3200, "co2_installed": 1300, "co2_ended": 650 }
+        {
+          "value": "hydro_s300",
+          "label": "S300 (hydraulic, low-rise)",
+          "price": 45000,
+          "co2": 2200,
+          "co2_installed": 600,
+          "co2_ended": 450
+        },
+        {
+          "value": "mrl_m500",
+          "label": "M500 (machine-room-less, mid-rise)",
+          "price": 58000,
+          "co2": 2350,
+          "co2_installed": 700,
+          "co2_ended": 380
+        },
+        {
+          "value": "mrl_m700",
+          "label": "M700 (machine-room-less, high-rise)",
+          "price": 78000,
+          "co2": 2600,
+          "co2_installed": 850,
+          "co2_ended": 450
+        },
+        {
+          "value": "highrise_h900",
+          "label": "H900 (machine room, tower)",
+          "price": 125000,
+          "co2": 3200,
+          "co2_installed": 1300,
+          "co2_ended": 650
+        }
       ]
     },
     {
@@ -222,9 +440,21 @@
       "label": "Drive type",
       "group": "platform",
       "options": [
-        { "value": "hydraulic", "label": "Hydraulic", "co2": 0 },
-        { "value": "gearless_mrl", "label": "Gearless traction, machine-room-less", "co2": 0 },
-        { "value": "gearless_mr", "label": "Gearless traction, machine room", "co2": 0 }
+        {
+          "value": "hydraulic",
+          "label": "Hydraulic",
+          "co2": 0
+        },
+        {
+          "value": "gearless_mrl",
+          "label": "Gearless traction, machine-room-less",
+          "co2": 0
+        },
+        {
+          "value": "gearless_mr",
+          "label": "Gearless traction, machine room",
+          "co2": 0
+        }
       ]
     },
     {
@@ -232,8 +462,18 @@
       "label": "Energy package",
       "group": "platform",
       "options": [
-        { "value": "standard", "label": "Standard", "price": 0, "co2": 0 },
-        { "value": "eco", "label": "LED lighting + deep standby", "price": 900, "co2": 0 },
+        {
+          "value": "standard",
+          "label": "Standard",
+          "price": 0,
+          "co2": 0
+        },
+        {
+          "value": "eco",
+          "label": "LED lighting + deep standby",
+          "price": 900,
+          "co2": 0
+        },
         {
           "value": "regen",
           "label": "Regenerative drive (includes eco measures)",
@@ -253,10 +493,26 @@
       "label": "Energy class (modelled)",
       "group": "platform",
       "options": [
-        { "value": "a", "label": "A", "co2": 0 },
-        { "value": "b", "label": "B", "co2": 0 },
-        { "value": "c", "label": "C", "co2": 0 },
-        { "value": "d", "label": "D", "co2": 0 }
+        {
+          "value": "a",
+          "label": "A",
+          "co2": 0
+        },
+        {
+          "value": "b",
+          "label": "B",
+          "co2": 0
+        },
+        {
+          "value": "c",
+          "label": "C",
+          "co2": 0
+        },
+        {
+          "value": "d",
+          "label": "D",
+          "co2": 0
+        }
       ]
     },
     {
@@ -270,7 +526,13 @@
         }
       ],
       "options": [
-        { "value": "collective", "label": "Collective control (up/down landing calls)", "price": 0, "co2": 0, "note": "one car answers the call it happens to suit" },
+        {
+          "value": "collective",
+          "label": "Collective control (up/down landing calls)",
+          "price": 0,
+          "co2": 0,
+          "note": "one car answers the call it happens to suit"
+        },
         {
           "value": "destination",
           "label": "Destination control (lobby panels)",
@@ -295,15 +557,69 @@
       "label": "Car dimensions (width × depth)",
       "group": "dimensions",
       "options": [
-        { "value": "c1100x1400", "label": "1100 × 1400 mm", "price": 0, "co2": 0, "note": "one wheelchair, no companion" },
-        { "value": "c1350x1400", "label": "1350 × 1400 mm", "price": 800, "co2": 80, "note": "a wheelchair and one companion" },
-        { "value": "c1600x1400", "label": "1600 × 1400 mm", "price": 1500, "co2": 160, "note": "prams and trolleys pass each other" },
-        { "value": "c1950x1400", "label": "1950 × 1400 mm (wide)", "price": 2500, "co2": 270, "note": "several people abreast, short depth" },
-        { "value": "c1200x2300", "label": "1200 × 2300 mm (deep)", "price": 2500, "co2": 280, "note": "long loads, single file" },
-        { "value": "c2100x1600", "label": "2100 × 1600 mm (wide)", "price": 3000, "co2": 420, "note": "peak-hour crowds board in one wave" },
-        { "value": "c1400x2400", "label": "1400 × 2400 mm (stretcher)", "price": 3500, "co2": 420, "note": "a stretcher lies flat" },
-        { "value": "c1500x2700", "label": "1500 × 2700 mm (bed)", "price": 5000, "co2": 580, "note": "a bed with attendants on both sides" },
-        { "value": "c1800x2700", "label": "1800 × 2700 mm (bed)", "price": 7000, "co2": 770, "note": "a bed, attendants and equipment" }
+        {
+          "value": "c1100x1400",
+          "label": "1100 × 1400 mm",
+          "price": 0,
+          "co2": 0,
+          "note": "one wheelchair, no companion"
+        },
+        {
+          "value": "c1350x1400",
+          "label": "1350 × 1400 mm",
+          "price": 800,
+          "co2": 80,
+          "note": "a wheelchair and one companion"
+        },
+        {
+          "value": "c1600x1400",
+          "label": "1600 × 1400 mm",
+          "price": 1500,
+          "co2": 160,
+          "note": "prams and trolleys pass each other"
+        },
+        {
+          "value": "c1950x1400",
+          "label": "1950 × 1400 mm (wide)",
+          "price": 2500,
+          "co2": 270,
+          "note": "several people abreast, short depth"
+        },
+        {
+          "value": "c1200x2300",
+          "label": "1200 × 2300 mm (deep)",
+          "price": 2500,
+          "co2": 280,
+          "note": "long loads, single file"
+        },
+        {
+          "value": "c2100x1600",
+          "label": "2100 × 1600 mm (wide)",
+          "price": 3000,
+          "co2": 420,
+          "note": "peak-hour crowds board in one wave"
+        },
+        {
+          "value": "c1400x2400",
+          "label": "1400 × 2400 mm (stretcher)",
+          "price": 3500,
+          "co2": 420,
+          "note": "a stretcher lies flat"
+        },
+        {
+          "value": "c1500x2700",
+          "label": "1500 × 2700 mm (bed)",
+          "price": 5000,
+          "co2": 580,
+          "note": "a bed with attendants on both sides"
+        },
+        {
+          "value": "c1800x2700",
+          "label": "1800 × 2700 mm (bed)",
+          "price": 7000,
+          "co2": 770,
+          "note": "a bed, attendants and equipment"
+        }
       ]
     },
     {
@@ -311,9 +627,27 @@
       "label": "Car clear height",
       "group": "dimensions",
       "options": [
-        { "value": "ch2100", "label": "2100 mm", "price": 0, "co2": -25, "note": "low ceiling, and it fits under a tight slab" },
-        { "value": "ch2200", "label": "2200 mm", "price": 0, "co2": 0, "note": "the usual clear height" },
-        { "value": "ch2400", "label": "2400 mm", "price": 1400, "co2": 70, "note": "generous, and it asks the shaft for more headroom" }
+        {
+          "value": "ch2100",
+          "label": "2100 mm",
+          "price": 0,
+          "co2": -25,
+          "note": "low ceiling, and it fits under a tight slab"
+        },
+        {
+          "value": "ch2200",
+          "label": "2200 mm",
+          "price": 0,
+          "co2": 0,
+          "note": "the usual clear height"
+        },
+        {
+          "value": "ch2400",
+          "label": "2400 mm",
+          "price": 1400,
+          "co2": 70,
+          "note": "generous, and it asks the shaft for more headroom"
+        }
       ]
     },
     {
@@ -321,12 +655,36 @@
       "label": "Shaft size (width × depth)",
       "group": "dimensions",
       "options": [
-        { "value": "t1_1800x1700", "label": "1800 × 1700 mm", "co2": 0 },
-        { "value": "t2_2000x1800", "label": "2000 × 1800 mm", "co2": 20 },
-        { "value": "t3_2200x2000", "label": "2200 × 2000 mm", "co2": 40 },
-        { "value": "t4_2500x2200", "label": "2500 × 2200 mm", "co2": 70 },
-        { "value": "t5_2700x2900", "label": "2700 × 2900 mm", "co2": 110 },
-        { "value": "t6_3000x3000", "label": "3000 × 3000 mm", "co2": 150 }
+        {
+          "value": "t1_1800x1700",
+          "label": "1800 × 1700 mm",
+          "co2": 0
+        },
+        {
+          "value": "t2_2000x1800",
+          "label": "2000 × 1800 mm",
+          "co2": 20
+        },
+        {
+          "value": "t3_2200x2000",
+          "label": "2200 × 2000 mm",
+          "co2": 40
+        },
+        {
+          "value": "t4_2500x2200",
+          "label": "2500 × 2200 mm",
+          "co2": 70
+        },
+        {
+          "value": "t5_2700x2900",
+          "label": "2700 × 2900 mm",
+          "co2": 110
+        },
+        {
+          "value": "t6_3000x3000",
+          "label": "3000 × 3000 mm",
+          "co2": 150
+        }
       ]
     },
     {
@@ -334,10 +692,26 @@
       "label": "Pit depth",
       "group": "dimensions",
       "options": [
-        { "value": "p1100", "label": "1100 mm", "co2": 0 },
-        { "value": "p1400", "label": "1400 mm", "co2": 10 },
-        { "value": "p1600", "label": "1600 mm", "co2": 20 },
-        { "value": "p2100", "label": "2100 mm", "co2": 40 }
+        {
+          "value": "p1100",
+          "label": "1100 mm",
+          "co2": 0
+        },
+        {
+          "value": "p1400",
+          "label": "1400 mm",
+          "co2": 10
+        },
+        {
+          "value": "p1600",
+          "label": "1600 mm",
+          "co2": 20
+        },
+        {
+          "value": "p2100",
+          "label": "2100 mm",
+          "co2": 40
+        }
       ]
     },
     {
@@ -345,10 +719,26 @@
       "label": "Headroom",
       "group": "dimensions",
       "options": [
-        { "value": "h3400", "label": "3400 mm", "co2": 0 },
-        { "value": "h3800", "label": "3800 mm", "co2": 10 },
-        { "value": "h4200", "label": "4200 mm", "co2": 20 },
-        { "value": "h4600", "label": "4600 mm", "co2": 40 }
+        {
+          "value": "h3400",
+          "label": "3400 mm",
+          "co2": 0
+        },
+        {
+          "value": "h3800",
+          "label": "3800 mm",
+          "co2": 10
+        },
+        {
+          "value": "h4200",
+          "label": "4200 mm",
+          "co2": 20
+        },
+        {
+          "value": "h4600",
+          "label": "4600 mm",
+          "co2": 40
+        }
       ]
     },
     {
@@ -356,9 +746,24 @@
       "label": "Door opening type",
       "group": "doors",
       "options": [
-        { "value": "telescopic_2", "label": "Side-opening telescopic, 2 panels", "price": 0, "co2": 95 },
-        { "value": "center_2", "label": "Center-opening, 2 panels", "price": 1200, "co2": 110 },
-        { "value": "center_4", "label": "Center-opening, 4 panels", "price": 3500, "co2": 160 }
+        {
+          "value": "telescopic_2",
+          "label": "Side-opening telescopic, 2 panels",
+          "price": 0,
+          "co2": 95
+        },
+        {
+          "value": "center_2",
+          "label": "Center-opening, 2 panels",
+          "price": 1200,
+          "co2": 110
+        },
+        {
+          "value": "center_4",
+          "label": "Center-opening, 4 panels",
+          "price": 3500,
+          "co2": 160
+        }
       ]
     },
     {
@@ -366,11 +771,41 @@
       "label": "Door width",
       "group": "doors",
       "options": [
-        { "value": "d800", "label": "800 mm", "price": 0, "co2": 0, "note": "tight for a wheelchair" },
-        { "value": "d900", "label": "900 mm", "price": 300, "co2": 10, "note": "a wheelchair passes" },
-        { "value": "d1000", "label": "1000 mm", "price": 600, "co2": 20, "note": "a stretcher passes" },
-        { "value": "d1100", "label": "1100 mm", "price": 1200, "co2": 35, "note": "a bed passes" },
-        { "value": "d1300", "label": "1300 mm", "price": 2500, "co2": 60, "note": "beds and trolleys pass without slowing" }
+        {
+          "value": "d800",
+          "label": "800 mm",
+          "price": 0,
+          "co2": 0,
+          "note": "tight for a wheelchair"
+        },
+        {
+          "value": "d900",
+          "label": "900 mm",
+          "price": 300,
+          "co2": 10,
+          "note": "a wheelchair passes"
+        },
+        {
+          "value": "d1000",
+          "label": "1000 mm",
+          "price": 600,
+          "co2": 20,
+          "note": "a stretcher passes"
+        },
+        {
+          "value": "d1100",
+          "label": "1100 mm",
+          "price": 1200,
+          "co2": 35,
+          "note": "a bed passes"
+        },
+        {
+          "value": "d1300",
+          "label": "1300 mm",
+          "price": 2500,
+          "co2": 60,
+          "note": "beds and trolleys pass without slowing"
+        }
       ]
     },
     {
@@ -378,9 +813,24 @@
       "label": "Door finish",
       "group": "doors",
       "options": [
-        { "value": "painted", "label": "Painted steel", "price": 0, "co2": 0 },
-        { "value": "brushed_ss", "label": "Brushed stainless steel", "price": 900, "co2": 330 },
-        { "value": "glass", "label": "Framed glass", "price": 2800, "co2": 230 }
+        {
+          "value": "painted",
+          "label": "Painted steel",
+          "price": 0,
+          "co2": 0
+        },
+        {
+          "value": "brushed_ss",
+          "label": "Brushed stainless steel",
+          "price": 900,
+          "co2": 330
+        },
+        {
+          "value": "glass",
+          "label": "Framed glass",
+          "price": 2800,
+          "co2": 230
+        }
       ]
     },
     {
@@ -388,9 +838,24 @@
       "label": "Landing door fire rating",
       "group": "doors",
       "options": [
-        { "value": "none", "label": "Not fire rated", "price": 0, "co2": 0 },
-        { "value": "e120", "label": "E120", "price": 1800, "co2": 200 },
-        { "value": "ei60", "label": "EI60", "price": 3200, "co2": 350 }
+        {
+          "value": "none",
+          "label": "Not fire rated",
+          "price": 0,
+          "co2": 0
+        },
+        {
+          "value": "e120",
+          "label": "E120",
+          "price": 1800,
+          "co2": 200
+        },
+        {
+          "value": "ei60",
+          "label": "EI60",
+          "price": 3200,
+          "co2": 350
+        }
       ]
     },
     {
@@ -398,7 +863,13 @@
       "label": "Entrapment rescue",
       "group": "safety",
       "options": [
-        { "value": "manual", "label": "Manual release by a technician", "price": 0, "co2": 0, "note": "passengers wait for the call-out to arrive" },
+        {
+          "value": "manual",
+          "label": "Manual release by a technician",
+          "price": 0,
+          "co2": 0,
+          "note": "passengers wait for the call-out to arrive"
+        },
         {
           "value": "ard",
           "label": "Automatic rescue device",
@@ -442,7 +913,12 @@
       "group": "safety",
       "note": "Region-split like accessibility: EN 81-72 firefighters lift in Europe, ASME A17.1 Phase I/II emergency operation in North America.",
       "options": [
-        { "value": "none", "label": "None", "price": 0, "co2": 0 },
+        {
+          "value": "none",
+          "label": "None",
+          "price": 0,
+          "co2": 0
+        },
         {
           "value": "recall",
           "label": "Phase I/II emergency operation",
@@ -486,10 +962,34 @@
       "label": "Car wall finish",
       "group": "cabin",
       "options": [
-        { "value": "painted_steel", "label": "Painted steel", "price": 0, "co2": 150, "note": "cheapest to make good after a knock" },
-        { "value": "laminate", "label": "Laminate", "price": 1200, "co2": 155, "note": "warm finish, scratches show" },
-        { "value": "brushed_ss", "label": "Brushed stainless steel", "price": 2400, "co2": 525, "note": "survives heavy traffic, shows fingerprints" },
-        { "value": "glass_panoramic", "label": "Panoramic glass back wall", "price": 9500, "co2": 300, "note": "the lobby stays in view from the car" }
+        {
+          "value": "painted_steel",
+          "label": "Painted steel",
+          "price": 0,
+          "co2": 150,
+          "note": "cheapest to make good after a knock"
+        },
+        {
+          "value": "laminate",
+          "label": "Laminate",
+          "price": 1200,
+          "co2": 155,
+          "note": "warm finish, scratches show"
+        },
+        {
+          "value": "brushed_ss",
+          "label": "Brushed stainless steel",
+          "price": 2400,
+          "co2": 525,
+          "note": "survives heavy traffic, shows fingerprints"
+        },
+        {
+          "value": "glass_panoramic",
+          "label": "Panoramic glass back wall",
+          "price": 9500,
+          "co2": 300,
+          "note": "the lobby stays in view from the car"
+        }
       ]
     },
     {
@@ -497,9 +997,27 @@
       "label": "Car floor",
       "group": "cabin",
       "options": [
-        { "value": "rubber", "label": "Studded rubber", "price": 0, "co2": 0, "note": "quiet and non-slip, scuffs over time" },
-        { "value": "pvc", "label": "PVC", "price": 400, "co2": -6, "note": "easy to clean, wears at the doors" },
-        { "value": "granite", "label": "Granite composite", "price": 2200, "co2": 38, "note": "hard-wearing and heavy, cold underfoot" }
+        {
+          "value": "rubber",
+          "label": "Studded rubber",
+          "price": 0,
+          "co2": 0,
+          "note": "quiet and non-slip, scuffs over time"
+        },
+        {
+          "value": "pvc",
+          "label": "PVC",
+          "price": 400,
+          "co2": -6,
+          "note": "easy to clean, wears at the doors"
+        },
+        {
+          "value": "granite",
+          "label": "Granite composite",
+          "price": 2200,
+          "co2": 38,
+          "note": "hard-wearing and heavy, cold underfoot"
+        }
       ]
     },
     {
@@ -507,8 +1025,18 @@
       "label": "Car operating panel",
       "group": "cabin",
       "options": [
-        { "value": "standard", "label": "Standard buttons", "price": 0, "co2": 10 },
-        { "value": "vandal", "label": "Vandal-resistant", "price": 700, "co2": 15 },
+        {
+          "value": "standard",
+          "label": "Standard buttons",
+          "price": 0,
+          "co2": 10
+        },
+        {
+          "value": "vandal",
+          "label": "Vandal-resistant",
+          "price": 700,
+          "co2": 15
+        },
         {
           "value": "touch_premium",
           "label": "Premium touchscreen",
@@ -528,9 +1056,24 @@
       "label": "Mirror",
       "group": "cabin",
       "options": [
-        { "value": "none", "label": "None", "price": 0, "co2": 0 },
-        { "value": "half", "label": "Half-height rear wall", "price": 350, "co2": 10 },
-        { "value": "full", "label": "Full-height rear wall", "price": 700, "co2": 20 }
+        {
+          "value": "none",
+          "label": "None",
+          "price": 0,
+          "co2": 0
+        },
+        {
+          "value": "half",
+          "label": "Half-height rear wall",
+          "price": 350,
+          "co2": 10
+        },
+        {
+          "value": "full",
+          "label": "Full-height rear wall",
+          "price": 700,
+          "co2": 20
+        }
       ]
     },
     {
@@ -538,9 +1081,24 @@
       "label": "Handrail",
       "group": "cabin",
       "options": [
-        { "value": "none", "label": "None", "price": 0, "co2": 0 },
-        { "value": "one_side", "label": "One side", "price": 250, "co2": 15 },
-        { "value": "three_sides", "label": "Three sides", "price": 650, "co2": 40 }
+        {
+          "value": "none",
+          "label": "None",
+          "price": 0,
+          "co2": 0
+        },
+        {
+          "value": "one_side",
+          "label": "One side",
+          "price": 250,
+          "co2": 15
+        },
+        {
+          "value": "three_sides",
+          "label": "Three sides",
+          "price": 650,
+          "co2": 40
+        }
       ]
     },
     {
@@ -558,7 +1116,12 @@
         }
       ],
       "options": [
-        { "value": "none", "label": "Open to every floor", "price": 0, "co2": 0 },
+        {
+          "value": "none",
+          "label": "Open to every floor",
+          "price": 0,
+          "co2": 0
+        },
         {
           "value": "card_reader",
           "label": "Card reader in the car",
@@ -644,7 +1207,14 @@
         }
       ],
       "options": [
-        { "value": "standard", "label": "16 weeks from order", "weeks": 16, "price": 0, "co2": 0, "note": "the factory's ordinary queue, any finish" },
+        {
+          "value": "standard",
+          "label": "16 weeks from order",
+          "weeks": 16,
+          "price": 0,
+          "co2": 0,
+          "note": "the factory's ordinary queue, any finish"
+        },
         {
           "value": "expedited",
           "label": "10 weeks from order",
@@ -666,7 +1236,12 @@
       "label": "Existing lift",
       "group": "installation",
       "options": [
-        { "value": "none", "label": "None, a new shaft", "price": 0, "co2": 0 },
+        {
+          "value": "none",
+          "label": "None, a new shaft",
+          "price": 0,
+          "co2": 0
+        },
         {
           "value": "strip_recycle",
           "label": "Dismantled and removed by us, metals recycled",
@@ -681,7 +1256,14 @@
             }
           ]
         },
-        { "value": "strip_by_others", "label": "Removed by the customer's contractor before we start", "price": 0, "co2": 0, "co2_installed": 400, "note": "the shaft is handed over empty, with no assurance of what is recycled" }
+        {
+          "value": "strip_by_others",
+          "label": "Removed by the customer's contractor before we start",
+          "price": 0,
+          "co2": 0,
+          "co2_installed": 400,
+          "note": "the shaft is handed over empty, with no assurance of what is recycled"
+        }
       ]
     },
     {
@@ -689,7 +1271,12 @@
       "label": "Working hours on site",
       "group": "installation",
       "options": [
-        { "value": "normal", "label": "Weekdays, normal working hours", "price": 0, "co2": 0 },
+        {
+          "value": "normal",
+          "label": "Weekdays, normal working hours",
+          "price": 0,
+          "co2": 0
+        },
         {
           "value": "out_of_hours",
           "label": "Evenings and weekends, with the building in use",
@@ -717,9 +1304,27 @@
         }
       ],
       "options": [
-        { "value": "basic", "label": "Business-hours support, next-day response", "monthly_price": 150, "co2": 0, "co2_upkeep": 80 },
-        { "value": "standard", "label": "24/7 call-out, 8 h response, 99.5 % uptime", "monthly_price": 300, "co2": 0, "co2_upkeep": 120 },
-        { "value": "premium", "label": "99.9 % uptime, 4 h response, remote diagnostics", "monthly_price": 550, "co2": 0, "co2_upkeep": 160 }
+        {
+          "value": "basic",
+          "label": "Business-hours support, next-day response",
+          "monthly_price": 150,
+          "co2": 0,
+          "co2_upkeep": 80
+        },
+        {
+          "value": "standard",
+          "label": "24/7 call-out, 8 h response, 99.5 % uptime",
+          "monthly_price": 300,
+          "co2": 0,
+          "co2_upkeep": 120
+        },
+        {
+          "value": "premium",
+          "label": "99.9 % uptime, 4 h response, remote diagnostics",
+          "monthly_price": 550,
+          "co2": 0,
+          "co2_upkeep": 160
+        }
       ]
     },
     {
@@ -727,9 +1332,21 @@
       "label": "Contract term",
       "group": "maintenance",
       "options": [
-        { "value": "y5", "label": "5 years", "co2": 0 },
-        { "value": "y10", "label": "10 years", "co2": 0 },
-        { "value": "y15", "label": "15 years", "co2": 0 }
+        {
+          "value": "y5",
+          "label": "5 years",
+          "co2": 0
+        },
+        {
+          "value": "y10",
+          "label": "10 years",
+          "co2": 0
+        },
+        {
+          "value": "y15",
+          "label": "15 years",
+          "co2": 0
+        }
       ]
     },
     {
@@ -737,9 +1354,27 @@
       "label": "Usage profile",
       "group": "maintenance",
       "options": [
-        { "value": "low", "label": "A few trips an hour", "monthly_price": 50, "co2": 0, "co2_upkeep": 30 },
-        { "value": "medium", "label": "Steady traffic through the day", "monthly_price": 120, "co2": 0, "co2_upkeep": 60 },
-        { "value": "heavy", "label": "Near-continuous traffic", "monthly_price": 260, "co2": 0, "co2_upkeep": 120 }
+        {
+          "value": "low",
+          "label": "A few trips an hour",
+          "monthly_price": 50,
+          "co2": 0,
+          "co2_upkeep": 30
+        },
+        {
+          "value": "medium",
+          "label": "Steady traffic through the day",
+          "monthly_price": 120,
+          "co2": 0,
+          "co2_upkeep": 60
+        },
+        {
+          "value": "heavy",
+          "label": "Near-continuous traffic",
+          "monthly_price": 260,
+          "co2": 0,
+          "co2_upkeep": 120
+        }
       ]
     },
     {
@@ -747,7 +1382,11 @@
       "label": "Connectivity package",
       "group": "maintenance",
       "options": [
-        { "value": "none", "label": "Not connected", "co2": 0 },
+        {
+          "value": "none",
+          "label": "Not connected",
+          "co2": 0
+        },
         {
           "value": "connected",
           "label": "Remote monitoring and diagnostics",
@@ -773,9 +1412,25 @@
       "label": "Maintenance coverage",
       "group": "maintenance",
       "options": [
-        { "value": "oil_grease", "label": "Examination and lubrication; parts and repairs billed", "monthly_price": 90, "co2": 0, "note": "the lowest charge, and the least predictable cost" },
-        { "value": "semi", "label": "Planned maintenance and minor parts; major components billed", "monthly_price": 160, "co2": 0 },
-        { "value": "comprehensive", "label": "All parts and labour, major components included", "monthly_price": 290, "co2": 0 }
+        {
+          "value": "oil_grease",
+          "label": "Examination and lubrication; parts and repairs billed",
+          "monthly_price": 90,
+          "co2": 0,
+          "note": "the lowest charge, and the least predictable cost"
+        },
+        {
+          "value": "semi",
+          "label": "Planned maintenance and minor parts; major components billed",
+          "monthly_price": 160,
+          "co2": 0
+        },
+        {
+          "value": "comprehensive",
+          "label": "All parts and labour, major components included",
+          "monthly_price": 290,
+          "co2": 0
+        }
       ]
     },
     {
@@ -783,7 +1438,12 @@
       "label": "Maintainable by others",
       "group": "maintenance",
       "options": [
-        { "value": "proprietary", "label": "Service tool and parameters kept by us", "price": 0, "co2": 0 },
+        {
+          "value": "proprietary",
+          "label": "Service tool and parameters kept by us",
+          "price": 0,
+          "co2": 0
+        },
         {
           "value": "open",
           "label": "Service tool, passwords and wiring diagrams handed over, without expiry",
@@ -804,7 +1464,12 @@
       "label": "At the end of its life",
       "group": "end-of-life",
       "options": [
-        { "value": "owner", "label": "Dismantled and disposed of by the owner's contractor", "price": 0, "co2": 0 },
+        {
+          "value": "owner",
+          "label": "Dismantled and disposed of by the owner's contractor",
+          "price": 0,
+          "co2": 0
+        },
         {
           "value": "take_back",
           "label": "Taken back by us: dismantled, parts refurbished, metals recycled",
@@ -822,471 +1487,1786 @@
       ]
     }
   ],
-  "situation": ["building_type", "region", "installation"],
+  "situation": [
+    "building_type",
+    "region",
+    "installation"
+  ],
   "quantities": [
-    { "name": "stop_count", "meaning": "stops, counted outright", "unit": "" },
-    { "name": "storeys", "meaning": "storeys from the ground floor up", "unit": "" },
-    { "name": "upper_floors", "meaning": "floors above the ground floor", "unit": "" },
-    { "name": "basements", "meaning": "basement levels served", "unit": "" },
-    { "name": "storey_height", "meaning": "floor-to-floor height", "unit": "m" },
-    { "name": "travel_m", "meaning": "travel from the lowest stop to the highest", "unit": "m" },
-    { "name": "stops", "meaning": "number of stops", "unit": "" },
-    { "name": "travel", "meaning": "travel height", "unit": "m" }
+    {
+      "name": "stop_count",
+      "meaning": "stops, counted outright",
+      "unit": ""
+    },
+    {
+      "name": "storeys",
+      "meaning": "storeys from the ground floor up",
+      "unit": ""
+    },
+    {
+      "name": "upper_floors",
+      "meaning": "floors above the ground floor",
+      "unit": ""
+    },
+    {
+      "name": "basements",
+      "meaning": "basement levels served",
+      "unit": ""
+    },
+    {
+      "name": "storey_height",
+      "meaning": "floor-to-floor height",
+      "unit": "m"
+    },
+    {
+      "name": "travel_m",
+      "meaning": "travel from the lowest stop to the highest",
+      "unit": "m"
+    },
+    {
+      "name": "stops",
+      "meaning": "number of stops",
+      "unit": ""
+    },
+    {
+      "name": "travel",
+      "meaning": "travel height",
+      "unit": "m"
+    }
   ],
   "methods": [
-    { "method": "stops_counted", "yields": "stops", "formula": "stop_count", "needs": ["stop_count"] },
-    { "method": "stops_from_storeys", "yields": "stops", "formula": "storeys + basements", "needs": ["storeys", "basements"], "presumes": { "basements": 0 } },
-    { "method": "stops_from_upper_floors", "yields": "stops", "formula": "upper_floors + 1 + basements", "needs": ["upper_floors", "basements"], "presumes": { "basements": 0 } },
-    { "method": "travel_measured", "yields": "travel", "formula": "travel_m", "needs": ["travel_m"] },
-    { "method": "travel_from_storeys", "yields": "travel", "formula": "(storeys - 1 + basements) * storey_height", "needs": ["storeys", "basements", "storey_height"], "presumes": { "basements": 0, "storey_height": 3.5 } },
-    { "method": "travel_from_upper_floors", "yields": "travel", "formula": "(upper_floors + basements) * storey_height", "needs": ["upper_floors", "basements", "storey_height"], "presumes": { "basements": 0, "storey_height": 3.5 } }
+    {
+      "method": "stops_counted",
+      "yields": "stops",
+      "formula": "stop_count",
+      "needs": [
+        "stop_count"
+      ]
+    },
+    {
+      "method": "stops_from_storeys",
+      "yields": "stops",
+      "formula": "storeys + basements",
+      "needs": [
+        "storeys",
+        "basements"
+      ],
+      "presumes": {
+        "basements": 0
+      }
+    },
+    {
+      "method": "stops_from_upper_floors",
+      "yields": "stops",
+      "formula": "upper_floors + 1 + basements",
+      "needs": [
+        "upper_floors",
+        "basements"
+      ],
+      "presumes": {
+        "basements": 0
+      }
+    },
+    {
+      "method": "travel_measured",
+      "yields": "travel",
+      "formula": "travel_m",
+      "needs": [
+        "travel_m"
+      ]
+    },
+    {
+      "method": "travel_from_storeys",
+      "yields": "travel",
+      "formula": "(storeys - 1 + basements) * storey_height",
+      "needs": [
+        "storeys",
+        "basements",
+        "storey_height"
+      ],
+      "presumes": {
+        "basements": 0,
+        "storey_height": 3.5
+      }
+    },
+    {
+      "method": "travel_from_upper_floors",
+      "yields": "travel",
+      "formula": "(upper_floors + basements) * storey_height",
+      "needs": [
+        "upper_floors",
+        "basements",
+        "storey_height"
+      ],
+      "presumes": {
+        "basements": 0,
+        "storey_height": 3.5
+      }
+    }
   ],
   "steps": [
-    { "step": "building", "name": "The building", "needs": ["building_type", "region", "installation"], "covers": ["building_type", "region", "installation", "accessibility", "existing_equipment"], "owner": "person" },
-    { "step": "journey", "name": "The journey", "needs": ["stops", "travel"], "covers": ["stops", "travel", "rated_speed", "usage_profile", "dispatch_control"], "owner": "person" },
-    { "step": "fit", "name": "What must fit", "needs": ["rated_load", "car_size"], "covers": ["rated_load", "car_size", "car_height", "door_width", "accessibility"], "owner": "person" },
-    { "step": "shaft", "name": "The shaft", "needs": ["shaft", "pit_depth"], "covers": ["shaft", "pit_depth", "headroom", "car_size", "car_height"], "owner": "person" },
-    { "step": "safety", "name": "Safety", "needs": ["rescue_operation"], "covers": ["rescue_operation", "firefighters_operation", "fire_rating"], "owner": "person" },
-    { "step": "car", "name": "The car and its doors", "needs": [], "covers": ["wall_finish", "floor", "cop", "mirror", "handrail", "access_control", "door_type", "door_finish"], "owner": "model" },
-    { "step": "drive", "name": "Drive and energy", "needs": [], "covers": ["platform", "drive", "energy_package", "energy_class", "connectivity_package"], "owner": "model" },
-    { "step": "installing", "name": "Installing it", "needs": ["lead_time", "site_hours"], "covers": ["lead_time", "site_hours", "existing_equipment", "installation"], "owner": "person" },
-    { "step": "maintaining", "name": "Maintaining it", "needs": ["service_level", "contract_term"], "covers": ["service_level", "contract_term", "maintenance_scope", "maintainability", "connectivity_package", "usage_profile"], "owner": "person" },
-    { "step": "ending", "name": "At the end of its life", "needs": ["end_of_life"], "covers": ["end_of_life"], "owner": "person" }
+    {
+      "step": "building",
+      "name": "The building",
+      "covers": [
+        "building_type",
+        "region",
+        "installation",
+        "accessibility",
+        "existing_equipment"
+      ]
+    },
+    {
+      "step": "journey",
+      "name": "The journey",
+      "covers": [
+        "stops",
+        "travel",
+        "rated_speed",
+        "usage_profile",
+        "dispatch_control"
+      ]
+    },
+    {
+      "step": "fit",
+      "name": "What must fit",
+      "covers": [
+        "rated_load",
+        "car_size",
+        "car_height",
+        "door_width",
+        "accessibility"
+      ]
+    },
+    {
+      "step": "shaft",
+      "name": "The shaft",
+      "covers": [
+        "shaft",
+        "pit_depth",
+        "headroom",
+        "car_size",
+        "car_height"
+      ]
+    },
+    {
+      "step": "safety",
+      "name": "Safety",
+      "covers": [
+        "rescue_operation",
+        "firefighters_operation",
+        "fire_rating"
+      ]
+    },
+    {
+      "step": "car",
+      "name": "The car and its doors",
+      "covers": [
+        "wall_finish",
+        "floor",
+        "cop",
+        "mirror",
+        "handrail",
+        "access_control",
+        "door_type",
+        "door_finish"
+      ]
+    },
+    {
+      "step": "drive",
+      "name": "Drive and energy",
+      "covers": [
+        "platform",
+        "drive",
+        "energy_package",
+        "energy_class",
+        "connectivity_package"
+      ]
+    },
+    {
+      "step": "installing",
+      "name": "Installing it",
+      "covers": [
+        "lead_time",
+        "site_hours",
+        "existing_equipment",
+        "installation"
+      ]
+    },
+    {
+      "step": "maintaining",
+      "name": "Maintaining it",
+      "covers": [
+        "service_level",
+        "contract_term",
+        "maintenance_scope",
+        "maintainability",
+        "connectivity_package",
+        "usage_profile"
+      ]
+    },
+    {
+      "step": "ending",
+      "name": "At the end of its life",
+      "covers": [
+        "end_of_life"
+      ]
+    }
   ],
   "constraints": [
     {
       "id": "R01",
       "label": "Rated load determines car dimensions (EN 81-20 Table 6)",
       "type": "table",
-      "vars": ["rated_load", "car_size"],
+      "vars": [
+        "rated_load",
+        "car_size"
+      ],
       "allowed": [
-        ["kg630", "c1100x1400"],
-        ["kg800", "c1350x1400"],
-        ["kg1000", "c1600x1400"],
-        ["kg1250", "c1950x1400"],
-        ["kg1250", "c1200x2300"],
-        ["kg1600", "c2100x1600"],
-        ["kg1600", "c1400x2400"],
-        ["kg2000", "c1500x2700"],
-        ["kg2500", "c1800x2700"]
+        [
+          "kg630",
+          "c1100x1400"
+        ],
+        [
+          "kg800",
+          "c1350x1400"
+        ],
+        [
+          "kg1000",
+          "c1600x1400"
+        ],
+        [
+          "kg1250",
+          "c1950x1400"
+        ],
+        [
+          "kg1250",
+          "c1200x2300"
+        ],
+        [
+          "kg1600",
+          "c2100x1600"
+        ],
+        [
+          "kg1600",
+          "c1400x2400"
+        ],
+        [
+          "kg2000",
+          "c1500x2700"
+        ],
+        [
+          "kg2500",
+          "c1800x2700"
+        ]
       ]
     },
     {
       "id": "R02",
       "label": "Car dimensions determine minimum shaft size",
       "type": "table",
-      "vars": ["car_size", "shaft"],
+      "vars": [
+        "car_size",
+        "shaft"
+      ],
       "allowed": [
-        ["c1100x1400", "t1_1800x1700"], ["c1100x1400", "t2_2000x1800"], ["c1100x1400", "t3_2200x2000"], ["c1100x1400", "t4_2500x2200"], ["c1100x1400", "t5_2700x2900"], ["c1100x1400", "t6_3000x3000"],
-        ["c1350x1400", "t2_2000x1800"], ["c1350x1400", "t3_2200x2000"], ["c1350x1400", "t4_2500x2200"], ["c1350x1400", "t5_2700x2900"], ["c1350x1400", "t6_3000x3000"],
-        ["c1600x1400", "t3_2200x2000"], ["c1600x1400", "t4_2500x2200"], ["c1600x1400", "t5_2700x2900"], ["c1600x1400", "t6_3000x3000"],
-        ["c1950x1400", "t4_2500x2200"], ["c1950x1400", "t5_2700x2900"], ["c1950x1400", "t6_3000x3000"],
-        ["c1200x2300", "t4_2500x2200"], ["c1200x2300", "t5_2700x2900"], ["c1200x2300", "t6_3000x3000"],
-        ["c2100x1600", "t4_2500x2200"], ["c2100x1600", "t5_2700x2900"], ["c2100x1600", "t6_3000x3000"],
-        ["c1400x2400", "t5_2700x2900"], ["c1400x2400", "t6_3000x3000"],
-        ["c1500x2700", "t5_2700x2900"], ["c1500x2700", "t6_3000x3000"],
-        ["c1800x2700", "t6_3000x3000"]
+        [
+          "c1100x1400",
+          "t1_1800x1700"
+        ],
+        [
+          "c1100x1400",
+          "t2_2000x1800"
+        ],
+        [
+          "c1100x1400",
+          "t3_2200x2000"
+        ],
+        [
+          "c1100x1400",
+          "t4_2500x2200"
+        ],
+        [
+          "c1100x1400",
+          "t5_2700x2900"
+        ],
+        [
+          "c1100x1400",
+          "t6_3000x3000"
+        ],
+        [
+          "c1350x1400",
+          "t2_2000x1800"
+        ],
+        [
+          "c1350x1400",
+          "t3_2200x2000"
+        ],
+        [
+          "c1350x1400",
+          "t4_2500x2200"
+        ],
+        [
+          "c1350x1400",
+          "t5_2700x2900"
+        ],
+        [
+          "c1350x1400",
+          "t6_3000x3000"
+        ],
+        [
+          "c1600x1400",
+          "t3_2200x2000"
+        ],
+        [
+          "c1600x1400",
+          "t4_2500x2200"
+        ],
+        [
+          "c1600x1400",
+          "t5_2700x2900"
+        ],
+        [
+          "c1600x1400",
+          "t6_3000x3000"
+        ],
+        [
+          "c1950x1400",
+          "t4_2500x2200"
+        ],
+        [
+          "c1950x1400",
+          "t5_2700x2900"
+        ],
+        [
+          "c1950x1400",
+          "t6_3000x3000"
+        ],
+        [
+          "c1200x2300",
+          "t4_2500x2200"
+        ],
+        [
+          "c1200x2300",
+          "t5_2700x2900"
+        ],
+        [
+          "c1200x2300",
+          "t6_3000x3000"
+        ],
+        [
+          "c2100x1600",
+          "t4_2500x2200"
+        ],
+        [
+          "c2100x1600",
+          "t5_2700x2900"
+        ],
+        [
+          "c2100x1600",
+          "t6_3000x3000"
+        ],
+        [
+          "c1400x2400",
+          "t5_2700x2900"
+        ],
+        [
+          "c1400x2400",
+          "t6_3000x3000"
+        ],
+        [
+          "c1500x2700",
+          "t5_2700x2900"
+        ],
+        [
+          "c1500x2700",
+          "t6_3000x3000"
+        ],
+        [
+          "c1800x2700",
+          "t6_3000x3000"
+        ]
       ]
     },
     {
       "id": "R03",
       "label": "Rated speed determines minimum pit depth",
       "type": "table",
-      "vars": ["rated_speed", "pit_depth"],
+      "vars": [
+        "rated_speed",
+        "pit_depth"
+      ],
       "allowed": [
-        ["mps0_63", "p1100"], ["mps0_63", "p1400"], ["mps0_63", "p1600"], ["mps0_63", "p2100"],
-        ["mps1_0", "p1100"], ["mps1_0", "p1400"], ["mps1_0", "p1600"], ["mps1_0", "p2100"],
-        ["mps1_6", "p1400"], ["mps1_6", "p1600"], ["mps1_6", "p2100"],
-        ["mps2_5", "p1600"], ["mps2_5", "p2100"],
-        ["mps3_0", "p2100"]
+        [
+          "mps0_63",
+          "p1100"
+        ],
+        [
+          "mps0_63",
+          "p1400"
+        ],
+        [
+          "mps0_63",
+          "p1600"
+        ],
+        [
+          "mps0_63",
+          "p2100"
+        ],
+        [
+          "mps1_0",
+          "p1100"
+        ],
+        [
+          "mps1_0",
+          "p1400"
+        ],
+        [
+          "mps1_0",
+          "p1600"
+        ],
+        [
+          "mps1_0",
+          "p2100"
+        ],
+        [
+          "mps1_6",
+          "p1400"
+        ],
+        [
+          "mps1_6",
+          "p1600"
+        ],
+        [
+          "mps1_6",
+          "p2100"
+        ],
+        [
+          "mps2_5",
+          "p1600"
+        ],
+        [
+          "mps2_5",
+          "p2100"
+        ],
+        [
+          "mps3_0",
+          "p2100"
+        ]
       ]
     },
     {
       "id": "R04",
       "label": "Rated speed determines minimum headroom",
       "type": "table",
-      "vars": ["rated_speed", "headroom"],
+      "vars": [
+        "rated_speed",
+        "headroom"
+      ],
       "allowed": [
-        ["mps0_63", "h3400"], ["mps0_63", "h3800"], ["mps0_63", "h4200"], ["mps0_63", "h4600"],
-        ["mps1_0", "h3400"], ["mps1_0", "h3800"], ["mps1_0", "h4200"], ["mps1_0", "h4600"],
-        ["mps1_6", "h3800"], ["mps1_6", "h4200"], ["mps1_6", "h4600"],
-        ["mps2_5", "h4200"], ["mps2_5", "h4600"],
-        ["mps3_0", "h4600"]
+        [
+          "mps0_63",
+          "h3400"
+        ],
+        [
+          "mps0_63",
+          "h3800"
+        ],
+        [
+          "mps0_63",
+          "h4200"
+        ],
+        [
+          "mps0_63",
+          "h4600"
+        ],
+        [
+          "mps1_0",
+          "h3400"
+        ],
+        [
+          "mps1_0",
+          "h3800"
+        ],
+        [
+          "mps1_0",
+          "h4200"
+        ],
+        [
+          "mps1_0",
+          "h4600"
+        ],
+        [
+          "mps1_6",
+          "h3800"
+        ],
+        [
+          "mps1_6",
+          "h4200"
+        ],
+        [
+          "mps1_6",
+          "h4600"
+        ],
+        [
+          "mps2_5",
+          "h4200"
+        ],
+        [
+          "mps2_5",
+          "h4600"
+        ],
+        [
+          "mps3_0",
+          "h4600"
+        ]
       ]
     },
     {
       "id": "R05",
       "label": "Door width must fit the car front",
       "type": "table",
-      "vars": ["car_size", "door_width"],
+      "vars": [
+        "car_size",
+        "door_width"
+      ],
       "allowed": [
-        ["c1100x1400", "d800"], ["c1100x1400", "d900"],
-        ["c1350x1400", "d800"], ["c1350x1400", "d900"], ["c1350x1400", "d1000"],
-        ["c1600x1400", "d900"], ["c1600x1400", "d1000"], ["c1600x1400", "d1100"],
-        ["c1950x1400", "d1000"], ["c1950x1400", "d1100"], ["c1950x1400", "d1300"],
-        ["c1200x2300", "d900"], ["c1200x2300", "d1000"],
-        ["c2100x1600", "d1000"], ["c2100x1600", "d1100"], ["c2100x1600", "d1300"],
-        ["c1400x2400", "d1100"], ["c1400x2400", "d1300"],
-        ["c1500x2700", "d1100"], ["c1500x2700", "d1300"],
-        ["c1800x2700", "d1100"], ["c1800x2700", "d1300"]
+        [
+          "c1100x1400",
+          "d800"
+        ],
+        [
+          "c1100x1400",
+          "d900"
+        ],
+        [
+          "c1350x1400",
+          "d800"
+        ],
+        [
+          "c1350x1400",
+          "d900"
+        ],
+        [
+          "c1350x1400",
+          "d1000"
+        ],
+        [
+          "c1600x1400",
+          "d900"
+        ],
+        [
+          "c1600x1400",
+          "d1000"
+        ],
+        [
+          "c1600x1400",
+          "d1100"
+        ],
+        [
+          "c1950x1400",
+          "d1000"
+        ],
+        [
+          "c1950x1400",
+          "d1100"
+        ],
+        [
+          "c1950x1400",
+          "d1300"
+        ],
+        [
+          "c1200x2300",
+          "d900"
+        ],
+        [
+          "c1200x2300",
+          "d1000"
+        ],
+        [
+          "c2100x1600",
+          "d1000"
+        ],
+        [
+          "c2100x1600",
+          "d1100"
+        ],
+        [
+          "c2100x1600",
+          "d1300"
+        ],
+        [
+          "c1400x2400",
+          "d1100"
+        ],
+        [
+          "c1400x2400",
+          "d1300"
+        ],
+        [
+          "c1500x2700",
+          "d1100"
+        ],
+        [
+          "c1500x2700",
+          "d1300"
+        ],
+        [
+          "c1800x2700",
+          "d1100"
+        ],
+        [
+          "c1800x2700",
+          "d1300"
+        ]
       ]
     },
     {
       "id": "R06",
       "label": "Door opening type limits available widths",
       "type": "table",
-      "vars": ["door_type", "door_width"],
+      "vars": [
+        "door_type",
+        "door_width"
+      ],
       "allowed": [
-        ["telescopic_2", "d800"], ["telescopic_2", "d900"], ["telescopic_2", "d1000"],
-        ["center_2", "d800"], ["center_2", "d900"], ["center_2", "d1000"], ["center_2", "d1100"],
-        ["center_4", "d1100"], ["center_4", "d1300"]
+        [
+          "telescopic_2",
+          "d800"
+        ],
+        [
+          "telescopic_2",
+          "d900"
+        ],
+        [
+          "telescopic_2",
+          "d1000"
+        ],
+        [
+          "center_2",
+          "d800"
+        ],
+        [
+          "center_2",
+          "d900"
+        ],
+        [
+          "center_2",
+          "d1000"
+        ],
+        [
+          "center_2",
+          "d1100"
+        ],
+        [
+          "center_4",
+          "d1100"
+        ],
+        [
+          "center_4",
+          "d1300"
+        ]
       ]
     },
     {
       "id": "R07",
       "label": "Product platform fixes the drive type",
       "type": "table",
-      "vars": ["platform", "drive"],
+      "vars": [
+        "platform",
+        "drive"
+      ],
       "allowed": [
-        ["hydro_s300", "hydraulic"],
-        ["mrl_m500", "gearless_mrl"],
-        ["mrl_m700", "gearless_mrl"],
-        ["highrise_h900", "gearless_mr"]
+        [
+          "hydro_s300",
+          "hydraulic"
+        ],
+        [
+          "mrl_m500",
+          "gearless_mrl"
+        ],
+        [
+          "mrl_m700",
+          "gearless_mrl"
+        ],
+        [
+          "highrise_h900",
+          "gearless_mr"
+        ]
       ]
     },
     {
       "id": "R08",
       "label": "Product platform limits rated speed",
       "type": "table",
-      "vars": ["platform", "rated_speed"],
+      "vars": [
+        "platform",
+        "rated_speed"
+      ],
       "allowed": [
-        ["hydro_s300", "mps0_63"], ["hydro_s300", "mps1_0"],
-        ["mrl_m500", "mps1_0"], ["mrl_m500", "mps1_6"],
-        ["mrl_m700", "mps1_0"], ["mrl_m700", "mps1_6"], ["mrl_m700", "mps2_5"],
-        ["highrise_h900", "mps2_5"], ["highrise_h900", "mps3_0"]
+        [
+          "hydro_s300",
+          "mps0_63"
+        ],
+        [
+          "hydro_s300",
+          "mps1_0"
+        ],
+        [
+          "mrl_m500",
+          "mps1_0"
+        ],
+        [
+          "mrl_m500",
+          "mps1_6"
+        ],
+        [
+          "mrl_m700",
+          "mps1_0"
+        ],
+        [
+          "mrl_m700",
+          "mps1_6"
+        ],
+        [
+          "mrl_m700",
+          "mps2_5"
+        ],
+        [
+          "highrise_h900",
+          "mps2_5"
+        ],
+        [
+          "highrise_h900",
+          "mps3_0"
+        ]
       ]
     },
     {
       "id": "R09",
       "label": "Product platform limits travel height",
       "type": "table",
-      "vars": ["platform", "travel"],
+      "vars": [
+        "platform",
+        "travel"
+      ],
       "allowed": [
-        ["hydro_s300", "low_0_15"],
-        ["mrl_m500", "low_0_15"], ["mrl_m500", "mid_15_30"],
-        ["mrl_m700", "low_0_15"], ["mrl_m700", "mid_15_30"], ["mrl_m700", "high_30_50"], ["mrl_m700", "very_high_50_75"],
-        ["highrise_h900", "very_high_50_75"], ["highrise_h900", "tower_75_100"]
+        [
+          "hydro_s300",
+          "low_0_15"
+        ],
+        [
+          "mrl_m500",
+          "low_0_15"
+        ],
+        [
+          "mrl_m500",
+          "mid_15_30"
+        ],
+        [
+          "mrl_m700",
+          "low_0_15"
+        ],
+        [
+          "mrl_m700",
+          "mid_15_30"
+        ],
+        [
+          "mrl_m700",
+          "high_30_50"
+        ],
+        [
+          "mrl_m700",
+          "very_high_50_75"
+        ],
+        [
+          "highrise_h900",
+          "very_high_50_75"
+        ],
+        [
+          "highrise_h900",
+          "tower_75_100"
+        ]
       ]
     },
     {
       "id": "R10",
       "label": "Product platform limits rated load",
       "type": "table",
-      "vars": ["platform", "rated_load"],
+      "vars": [
+        "platform",
+        "rated_load"
+      ],
       "allowed": [
-        ["hydro_s300", "kg630"], ["hydro_s300", "kg800"], ["hydro_s300", "kg1000"], ["hydro_s300", "kg1250"], ["hydro_s300", "kg1600"], ["hydro_s300", "kg2000"], ["hydro_s300", "kg2500"],
-        ["mrl_m500", "kg630"], ["mrl_m500", "kg800"], ["mrl_m500", "kg1000"], ["mrl_m500", "kg1250"],
-        ["mrl_m700", "kg630"], ["mrl_m700", "kg800"], ["mrl_m700", "kg1000"], ["mrl_m700", "kg1250"], ["mrl_m700", "kg1600"], ["mrl_m700", "kg2000"],
-        ["highrise_h900", "kg1000"], ["highrise_h900", "kg1250"], ["highrise_h900", "kg1600"], ["highrise_h900", "kg2000"]
+        [
+          "hydro_s300",
+          "kg630"
+        ],
+        [
+          "hydro_s300",
+          "kg800"
+        ],
+        [
+          "hydro_s300",
+          "kg1000"
+        ],
+        [
+          "hydro_s300",
+          "kg1250"
+        ],
+        [
+          "hydro_s300",
+          "kg1600"
+        ],
+        [
+          "hydro_s300",
+          "kg2000"
+        ],
+        [
+          "hydro_s300",
+          "kg2500"
+        ],
+        [
+          "mrl_m500",
+          "kg630"
+        ],
+        [
+          "mrl_m500",
+          "kg800"
+        ],
+        [
+          "mrl_m500",
+          "kg1000"
+        ],
+        [
+          "mrl_m500",
+          "kg1250"
+        ],
+        [
+          "mrl_m700",
+          "kg630"
+        ],
+        [
+          "mrl_m700",
+          "kg800"
+        ],
+        [
+          "mrl_m700",
+          "kg1000"
+        ],
+        [
+          "mrl_m700",
+          "kg1250"
+        ],
+        [
+          "mrl_m700",
+          "kg1600"
+        ],
+        [
+          "mrl_m700",
+          "kg2000"
+        ],
+        [
+          "highrise_h900",
+          "kg1000"
+        ],
+        [
+          "highrise_h900",
+          "kg1250"
+        ],
+        [
+          "highrise_h900",
+          "kg1600"
+        ],
+        [
+          "highrise_h900",
+          "kg2000"
+        ]
       ]
     },
     {
       "id": "R11",
       "label": "Product platform limits number of stops",
       "type": "table",
-      "vars": ["platform", "stops"],
+      "vars": [
+        "platform",
+        "stops"
+      ],
       "allowed": [
-        ["hydro_s300", "s2_6"],
-        ["mrl_m500", "s2_6"], ["mrl_m500", "s7_12"],
-        ["mrl_m700", "s2_6"], ["mrl_m700", "s7_12"], ["mrl_m700", "s13_24"],
-        ["highrise_h900", "s7_12"], ["highrise_h900", "s13_24"]
+        [
+          "hydro_s300",
+          "s2_6"
+        ],
+        [
+          "mrl_m500",
+          "s2_6"
+        ],
+        [
+          "mrl_m500",
+          "s7_12"
+        ],
+        [
+          "mrl_m700",
+          "s2_6"
+        ],
+        [
+          "mrl_m700",
+          "s7_12"
+        ],
+        [
+          "mrl_m700",
+          "s13_24"
+        ],
+        [
+          "highrise_h900",
+          "s7_12"
+        ],
+        [
+          "highrise_h900",
+          "s13_24"
+        ]
       ]
     },
     {
       "id": "R12",
       "label": "Region determines applicable accessibility standard",
       "type": "table",
-      "vars": ["region", "accessibility"],
+      "vars": [
+        "region",
+        "accessibility"
+      ],
       "allowed": [
-        ["europe", "none"], ["europe", "en81_70"],
-        ["north_america", "none"], ["north_america", "ada"]
+        [
+          "europe",
+          "none"
+        ],
+        [
+          "europe",
+          "en81_70"
+        ],
+        [
+          "north_america",
+          "none"
+        ],
+        [
+          "north_america",
+          "ada"
+        ]
       ]
     },
     {
       "id": "R13",
       "label": "Travel height constrains sensible rated speeds",
       "type": "table",
-      "vars": ["travel", "rated_speed"],
+      "vars": [
+        "travel",
+        "rated_speed"
+      ],
       "allowed": [
-        ["low_0_15", "mps0_63"], ["low_0_15", "mps1_0"],
-        ["mid_15_30", "mps1_0"], ["mid_15_30", "mps1_6"],
-        ["high_30_50", "mps1_6"], ["high_30_50", "mps2_5"],
-        ["very_high_50_75", "mps1_6"], ["very_high_50_75", "mps2_5"],
-        ["tower_75_100", "mps2_5"], ["tower_75_100", "mps3_0"]
+        [
+          "low_0_15",
+          "mps0_63"
+        ],
+        [
+          "low_0_15",
+          "mps1_0"
+        ],
+        [
+          "mid_15_30",
+          "mps1_0"
+        ],
+        [
+          "mid_15_30",
+          "mps1_6"
+        ],
+        [
+          "high_30_50",
+          "mps1_6"
+        ],
+        [
+          "high_30_50",
+          "mps2_5"
+        ],
+        [
+          "very_high_50_75",
+          "mps1_6"
+        ],
+        [
+          "very_high_50_75",
+          "mps2_5"
+        ],
+        [
+          "tower_75_100",
+          "mps2_5"
+        ],
+        [
+          "tower_75_100",
+          "mps3_0"
+        ]
       ]
     },
     {
       "id": "R14",
       "label": "Travel height constrains number of stops",
       "type": "table",
-      "vars": ["travel", "stops"],
+      "vars": [
+        "travel",
+        "stops"
+      ],
       "allowed": [
-        ["low_0_15", "s2_6"],
-        ["mid_15_30", "s2_6"], ["mid_15_30", "s7_12"],
-        ["high_30_50", "s7_12"], ["high_30_50", "s13_24"],
-        ["very_high_50_75", "s7_12"], ["very_high_50_75", "s13_24"],
-        ["tower_75_100", "s7_12"], ["tower_75_100", "s13_24"]
+        [
+          "low_0_15",
+          "s2_6"
+        ],
+        [
+          "mid_15_30",
+          "s2_6"
+        ],
+        [
+          "mid_15_30",
+          "s7_12"
+        ],
+        [
+          "high_30_50",
+          "s7_12"
+        ],
+        [
+          "high_30_50",
+          "s13_24"
+        ],
+        [
+          "very_high_50_75",
+          "s7_12"
+        ],
+        [
+          "very_high_50_75",
+          "s13_24"
+        ],
+        [
+          "tower_75_100",
+          "s7_12"
+        ],
+        [
+          "tower_75_100",
+          "s13_24"
+        ]
       ]
     },
     {
       "id": "R15",
       "label": "Hospitals require stretcher/bed-depth cars",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hospital"] }],
-      "then": { "var": "car_size", "in": ["c1400x2400", "c1500x2700", "c1800x2700"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hospital"
+          ]
+        }
+      ],
+      "then": {
+        "var": "car_size",
+        "in": [
+          "c1400x2400",
+          "c1500x2700",
+          "c1800x2700"
+        ]
+      }
     },
     {
       "id": "R16",
       "label": "Hospitals require wide doors for stretcher access",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hospital"] }],
-      "then": { "var": "door_width", "in": ["d1100", "d1300"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hospital"
+          ]
+        }
+      ],
+      "then": {
+        "var": "door_width",
+        "in": [
+          "d1100",
+          "d1300"
+        ]
+      }
     },
     {
       "id": "R17",
       "label": "Hospitals require an accessibility package",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hospital"] }],
-      "then": { "var": "accessibility", "in": ["en81_70", "ada"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hospital"
+          ]
+        }
+      ],
+      "then": {
+        "var": "accessibility",
+        "in": [
+          "en81_70",
+          "ada"
+        ]
+      }
     },
     {
       "id": "R18",
       "label": "New public buildings require an accessibility package",
       "type": "implication",
       "if_all": [
-        { "var": "installation", "in": ["new_build"] },
-        { "var": "building_type", "in": ["office", "hotel", "hospital"] }
+        {
+          "var": "installation",
+          "in": [
+            "new_build"
+          ]
+        },
+        {
+          "var": "building_type",
+          "in": [
+            "office",
+            "hotel",
+            "hospital"
+          ]
+        }
       ],
-      "then": { "var": "accessibility", "in": ["en81_70", "ada"] }
+      "then": {
+        "var": "accessibility",
+        "in": [
+          "en81_70",
+          "ada"
+        ]
+      }
     },
     {
       "id": "R19",
       "label": "Accessibility requires door width of at least 900 mm",
       "type": "implication",
-      "if_all": [{ "var": "accessibility", "in": ["en81_70", "ada"] }],
-      "then": { "var": "door_width", "in": ["d900", "d1000", "d1100", "d1300"] }
+      "if_all": [
+        {
+          "var": "accessibility",
+          "in": [
+            "en81_70",
+            "ada"
+          ]
+        }
+      ],
+      "then": {
+        "var": "door_width",
+        "in": [
+          "d900",
+          "d1000",
+          "d1100",
+          "d1300"
+        ]
+      }
     },
     {
       "id": "R20",
       "label": "Accessibility requires a handrail",
       "type": "implication",
-      "if_all": [{ "var": "accessibility", "in": ["en81_70", "ada"] }],
-      "then": { "var": "handrail", "in": ["one_side", "three_sides"] }
+      "if_all": [
+        {
+          "var": "accessibility",
+          "in": [
+            "en81_70",
+            "ada"
+          ]
+        }
+      ],
+      "then": {
+        "var": "handrail",
+        "in": [
+          "one_side",
+          "three_sides"
+        ]
+      }
     },
     {
       "id": "R21",
       "label": "Accessibility requires a mirror for reversing visibility",
       "type": "implication",
-      "if_all": [{ "var": "accessibility", "in": ["en81_70", "ada"] }],
-      "then": { "var": "mirror", "in": ["half", "full"] }
+      "if_all": [
+        {
+          "var": "accessibility",
+          "in": [
+            "en81_70",
+            "ada"
+          ]
+        }
+      ],
+      "then": {
+        "var": "mirror",
+        "in": [
+          "half",
+          "full"
+        ]
+      }
     },
     {
       "id": "R22",
       "label": "ADA requires tactile controls (no touchscreen-only panel)",
       "type": "implication",
-      "if_all": [{ "var": "accessibility", "in": ["ada"] }],
-      "then": { "var": "cop", "in": ["standard", "vandal"] }
+      "if_all": [
+        {
+          "var": "accessibility",
+          "in": [
+            "ada"
+          ]
+        }
+      ],
+      "then": {
+        "var": "cop",
+        "in": [
+          "standard",
+          "vandal"
+        ]
+      }
     },
     {
       "id": "R23",
       "label": "Glass landing doors are not available fire-rated",
       "type": "implication",
-      "if_all": [{ "var": "door_finish", "in": ["glass"] }],
-      "then": { "var": "fire_rating", "in": ["none"] }
+      "if_all": [
+        {
+          "var": "door_finish",
+          "in": [
+            "glass"
+          ]
+        }
+      ],
+      "then": {
+        "var": "fire_rating",
+        "in": [
+          "none"
+        ]
+      }
     },
     {
       "id": "R24",
       "label": "Tall public buildings require fire-rated landing doors",
       "type": "implication",
       "if_all": [
-        { "var": "building_type", "in": ["office", "hotel", "hospital"] },
-        { "var": "travel", "in": ["high_30_50", "very_high_50_75", "tower_75_100"] }
+        {
+          "var": "building_type",
+          "in": [
+            "office",
+            "hotel",
+            "hospital"
+          ]
+        },
+        {
+          "var": "travel",
+          "in": [
+            "high_30_50",
+            "very_high_50_75",
+            "tower_75_100"
+          ]
+        }
       ],
-      "then": { "var": "fire_rating", "in": ["e120", "ei60"] }
+      "then": {
+        "var": "fire_rating",
+        "in": [
+          "e120",
+          "ei60"
+        ]
+      }
     },
     {
       "id": "R25",
       "label": "Panoramic glass wall exceeds weight budget at 2500 kg",
       "type": "implication",
-      "if_all": [{ "var": "wall_finish", "in": ["glass_panoramic"] }],
-      "then": { "var": "rated_load", "in": ["kg630", "kg800", "kg1000", "kg1250", "kg1600", "kg2000"] }
+      "if_all": [
+        {
+          "var": "wall_finish",
+          "in": [
+            "glass_panoramic"
+          ]
+        }
+      ],
+      "then": {
+        "var": "rated_load",
+        "in": [
+          "kg630",
+          "kg800",
+          "kg1000",
+          "kg1250",
+          "kg1600",
+          "kg2000"
+        ]
+      }
     },
     {
       "id": "R26",
       "label": "Granite floor exceeds weight budget on the smallest car",
       "type": "implication",
-      "if_all": [{ "var": "floor", "in": ["granite"] }],
-      "then": { "var": "rated_load", "in": ["kg800", "kg1000", "kg1250", "kg1600", "kg2000", "kg2500"] }
+      "if_all": [
+        {
+          "var": "floor",
+          "in": [
+            "granite"
+          ]
+        }
+      ],
+      "then": {
+        "var": "rated_load",
+        "in": [
+          "kg800",
+          "kg1000",
+          "kg1250",
+          "kg1600",
+          "kg2000",
+          "kg2500"
+        ]
+      }
     },
     {
       "id": "R27",
       "label": "Modernization cannot deepen the existing pit to 2100 mm",
       "type": "implication",
-      "if_all": [{ "var": "installation", "in": ["modernization"] }],
-      "then": { "var": "pit_depth", "in": ["p1100", "p1400", "p1600"] }
+      "if_all": [
+        {
+          "var": "installation",
+          "in": [
+            "modernization"
+          ]
+        }
+      ],
+      "then": {
+        "var": "pit_depth",
+        "in": [
+          "p1100",
+          "p1400",
+          "p1600"
+        ]
+      }
     },
     {
       "id": "R28",
       "label": "Modernization cannot raise the existing headroom to 4600 mm",
       "type": "implication",
-      "if_all": [{ "var": "installation", "in": ["modernization"] }],
-      "then": { "var": "headroom", "in": ["h3400", "h3800", "h4200"] }
+      "if_all": [
+        {
+          "var": "installation",
+          "in": [
+            "modernization"
+          ]
+        }
+      ],
+      "then": {
+        "var": "headroom",
+        "in": [
+          "h3400",
+          "h3800",
+          "h4200"
+        ]
+      }
     },
     {
       "id": "R29",
       "label": "Retail traffic requires a vandal-resistant panel",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["retail"] }],
-      "then": { "var": "cop", "in": ["vandal"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "retail"
+          ]
+        }
+      ],
+      "then": {
+        "var": "cop",
+        "in": [
+          "vandal"
+        ]
+      }
     },
     {
       "id": "R30",
       "label": "4-panel center doors need the wider shaft tiers",
       "type": "implication",
-      "if_all": [{ "var": "door_type", "in": ["center_4"] }],
-      "then": { "var": "shaft", "in": ["t4_2500x2200", "t5_2700x2900", "t6_3000x3000"] }
+      "if_all": [
+        {
+          "var": "door_type",
+          "in": [
+            "center_4"
+          ]
+        }
+      ],
+      "then": {
+        "var": "shaft",
+        "in": [
+          "t4_2500x2200",
+          "t5_2700x2900",
+          "t6_3000x3000"
+        ]
+      }
     },
     {
       "id": "R31",
       "label": "The 99.9 % uptime promise requires remote monitoring",
       "type": "implication",
-      "if_all": [{ "var": "service_level", "in": ["premium"] }],
-      "then": { "var": "connectivity_package", "in": ["connected"] }
+      "if_all": [
+        {
+          "var": "service_level",
+          "in": [
+            "premium"
+          ]
+        }
+      ],
+      "then": {
+        "var": "connectivity_package",
+        "in": [
+          "connected"
+        ]
+      }
     },
     {
       "id": "R32",
       "label": "Near-continuous traffic exceeds the hydraulic drive's duty cycle",
       "type": "implication",
-      "if_all": [{ "var": "usage_profile", "in": ["heavy"] }],
-      "then": { "var": "drive", "in": ["gearless_mrl", "gearless_mr"] }
+      "if_all": [
+        {
+          "var": "usage_profile",
+          "in": [
+            "heavy"
+          ]
+        }
+      ],
+      "then": {
+        "var": "drive",
+        "in": [
+          "gearless_mrl",
+          "gearless_mr"
+        ]
+      }
     },
     {
       "id": "R33",
       "label": "Building type bounds the plausible usage profile",
       "type": "table",
-      "vars": ["building_type", "usage_profile"],
+      "vars": [
+        "building_type",
+        "usage_profile"
+      ],
       "allowed": [
-        ["residential", "low"], ["residential", "medium"],
-        ["hotel", "medium"],
-        ["office", "medium"], ["office", "heavy"],
-        ["retail", "medium"], ["retail", "heavy"],
-        ["hospital", "heavy"]
+        [
+          "residential",
+          "low"
+        ],
+        [
+          "residential",
+          "medium"
+        ],
+        [
+          "hotel",
+          "medium"
+        ],
+        [
+          "office",
+          "medium"
+        ],
+        [
+          "office",
+          "heavy"
+        ],
+        [
+          "retail",
+          "medium"
+        ],
+        [
+          "retail",
+          "heavy"
+        ],
+        [
+          "hospital",
+          "heavy"
+        ]
       ]
     },
     {
       "id": "R34",
       "label": "Hospitals require at least the standard service level",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hospital"] }],
-      "then": { "var": "service_level", "in": ["standard", "premium"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hospital"
+          ]
+        }
+      ],
+      "then": {
+        "var": "service_level",
+        "in": [
+          "standard",
+          "premium"
+        ]
+      }
     },
     {
       "id": "R35",
       "label": "A regenerative drive requires a gearless traction machine",
       "type": "implication",
-      "if_all": [{ "var": "energy_package", "in": ["regen"] }],
-      "then": { "var": "drive", "in": ["gearless_mrl", "gearless_mr"] }
+      "if_all": [
+        {
+          "var": "energy_package",
+          "in": [
+            "regen"
+          ]
+        }
+      ],
+      "then": {
+        "var": "drive",
+        "in": [
+          "gearless_mrl",
+          "gearless_mr"
+        ]
+      }
     },
     {
       "id": "R36",
       "label": "Hydraulic drive with the standard package rates modelled class D",
       "type": "implication",
       "if_all": [
-        { "var": "drive", "in": ["hydraulic"] },
-        { "var": "energy_package", "in": ["standard"] }
+        {
+          "var": "drive",
+          "in": [
+            "hydraulic"
+          ]
+        },
+        {
+          "var": "energy_package",
+          "in": [
+            "standard"
+          ]
+        }
       ],
-      "then": { "var": "energy_class", "in": ["d"] }
+      "then": {
+        "var": "energy_class",
+        "in": [
+          "d"
+        ]
+      }
     },
     {
       "id": "R37",
       "label": "Hydraulic drive with the eco package rates modelled class C",
       "type": "implication",
       "if_all": [
-        { "var": "drive", "in": ["hydraulic"] },
-        { "var": "energy_package", "in": ["eco"] }
+        {
+          "var": "drive",
+          "in": [
+            "hydraulic"
+          ]
+        },
+        {
+          "var": "energy_package",
+          "in": [
+            "eco"
+          ]
+        }
       ],
-      "then": { "var": "energy_class", "in": ["c"] }
+      "then": {
+        "var": "energy_class",
+        "in": [
+          "c"
+        ]
+      }
     },
     {
       "id": "R38",
       "label": "Gearless traction with the standard package rates modelled class C",
       "type": "implication",
       "if_all": [
-        { "var": "drive", "in": ["gearless_mrl", "gearless_mr"] },
-        { "var": "energy_package", "in": ["standard"] }
+        {
+          "var": "drive",
+          "in": [
+            "gearless_mrl",
+            "gearless_mr"
+          ]
+        },
+        {
+          "var": "energy_package",
+          "in": [
+            "standard"
+          ]
+        }
       ],
-      "then": { "var": "energy_class", "in": ["c"] }
+      "then": {
+        "var": "energy_class",
+        "in": [
+          "c"
+        ]
+      }
     },
     {
       "id": "R39",
       "label": "Gearless traction with the eco package rates modelled class B",
       "type": "implication",
       "if_all": [
-        { "var": "drive", "in": ["gearless_mrl", "gearless_mr"] },
-        { "var": "energy_package", "in": ["eco"] }
+        {
+          "var": "drive",
+          "in": [
+            "gearless_mrl",
+            "gearless_mr"
+          ]
+        },
+        {
+          "var": "energy_package",
+          "in": [
+            "eco"
+          ]
+        }
       ],
-      "then": { "var": "energy_class", "in": ["b"] }
+      "then": {
+        "var": "energy_class",
+        "in": [
+          "b"
+        ]
+      }
     },
     {
       "id": "R40",
       "label": "A regenerative drive rates modelled class A",
       "type": "implication",
-      "if_all": [{ "var": "energy_package", "in": ["regen"] }],
-      "then": { "var": "energy_class", "in": ["a"] }
+      "if_all": [
+        {
+          "var": "energy_package",
+          "in": [
+            "regen"
+          ]
+        }
+      ],
+      "then": {
+        "var": "energy_class",
+        "in": [
+          "a"
+        ]
+      }
     },
     {
       "id": "R41",
       "label": "Destination control is delivered as a connected system",
       "type": "implication",
-      "if_all": [{ "var": "dispatch_control", "in": ["destination"] }],
-      "then": { "var": "connectivity_package", "in": ["connected"] }
+      "if_all": [
+        {
+          "var": "dispatch_control",
+          "in": [
+            "destination"
+          ]
+        }
+      ],
+      "then": {
+        "var": "connectivity_package",
+        "in": [
+          "connected"
+        ]
+      }
     },
     {
       "id": "R42",
       "label": "Destination control only earns its place from seven stops up",
       "type": "implication",
-      "if_all": [{ "var": "dispatch_control", "in": ["destination"] }],
-      "then": { "var": "stops", "in": ["s7_12", "s13_24"] }
+      "if_all": [
+        {
+          "var": "dispatch_control",
+          "in": [
+            "destination"
+          ]
+        }
+      ],
+      "then": {
+        "var": "stops",
+        "in": [
+          "s7_12",
+          "s13_24"
+        ]
+      }
     },
     {
       "id": "R43",
       "label": "A machine-room-less lift has no machine to hand-wind, so rescue must be automatic",
       "type": "implication",
-      "if_all": [{ "var": "drive", "in": ["gearless_mrl"] }],
-      "then": { "var": "rescue_operation", "in": ["ard", "ups"] }
+      "if_all": [
+        {
+          "var": "drive",
+          "in": [
+            "gearless_mrl"
+          ]
+        }
+      ],
+      "then": {
+        "var": "rescue_operation",
+        "in": [
+          "ard",
+          "ups"
+        ]
+      }
     },
     {
       "id": "R44",
       "label": "The four-hour response promise cannot rely on a technician to free passengers",
       "type": "implication",
-      "if_all": [{ "var": "service_level", "in": ["premium"] }],
-      "then": { "var": "rescue_operation", "in": ["ard", "ups"] }
+      "if_all": [
+        {
+          "var": "service_level",
+          "in": [
+            "premium"
+          ]
+        }
+      ],
+      "then": {
+        "var": "rescue_operation",
+        "in": [
+          "ard",
+          "ups"
+        ]
+      }
     },
     {
       "id": "R45",
       "label": "Hospital lifts must keep running on the building's standby supply",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hospital"] }],
-      "then": { "var": "rescue_operation", "in": ["ups"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hospital"
+          ]
+        }
+      ],
+      "then": {
+        "var": "rescue_operation",
+        "in": [
+          "ups"
+        ]
+      }
     },
     {
       "id": "R46",
       "label": "Region determines the applicable firefighters' operation",
       "type": "table",
-      "vars": ["region", "firefighters_operation"],
+      "vars": [
+        "region",
+        "firefighters_operation"
+      ],
       "allowed": [
-        ["europe", "none"], ["europe", "en81_72"],
-        ["north_america", "recall"]
+        [
+          "europe",
+          "none"
+        ],
+        [
+          "europe",
+          "en81_72"
+        ],
+        [
+          "north_america",
+          "recall"
+        ]
       ]
     },
     {
@@ -1294,113 +3274,350 @@
       "label": "European public buildings above 30 m require a firefighters lift",
       "type": "implication",
       "if_all": [
-        { "var": "region", "in": ["europe"] },
-        { "var": "building_type", "in": ["office", "hotel", "hospital"] },
-        { "var": "travel", "in": ["high_30_50", "very_high_50_75", "tower_75_100"] }
+        {
+          "var": "region",
+          "in": [
+            "europe"
+          ]
+        },
+        {
+          "var": "building_type",
+          "in": [
+            "office",
+            "hotel",
+            "hospital"
+          ]
+        },
+        {
+          "var": "travel",
+          "in": [
+            "high_30_50",
+            "very_high_50_75",
+            "tower_75_100"
+          ]
+        }
       ],
-      "then": { "var": "firefighters_operation", "in": ["en81_72"] }
+      "then": {
+        "var": "firefighters_operation",
+        "in": [
+          "en81_72"
+        ]
+      }
     },
     {
       "id": "R48",
       "label": "A firefighters lift requires fire-rated landing doors",
       "type": "implication",
-      "if_all": [{ "var": "firefighters_operation", "in": ["en81_72"] }],
-      "then": { "var": "fire_rating", "in": ["e120", "ei60"] }
+      "if_all": [
+        {
+          "var": "firefighters_operation",
+          "in": [
+            "en81_72"
+          ]
+        }
+      ],
+      "then": {
+        "var": "fire_rating",
+        "in": [
+          "e120",
+          "ei60"
+        ]
+      }
     },
     {
       "id": "R49",
       "label": "A firefighters lift must run for two hours after the mains fail",
       "type": "implication",
-      "if_all": [{ "var": "firefighters_operation", "in": ["en81_72"] }],
-      "then": { "var": "rescue_operation", "in": ["ups"] }
+      "if_all": [
+        {
+          "var": "firefighters_operation",
+          "in": [
+            "en81_72"
+          ]
+        }
+      ],
+      "then": {
+        "var": "rescue_operation",
+        "in": [
+          "ups"
+        ]
+      }
     },
     {
       "id": "R50",
       "label": "Badge-at-the-panel access needs destination control to route to",
       "type": "implication",
-      "if_all": [{ "var": "access_control", "in": ["destination_linked"] }],
-      "then": { "var": "dispatch_control", "in": ["destination"] }
+      "if_all": [
+        {
+          "var": "access_control",
+          "in": [
+            "destination_linked"
+          ]
+        }
+      ],
+      "then": {
+        "var": "dispatch_control",
+        "in": [
+          "destination"
+        ]
+      }
     },
     {
       "id": "R51",
       "label": "Hotels lock the guest floors",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hotel"] }],
-      "then": { "var": "access_control", "in": ["card_reader", "destination_linked"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hotel"
+          ]
+        }
+      ],
+      "then": {
+        "var": "access_control",
+        "in": [
+          "card_reader",
+          "destination_linked"
+        ]
+      }
     },
     {
       "id": "R52",
       "label": "A made-to-order car wall cannot be built in ten weeks",
       "type": "implication",
-      "if_all": [{ "var": "lead_time", "in": ["expedited"] }],
-      "then": { "var": "wall_finish", "in": ["painted_steel", "laminate", "brushed_ss"] }
+      "if_all": [
+        {
+          "var": "lead_time",
+          "in": [
+            "expedited"
+          ]
+        }
+      ],
+      "then": {
+        "var": "wall_finish",
+        "in": [
+          "painted_steel",
+          "laminate",
+          "brushed_ss"
+        ]
+      }
     },
     {
       "id": "R53",
       "label": "Framed glass landing doors cannot be built in ten weeks",
       "type": "implication",
-      "if_all": [{ "var": "lead_time", "in": ["expedited"] }],
-      "then": { "var": "door_finish", "in": ["painted", "brushed_ss"] }
+      "if_all": [
+        {
+          "var": "lead_time",
+          "in": [
+            "expedited"
+          ]
+        }
+      ],
+      "then": {
+        "var": "door_finish",
+        "in": [
+          "painted",
+          "brushed_ss"
+        ]
+      }
     },
     {
       "id": "R54",
       "label": "A 2400 mm cabin needs at least 3800 mm of headroom",
       "type": "table",
-      "vars": ["car_height", "headroom"],
+      "vars": [
+        "car_height",
+        "headroom"
+      ],
       "allowed": [
-        ["ch2100", "h3400"], ["ch2100", "h3800"], ["ch2100", "h4200"], ["ch2100", "h4600"],
-        ["ch2200", "h3400"], ["ch2200", "h3800"], ["ch2200", "h4200"], ["ch2200", "h4600"],
-        ["ch2400", "h3800"], ["ch2400", "h4200"], ["ch2400", "h4600"]
+        [
+          "ch2100",
+          "h3400"
+        ],
+        [
+          "ch2100",
+          "h3800"
+        ],
+        [
+          "ch2100",
+          "h4200"
+        ],
+        [
+          "ch2100",
+          "h4600"
+        ],
+        [
+          "ch2200",
+          "h3400"
+        ],
+        [
+          "ch2200",
+          "h3800"
+        ],
+        [
+          "ch2200",
+          "h4200"
+        ],
+        [
+          "ch2200",
+          "h4600"
+        ],
+        [
+          "ch2400",
+          "h3800"
+        ],
+        [
+          "ch2400",
+          "h4200"
+        ],
+        [
+          "ch2400",
+          "h4600"
+        ]
       ]
     },
     {
       "id": "R55",
       "label": "A new building has no existing lift to remove",
       "type": "implication",
-      "if_all": [{ "var": "installation", "in": ["new_build"] }],
-      "then": { "var": "existing_equipment", "in": ["none"] }
+      "if_all": [
+        {
+          "var": "installation",
+          "in": [
+            "new_build"
+          ]
+        }
+      ],
+      "then": {
+        "var": "existing_equipment",
+        "in": [
+          "none"
+        ]
+      }
     },
     {
       "id": "R56",
       "label": "A modernization begins by taking the old lift out",
       "type": "implication",
-      "if_all": [{ "var": "installation", "in": ["modernization"] }],
-      "then": { "var": "existing_equipment", "in": ["strip_recycle", "strip_by_others"] }
+      "if_all": [
+        {
+          "var": "installation",
+          "in": [
+            "modernization"
+          ]
+        }
+      ],
+      "then": {
+        "var": "existing_equipment",
+        "in": [
+          "strip_recycle",
+          "strip_by_others"
+        ]
+      }
     },
     {
       "id": "R57",
       "label": "A hospital keeps a lift by day while its old one is replaced",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hospital"] }, { "var": "installation", "in": ["modernization"] }],
-      "then": { "var": "site_hours", "in": ["out_of_hours"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hospital"
+          ]
+        },
+        {
+          "var": "installation",
+          "in": [
+            "modernization"
+          ]
+        }
+      ],
+      "then": {
+        "var": "site_hours",
+        "in": [
+          "out_of_hours"
+        ]
+      }
     },
     {
       "id": "R58",
       "label": "The 99.9 % uptime promise carries the parts risk too",
       "type": "implication",
-      "if_all": [{ "var": "service_level", "in": ["premium"] }],
-      "then": { "var": "maintenance_scope", "in": ["comprehensive"] }
+      "if_all": [
+        {
+          "var": "service_level",
+          "in": [
+            "premium"
+          ]
+        }
+      ],
+      "then": {
+        "var": "maintenance_scope",
+        "in": [
+          "comprehensive"
+        ]
+      }
     },
     {
       "id": "R59",
       "label": "A hospital cannot wait for a repair to be approved",
       "type": "implication",
-      "if_all": [{ "var": "building_type", "in": ["hospital"] }],
-      "then": { "var": "maintenance_scope", "in": ["semi", "comprehensive"] }
+      "if_all": [
+        {
+          "var": "building_type",
+          "in": [
+            "hospital"
+          ]
+        }
+      ],
+      "then": {
+        "var": "maintenance_scope",
+        "in": [
+          "semi",
+          "comprehensive"
+        ]
+      }
     },
     {
       "id": "R60",
       "label": "Take-back runs through our European recovery network",
       "type": "implication",
-      "if_all": [{ "var": "end_of_life", "in": ["take_back"] }],
-      "then": { "var": "region", "in": ["europe"] }
+      "if_all": [
+        {
+          "var": "end_of_life",
+          "in": [
+            "take_back"
+          ]
+        }
+      ],
+      "then": {
+        "var": "region",
+        "in": [
+          "europe"
+        ]
+      }
     },
     {
       "id": "R61",
       "label": "A card reader in the car locks floor buttons, which a destination-controlled car does not have",
       "type": "implication",
-      "if_all": [{ "var": "access_control", "in": ["card_reader"] }],
-      "then": { "var": "dispatch_control", "in": ["collective"] }
+      "if_all": [
+        {
+          "var": "access_control",
+          "in": [
+            "card_reader"
+          ]
+        }
+      ],
+      "then": {
+        "var": "dispatch_control",
+        "in": [
+          "collective"
+        ]
+      }
     }
   ],
   "footprint": {
@@ -1412,24 +3629,96 @@
     "module_scope": "Making ≈ EN 15804 A1–A3 with a fabrication multiplier; installation ≈ A4–A5; maintenance ≈ B2–B4 over the service life; energy in use ≈ B6; end of life ≈ C1–C4. Benefits beyond the life cycle (module D) are not counted. All figures are illustrative modelled estimates, not a verified assessment.",
     "annual_kwh": {
       "a": {
-        "low": { "low_0_15": 631, "mid_15_30": 948, "high_30_50": 1323, "very_high_50_75": 1702, "tower_75_100": 2159 },
-        "medium": { "low_0_15": 1397, "mid_15_30": 2556, "high_30_50": 3920, "very_high_50_75": 5282, "tower_75_100": 6909 },
-        "heavy": { "low_0_15": 3562, "mid_15_30": 7066, "high_30_50": 11154, "very_high_50_75": 15184, "tower_75_100": 19944 }
+        "low": {
+          "low_0_15": 631,
+          "mid_15_30": 948,
+          "high_30_50": 1323,
+          "very_high_50_75": 1702,
+          "tower_75_100": 2159
+        },
+        "medium": {
+          "low_0_15": 1397,
+          "mid_15_30": 2556,
+          "high_30_50": 3920,
+          "very_high_50_75": 5282,
+          "tower_75_100": 6909
+        },
+        "heavy": {
+          "low_0_15": 3562,
+          "mid_15_30": 7066,
+          "high_30_50": 11154,
+          "very_high_50_75": 15184,
+          "tower_75_100": 19944
+        }
       },
       "b": {
-        "low": { "low_0_15": 664, "mid_15_30": 1048, "high_30_50": 1540, "very_high_50_75": 2088, "tower_75_100": 2800 },
-        "medium": { "low_0_15": 1621, "mid_15_30": 3154, "high_30_50": 5125, "very_high_50_75": 7315, "tower_75_100": 10162 },
-        "heavy": { "low_0_15": 4614, "mid_15_30": 9724, "high_30_50": 16294, "very_high_50_75": 23594, "tower_75_100": 33084 }
+        "low": {
+          "low_0_15": 664,
+          "mid_15_30": 1048,
+          "high_30_50": 1540,
+          "very_high_50_75": 2088,
+          "tower_75_100": 2800
+        },
+        "medium": {
+          "low_0_15": 1621,
+          "mid_15_30": 3154,
+          "high_30_50": 5125,
+          "very_high_50_75": 7315,
+          "tower_75_100": 10162
+        },
+        "heavy": {
+          "low_0_15": 4614,
+          "mid_15_30": 9724,
+          "high_30_50": 16294,
+          "very_high_50_75": 23594,
+          "tower_75_100": 33084
+        }
       },
       "c": {
-        "low": { "low_0_15": 1057, "mid_15_30": 1555, "high_30_50": 2195, "very_high_50_75": 2907, "tower_75_100": 3832 },
-        "medium": { "low_0_15": 2283, "mid_15_30": 4276, "high_30_50": 6838, "very_high_50_75": 9685, "tower_75_100": 13386 },
-        "heavy": { "low_0_15": 6132, "mid_15_30": 12775, "high_30_50": 21316, "very_high_50_75": 30806, "tower_75_100": 43143 }
+        "low": {
+          "low_0_15": 1057,
+          "mid_15_30": 1555,
+          "high_30_50": 2195,
+          "very_high_50_75": 2907,
+          "tower_75_100": 3832
+        },
+        "medium": {
+          "low_0_15": 2283,
+          "mid_15_30": 4276,
+          "high_30_50": 6838,
+          "very_high_50_75": 9685,
+          "tower_75_100": 13386
+        },
+        "heavy": {
+          "low_0_15": 6132,
+          "mid_15_30": 12775,
+          "high_30_50": 21316,
+          "very_high_50_75": 30806,
+          "tower_75_100": 43143
+        }
       },
       "d": {
-        "low": { "low_0_15": 1752, "mid_15_30": 2327, "high_30_50": 3066, "very_high_50_75": 3887, "tower_75_100": 4955 },
-        "medium": { "low_0_15": 3121, "mid_15_30": 5420, "high_30_50": 8377, "very_high_50_75": 11662, "tower_75_100": 15932 },
-        "heavy": { "low_0_15": 7446, "mid_15_30": 15111, "high_30_50": 24966, "very_high_50_75": 35916, "tower_75_100": 50151 }
+        "low": {
+          "low_0_15": 1752,
+          "mid_15_30": 2327,
+          "high_30_50": 3066,
+          "very_high_50_75": 3887,
+          "tower_75_100": 4955
+        },
+        "medium": {
+          "low_0_15": 3121,
+          "mid_15_30": 5420,
+          "high_30_50": 8377,
+          "very_high_50_75": 11662,
+          "tower_75_100": 15932
+        },
+        "heavy": {
+          "low_0_15": 7446,
+          "mid_15_30": 15111,
+          "high_30_50": 24966,
+          "very_high_50_75": 35916,
+          "tower_75_100": 50151
+        }
       }
     }
   }

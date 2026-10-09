@@ -516,21 +516,21 @@ export function OpenRow({ variable }: { variable: Variable }) {
       id={id}
       open={open}
       onOpenChange={setOpen}
-      className={cn("border-b last:border-b-0", addressable, targeted && targetedRing)}
+      className={cn("border-t first:border-t-0", addressable, targeted && targetedRing)}
     >
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="h-auto w-full justify-between gap-2 px-3 py-2 text-left text-sm font-normal"
+          className="-mx-3 h-auto w-[calc(100%+1.5rem)] justify-between gap-2 px-3 py-2.5 text-left text-sm font-normal"
         >
-          <span>
-            {variable.heading}
+          <span>{variable.heading}</span>
+          <span className="ml-auto flex shrink-0 items-center gap-2">
+            <ChevronDownIcon className="text-muted-foreground transition-transform group-data-[state=open]/button:rotate-180" />
           </span>
-          <ChevronDownIcon className="shrink-0 text-muted-foreground transition-transform group-data-[state=open]/button:rotate-180" />
         </Button>
       </CollapsibleTrigger>
       {proposed ? (
-        <div className="flex flex-wrap items-center gap-2 px-3 pb-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 pb-2 text-xs">
           <span className="text-muted-foreground">
             <SparklesIcon className="mr-1 inline size-3 align-[-2px]" />
             proposed: <span className="text-foreground">{proposed.label}</span>
@@ -567,7 +567,7 @@ export function OpenRow({ variable }: { variable: Variable }) {
           ) : null}
         </div>
       ) : null}
-      <CollapsibleContent className="px-3 pb-3">
+      <CollapsibleContent className="pb-3">
         <Options variable={variable} />
       </CollapsibleContent>
     </Collapsible>

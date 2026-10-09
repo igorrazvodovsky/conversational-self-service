@@ -84,7 +84,8 @@ import {
   type View,
 } from "./provider";
 import { useNavigate } from "./link";
-import { StepHeading, StepTabs } from "./steps";
+import { StepTabs } from "./steps";
+import { TONE } from "./tone";
 import { ShowingMenu } from "./showing";
 import {
   Answers,
@@ -188,10 +189,7 @@ const ClauseDocument = Document.extend({ content: "clause+" });
  */
 const ClausePlaceholder = Placeholder.configure({
   showOnlyCurrent: false,
-  placeholder: ({ editor, pos }) =>
-    pos === 0 && editor.state.doc.childCount === 1
-      ? "What the lift must do, in your words"
-      : "Another requirement, in your words",
+  placeholder: "Requirement"
 });
 
 function hintOf(decorations: NodeViewProps["decorations"]): string | null {
@@ -867,11 +865,11 @@ export function Specification() {
   );
 }
 
-/** The gaps a person can narrow the list to, in the order they are offered. */
-const GAPS: { gap: Gap; title: string }[] = [
-  { gap: "open", title: "Open" },
-  { gap: "unanswered", title: "Unanswered" },
-  { gap: "unbound", title: "Answering nothing" },
+/** The mismatches a person can narrow the list to, offered only while
+ * there are any. */
+const MISMATCHES: { gap: Gap; title: string }[] = [
+  { gap: "unanswered", title: "unanswered" },
+  { gap: "unbound", title: "answering nothing" },
 ];
 
 const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
@@ -886,12 +884,23 @@ const PRESSED = "data-[state=on]:bg-foreground data-[state=on]:text-background";
  * read them all. The steps stay beside the list: they are what the list is
  * about, a different axis, and the rail reads as a sequence.
  *
+ * The gaps are of two kinds, so they are two controls. *Open* is how far
+ * the work has come, so *All* and *Open* are a pair to switch between.
+ * *Unanswered* and *Answering nothing* are mismatches between what was
+ * asked and what was set: usually there are none, and a row of tabs
+ * counting zeros reads as a menu of empty places. They appear only while
+ * there is something in them, tinted as something in the way, and the one
+ * chosen stays while it is chosen, so a person who has just emptied it
+ * sees that it is empty and the way back. The pair follows the same rule:
+ * before anything is asked for or set, everything is open and *Open*
+ * would narrow nothing, so the pair waits until the list holds something
+ * else.
+ *
  * Choosing a gap is `frame` by gap and choosing everything is `unframe`,
  * so the filter is a fact of `Framing`, the same whichever party set it.
  * While a step frames the list the gaps work within it: each is the same
- * step frame with the gap beside it, and the counts are the step's. A gap
- * with nothing in it can be chosen like any other: its count says it is
- * empty, and the list it opens shows that it is. An assertion or a clause
+ * step frame with the gap beside it, and the counts are the step's. An
+ * assertion or a clause
  * frame is not a gap, so the gaps give way to the sentence that says what
  * the frame is, with the way out beside it; a frame on a clause is also
  * the answering mode, and the sentence says so.
@@ -906,13 +915,18 @@ function Narrowing() {
   const step = frame?.by === "step" ? frame : null;
   const value = !frame ? "all" : frame.by === "gap" ? frame.gap : step ? step.gap ?? "all" : "";
   const counts = step ? step.counts : view.counts;
+  const mismatches = MISMATCHES.filter(({ gap }) => counts[gap] || value === gap);
+  const inside = view.variables.filter((v) => v.framed);
+  // Under *All* every item in scope is framed, so this is whether *Open*
+  // would leave anything out; chosen, it stays, as the way back.
+  const narrows =
+    value === "open" || view.clauses.length > 0 || inside.some((v) => v.standing !== "open");
   const to = (next: string): Stimulus =>
     step
       ? { act: "frame", frame: { by: "step", step: step.step, ...(next === "all" ? {} : { gap: next }) } }
       : next === "all"
         ? { act: "unframe" }
         : { act: "frame", frame: { by: "gap", gap: next } };
-  const inside = view.variables.filter((v) => v.framed);
   const count = (standing: string) => inside.filter((v) => v.standing === standing).length;
   // Only the counts that say something: a frame with nothing forced, open
   // or given way does not list them as zeros.
@@ -965,32 +979,60 @@ function Narrowing() {
           )}
         </span>
       ) : (
-        <ToggleGroup
-          type="single"
-          variant="outline"
-          size="sm"
-          spacing={0}
-          value={value}
-          aria-label="Show"
-          onValueChange={(next) => {
-            if (!next || next === value) return;
-            void navigate(to(next));
-          }}
-        >
-          {/* Pressed is solid: the primitive's muted fill all but vanishes on
-              the panel's ground, and which filter is on is the list's meaning. */}
-          <ToggleGroupItem value="all" className={PRESSED}>
-            All
-          </ToggleGroupItem>
-          {GAPS.map(({ gap, title }) => (
-            <ToggleGroupItem key={gap} value={gap} className={cn("gap-1.5", PRESSED)}>
-              {title}
-              <span className="tabular-nums text-muted-foreground group-data-[state=on]/toggle:text-background/70">
-                {counts[gap]}
-              </span>
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <span className="flex flex-wrap items-center gap-2">
+          {narrows ? (
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              spacing={0}
+              value={value}
+              aria-label="Show"
+              onValueChange={(next) => {
+                if (!next || next === value) return;
+                void navigate(to(next));
+              }}
+            >
+              {/* Pressed is solid: the primitive's muted fill all but vanishes on
+                  the panel's ground, and which filter is on is the list's meaning. */}
+              <ToggleGroupItem value="all" className={PRESSED}>
+                All
+              </ToggleGroupItem>
+              <ToggleGroupItem value="open" className={cn("gap-1.5", PRESSED)}>
+                Open
+                <span className="tabular-nums text-muted-foreground group-data-[state=on]/toggle:text-background/70">
+                  {counts.open}
+                </span>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          ) : null}
+          {mismatches.length ? (
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              spacing={1}
+              value={value}
+              aria-label="Mismatches"
+              onValueChange={(next) => {
+                // Pressing the chosen one again lets go of it.
+                const gap = next || "all";
+                if (gap !== value) void navigate(to(gap));
+              }}
+            >
+              {mismatches.map(({ gap, title }) => (
+                <ToggleGroupItem
+                  key={gap}
+                  value={gap}
+                  className={cn("gap-1.5", TONE.caution, PRESSED)}
+                >
+                  <span className="tabular-nums">{counts[gap]}</span>
+                  {title}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          ) : null}
+        </span>
       )}
       {/* The way out and the facets stay together at the end of the line,
           whatever the sentence's length. */}
@@ -1025,19 +1067,29 @@ export function AskedFor() {
         The specification
       </h2>
       {/* The steps of the job beside the list, and the list's own header
-          under them: the step it is narrowed to, and the gaps within it
+          under them: the gaps, within the step it is narrowed to
           (`steps.tsx`). */}
       <StepTabs>
         {/* Sticky, so what the list is narrowed to, and the way out of it,
             stay in view down a long list. */}
         <header className="sticky top-0 z-10 -mt-2 space-y-2 bg-ground/95 pt-2 pb-2 backdrop-blur">
-          <StepHeading />
           <Narrowing />
         </header>
         {/* The ledger is a text field, so its edge is a field's: 3:1. Framed,
             it is read, and a frame that leaves nothing says so. */}
-        <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-(--field)">
-          <CardContent className={cn("px-3 py-1", view.frame && !shown.size && "[&_.tiptap]:hidden")}>
+        {/* The ring is drawn inside the edge: outside it, the sticky header
+            above paints over the card's top. */}
+        <Card id="required" className="scroll-mt-28 gap-0 py-0 ring-(--field) ring-inset">
+          {/* With the clauses hidden, the first line has nothing above it to
+              be ruled off from. */}
+          <CardContent
+            className={cn(
+              "px-3 py-1",
+              view.frame &&
+                !shown.size &&
+                "[&_.tiptap]:hidden [&>[data-line]:not([data-line]~[data-line])]:border-t-0",
+            )}
+          >
             <Specification />
             <Unbound unbound={unbound} />
             <Loose loose={loose} />

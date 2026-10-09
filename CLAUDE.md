@@ -175,7 +175,7 @@ How much the person delegates is theirs to set, in their own agent.
 | take the out-of-date mark off an answer or an offer | yes | no | yes |
 | say a fact of the situation was checked on site, or drop one | yes | no | yes |
 | choose which facts the canvas shows beside each item | yes | yes | yes |
-| narrow the canvas to what followed from one assertion, or to one gap | yes | yes | yes |
+| narrow the canvas to what followed from one assertion, to one gap, or to one step of the job | yes | yes | yes |
 | change a price, the catalogue, or the seller's terms | no | no | no |
 
 Every `no` is the absence of a rule, not a prohibition — the DSL has no way to

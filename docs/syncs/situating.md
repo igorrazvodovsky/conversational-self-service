@@ -259,13 +259,13 @@ the building and whether the person has checked it, and offers to check it;
 on a derivation, each quantity it rested on or assumed is marked as stated
 or measured, and can be measured there. The situation as a whole is a read
 over `Situating` for the model's `review`, under `situation`, with what is
-still open, and the step that wants it is [Stepping](stepping.md)'s.
+still open.
 
 ## What is not here
 
 _No `pending` given._ The case's `Situating` records a fact with no value
 yet, as pending a survey. Here a fact nobody has given is *open*, which the
-canvas and the step that wants it already say; a second way to say it would
+canvas already says; a second way to say it would
 be the same fact under two names.
 
 _No `pin`, and no `constrains`._ The case pins a given to a target and
@@ -297,4 +297,3 @@ reaches the offer only through an answer, which is marked here.
 - [Conduct](conduct.md) — the model's permissions, narrowed by a fact the person gave
 - [Propagation](propagation.md) — the conflict question, which does not offer such a fact
 - [Staling](staling.md) — the mark a changed given puts on what rested on it
-- [Stepping](stepping.md) — the step that wants a fact nobody has given

@@ -30,7 +30,6 @@ it.
 | `TheCatalogueSetsTheRules` | [Seeding](seeding.md) |
 | `TheCatalogueSaysHowToWorkThingsOut` | [Seeding](seeding.md) |
 | `TheCatalogueNamesTheSituation` | [Seeding](seeding.md) |
-| `TheCatalogueSetsTheSteps` | [Seeding](seeding.md) |
 | `TheWorkspaceIsLaidOut` | [Seeding](seeding.md) |
 | `ASpecificationIsStartedAtBoot` | [Seeding](seeding.md) |
 | `TheCatalogueSeedsTheSolver` | [Seeding](seeding.md) |
@@ -129,16 +128,6 @@ it.
 | `ASurveyedQuantityIsWorkedOutAgain` | [Situating](situating.md) |
 | `AChangedGivenStalesWhatRestsOnIt` | [Situating](situating.md) |
 | `APersonDropsAGiven` | [Situating](situating.md) |
-| `AStartedSpecificationGetsItsSteps` | [Stepping](stepping.md) |
-| `ADiscardedSpecificationLosesItsSteps` | [Stepping](stepping.md) |
-| `APersonTakesAStep` | [Stepping](stepping.md) |
-| `ATakenStepFramesTheCanvas` | [Stepping](stepping.md) |
-| `APersonFinishesAStep` | [Stepping](stepping.md) |
-| `APersonSkipsAStep` | [Stepping](stepping.md) |
-| `APersonReopensAStep` | [Stepping](stepping.md) |
-| `APersonReassignsAStep` | [Stepping](stepping.md) |
-| `APersonRenamesAStep` | [Stepping](stepping.md) |
-| `APersonAddsAStep` | [Stepping](stepping.md) |
 
 ## Seeding
 
@@ -225,17 +214,13 @@ is already on the log, as provenance and as utterances. No rule receives a
 handover, because the seller has no surface here. See
 [Handover](handover.md).
 
-## Where the person is in the job
+## The steps of the job are a frame
 
-The seller's template of steps arrives with the catalogue, and a
-specification gets one step of each when it is opened. The person takes a
-step, which narrows the canvas to what the step is about, finishes or
-skips one with a reason, reopens, reassigns, renames or adds one, and
-every gesture is recorded as made: no rule has a step's status in its
-`where`, so the steps are a map and not a script. What a step
-still wants is a read over the variables' standing, and the model asks
-about the step the person is at, in its turn, from `review`. See
-[Stepping](stepping.md).
+The seller names the parts of the job in the catalogue, and the canvas
+narrows to one as it narrows to a gap: a frame value, read by the read
+side, held by `Framing`. No concept holds the steps, nothing has a status,
+and the model asks about no step. See
+[Gestures](gestures.md#the-canvas-is-narrowed-to-one-step-of-the-job).
 
 ## What is out of date is marked
 

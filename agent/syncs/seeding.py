@@ -436,24 +436,6 @@ def _leaves_the_solver(c: Completion, _: States) -> list[Invocation]:
     ]
 
 
-def _the_catalogue_sets_the_steps(c: Completion, _: States) -> list[Invocation]:
-    """The template of steps, in the seller's job vocabulary, in the order
-    the catalogue gives them.  A need is a variable's name; whether it is
-    met is read elsewhere (`docs/syncs/stepping.md`)."""
-    return [
-        Invocation(
-            "Stepping",
-            "author",
-            {
-                "template": step["step"],
-                "name": step.get("name", step["step"]),
-                "needs": list(step.get("needs", [])),
-                "covers": list(step.get("covers", [])),
-                "owner": step.get("owner", "person"),
-            },
-        )
-        for step in _catalogue(c).get("steps", [])
-    ]
 
 
 # In this order: a rule fires with every earlier rule's consequences already
@@ -473,7 +455,6 @@ rules = [
         _the_catalogue_says_how_to_work_things_out,
     ),
     Sync("TheCatalogueNamesTheSituation", BOOT, _the_catalogue_names_the_situation),
-    Sync("TheCatalogueSetsTheSteps", BOOT, _the_catalogue_sets_the_steps),
     Sync("TheWorkspaceIsLaidOut", BOOT, _the_workspace_is_laid_out),
     Sync("ASpecificationIsStartedAtBoot", BOOT, _a_specification_is_started),
     Sync("TheCatalogueSeedsTheSolver", ("Cataloguing", "list"), _seeds_the_solver),

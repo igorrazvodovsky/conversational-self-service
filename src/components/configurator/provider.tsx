@@ -168,7 +168,8 @@ export type Frame =
   | { by: "clause"; clause: string; text: string }
   | { by: "gap"; gap: Gap }
   /** A step of the job, with a gap filtering within it; `counts` are the
-   * gaps counted within the step (docs/syncs/stepping.md). */
+   * gaps counted within the step (docs/syncs/gestures.md, "The canvas is
+   * narrowed to one step of the job"). */
   | {
       by: "step";
       step: string;
@@ -559,19 +560,13 @@ export interface Turn {
   }[];
 }
 
-/** One step of the job, as the seller's template names it or as the person
- * renamed or added it. `wanting` is the variables of its needs that stand
- * open: nothing asserted and nothing following (docs/syncs/stepping.md). */
+/** One step of the job, as the seller's catalogue names it: a frame value,
+ * not a thing with a status. */
 export interface Step {
   step: string;
   at: string;
   name: string;
-  template: string | null;
-  owner: string;
-  status: "open" | "finished" | "skipped";
-  needs: { variable: string; heading: string; standing: Standing; at: string }[];
-  wanting: string[];
-  deviation: { kind: string; text: string }[];
+  about: string[];
 }
 
 export interface View {
@@ -625,9 +620,8 @@ export interface View {
   quotable: { ok: boolean; because: string; asked?: AskedAddressee | null };
   handovers: Handover[];
   beyond: Beyond | null;
-  /** Where the person is in the job: `at` is the step they took, `start`
-   * the first still wanting something while they have taken none. */
-  stepping: { at: string | null; start: string | null; steps: Step[] };
+  /** The steps of the job. */
+  steps: Step[];
   customer: Party;
   seller: Party;
   project: { title: string; site: string };

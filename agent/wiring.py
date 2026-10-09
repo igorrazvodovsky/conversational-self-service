@@ -41,13 +41,12 @@ from concepts.showing import Showing
 from concepts.situating import Situating
 from concepts.specifying import Specifying
 from concepts.staling import Staling
-from concepts.stepping import Stepping
 from concepts.stipulating import Stipulating
 from engine import Engine
 from engine.bootstrap import Copiloting
 from syncs import (
     binding, conduct, gestures, handover, propagation, reading, seeding, situating,
-    staling, stepping,
+    staling,
 )
 
 CATALOGUE = Path(__file__).parent / "catalogue" / "elevator.json"
@@ -108,9 +107,6 @@ def build(path: Path = CATALOGUE) -> Engine:
         HandingOver(),
         # What is out of date, and by which change.  Nothing to seed.
         Staling(),
-        # Where the person is in the job.  Seeded with the catalogue's
-        # template of steps; a specification gets its own when opened.
-        Stepping(),
         Profiling(),
         Naming(),
         Stipulating(),
@@ -133,7 +129,6 @@ def build(path: Path = CATALOGUE) -> Engine:
         *conduct.rules,
         *handover.rules,
         *staling.rules,
-        *stepping.rules,
     )
 
     catalogue = json.loads(path.read_text())

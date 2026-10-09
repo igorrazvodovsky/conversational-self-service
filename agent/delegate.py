@@ -704,41 +704,6 @@ def drop(
     return gesture(act="drop", given=given)
 
 
-@tool(
-    "take",
-    "Say which step of the job the person is at. `review` lists the steps "
-    "under `stepping`, each with what it still wants; `at` is the step the "
-    "person took and `start` the first still wanting something. Taking a "
-    "step prevents nothing and changes no step's status.",
-)
-def take(
-    step: Annotated[str, Field(description="A step's id from `stepping.steps`")],
-) -> dict[str, Any]:
-    return gesture(act="take", step=step)
-
-
-@tool(
-    "finish",
-    "Mark a step of the job finished, as the person, whether or not what it "
-    "wants has been given. The mark is the person's claim and gates nothing.",
-)
-def finish(
-    step: Annotated[str, Field(description="A step's id from `stepping.steps`")],
-) -> dict[str, Any]:
-    return gesture(act="finish", step=step)
-
-
-@tool(
-    "skip",
-    "Mark a step of the job skipped, with the person's reason, which is kept "
-    "as a deviation from the seller's template. Gates nothing.",
-)
-def skip(
-    step: Annotated[str, Field(description="A step's id from `stepping.steps`")],
-    reason: Annotated[str, Field(description="Why, in the person's words")],
-) -> dict[str, Any]:
-    return gesture(act="skip", step=step, reason=reason)
-
 
 # -- what the canvas shows ------------------------------------------------------
 
@@ -760,21 +725,28 @@ def hide(facet: str) -> dict[str, Any]:
 @tool(
     "frame",
     "Narrow the canvas to one assertion (`variable`, from `asked`), one "
-    "requirement (`clause`, from `required`), or one gap (`gap`: `open`, "
-    "`unanswered` or `unbound`). Exactly one of the three.",
+    "requirement (`clause`, from `required`), one gap (`gap`: `open`, "
+    "`unanswered` or `unbound`), or one step of the job (`step`, from "
+    "`steps`), with a `gap` beside a step to filter within it. A step is "
+    "narrowed to, never taken, finished or skipped.",
 )
 def frame(
     variable: str | None = None,
     clause: str | None = None,
     gap: Literal["open", "unanswered", "unbound"] | None = None,
+    step: str | None = None,
 ) -> dict[str, Any]:
-    given = [g for g in (variable, clause, gap) if g]
+    given = [g for g in (variable, clause, step, gap) if g]
+    if step and gap:
+        return gesture(act="frame", frame={"by": "step", "step": step, "gap": gap})
     if len(given) != 1:
-        return refused("frame", "give exactly one of a variable, a clause or a gap")
+        return refused("frame", "give exactly one of a variable, a clause, a gap or a step")
     if clause:
         return gesture(act="frame", frame={"by": "clause", "clause": clause})
     if variable:
         return gesture(act="frame", frame={"by": "assertion", "variable": variable})
+    if step:
+        return gesture(act="frame", frame={"by": "step", "step": step})
     return gesture(act="frame", frame={"by": "gap", "gap": gap})
 
 

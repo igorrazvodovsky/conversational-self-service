@@ -684,156 +684,64 @@ def _beyond(
     return None
 
 
-def _steps(engine: Engine, spec: str, variables: list[dict[str, Any]]) -> dict[str, Any]:
-    """Where the person is in the job, read off `Stepping` and the variables'
-    standing.  `at` is the step the person took, or none; `start` is the
-    first open step still wanting something, offered as the place to begin
-    while they have taken none, and recorded by nobody."""
-    stepping = engine.state("Stepping")
-    standing = {v["name"]: v["standing"] for v in variables}
-    heading = {v["name"]: v["heading"] for v in variables}
-    wanting = readings.wanting(stepping, standing, spec)
-    steps = [
+def steps_of(engine: Engine) -> list[dict[str, Any]]:
+    """The seller's steps of the job, read off the catalogue as the currency
+    is: a name and the variables it is about.  No concept holds them and
+    nothing about them is state; a step is a frame value (`docs/syncs/gestures.md`,
+    "The canvas is narrowed to one step of the job").  Listed as the
+    catalogue lists them, because a list has to go some way; no claim rests
+    on the order."""
+    return [
         {
-            "step": step,
-            "at": f"#step:{step}",
-            "name": stepping["name"][step],
-            "template": stepping["instanceOf"].get(step),
-            "owner": stepping["owner"][step],
-            "status": stepping["status"][step],
-            "needs": [
-                {
-                    "variable": n,
-                    "heading": heading.get(n, n),
-                    "standing": standing.get(n, "open"),
-                    "at": f"#variable:{n}",
-                }
-                for n in stepping["needs"].get(step, [])
-            ],
-            "wanting": wanting[step],
-            "deviation": stepping["deviation"].get(step, []),
+            "step": step["step"],
+            "at": f"#step:{step['step']}",
+            "name": step.get("name", step["step"]),
+            "about": list(step.get("covers", [])),
         }
-        for step in stepping["steps"].get(spec, [])
+        for step in engine.catalogue.get("steps", [])
     ]
-    at = stepping["at"].get(spec)
-    start = next(
-        (s["step"] for s in steps if s["status"] == "open" and s["wanting"]), None
-    )
-    return {"at": at, "start": start, "steps": steps}
 
 
 def tally(engine: Engine) -> list[dict[str, Any]]:
-    """Each step of the job, as the template names it, and what every
-    specification ever given it did with it: how many were given it, how
-    many took, finished or skipped it, and how many took it *out of order*,
-    which is past a step before it that still wanted something at the time.
-    The plan's instrument for whether the authored steps match practice;
-    read by the case and by nobody in the application.
+    """Each step of the job, and what every specification ever started did
+    with it: how many were narrowed to it at all, how many had a value in
+    its ground asserted by the person while narrowed to it, and how many
+    while not.  The plan's instrument for whether the seller's steps match
+    practice, read by the case and by nobody in the application.  A step
+    nobody narrows to while its ground is answered anyway is the finding to
+    watch for.
 
-    Everything is the log's.  Steps leave `Stepping` when the specification
-    closes, and `at` is replaced in place, so the order a person went in
-    survives only as the sequence of `take` completions.  Whether a step
-    still wanted something at that moment is the canvas's read made over
-    the log instead of the state: a need stands open while nothing is
-    asserted for it and the solver has not settled it, so the assertions
-    are followed through `Asserting`'s completions and the settled values
-    through the solver's, which carry them.  Finishing a step is a gesture
-    nobody owes, so a step's status alone would call every second take out
-    of order; a step finished or skipped is closed whatever it wants.
-
-    A specification is counted by its opening, not its id: the one
-    specification a session holds is started again under the same id after
-    a discard, and each start is a person going through the steps afresh."""
-    stepping = engine.state("Stepping")
-    templates = {t: stepping["called"][t] for t in stepping["templates"]}
-    wants = {t: list(stepping["wants"].get(t, [])) for t in templates}
-    given: dict[str, set[str]] = {t: set() for t in templates}
-    did: dict[str, dict[str, set[str]]] = {
-        t: {"taken": set(), "finished": set(), "skipped": set(), "outOfOrder": set()}
-        for t in templates
-    }
-    order: dict[str, list[str]] = {}
-    opening: dict[str, str] = {}
-    instance_of: dict[str, str] = {}
-    status: dict[str, str] = {}
-    asserted: dict[str, set[str]] = {}
-    settled: dict[str, set[str]] = {}
-
-    def wanting(spec: str, step: str) -> bool:
-        if status.get(step) != "open":
-            return False
-        standing = asserted.get(spec, set()) | settled.get(spec, set())
-        return any(n not in standing for n in wants.get(instance_of.get(step, ""), []))
-
-    # From the first record, not from `settled_at`: the specification the
-    # boot opens gets its steps in the boot, and it counts.
+    Everything is the log's: the frames as `Framing` recorded them, the
+    assertions as `Asserting` did, and a specification counted by its
+    opening rather than its id, since the one specification a session holds
+    is started again under the same id after a discard."""
+    steps = steps_of(engine)
+    ground = {s["step"]: set(s["about"]) for s in steps}
+    did = {s["step"]: {"framed": set(), "within": set(), "elsewhere": set()} for s in steps}
+    # One specification and one workspace per instance (`wiring.py`), so the
+    # start in progress is the latest opening, and the frame is the
+    # workspace's.
+    start = ""
+    framed: str | None = None
     for record in engine.log.records(since=0, limit=1_000_000):
-        if record.kind != "completion":
+        if record.kind != "completion" or "error" in (record.output or {}):
             continue
         out = record.output or {}
-        if "error" in out:
-            continue
-        if record.concept == "Asserting":
-            if record.action == "assert":
-                asserted.setdefault(out["spec"], set()).add(out["variable"])
-            elif record.action == "withdraw":
-                asserted.get(out["spec"], set()).discard(out["variable"])
-            elif record.action == "discard":
-                asserted.pop(out["spec"], None)
-            continue
-        if record.concept == "Constraining":
-            if "settled" in out:
-                settled[out["spec"]] = set(out["settled"])
-            elif record.action == "forget":
-                settled.pop(out["spec"], None)
-            continue
-        if record.concept != "Stepping":
-            continue
-        if record.action == "instantiate":
-            # One step per template, in the templates' order: the concept's
-            # contract, and the only record of which template a step was of
-            # once the specification has closed.
-            order[out["spec"]] = list(out["steps"])
-            opening[out["spec"]] = record.id
-            for template, step in zip(templates, out["steps"]):
-                status[step] = "open"
-                instance_of[step] = template
-                given[template].add(record.id)
-            continue
-        if record.action == "add":
-            order.setdefault(out["spec"], []).append(out["step"])
-            status[out["step"]] = "open"
-            continue
-        if record.action not in ("take", "finish", "skip", "reopen"):
-            continue
-        step, spec = out["step"], out["spec"]
-        opened = opening.get(spec, spec)
-        counted = did.get(instance_of.get(step, ""))
-        if record.action == "take":
-            before = order.get(spec, [])
-            before = before[: before.index(step)] if step in before else []
-            if counted is not None:
-                counted["taken"].add(opened)
-                if any(wanting(spec, s) for s in before):
-                    counted["outOfOrder"].add(opened)
-        elif record.action == "finish":
-            status[step] = "finished"
-            if counted is not None:
-                counted["finished"].add(opened)
-        elif record.action == "skip":
-            status[step] = "skipped"
-            if counted is not None:
-                counted["skipped"].add(opened)
-        else:
-            status[step] = "open"
+        if record.concept == "Specifying" and record.action == "open":
+            start, framed = record.id, None
+        elif record.concept == "Framing":
+            frame = out.get("frame") if record.action == "frame" else None
+            framed = frame.get("step") if isinstance(frame, dict) and frame.get("by") == "step" else None
+            if framed in did:
+                did[framed]["framed"].add(start)
+        elif record.concept == "Asserting" and record.action == "assert" and record.actor == "person":
+            variable = record.input.get("variable")
+            for step, about in ground.items():
+                if variable in about:
+                    did[step]["within" if step == framed else "elsewhere"].add(start)
     return [
-        {
-            "template": t,
-            "name": name,
-            "given": len(given[t]),
-            **{what: len(specs) for what, specs in did[t].items()},
-        }
-        for t, name in templates.items()
+        {"step": s["step"], "name": s["name"], **{what: len(specs) for what, specs in did[s["step"]].items()}}
+        for s in steps
     ]
 
 
@@ -913,14 +821,13 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         else None
     )
     # A step frames the canvas to the variables it is about, and a gap
-    # beside it filters within.  A step the specification no longer has
-    # reads as no frame.  See docs/syncs/stepping.md, "A step is a frame".
-    stepping = engine.state("Stepping")
+    # beside it filters within.  A step the catalogue does not list reads as
+    # no frame.  See docs/syncs/gestures.md, "The canvas is narrowed to one
+    # step of the job".
+    steps = {s["step"]: s for s in steps_of(engine)}
     framed_step = (
         frame.get("step")
-        if isinstance(frame, dict)
-        and frame.get("by") == "step"
-        and frame.get("step") in stepping["steps"].get(spec, [])
+        if isinstance(frame, dict) and frame.get("by") == "step" and frame.get("step") in steps
         else None
     )
     step_gap = (
@@ -928,11 +835,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
         if framed_step is not None and frame.get("gap") in ("open", "unanswered", "unbound")
         else None
     )
-    step_vars = (
-        set(stepping["about"].get(framed_step, [])) | set(stepping["needs"].get(framed_step, []))
-        if framed_step is not None
-        else set()
-    )
+    step_vars = set(steps[framed_step]["about"]) if framed_step is not None else set()
     # The variables whose asserted value answers the framed clause, read
     # from the ledger below once it exists; filled before `variables` is built.
     answering_clause: set[str] = set()
@@ -1324,7 +1227,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             else {
                 "by": "step",
                 "step": framed_step,
-                "name": stepping["name"].get(framed_step, framed_step),
+                "name": steps[framed_step]["name"],
                 "gap": step_gap,
                 # The gaps counted within the step, for the filter row.
                 "counts": {
@@ -1344,7 +1247,7 @@ def _canvas(engine: Engine, spec: str, grid: str) -> dict[str, Any]:
             else None
         ),
         "variables": variables,
-        "stepping": _steps(engine, spec, variables),
+        "steps": steps_of(engine),
         "clauses": clauses,
         "sources": _sources(engine, clauses, trace["stated"]),
         # The flows the person's own agent opened by speaking in the chat;
@@ -2246,18 +2149,10 @@ def digest(
         ],
         # What the canvas shows beside each item, and what else it could.
         # The model may change this with `show` and `hide`, and nothing else.
-        # Where the person is in the job: the steps with their needs, which
-        # of them still want a value, the step they took, and the one to
-        # start at while they have taken none.  Ask about that step and no
-        # other (docs/syncs/stepping.md).
-        "stepping": {
-            "at": view["stepping"]["at"],
-            "start": view["stepping"]["start"],
-            "steps": [
-                {k: s[k] for k in ("step", "at", "name", "owner", "status", "wanting")}
-                for s in view["stepping"]["steps"]
-            ],
-        },
+        # The steps of the job, for `frame` by step.  Nothing here is to ask
+        # about: a step has no status and wants nothing of its own
+        # (docs/syncs/gestures.md).
+        "steps": [{k: s[k] for k in ("step", "at", "name")} for s in view["steps"]],
         "showing": view["showing"],
         # Which items the canvas is narrowed to, if any — `frame` and
         # `unframe` change it.  `framed` lists what the frame selects.

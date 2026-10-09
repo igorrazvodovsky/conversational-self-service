@@ -359,8 +359,7 @@ their mind in words later, since the re-ask discards the choice on record.
 Neither rule computes a completion while a fact of the situation is open.
 The optimiser picks the cheapest option for every variable nobody has
 settled, and the cheapest building type, code regime or shaft is not a
-finding about the building; the person has to say, and the step that wants
-it is already the first ([Stepping](stepping.md)). So the `where` reads
+finding about the building; the person has to say. So the `where` reads
 [Situating](situating.md#a-completion-waits-for-the-situation) for every fact
 the solver takes, the tool names the ones still open under `next`, and the
 model asks. A fact the model estimated, such as the region a city implies,

@@ -375,7 +375,8 @@ looking inside. The values read are `[ by: "assertion" ; variable: ?v ]`,
 which the page offers no control for — what an assertion forced is beneath
 it on its line — and which the person's own agent may pass, `[ by: "clause" ; clause: ?c ]`,
 from a control on a clause, and `[ by: "gap" ; gap: ?g ]`, from the filters
-over the specification. Rules in
+over the specification, and `[ by: "step" ; step: ?st ]`, from the steps
+of the job beside it, with a gap beside the step to filter within. Rules in
 [Propagation](propagation.md#a-frame-goes-with-what-it-framed) take a frame
 away when what it framed goes; a gap frame names no item, so nothing takes it
 away, and once the gap closes it selects nothing and the canvas says so.
@@ -411,6 +412,36 @@ the values asserted with no clause behind them, with what they forced. Each
 is a rule over the current state, read in `agent/views.py`, so a frame on a
 gap follows the state as it moves: answer the last unanswered clause and the
 frame selects nothing.
+
+<a id="the-canvas-is-narrowed-to-one-step-of-the-job"></a>
+### The canvas is narrowed to one step of the job
+
+The seller names the parts of the job in the catalogue — the building, the
+journey, what must fit — each as a set of the variables it is about, and
+`[ by: "step" ; step: ?st ]` is a frame on one of them: the list narrowed to
+those variables and the requirements they answer, with a gap beside it
+filtering within, so *open within the shaft* is one frame value and not two.
+The steps are a listing the read side reads off the catalogue, as it reads
+the currency; no concept holds them, and nothing about them is state. They
+have no order, no status and no owner: a step is not taken, finished or
+skipped, and where the person is in the job is where they are looking,
+which `Framing` already holds. What a step still lacks is the open gap
+within it, the same read as the filter and shown only there, not a need
+the seller declared and not a count beside every step: every open variable
+is equally unsaid until the person says it, and what stands between the
+specification and a quote is [Standing](handover.md)'s one read against
+that one goal. The model has no
+step of its own to ask about, and asks for a value only where a rule's
+`next` or `missing` names it ([Conduct](conduct.md)).
+
+The instrument the plan keeps on the seller's steps is a read over the
+log, at `GET /configurator/steps`: per step, how many specifications were
+ever narrowed to it, and how many had a value in its ground asserted by
+the person while narrowed to it, against while not. A step nobody narrows
+to while its ground is answered from the words and the gap filters is the
+finding to watch for; a tally per step of declared skips would have
+measured who fills in forms. Nothing on the canvas shows it, because it is
+a finding about the catalogue, not about the person's lift.
 
 What was asked for, what follows from it and what is open are kinds
 of fact, not places on the canvas. Each item says which it is where it

@@ -108,11 +108,6 @@ then  { Situating/describe: [ fact ; meaning ]
           for each variable ?c lists under situation, with its heading,
           and for each quantity some method of ?c needs, with its meaning }
 
-sync TheCatalogueSetsTheSteps
-when  { Copiloting/boot: [] => [ catalogue: ?c ] }
-then  { Stepping/author: [ template ; name ; needs ; covers ; owner ]
-          for each step of ?c, in the catalogue's order }
-
 sync TheWorkspaceIsLaidOut
 when  { Copiloting/boot: [] => [ workspace: ?w ; facets: ?f ] }
 then  { Showing/offer: [ lens: ?w ; facet ; about ] for each facet in ?f ;

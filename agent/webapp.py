@@ -81,9 +81,10 @@ def review() -> dict[str, Any]:
 
 @app.get("/configurator/steps")
 def steps() -> list[dict[str, Any]]:
-    """The case's instrument for the steps: per authored step, how many
-    specifications skipped it or took it out of order.  Read by whoever runs
-    the prototype plan, not by the page or the model."""
+    """The case's instrument for the seller's steps: per step, how many
+    specifications were narrowed to it, and how many had its ground answered
+    while narrowed to it, against while not.  Read by whoever runs the
+    prototype plan, not by the page or the model."""
     return tally(engine)
 
 

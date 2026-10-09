@@ -91,8 +91,7 @@ function frameNamed(word: string): FrameAsked | null | undefined {
   if (by === "assertion") return { by, variable: rest };
   if (by === "clause") return { by, clause: rest };
   if (by === "step") {
-    // A step's id carries a colon of its own (`spec:shaft`), so the gap is
-    // the last word only when it names one.
+    // The gap is the last word only when it names one.
     const last = rest.lastIndexOf(":");
     const gap = last >= 0 ? rest.slice(last + 1) : "";
     if (GAPS.includes(gap)) return { by, step: rest.slice(0, last), gap };

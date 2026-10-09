@@ -315,7 +315,7 @@ export function Details({ children }: { children: React.ReactNode }) {
 /** The absence of a requirement reads where a requirement would be. */
 function Line({ question, children }: { question?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="space-y-1 border-t py-3">
+    <div data-line className="space-y-1 border-t py-3">
       <p className="text-sm text-muted-foreground">{question ?? "No stated requirement"}</p>
       <div className="min-w-0 space-y-1 pl-4">{children}</div>
     </div>
@@ -362,29 +362,30 @@ export function Loose({ loose }: { loose: Variable[] }) {
   ));
 }
 
-function byFamily(open: Variable[]): [string, Variable[]][] {
-  const groups = new Map<string, Variable[]>();
-  for (const v of open) {
-    const rows = groups.get(v.family);
-    if (rows) rows.push(v);
-    else groups.set(v.family, [v]);
-  }
-  return [...groups.entries()];
-}
-
 /**
- * Grouped by the catalogue's family, so the scan a person brings here — what kind of thing
- * is left — has an answer; the grouping is the catalogue's, so it is only
- * here.
+ * What is still open, one list at the ledger's tail. The catalogue's
+ * families do not arrange it (`docs/ui.md`, "What a view is"): the question
+ * *what kind of thing is left* is the steps' to answer, and a step frames
+ * the same list. No row is marked as wanted more than another: before the
+ * person has said anything, every open variable is equally unsaid.
+ *
+ * Each row is a line of the ledger, ruled like the others, not a box
+ * inside one. The list is headed *Open* only where it follows other
+ * lines: narrowed to what is open, the filter above already says so.
  */
 export function Open({ open }: { open: Variable[] }) {
-  return byFamily(open).map(([family, rows]) => (
-    <Line key={family} question={`${family}: open`}>
-      <div className="border">
-        {rows.map((variable) => (
+  const { view } = useConfigurator();
+  if (!open.length) return null;
+  const frame = view?.frame;
+  const said = frame?.by === "gap" ? frame.gap === "open" : frame?.by === "step" && frame.gap === "open";
+  return (
+    <div data-line className="border-t">
+      {said ? null : <p className="pt-3 pb-1 text-sm text-muted-foreground">Open</p>}
+      <div>
+        {open.map((variable) => (
           <OpenRow key={variable.name} variable={variable} />
         ))}
       </div>
-    </Line>
-  ));
+    </div>
+  );
 }

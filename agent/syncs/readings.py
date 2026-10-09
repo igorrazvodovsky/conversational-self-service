@@ -324,18 +324,6 @@ def reasons(
     return out
 
 
-def wanting(stepping: dict[str, Any], standing: dict[str, str], spec: str) -> dict[str, list[str]]:
-    """`?step wants ?n`: of a step's needs, the variables that stand open,
-    with nothing asserted and nothing following.  `standing` is each
-    variable's standing as the canvas reads it off `Asserting` and
-    `Constraining`; a value the rules force or a method worked out is
-    never wanting, because it stands before anyone could ask for it.
-    Read by the canvas and the model alike (`docs/syncs/stepping.md`)."""
-    return {
-        step: [n for n in stepping["needs"].get(step, []) if standing.get(n) == "open"]
-        for step in stepping["steps"].get(spec, [])
-    }
-
 
 def given_of(situating: dict[str, Any], spec: str, fact: str) -> str | None:
     """`Situating: { ?g in givens of ?s ; ?g of: ?f }`: the situation's given
