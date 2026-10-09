@@ -2,12 +2,10 @@
 
 import {
   BotIcon,
-  CheckIcon,
   ChevronDownIcon,
   ChevronsDownUpIcon,
   ChevronsUpDownIcon,
   SparklesIcon,
-  TriangleAlertIcon,
   UserIcon,
   XIcon,
 } from "lucide-react";
@@ -18,13 +16,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Item, ItemContent } from "@/components/ui/item";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { address, addressable, targeted as targetedRing, To, useTargeted } from "./address";
 import { ClauseText, useAnswering } from "./clauses";
 import { Consequences } from "./question";
-import { adds, kilos } from "./format";
+import { choices, Control } from "./controls";
 import { useConfigurator, type Option, type Variable } from "./provider";
 import { useShown } from "./showing";
 
@@ -51,9 +48,10 @@ function usePick(variable: Variable) {
 
 /**
  * Which facts a person sees beside each option is `Showing`'s, not this
- * component's. The catalogue's note is advice about one option, read while
- * choosing it, so it is that option's tooltip rather than a line of its own:
- * as a list it repeated every label beneath the buttons.
+ * component's; which control the options are drawn as is `controls.tsx`'s.
+ * The catalogue's note is advice about one option, read while choosing it,
+ * so it is that option's tooltip rather than a line of its own: as a list it
+ * repeated every label beneath the options.
  *
  * An option the rules rule out stays a choice: picking it records the
  * assertion and puts the conflict to the person. So it is not struck, which
@@ -63,72 +61,19 @@ function Options({ variable }: { variable: Variable }) {
   const { view } = useConfigurator();
   const shown = useShown();
   const pick = usePick(variable);
-  const currency = view?.currency ?? "";
-  const price = shown("price");
-  const carbon = shown("carbon");
   const excluded = shown("excluded")
     ? variable.options.filter((o) => !o.possible && o.excluded.length)
     : [];
   return (
     <div className="space-y-1.5">
-      <div className="flex flex-wrap gap-1.5">
-        {variable.options.map((option) => {
-          const tip = option.possible
-            ? option.note
-            : "Conflicts with what has been asserted so far. Picking it puts the conflict to you.";
-          // The current value is pressed rather than disabled: it stays in
-          // reach and keeps its note, and pressing it again changes nothing.
-          const current = option.id === variable.asked;
-          const button = (
-            <Button
-              variant="outline"
-              size="xs"
-              aria-pressed={current}
-              className={cn(
-                "h-auto py-1",
-                !option.possible && "border-dashed text-muted-foreground",
-              )}
-              onClick={() => current || pick(option)}
-            >
-              {current ? (
-                <CheckIcon />
-              ) : !option.possible ? (
-                <TriangleAlertIcon aria-hidden className="text-caution" />
-              ) : null}
-              {option.label}
-              {/* The tick and the caution mark are for the eye only. */}
-              {current ? (
-                <span className="sr-only">, the current value</span>
-              ) : !option.possible ? (
-                <span className="sr-only">, conflicts with what has been asserted</span>
-              ) : null}
-              {price && option.capital !== null ? (
-                <span className="font-normal tabular-nums text-muted-foreground">
-                  {adds(option.capital, currency)}
-                </span>
-              ) : null}
-              {price && option.monthly !== null ? (
-                <span className="font-normal tabular-nums text-muted-foreground">
-                  {adds(option.monthly, currency)}/mo
-                </span>
-              ) : null}
-              {carbon && option.carbon !== null ? (
-                <span className="font-normal tabular-nums text-muted-foreground">
-                  {option.carbon < 0 ? "−" : "+"}
-                  {kilos(Math.abs(option.carbon))}
-                </span>
-              ) : null}
-            </Button>
-          );
-          if (!tip) return <span key={option.id}>{button}</span>;
-          return (
-            <Tooltip key={option.id}>
-              <TooltipTrigger asChild>{button}</TooltipTrigger>
-              <TooltipContent>{tip}</TooltipContent>
-            </Tooltip>
-          );
+      <Control
+        variable={variable}
+        choices={choices(variable, pick, {
+          price: shown("price"),
+          carbon: shown("carbon"),
+          currency: view?.currency ?? "",
         })}
-      </div>
+      />
       {excluded.length ? (
         <ul className="space-y-0.5 text-xs text-muted-foreground">
           {excluded.map((option) => (

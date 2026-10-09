@@ -92,6 +92,7 @@ layer beside the agent.
 │   │   │   ├── format.ts                 # number and date formatting shared by the canvas and the proposal
 │   │   │   ├── tone.ts                   # a status badge's hue, laid over the primitive
 │   │   │   ├── webmcp.tsx                # the person's agent's tools, read from the MCP server and registered on the page (WebMCP)
+│   │   │   ├── controls.tsx              # each variable's options as the control that fits them: a scale, a plan to scale, a swatch, a pictogram, a list
 │   │   │   └── variables.tsx             # an answer and what it forced, a row that follows, an open row
 │   │   ├── example-layout/               # the artifact panel (the specification or the quotes, from Moding) and the chat's geometry (view state)
 │   │   └── generative-ui/                # other showcase features

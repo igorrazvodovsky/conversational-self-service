@@ -395,7 +395,7 @@ function ClauseView({ node, decorations }: NodeViewProps) {
     <NodeViewWrapper
       id={clause ? address.clause(clause.clause) : undefined}
       className={cn(
-        "group/clause relative border-b py-3 px-3 last:border-b-0",
+        "group/clause relative border-b py-3 last:border-b-0",
         clause && addressable,
         "scroll-mt-28",
         (active || isTarget) && targeted,
